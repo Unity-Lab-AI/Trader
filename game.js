@@ -2086,6 +2086,10 @@ const elements = {
     closeControlsHelpBtn: null,
     statusBanner: null,
     controlsHelpOverlay: null,
+    autosaveIndicator: null,
+    lastSaveTime: null,
+    loadingMessage: null,
+    loadingProgressFill: null,
     
     // Forms
     characterForm: null,
@@ -2100,6 +2104,10 @@ const elements = {
     previewName: null,
     characterAvatar: null
 };
+
+const AUTO_SAVE_INTERVAL = 180000; // 3 minutes
+let autoSaveTimerId = null;
+let loadingProgressTimer = null;
 
 // Initialize the game when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -2162,6 +2170,10 @@ function initializeElements() {
     elements.closeControlsHelpBtn = document.getElementById('close-controls-help');
     elements.statusBanner = document.getElementById('status-banner');
     elements.controlsHelpOverlay = document.getElementById('controls-help-overlay');
+    elements.autosaveIndicator = document.getElementById('autosave-indicator');
+    elements.lastSaveTime = document.getElementById('last-save-time');
+    elements.loadingMessage = document.getElementById('loading-message');
+    elements.loadingProgressFill = document.getElementById('loading-progress-fill');
     
     // Forms
     elements.characterForm = document.getElementById('character-form');
@@ -2252,7 +2264,11 @@ function setupEventListeners() {
 function changeState(newState) {
     const oldState = game.state;
     game.state = newState;
-    
+
+    if (newState !== GameState.PLAYING) {
+        stopAutoSaveTimer();
+    }
+
     // Handle state transitions
     switch (newState) {
         case GameState.MENU:
@@ -2271,6 +2287,7 @@ function changeState(newState) {
             hideAllPanels();
             showPanel('location-panel');
             startGameLoop();
+            startAutoSaveTimer();
             break;
         case GameState.PAUSED:
             // Pause game logic
@@ -2351,8 +2368,15 @@ function switchTab(tabName) {
 
 // Game Functions
 function startNewGame() {
-    changeState(GameState.CHARACTER_CREATION);
-    addMessage('Starting a new game...');
+    const stopProgress = startLoadingProgress('Preparing new adventure...', 25);
+
+    setTimeout(() => {
+        changeState(GameState.CHARACTER_CREATION);
+        addMessage('Starting a new game...');
+        if (stopProgress) {
+            stopProgress('Ready');
+        }
+    }, 450);
 }
 
 // Character Creation State
@@ -3998,6 +4022,107 @@ function addMessage(text, type = 'info') {
     }
 }
 
+function handleError(context, error, { silent = false } = {}) {
+    console.error(`${context} failed:`, error);
+    const friendly = 'Something went wrong. Please try again or check your connection.';
+    addMessage(friendly);
+    if (!silent) {
+        showStatusBanner(`${context} failed`, 'error');
+    }
+}
+
+function updateLastSaveTime(timestamp = new Date()) {
+    if (!elements.lastSaveTime) return;
+
+    const formatted = typeof timestamp === 'string'
+        ? timestamp
+        : timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    elements.lastSaveTime.textContent = `Last save: ${formatted}`;
+}
+
+function showAutoSaveIndicator(message, state = 'info', duration = 1800) {
+    if (!elements.autosaveIndicator) return;
+
+    const textElement = elements.autosaveIndicator.querySelector('.autosave-text');
+    if (textElement) {
+        textElement.textContent = message;
+    }
+
+    elements.autosaveIndicator.classList.remove('hidden', 'error', 'success');
+    if (state !== 'info') {
+        elements.autosaveIndicator.classList.add(state);
+    }
+
+    clearTimeout(elements.autosaveHideTimeout);
+    elements.autosaveHideTimeout = setTimeout(() => {
+        elements.autosaveIndicator.classList.add('hidden');
+    }, duration);
+}
+
+function startAutoSaveTimer() {
+    stopAutoSaveTimer();
+
+    if (!elements.autosaveIndicator) return;
+
+    autoSaveTimerId = setInterval(() => {
+        showAutoSaveIndicator('Auto-saving...');
+        saveGame({ silent: true, isAutoSave: true });
+    }, AUTO_SAVE_INTERVAL);
+}
+
+function stopAutoSaveTimer() {
+    if (autoSaveTimerId) {
+        clearInterval(autoSaveTimerId);
+        autoSaveTimerId = null;
+    }
+}
+
+function startLoadingProgress(message = 'Loading...', startingProgress = 10) {
+    if (!elements.loadingScreen) return null;
+
+    elements.loadingScreen.classList.remove('hidden');
+    if (elements.loadingMessage) {
+        elements.loadingMessage.textContent = message;
+    }
+    if (elements.loadingProgressFill) {
+        elements.loadingProgressFill.style.width = `${startingProgress}%`;
+    }
+
+    let progress = startingProgress;
+    loadingProgressTimer = setInterval(() => {
+        progress = Math.min(95, progress + Math.random() * 15);
+        if (elements.loadingProgressFill) {
+            elements.loadingProgressFill.style.width = `${progress}%`;
+        }
+    }, 200);
+
+    return stopLoadingProgress;
+}
+
+function stopLoadingProgress(finalMessage) {
+    if (loadingProgressTimer) {
+        clearInterval(loadingProgressTimer);
+        loadingProgressTimer = null;
+    }
+
+    if (elements.loadingMessage && finalMessage) {
+        elements.loadingMessage.textContent = finalMessage;
+    }
+
+    if (elements.loadingProgressFill) {
+        elements.loadingProgressFill.style.width = '100%';
+    }
+
+    setTimeout(() => {
+        if (elements.loadingScreen) {
+            elements.loadingScreen.classList.add('hidden');
+        }
+        if (elements.loadingProgressFill) {
+            elements.loadingProgressFill.style.width = '0%';
+        }
+    }, 350);
+}
+
 let statusBannerTimeout;
 
 function showStatusBanner(message, type = 'success') {
@@ -4103,21 +4228,35 @@ function toggleMenu() {
 }
 
 // Save/Load Functions
-function saveGame() {
+function saveGame(options = {}) {
+    const { silent = false, isAutoSave = false } = options;
+
     try {
         const saveData = game.saveState();
         localStorage.setItem('tradingGameSave', JSON.stringify(saveData));
-        addMessage('Game saved successfully!');
-        showStatusBanner('Game saved', 'success');
+
+        const now = new Date();
+        updateLastSaveTime(now);
+
+        if (!isAutoSave) {
+            addMessage('Game saved successfully!');
+        }
+
+        if (!silent) {
+            showStatusBanner('Game saved', 'success');
+        }
+
+        showAutoSaveIndicator(isAutoSave ? 'Auto-saved' : 'Saved', 'success');
     } catch (error) {
-        console.error('Save failed:', error);
-        addMessage('Failed to save game!');
-        showStatusBanner('Save failed', 'error');
+        handleError('Save', error, { silent });
+        if (isAutoSave) {
+            showAutoSaveIndicator('Auto-save failed', 'error', 2500);
+        }
     }
 }
 
 function loadGame(options = {}) {
-    const { skipConfirm = false } = options;
+    const { skipConfirm = false, showLoader = true } = options;
 
     if (!skipConfirm && game && game.state && game.state !== GameState.MENU) {
         const confirmLoad = window.confirm('Load saved game? Unsaved progress will be lost.');
@@ -4126,6 +4265,8 @@ function loadGame(options = {}) {
             return;
         }
     }
+
+    const stopProgress = showLoader ? startLoadingProgress('Loading saved game...') : null;
 
     try {
         const saveData = localStorage.getItem('tradingGameSave');
@@ -4136,14 +4277,20 @@ function loadGame(options = {}) {
             updateLocationInfo();
             addMessage('Game loaded successfully!');
             showStatusBanner('Game loaded', 'success');
+            updateLastSaveTime('just now');
+            if (game.state === GameState.PLAYING) {
+                startAutoSaveTimer();
+            }
         } else {
             addMessage('No saved game found!');
             showStatusBanner('No save found', 'warning');
         }
     } catch (error) {
-        console.error('Load failed:', error);
-        addMessage('Failed to load game!');
-        showStatusBanner('Load failed', 'error');
+        handleError('Load', error);
+    } finally {
+        if (stopProgress) {
+            stopProgress('Loaded');
+        }
     }
 }
 
