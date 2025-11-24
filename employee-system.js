@@ -642,9 +642,13 @@ const EmployeeSystem = {
         // Hire employee
         game.player.gold -= employee.wage * 7;
         game.player.ownedEmployees.push(employee);
-        
+
         addMessage(`Hired ${employee.name} (${this.employeeTypes[employee.type].name}) for ${employee.wage} gold/week!`);
-        
+        if (typeof StatsSystem !== 'undefined') {
+            StatsSystem.recordAction('employeeHired');
+            StatsSystem.updateFromGame();
+        }
+
         // Update UI
         updatePlayerInfo();
         this.updateEmployeeDisplay();
