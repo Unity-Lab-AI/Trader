@@ -883,11 +883,12 @@ const TravelSystem = {
         const transport = game.player.currentTransportation || 'foot';
         const speed = this.getTransportSpeed(transport);
         const timeHours = (distance / speed) * (1 - safety * 0.1); // Safety bonus
-        
+
         return {
             timeDisplay: this.formatTime(timeHours),
             distance: Math.round(distance),
-            safety: Math.round(safety * 100)
+            safety: Math.round(safety * 100),
+            transport
         };
     },
 
@@ -990,7 +991,15 @@ const TravelSystem = {
         this.playerPosition.path = this.findPath(currentLoc, destination);
         
         addMessage(`Starting travel to ${destination.name}... Estimated time: ${travelInfo.timeDisplay}`);
-        
+
+        if (window.AnimationSystem) {
+            AnimationSystem.setState('travel', { destination: destination.name, context: travelInfo.transport });
+            AnimationSystem.registerBeat(0.25);
+        }
+        if (window.ControllerSupport) {
+            ControllerSupport.tryHaptics?.(0.35, 140);
+        }
+
         // Hide location details panel
         const detailsPanel = document.getElementById('location-details');
         if (detailsPanel) {
@@ -1066,6 +1075,14 @@ const TravelSystem = {
         };
 
         addMessage(`Arrived at ${destination.name}!`);
+
+        if (window.AnimationSystem) {
+            AnimationSystem.registerBeat(0.35);
+            AnimationSystem.setState('idle', { reason: 'Arrival complete' });
+        }
+        if (window.ControllerSupport) {
+            ControllerSupport.tryHaptics?.(0.55, 120);
+        }
 
         ParticleSystem?.spawnBurst('travel', { origin: document.getElementById('map-container') });
         

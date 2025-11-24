@@ -623,6 +623,7 @@ const game = {
         this.render();
 
         PerformanceMonitor.update(deltaTime);
+        AdaptiveQualitySystem.track(deltaTime);
 
         // Continue loop
         requestAnimationFrame((time) => this.gameLoop(time));
@@ -713,7 +714,23 @@ const game = {
                 updatePlayerStats();
             };
         }
-        
+
+        const travelContext = typeof TravelSystem !== 'undefined' ? {
+            isTraveling: TravelSystem.playerPosition?.isTraveling,
+            travelProgress: TravelSystem.playerPosition?.travelProgress || 0,
+            destination: TravelSystem.playerPosition?.destination?.name,
+            transport: game.player?.currentTransportation || 'foot'
+        } : {};
+
+        AnimationSystem.update(deltaTime, {
+            ...travelContext,
+            inMarket: this.state === GameState.MARKET,
+            marketName: this.currentLocation?.name,
+            resting: game.player?.stats?.stamina <= 15
+        });
+
+        ControllerSupport.update(deltaTime);
+
         // Update UI
         this.updateUI();
 
@@ -2215,6 +2232,10 @@ const elements = {
     weatherLabel: null,
     cycleLabel: null,
     atmosphereNote: null,
+    animationState: null,
+    animationMomentum: null,
+    qualityLabel: null,
+    controllerStatus: null,
 
     // Buttons
     newGameBtn: null,
@@ -2316,6 +2337,7 @@ const defaultPreferences = {
     reducedMotion: false,
     flashWarnings: false,
     environmentQuality: 'high',
+    autoQuality: true,
     dynamicWeather: true,
     highlightGuides: true,
     vfxQuality: 'high',
@@ -2585,6 +2607,184 @@ const EnvironmentSystem = {
     }
 };
 
+const AnimationSystem = {
+    avatar: null,
+    stateDisplay: null,
+    momentumDisplay: null,
+    activeState: 'idle',
+    activeDetail: '',
+    momentum: 0,
+    lastUpdate: 0,
+    init() {
+        this.avatar = elements.characterAvatar;
+        this.stateDisplay = elements.animationState;
+        this.momentumDisplay = elements.animationMomentum;
+        this.setState('idle', { reason: 'Awaiting orders' });
+    },
+    setState(state, meta = {}) {
+        this.activeState = state;
+        this.activeDetail = meta.reason || meta.destination || meta.context || '';
+        this.lastUpdate = performance.now();
+        if (this.avatar) {
+            this.avatar.dataset.state = state;
+            if (meta.context) {
+                this.avatar.dataset.action = meta.context;
+            }
+        }
+        this.refreshLabels(meta);
+    },
+    refreshLabels(meta = {}) {
+        if (this.stateDisplay) {
+            const detail = meta.destination || meta.reason || this.activeDetail;
+            this.stateDisplay.textContent = detail ? `${this.prettyState()} • ${detail}` : this.prettyState();
+        }
+        if (this.momentumDisplay) {
+            const level = this.describeMomentum();
+            this.momentumDisplay.textContent = level;
+        }
+    },
+    describeMomentum() {
+        if (this.momentum > 0.8) return 'Adrenaline';
+        if (this.momentum > 0.5) return 'Engaged';
+        if (this.momentum > 0.2) return 'Alert';
+        return 'Stable';
+    },
+    prettyState() {
+        return {
+            idle: 'Idle',
+            travel: 'On the road',
+            trade: 'Trading',
+            combat: 'In danger',
+            rest: 'Recovering'
+        }[this.activeState] || this.activeState;
+    },
+    registerBeat(amount = 0.1) {
+        this.momentum = Math.min(1, this.momentum + amount);
+    },
+    update(deltaTime, context = {}) {
+        if (!this.avatar && elements.characterAvatar) {
+            this.avatar = elements.characterAvatar;
+        }
+
+        // Natural momentum decay
+        this.momentum = Math.max(0, this.momentum - deltaTime / 12000);
+
+        if (context.isTraveling) {
+            this.setState('travel', { destination: context.destination || 'En route', context: context.transport || 'travel' });
+            this.momentum = Math.max(this.momentum, Math.min(1, context.travelProgress + 0.25));
+        } else if (context.inMarket) {
+            this.setState('trade', { reason: context.marketName || 'Market focus', context: 'trade' });
+            this.registerBeat(0.05);
+        } else if (context.resting) {
+            this.setState('rest', { reason: 'Recovering', context: 'rest' });
+        } else if (this.activeState !== 'idle') {
+            this.setState('idle', { reason: 'Ready' });
+        } else {
+            this.refreshLabels();
+        }
+    }
+};
+
+const AdaptiveQualitySystem = {
+    lastAdjust: 0,
+    window: [],
+    maxSamples: 120,
+    init() {
+        this.lastAdjust = performance.now();
+    },
+    track(deltaTime) {
+        if (!userPreferences.autoQuality) return;
+        this.window.push(deltaTime);
+        if (this.window.length > this.maxSamples) {
+            this.window.shift();
+        }
+        const now = performance.now();
+        if (now - this.lastAdjust < 4000) return;
+        this.lastAdjust = now;
+        const averageFrame = this.window.reduce((a, b) => a + b, 0) / this.window.length;
+        const fps = 1000 / Math.max(1, averageFrame);
+        if (fps < 45 && userPreferences.environmentQuality !== 'low') {
+            userPreferences.environmentQuality = 'medium';
+            if (fps < 35) {
+                userPreferences.environmentQuality = 'low';
+                userPreferences.particleDensity = Math.max(40, userPreferences.particleDensity - 20);
+            }
+            applyPreferences();
+            addMessage('Performance guard lowered fidelity to keep things smooth.', 'info');
+        } else if (fps > 65 && userPreferences.environmentQuality === 'low') {
+            userPreferences.environmentQuality = 'medium';
+            applyPreferences();
+        } else if (fps > 75 && userPreferences.environmentQuality === 'medium') {
+            userPreferences.environmentQuality = 'high';
+            applyPreferences();
+        }
+    }
+};
+
+const ControllerSupport = {
+    connectedGamepad: null,
+    lastButtonState: new Map(),
+    hapticsEnabled: true,
+    pollInterval: 120,
+    lastPoll: 0,
+    init() {
+        window.addEventListener('gamepadconnected', (event) => {
+            this.connectedGamepad = event.gamepad;
+            this.updateStatusLabel();
+            this.tryHaptics(0.3, 100);
+            addMessage(`Controller connected: ${event.gamepad.id}`, 'success');
+        });
+        window.addEventListener('gamepaddisconnected', () => {
+            this.connectedGamepad = null;
+            this.updateStatusLabel();
+            addMessage('Controller disconnected', 'warning');
+        });
+    },
+    updateStatusLabel() {
+        if (elements.controllerStatus) {
+            elements.controllerStatus.textContent = this.connectedGamepad ? `Controller: ${this.connectedGamepad.id}` : 'Controller: None';
+        }
+    },
+    update(deltaTime) {
+        if (!this.connectedGamepad) return;
+        this.lastPoll += deltaTime;
+        if (this.lastPoll < this.pollInterval) return;
+        this.lastPoll = 0;
+
+        const pad = navigator.getGamepads()[this.connectedGamepad.index];
+        if (!pad) return;
+
+        const buttons = [pad.buttons[0], pad.buttons[1], pad.buttons[2], pad.buttons[3]];
+        const mapping = [
+            () => openMarket(),
+            () => toggleMenu(),
+            () => saveGame(),
+            () => openInventory()
+        ];
+
+        buttons.forEach((button, index) => {
+            const pressedBefore = this.lastButtonState.get(index);
+            if (button?.pressed && !pressedBefore) {
+                mapping[index]?.();
+                this.tryHaptics(0.45, 60);
+            }
+            this.lastButtonState.set(index, button?.pressed);
+        });
+    },
+    tryHaptics(intensity = 0.4, duration = 80) {
+        const pad = this.connectedGamepad || (navigator.getGamepads ? navigator.getGamepads()[0] : null);
+        const actuator = pad?.vibrationActuator;
+        if (actuator?.type === 'dual-rumble') {
+            actuator.playEffect('dual-rumble', {
+                startDelay: 0,
+                duration,
+                weakMagnitude: intensity,
+                strongMagnitude: Math.min(1, intensity + 0.1)
+            }).catch(() => {});
+        }
+    }
+};
+
 const PerformanceMonitor = {
     enabled: false,
     smoothFrame: 16,
@@ -2815,8 +3015,11 @@ document.addEventListener('DOMContentLoaded', function() {
     VisualEffectsSystem.init();
     ParticleSystem.init();
     EnvironmentSystem.init();
+    AnimationSystem.init();
+    AdaptiveQualitySystem.init();
     loadPreferencesFromStorage();
     PerformanceMonitor.init();
+    ControllerSupport.init();
     setupEventListeners();
     initializeOnboarding();
     showScreen('main-menu');
@@ -2873,6 +3076,10 @@ function initializeElements() {
     elements.weatherLabel = document.getElementById('weather-label');
     elements.cycleLabel = document.getElementById('cycle-label');
     elements.atmosphereNote = document.getElementById('atmosphere-note');
+    elements.animationState = document.getElementById('animation-state');
+    elements.animationMomentum = document.getElementById('animation-momentum');
+    elements.qualityLabel = document.getElementById('quality-label');
+    elements.controllerStatus = document.getElementById('controller-status');
     
     // Buttons
     elements.newGameBtn = document.getElementById('new-game-btn');
@@ -3267,6 +3474,11 @@ function applyPreferences() {
     document.documentElement.style.setProperty('--shake-intensity', `${(userPreferences.screenShake / 100) * 8}px`);
     if (elements.environmentOverlay) {
         elements.environmentOverlay.style.opacity = userPreferences.environmentQuality === 'low' ? 0.16 : '';
+    }
+    if (elements.qualityLabel) {
+        const label = userPreferences.environmentQuality === 'low' ? 'Performance' :
+            userPreferences.environmentQuality === 'medium' ? 'Balanced' : 'High Fidelity';
+        elements.qualityLabel.textContent = label;
     }
     if (EnvironmentSystem.overlay && !userPreferences.dynamicWeather) {
         EnvironmentSystem.applyWeather('clear', { silent: true });
@@ -4307,10 +4519,12 @@ function openMarket() {
     populateComparisonSelect();
     updateMarketNews();
     StatsSystem.recordAction('marketOpened');
+    AnimationSystem.setState('trade', { reason: 'Market haggling' });
 }
 
 function closeMarket() {
     changeState(GameState.PLAYING);
+    AnimationSystem.setState('idle', { reason: 'Leaving market' });
 }
 
 function updateMarketHeader() {
