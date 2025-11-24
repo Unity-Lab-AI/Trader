@@ -576,10 +576,15 @@ const game = {
         PropertySystem.init();
         EmployeeSystem.init();
         TradeRouteSystem.init();
-        
+
         // Initialize notification system
         this.initNotificationSystem();
-        
+
+        // Initialize stats tracking
+        StatsSystem.init();
+        StatsSystem.updateFromGame();
+        updateNavigationPanel();
+
         // Initialize PropertyEmployeeUI if it exists
         if (typeof PropertyEmployeeUI !== 'undefined') {
             PropertyEmployeeUI.init();
@@ -696,7 +701,10 @@ const game = {
         
         // Update UI
         this.updateUI();
-        
+
+        // Keep statistics fresh
+        StatsSystem.updateFromGame();
+
         // Auto-save check
         if (this.settings.autoSave && Date.now() - this.lastSaveTime > this.settings.autoSaveInterval) {
             this.autoSave();
@@ -949,7 +957,11 @@ const game = {
             EventSystem.events = saveData.activeEvents;
         }
     },
-    
+
+    initNotificationSystem() {
+        NotificationCenter.init(elements.notificationTray);
+    },
+
     // Auto-save functionality
     lastSaveTime: 0,
     autoSave() {
@@ -1520,7 +1532,8 @@ const GameWorld = {
         // Update UI
         updateLocationInfo();
         updateLocationPanel();
-        
+        StatsSystem.recordAction('travelCompleted', { locationId });
+
         addMessage(`✅ Arrived at ${destination.name}!`);
     },
     
@@ -2062,7 +2075,17 @@ const elements = {
     playerName: null,
     playerGold: null,
     messages: null,
-    
+    statGold: null,
+    statDays: null,
+    statProperties: null,
+    statEmployees: null,
+    statLocations: null,
+    achievementList: null,
+    navigationConnections: null,
+    navigationCurrentLocation: null,
+    liveRegion: null,
+    notificationTray: null,
+
     // Buttons
     newGameBtn: null,
     loadGameBtn: null,
@@ -2130,15 +2153,169 @@ let loadingProgressTimer = null;
 const SETTINGS_STORAGE_KEY = 'tradingGamePreferences';
 const ONBOARDING_STORAGE_KEY = 'tradingGameOnboardingComplete';
 
+const defaultControlBindings = {
+    openInventory: 'I',
+    openMarket: 'M',
+    openTransportation: 'T',
+    toggleMenu: 'Escape',
+    quickSave: 'Ctrl+S',
+    quickLoad: 'Ctrl+L',
+    controlsHelp: 'Shift+/',
+    saveGame: 'S'
+};
+
 const defaultPreferences = {
     highContrast: false,
     colorblind: false,
     keyboardNav: true,
-    fontScale: 100
+    fontScale: 100,
+    controlBindings: { ...defaultControlBindings }
 };
 
 let userPreferences = { ...defaultPreferences };
 let onboardingStepIndex = 0;
+
+const StatsSystem = {
+    data: {
+        gold: 0,
+        daysSurvived: 0,
+        marketsVisited: 0,
+        inventoriesOpened: 0,
+        travelsCompleted: 0,
+        propertiesOwned: 0,
+        employeesHired: 0,
+        saves: 0,
+        uniqueLocations: new Set()
+    },
+    achievements: [
+        { id: 'getting-started', title: 'Getting Started', description: 'Open the market once.', key: 'marketsVisited', target: 1 },
+        { id: 'traveler', title: 'Trailblazer', description: 'Complete 3 journeys.', key: 'travelsCompleted', target: 3 },
+        { id: 'landed', title: 'Landowner', description: 'Own at least one property.', key: 'propertiesOwned', target: 1 },
+        { id: 'leader', title: 'People Manager', description: 'Hire your first employee.', key: 'employeesHired', target: 1 },
+        { id: 'wealthy', title: 'Wealthy Merchant', description: 'Hold 500 gold at once.', key: 'gold', target: 500 },
+        { id: 'seasoned', title: 'Seasoned Adventurer', description: 'Survive 5 in-game days.', key: 'daysSurvived', target: 5 }
+    ],
+    init() {
+        this.reset();
+    },
+    reset() {
+        this.data = {
+            gold: 0,
+            daysSurvived: 0,
+            marketsVisited: 0,
+            inventoriesOpened: 0,
+            travelsCompleted: 0,
+            propertiesOwned: 0,
+            employeesHired: 0,
+            saves: 0,
+            uniqueLocations: new Set()
+        };
+        this.renderAchievements();
+        this.updateUI();
+    },
+    recordAction(action, payload = {}) {
+        switch (action) {
+            case 'marketOpened':
+                this.data.marketsVisited++;
+                break;
+            case 'inventoryOpened':
+                this.data.inventoriesOpened++;
+                break;
+            case 'travelCompleted':
+                this.data.travelsCompleted++;
+                if (payload.locationId) {
+                    this.data.uniqueLocations.add(payload.locationId);
+                }
+                break;
+            case 'propertyPurchased':
+                this.data.propertiesOwned++;
+                break;
+            case 'employeeHired':
+                this.data.employeesHired++;
+                break;
+            case 'save':
+                this.data.saves++;
+                break;
+            default:
+                break;
+        }
+
+        this.updateUI();
+    },
+    updateFromGame() {
+        if (game.player) {
+            this.data.gold = game.player.gold || 0;
+            this.data.propertiesOwned = (game.player.ownedProperties || []).length;
+            this.data.employeesHired = (game.player.ownedEmployees || []).length;
+        }
+
+        this.data.daysSurvived = TimeSystem.currentTime.day || 0;
+
+        if (GameWorld && GameWorld.visitedLocations) {
+            GameWorld.visitedLocations.forEach(loc => this.data.uniqueLocations.add(loc));
+        }
+
+        this.updateUI();
+    },
+    updateUI() {
+        if (elements.statGold) {
+            elements.statGold.textContent = `${this.data.gold}`;
+        }
+        if (elements.statDays) {
+            elements.statDays.textContent = `${this.data.daysSurvived}`;
+        }
+        if (elements.statProperties) {
+            elements.statProperties.textContent = `${this.data.propertiesOwned}`;
+        }
+        if (elements.statEmployees) {
+            elements.statEmployees.textContent = `${this.data.employeesHired}`;
+        }
+        if (elements.statLocations) {
+            elements.statLocations.textContent = `${this.data.uniqueLocations.size}`;
+        }
+
+        this.renderAchievements();
+    },
+    renderAchievements() {
+        if (!elements.achievementList) return;
+
+        elements.achievementList.innerHTML = '';
+
+        this.achievements.forEach((achievement) => {
+            const value = achievement.key === 'uniqueLocations' ? this.data.uniqueLocations.size : (this.data[achievement.key] || 0);
+            const progress = Math.min(1, value / achievement.target);
+            const card = document.createElement('div');
+            card.className = `achievement-card ${progress >= 1 ? 'completed' : ''}`;
+            card.innerHTML = `
+                <h5 class="achievement-title">${achievement.title}</h5>
+                <p class="achievement-desc">${achievement.description}</p>
+                <div class="achievement-progress" aria-label="${achievement.title} progress">
+                    <div class="fill" style="width: ${progress * 100}%"></div>
+                </div>
+                <small>${Math.floor(progress * 100)}% complete</small>
+            `;
+            elements.achievementList.appendChild(card);
+        });
+    }
+};
+
+const NotificationCenter = {
+    tray: null,
+    init(trayElement) {
+        this.tray = trayElement;
+    },
+    show(message, type = 'info') {
+        if (!this.tray) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        this.tray.appendChild(toast);
+
+        setTimeout(() => toast.classList.add('hide'), 3200);
+        setTimeout(() => toast.remove(), 3600);
+    }
+};
 
 // Initialize the game when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -2179,6 +2356,16 @@ function initializeElements() {
     elements.playerCharisma = document.getElementById('player-charisma');
     elements.playerEndurance = document.getElementById('player-endurance');
     elements.playerLuck = document.getElementById('player-luck');
+    elements.statGold = document.getElementById('stat-gold');
+    elements.statDays = document.getElementById('stat-days');
+    elements.statProperties = document.getElementById('stat-properties');
+    elements.statEmployees = document.getElementById('stat-employees');
+    elements.statLocations = document.getElementById('stat-locations');
+    elements.achievementList = document.getElementById('achievement-list');
+    elements.navigationConnections = document.getElementById('nav-connections');
+    elements.navigationCurrentLocation = document.getElementById('nav-current-location');
+    elements.liveRegion = document.getElementById('live-region');
+    elements.notificationTray = document.getElementById('notification-tray');
     
     // Buttons
     elements.newGameBtn = document.getElementById('new-game-btn');
@@ -2225,6 +2412,10 @@ function initializeElements() {
     elements.lastSaveTime = document.getElementById('last-save-time');
     elements.loadingMessage = document.getElementById('loading-message');
     elements.loadingProgressFill = document.getElementById('loading-progress-fill');
+    elements.controlBindingInputs = Array.from(document.querySelectorAll('.control-binding-input'));
+    elements.resetBindingsBtn = document.getElementById('reset-bindings-btn');
+    elements.bindingHint = document.getElementById('binding-hint');
+    elements.openTravelFromNav = document.getElementById('open-travel-from-nav');
     
     // Forms
     elements.characterForm = document.getElementById('character-form');
@@ -2332,6 +2523,9 @@ function setupEventListeners() {
         });
     }
 
+    setupControlBindingListeners();
+    document.addEventListener('keydown', handleBindingKeydown, true);
+
     if (elements.controlsHelpOverlay) {
         elements.controlsHelpOverlay.addEventListener('click', (event) => {
             if (event.target === elements.controlsHelpOverlay) {
@@ -2344,6 +2538,23 @@ function setupEventListeners() {
     const propertyEmployeeBtn = document.getElementById('property-employee-btn');
     if (propertyEmployeeBtn) {
         propertyEmployeeBtn.addEventListener('click', openPropertyEmployeePanel);
+    }
+
+    if (elements.resetBindingsBtn) {
+        elements.resetBindingsBtn.addEventListener('click', resetControlBindings);
+    }
+
+    if (elements.openTravelFromNav) {
+        elements.openTravelFromNav.addEventListener('click', openTravel);
+    }
+
+    if (elements.navigationConnections) {
+        elements.navigationConnections.addEventListener('click', (event) => {
+            const button = event.target.closest('.nav-connection.actionable');
+            if (button?.dataset.destination) {
+                GameWorld.travelTo(button.dataset.destination);
+            }
+        });
     }
     
     // Game Setup
@@ -2378,6 +2589,7 @@ function loadPreferencesFromStorage() {
         const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
         if (stored) {
             userPreferences = { ...defaultPreferences, ...JSON.parse(stored) };
+            userPreferences.controlBindings = { ...defaultControlBindings, ...(userPreferences.controlBindings || {}) };
         }
     } catch (error) {
         console.warn('Unable to load preferences', error);
@@ -2400,6 +2612,22 @@ function applyPreferences() {
     updateFontSizeLabel();
 }
 
+function setupControlBindingListeners() {
+    if (!elements.controlBindingInputs) return;
+
+    elements.controlBindingInputs.forEach(input => {
+        input.addEventListener('focus', () => beginBindingCapture(input.dataset.action, input));
+        input.addEventListener('click', () => beginBindingCapture(input.dataset.action, input));
+    });
+}
+
+function resetControlBindings() {
+    userPreferences.controlBindings = { ...defaultControlBindings };
+    savePreferences();
+    syncSettingsUI();
+    announceToScreenReaders('Control bindings reset to defaults');
+}
+
 function syncSettingsUI() {
     if (elements.highContrastToggle) {
         elements.highContrastToggle.checked = userPreferences.highContrast;
@@ -2414,12 +2642,52 @@ function syncSettingsUI() {
         elements.fontSizeRange.value = userPreferences.fontScale;
     }
     updateFontSizeLabel();
+    updateBindingInputs();
 }
 
 function updateFontSizeLabel() {
     if (elements.fontSizeLabel) {
         elements.fontSizeLabel.textContent = `${userPreferences.fontScale}%`;
     }
+}
+
+function updateBindingInputs() {
+    if (!elements.controlBindingInputs) return;
+
+    elements.controlBindingInputs.forEach(input => {
+        const action = input.dataset.action;
+        if (!action) return;
+        input.value = getBinding(action);
+    });
+
+    renderControlsHelpList();
+}
+
+function renderControlsHelpList() {
+    if (!elements.controlsHelpOverlay) return;
+    const list = elements.controlsHelpOverlay.querySelector('ul');
+    if (!list) return;
+
+    const bindings = {
+        quickSave: getBinding('quickSave'),
+        quickLoad: getBinding('quickLoad'),
+        inventory: getBinding('openInventory'),
+        market: getBinding('openMarket'),
+        transportation: getBinding('openTransportation'),
+        menu: getBinding('toggleMenu'),
+        help: getBinding('controlsHelp')
+    };
+
+    list.innerHTML = `
+        <li><strong>${bindings.quickSave}</strong>: Quick Save</li>
+        <li><strong>${bindings.quickLoad}</strong>: Quick Load (asks for confirmation during play)</li>
+        <li><strong>${bindings.inventory}</strong>: Open Inventory</li>
+        <li><strong>${bindings.market}</strong>: Open Market</li>
+        <li><strong>${bindings.transportation}</strong>: Open Transportation</li>
+        <li><strong>${bindings.menu}</strong>: Toggle menu or return to game</li>
+        <li><strong>${bindings.help}</strong>: Toggle this help panel</li>
+        <li><strong>1-7 (in Market)</strong>: Switch between market tabs</li>
+    `;
 }
 
 function showSettings() {
@@ -2985,7 +3253,11 @@ function createCharacter(event) {
     
     // Initialize game world
     initializeGameWorld();
-    
+
+    StatsSystem.reset();
+    StatsSystem.updateFromGame();
+    updateNavigationPanel();
+
     // Update UI
     updatePlayerInfo();
     updatePlayerStats();
@@ -3006,8 +3278,10 @@ function initializeGameWorld() {
         name: 'Riverwood Village',
         description: 'A small village nestled by a peaceful river.'
     };
-    
+
     updateLocationInfo();
+    updateNavigationPanel();
+    StatsSystem.updateFromGame();
 }
 
 function updatePlayerInfo() {
@@ -3085,6 +3359,8 @@ function updateLocationInfo() {
         document.getElementById('location-name').textContent = game.currentLocation.name;
         document.getElementById('location-description').textContent = game.currentLocation.description;
     }
+
+    updateNavigationPanel();
 }
 
 function updateLocationPanel() {
@@ -3181,8 +3457,36 @@ function unlockRegion(regionId) {
     // Update UI
     updatePlayerInfo();
     updateLocationPanel();
-    
+
     addMessage(`🎉 Unlocked ${region.name}! New destinations are now available.`);
+}
+
+function updateNavigationPanel() {
+    if (!elements.navigationConnections) return;
+
+    const currentLocation = GameWorld.locations[game.currentLocation?.id];
+
+    if (elements.navigationCurrentLocation) {
+        elements.navigationCurrentLocation.textContent = currentLocation ? currentLocation.name : 'Unknown';
+    }
+
+    if (!currentLocation || !currentLocation.connections?.length) {
+        elements.navigationConnections.innerHTML = '<p class="nav-hint">Travel to a nearby town to unlock quick navigation.</p>';
+        return;
+    }
+
+    elements.navigationConnections.innerHTML = '';
+    currentLocation.connections.forEach(connectionId => {
+        const destination = GameWorld.locations[connectionId];
+        if (!destination) return;
+
+        const button = document.createElement('button');
+        button.className = 'nav-connection actionable';
+        button.dataset.destination = connectionId;
+        button.type = 'button';
+        button.textContent = destination.name;
+        elements.navigationConnections.appendChild(button);
+    });
 }
 
 // Market Functions
@@ -3194,6 +3498,7 @@ function openMarket() {
     populateItemFilter();
     populateComparisonSelect();
     updateMarketNews();
+    StatsSystem.recordAction('marketOpened');
 }
 
 function closeMarket() {
@@ -3457,6 +3762,7 @@ function populateDestinations() {
 function openInventory() {
     changeState(GameState.INVENTORY);
     populateInventory();
+    StatsSystem.recordAction('inventoryOpened');
 }
 
 function closeInventory() {
@@ -4263,8 +4569,14 @@ function addMessage(text, type = 'info') {
     const messageElement = document.createElement('p');
     messageElement.className = 'message';
     messageElement.textContent = text;
-    
+
     elements.messages.appendChild(messageElement);
+
+    if (NotificationCenter) {
+        NotificationCenter.show(text, type === 'error' ? 'error' : (type === 'success' ? 'success' : 'info'));
+    }
+
+    announceToScreenReaders(text);
     
     // Auto-scroll to bottom
     elements.messages.scrollTop = elements.messages.scrollHeight;
@@ -4282,6 +4594,15 @@ function handleError(context, error, { silent = false } = {}) {
     if (!silent) {
         showStatusBanner(`${context} failed`, 'error');
     }
+}
+
+function announceToScreenReaders(message) {
+    if (!elements.liveRegion) return;
+
+    elements.liveRegion.textContent = '';
+    setTimeout(() => {
+        elements.liveRegion.textContent = message;
+    }, 20);
 }
 
 function updateLastSaveTime(timestamp = new Date()) {
@@ -4402,24 +4723,90 @@ function toggleControlsHelp() {
     if (isHidden && elements.closeControlsHelpBtn) {
         elements.closeControlsHelpBtn.focus();
     }
+
+    renderControlsHelpList();
+}
+
+function formatKeyCombo(event) {
+    const parts = [];
+    if (event.ctrlKey) parts.push('Ctrl');
+    if (event.shiftKey) parts.push('Shift');
+    if (event.altKey) parts.push('Alt');
+
+    let key = event.key;
+    if (key === ' ') key = 'Space';
+    if (key.length === 1) key = key.toUpperCase();
+
+    parts.push(key);
+    return parts.join('+');
+}
+
+function getBinding(action) {
+    return (userPreferences.controlBindings?.[action] || defaultControlBindings[action] || '').trim();
+}
+
+function bindingMatches(event, action) {
+    return formatKeyCombo(event).toLowerCase() === getBinding(action).toLowerCase();
+}
+
+let awaitingBindingAction = null;
+
+function beginBindingCapture(action, input) {
+    awaitingBindingAction = action;
+    if (input) {
+        input.value = 'Press keys...';
+        input.focus();
+    }
+    if (elements.bindingHint) {
+        elements.bindingHint.textContent = `Press the new shortcut for ${action}`;
+    }
+}
+
+function handleBindingKeydown(event) {
+    if (!awaitingBindingAction) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (event.key === 'Escape') {
+        awaitingBindingAction = null;
+        syncSettingsUI();
+        return;
+    }
+
+    const combo = formatKeyCombo(event);
+    userPreferences.controlBindings[awaitingBindingAction] = combo;
+    savePreferences();
+    syncSettingsUI();
+    renderControlsHelpList();
+    announceToScreenReaders(`${awaitingBindingAction} bound to ${combo}`);
+
+    awaitingBindingAction = null;
 }
 
 function handleKeyPress(event) {
-    if (event.ctrlKey && !event.shiftKey && !event.altKey) {
-        if (event.key.toLowerCase() === 's') {
-            event.preventDefault();
-            saveGame();
-            return;
-        }
-
-        if (event.key.toLowerCase() === 'l') {
-            event.preventDefault();
-            loadGame();
-            return;
-        }
+    if (awaitingBindingAction) {
+        return; // binding capture handles its own events
     }
 
-    if (event.shiftKey && (event.key === '?' || event.key === '/')) {
+    const targetTag = event.target?.tagName;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(targetTag)) {
+        return;
+    }
+
+    if (bindingMatches(event, 'quickSave')) {
+        event.preventDefault();
+        saveGame();
+        return;
+    }
+
+    if (bindingMatches(event, 'quickLoad')) {
+        event.preventDefault();
+        loadGame();
+        return;
+    }
+
+    if (bindingMatches(event, 'controlsHelp')) {
         event.preventDefault();
         toggleControlsHelp();
         return;
@@ -4440,38 +4827,32 @@ function handleKeyPress(event) {
     }
 
     // Keyboard shortcuts
-    switch (event.key) {
-        case 'Escape':
-            if (game.state === GameState.PLAYING) {
-                toggleMenu();
-            } else if (game.state !== GameState.MENU) {
-                changeState(GameState.PLAYING);
-            }
-            break;
-        case 'i':
-        case 'I':
-            if (game.state === GameState.PLAYING) {
-                openInventory();
-            }
-            break;
-        case 'm':
-        case 'M':
-            if (game.state === GameState.PLAYING) {
-                openMarket();
-            }
-            break;
-        case 't':
-        case 'T':
-            if (game.state === GameState.PLAYING) {
-                openTransportation();
-            }
-            break;
-        case 's':
-        case 'S':
-            if (game.state === GameState.PLAYING) {
-                saveGame();
-            }
-            break;
+    if (bindingMatches(event, 'toggleMenu')) {
+        if (game.state === GameState.PLAYING) {
+            toggleMenu();
+        } else if (game.state !== GameState.MENU) {
+            changeState(GameState.PLAYING);
+        }
+        return;
+    }
+
+    if (bindingMatches(event, 'openInventory') && game.state === GameState.PLAYING) {
+        openInventory();
+        return;
+    }
+
+    if (bindingMatches(event, 'openMarket') && game.state === GameState.PLAYING) {
+        openMarket();
+        return;
+    }
+
+    if (bindingMatches(event, 'openTransportation') && game.state === GameState.PLAYING) {
+        openTransportation();
+        return;
+    }
+
+    if (bindingMatches(event, 'saveGame') && game.state === GameState.PLAYING) {
+        saveGame();
     }
 }
 
@@ -4494,6 +4875,8 @@ function saveGame(options = {}) {
         if (!isAutoSave) {
             addMessage('Game saved successfully!');
         }
+
+        StatsSystem.recordAction('save');
 
         if (!silent) {
             showStatusBanner('Game saved', 'success');
@@ -4528,6 +4911,8 @@ function loadGame(options = {}) {
             game.loadState(parsedData);
             updatePlayerInfo();
             updateLocationInfo();
+            StatsSystem.updateFromGame();
+            updateNavigationPanel();
             addMessage('Game loaded successfully!');
             showStatusBanner('Game loaded', 'success');
             updateLastSaveTime('just now');

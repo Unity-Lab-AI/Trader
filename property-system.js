@@ -385,9 +385,13 @@ const PropertySystem = {
         this.initializePropertyStorage(newProperty.id);
         
         game.player.ownedProperties.push(newProperty);
-        
+
         addMessage(`Purchased ${propertyType.name} in ${game.currentLocation.name} for ${price} gold!`);
-        
+        if (typeof StatsSystem !== 'undefined') {
+            StatsSystem.recordAction('propertyPurchased');
+            StatsSystem.updateFromGame();
+        }
+
         // Update UI
         updatePlayerInfo();
         this.updatePropertyDisplay();

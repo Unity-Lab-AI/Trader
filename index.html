@@ -787,8 +787,70 @@
                 <!-- Message Log -->
                 <section id="message-log">
                     <h3>Messages</h3>
-                    <div id="messages">
+                    <div id="messages" aria-live="polite">
                         <p class="message">Welcome to the Trading Game!</p>
+                    </div>
+                </section>
+                <section id="insights-panel" class="panel compact">
+                    <div class="insights-grid">
+                        <div class="insight-card" aria-live="polite">
+                            <div class="insight-header">
+                                <h4>Game Statistics</h4>
+                                <span class="insight-subtitle">Live progress tracker</span>
+                            </div>
+                            <dl id="game-stats-list" class="insight-list">
+                                <div class="insight-row">
+                                    <dt>Gold on hand</dt>
+                                    <dd id="stat-gold">0</dd>
+                                </div>
+                                <div class="insight-row">
+                                    <dt>Days survived</dt>
+                                    <dd id="stat-days">0</dd>
+                                </div>
+                                <div class="insight-row">
+                                    <dt>Properties owned</dt>
+                                    <dd id="stat-properties">0</dd>
+                                </div>
+                                <div class="insight-row">
+                                    <dt>Employees hired</dt>
+                                    <dd id="stat-employees">0</dd>
+                                </div>
+                                <div class="insight-row">
+                                    <dt>Locations visited</dt>
+                                    <dd id="stat-locations">0</dd>
+                                </div>
+                            </dl>
+                        </div>
+                        <div class="insight-card" aria-live="polite">
+                            <div class="insight-header">
+                                <h4>Achievements</h4>
+                                <span class="insight-subtitle">Complete milestones to earn rewards</span>
+                            </div>
+                            <div id="achievement-list" class="achievement-list">
+                                <!-- Achievements populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div class="insight-card" aria-live="polite">
+                            <div class="insight-header">
+                                <h4>Quick Navigation</h4>
+                                <span class="insight-subtitle">Jump between nearby hubs</span>
+                            </div>
+                            <div id="quick-navigation" class="quick-navigation">
+                                <div class="minimap" aria-hidden="true">
+                                    <div class="minimap-overlay">
+                                        <span class="minimap-dot" title="Current position"></span>
+                                        <span class="minimap-ring"></span>
+                                    </div>
+                                </div>
+                                <div class="navigation-details">
+                                    <p class="nav-location">Current: <span id="nav-current-location">Unknown</span></p>
+                                    <div id="nav-connections" class="nav-connections" role="list">
+                                        <p class="nav-hint">Connections will appear once you start traveling.</p>
+                                    </div>
+                                    <button id="open-travel-from-nav" class="secondary">Open Travel Planner</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -925,6 +987,44 @@
                     <h3>Preferences</h3>
                     <p class="setting-hint">Changes apply instantly and save to your browser.</p>
                 </section>
+                <section class="settings-section">
+                    <h3>Controls</h3>
+                    <p class="setting-hint">Click a binding, then press the new key or combo. Escape cancels.</p>
+                    <div class="control-binding-grid">
+                        <label class="control-binding">
+                            <span>Open Inventory</span>
+                            <input type="text" class="control-binding-input" data-action="openInventory" aria-label="Inventory key" readonly>
+                        </label>
+                        <label class="control-binding">
+                            <span>Open Market</span>
+                            <input type="text" class="control-binding-input" data-action="openMarket" aria-label="Market key" readonly>
+                        </label>
+                        <label class="control-binding">
+                            <span>Transportation</span>
+                            <input type="text" class="control-binding-input" data-action="openTransportation" aria-label="Transportation key" readonly>
+                        </label>
+                        <label class="control-binding">
+                            <span>Toggle Menu</span>
+                            <input type="text" class="control-binding-input" data-action="toggleMenu" aria-label="Menu key" readonly>
+                        </label>
+                        <label class="control-binding">
+                            <span>Quick Save</span>
+                            <input type="text" class="control-binding-input" data-action="quickSave" aria-label="Quick save key" readonly>
+                        </label>
+                        <label class="control-binding">
+                            <span>Quick Load</span>
+                            <input type="text" class="control-binding-input" data-action="quickLoad" aria-label="Quick load key" readonly>
+                        </label>
+                        <label class="control-binding">
+                            <span>Controls Help</span>
+                            <input type="text" class="control-binding-input" data-action="controlsHelp" aria-label="Controls help key" readonly>
+                        </label>
+                    </div>
+                    <div class="control-binding-actions">
+                        <button id="reset-bindings-btn" class="secondary">Reset Bindings</button>
+                        <span id="binding-hint" class="setting-hint" aria-live="polite">Select a binding to change it.</span>
+                    </div>
+                </section>
             </div>
             <div class="modal-footer settings-actions">
                 <button id="reset-settings-btn" class="secondary">Reset to Default</button>
@@ -932,6 +1032,10 @@
             </div>
         </div>
     </div>
+
+    <div id="live-region" class="sr-only" aria-live="polite"></div>
+
+    <div id="notification-tray" aria-live="polite" role="status"></div>
 
     <div id="controls-help-overlay" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="controls-help-title">
         <div class="modal-content">
