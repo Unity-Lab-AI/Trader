@@ -32,6 +32,7 @@
                     <button id="onboarding-btn" class="quick-action-btn" title="Replay the guided tour">🎓 Tour</button>
                     <button id="in-game-settings-btn" class="quick-action-btn" title="Adjust accessibility and preferences">⚙️ Settings</button>
                     <div id="status-banner" class="status-banner hidden" role="status" aria-live="polite">Saved</div>
+                    <div id="controller-status" class="controller-status" role="status" aria-live="polite">Controller: None</div>
                 </div>
                 <div class="save-indicators" aria-live="polite">
                     <span id="autosave-indicator" class="save-indicator hidden">
@@ -52,7 +53,19 @@
                 <span class="pill-label">Cycle</span>
                 <span id="cycle-label">Dawn</span>
             </div>
+            <div class="status-pill">
+                <span class="pill-label">Stance</span>
+                <span id="animation-state">Idle</span>
+            </div>
+            <div class="status-pill">
+                <span class="pill-label">Momentum</span>
+                <span id="animation-momentum">Stable</span>
+            </div>
             <div class="status-pill atmosphere" id="atmosphere-note">Atmosphere steady and safe.</div>
+            <div class="status-pill fidelity">
+                <span class="pill-label">Fidelity</span>
+                <span id="quality-label">High</span>
+            </div>
         </section>
 
         <main id="game-main">

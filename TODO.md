@@ -71,10 +71,10 @@ Comprehensive feature roadmap for the trading game to reach 100% completion.
 - [x] Create particle effects for resources
 
 ## Animation System
-- [ ] Implement character movement animations with different states (idle, walk, run, jump, attack, etc.)
+- [x] Implement character movement animations with different states (idle, walk, run, jump, attack, etc.)
 - [ ] Add item usage animations with visual feedback
 - [ ] Create building/property animations for construction, upgrades, and active states
-- [ ] Implement travel animations with smooth transitions
+- [x] Implement travel animations with smooth transitions
 - [ ] Add market stall animations for trading activities
 - [ ] Create loading animations with progress indicators
 
@@ -83,11 +83,11 @@ Comprehensive feature roadmap for the trading game to reach 100% completion.
 - [x] Add button press animations and hover effects with visual feedback
 - [x] Implement progress bar animations with smooth transitions
 - [x] Add text scrolling for long messages
-- [ ] Create icon animations for various UI elements
+- [x] Create icon animations for various UI elements
 - [x] Implement comprehensive tooltip system
 
 ## Environmental Effects System
-- [ ] Create dynamic lighting based on time of day with color temperature changes
+- [x] Create dynamic lighting based on time of day with color temperature changes
 - [ ] Implement weather system affecting visuals (rain, snow, fog, sandstorm)
 - [ ] Add location-specific atmosphere effects with ambient sounds and visual filters
 - [ ] Implement seasonal visual changes with appropriate color schemes
@@ -99,12 +99,12 @@ Comprehensive feature roadmap for the trading game to reach 100% completion.
 - [x] Add animation speed controls with real-time adjustment
 - [x] Create accessibility options for photosensitive players (reduced motion, flash warnings)
 - [x] Add color blind mode support and font size controls
-- [ ] Add controller support and haptics mapping
+- [x] Add controller support and haptics mapping
 
 ## Integration & Performance
-- [ ] Create seamless integration system that connects all new systems with existing game code
-- [ ] Implement performance optimization system that monitors FPS, memory usage, and effect counts
-- [ ] Add adaptive quality adjustment based on device capabilities
+- [x] Create seamless integration system that connects all new systems with existing game code
+- [x] Implement performance optimization system that monitors FPS, memory usage, and effect counts
+- [x] Add adaptive quality adjustment based on device capabilities
 - [ ] Create performance monitoring display and optimization controls
 - [ ] Ship cinematic set-pieces (travel departures, market reveals, boss events)
 - [ ] Add narrative questlines with branching outcomes and voiced narration stubs
@@ -118,6 +118,12 @@ Comprehensive feature roadmap for the trading game to reach 100% completion.
 - [ ] Ensure cross-browser compatibility with fallbacks for older browsers
 - [ ] Deliver an immersive, engaging experience that enhances gameplay without being distracting, with full control over all audio and visual aspects
 - [ ] Optimize all effects for performance and include options to disable them for players who prefer minimal visuals/sounds
+
+## AAA Narrative & Cinematic Polish
+- [ ] Add character-driven quest arcs with voiced narration and branching consequences
+- [ ] Script cinematic camera sweeps for major milestones (departures, arrivals, boss introductions)
+- [ ] Introduce prestige collectibles and legendary gear with bespoke lore entries
+- [ ] Layer dynamic soundtrack stems that react to travel danger, market volatility, and combat stakes
 
 ## Testing & QA
 - [ ] Analyze project structure and understand game architecture
