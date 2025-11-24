@@ -990,6 +990,53 @@
                     <p class="setting-hint">Changes apply instantly and save to your browser.</p>
                 </section>
                 <section class="settings-section">
+                    <h3>Audio & Atmosphere</h3>
+                    <div class="setting-control slider-control">
+                        <div class="setting-label">
+                            <span>Master Volume</span>
+                            <span id="master-volume-label" class="setting-value">80%</span>
+                        </div>
+                        <input type="range" id="master-volume-range" min="0" max="100" step="5" value="80">
+                    </div>
+                    <div class="setting-control slider-control">
+                        <div class="setting-label">
+                            <span>Music</span>
+                            <span id="music-volume-label" class="setting-value">60%</span>
+                        </div>
+                        <input type="range" id="music-volume-range" min="0" max="100" step="5" value="60">
+                    </div>
+                    <div class="setting-control slider-control">
+                        <div class="setting-label">
+                            <span>Sound Effects</span>
+                            <span id="sfx-volume-label" class="setting-value">75%</span>
+                        </div>
+                        <input type="range" id="sfx-volume-range" min="0" max="100" step="5" value="75">
+                    </div>
+                    <div class="setting-control slider-control">
+                        <div class="setting-label">
+                            <span>Ambient</span>
+                            <span id="ambient-volume-label" class="setting-value">50%</span>
+                        </div>
+                        <input type="range" id="ambient-volume-range" min="0" max="100" step="5" value="50">
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="mute-toggle">
+                        <span>Mute all audio</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="checkbox" id="music-mute-toggle">
+                        <span>Mute music</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="checkbox" id="sfx-mute-toggle">
+                        <span>Mute sound effects</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="checkbox" id="ambient-toggle" checked>
+                        <span>Enable ambient soundscapes</span>
+                    </label>
+                </section>
+                <section class="settings-section">
                     <h3>Controls</h3>
                     <p class="setting-hint">Click a binding, then press the new key or combo. Escape cancels.</p>
                     <div class="control-binding-grid">
@@ -1095,6 +1142,7 @@
         </div>
     </div>
 
+    <script src="audio-system.js"></script>
     <script src="property-system.js"></script>
     <script src="employee-system.js"></script>
     <script src="trade-route-system.js"></script>

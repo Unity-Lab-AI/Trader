@@ -532,9 +532,20 @@ const game = {
     items: [],
     marketPrices: {},
     gameTick: 0,
+    worldStars: [],
     settings: {
         soundVolume: 0.7,
         musicVolume: 0.5,
+        audio: {
+            master: 0.8,
+            music: 0.6,
+            sfx: 0.75,
+            ambient: 0.5,
+            muted: false,
+            musicMuted: false,
+            sfxMuted: false,
+            ambientEnabled: true
+        },
         autoSave: true,
         autoSaveInterval: 300000 // 5 minutes
     },
@@ -726,63 +737,146 @@ const game = {
     renderGameWorld() {
         const ctx = elements.ctx;
         const canvas = elements.gameCanvas;
-        
+
         if (!ctx || !canvas) return;
-        
-        // Clear canvas
-        ctx.fillStyle = '#0a0a0a';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Get time info for dynamic rendering
+
+        // Build star field once for visual depth
+        if (!this.worldStars.length) {
+            this.worldStars = Array.from({ length: 90 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height * 0.5,
+                size: Math.random() * 1.5 + 0.5,
+                alpha: Math.random() * 0.5 + 0.3
+            }));
+        }
+
         const timeInfo = TimeSystem.getTimeInfo();
-        
-        // Draw background based on time of day
-        if (timeInfo.isNight) {
-            ctx.fillStyle = '#0a0a1a';
-        } else if (timeInfo.isEvening) {
-            ctx.fillStyle = '#1a0f0a';
-        } else if (timeInfo.isMorning) {
-            ctx.fillStyle = '#f5f5dc';
-        } else {
-            ctx.fillStyle = '#87ceeb';
-        }
+        const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        sky.addColorStop(0, timeInfo.isNight ? '#050716' : '#1c3254');
+        sky.addColorStop(0.6, timeInfo.isNight ? '#0a0d1c' : '#234769');
+        sky.addColorStop(1, '#0b1422');
+
+        ctx.fillStyle = sky;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw time info
-        ctx.fillStyle = timeInfo.isNight ? '#ffffff' : '#000000';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(TimeSystem.getFormattedTime(), 10, 30);
-        
-        // Draw location info
-        if (this.currentLocation) {
-            ctx.font = '20px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(this.currentLocation.name, canvas.width / 2, 50);
-            ctx.font = '14px Arial';
-            ctx.fillText(this.currentLocation.description, canvas.width / 2, 80);
+
+        // Stars for night scenes
+        if (timeInfo.isNight || timeInfo.isEvening) {
+            this.worldStars.forEach(star => {
+                ctx.fillStyle = `rgba(255,255,255,${star.alpha})`;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
         }
-        
+
+        // Ground/horizon layer
+        const ground = ctx.createLinearGradient(0, canvas.height * 0.55, 0, canvas.height);
+        ground.addColorStop(0, '#132032');
+        ground.addColorStop(1, '#0c141f');
+        ctx.fillStyle = ground;
+        ctx.fillRect(0, canvas.height * 0.55, canvas.width, canvas.height * 0.45);
+
+        // Soft glow to represent day/night ambiance
+        ctx.fillStyle = timeInfo.isNight ? 'rgba(79, 195, 247, 0.08)' : 'rgba(255, 200, 120, 0.08)';
+        ctx.beginPath();
+        ctx.ellipse(canvas.width / 2, canvas.height * 0.55, 260, 120, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Location and connections
+        const currentLocation = GameWorld.locations[this.currentLocation?.id];
+        const connections = currentLocation?.connections || [];
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2 + 60;
+        const ringRadius = 170;
+
+        ctx.strokeStyle = 'rgba(79, 195, 247, 0.25)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const typeIcons = { city: '🏰', town: '🏘️', village: '🌾' };
+        connections.forEach((connectionId, index) => {
+            const destination = GameWorld.locations[connectionId];
+            if (!destination) return;
+
+            const angle = (index / Math.max(connections.length, 1)) * Math.PI * 2;
+            const nodeX = centerX + Math.cos(angle) * ringRadius;
+            const nodeY = centerY + Math.sin(angle) * ringRadius;
+
+            ctx.strokeStyle = 'rgba(79, 195, 247, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(nodeX, nodeY);
+            ctx.stroke();
+
+            const visited = GameWorld.visitedLocations.includes(connectionId);
+            ctx.fillStyle = visited ? '#7ee0ff' : '#4fc3f7';
+            ctx.beginPath();
+            ctx.arc(nodeX, nodeY, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.stroke();
+
+            ctx.font = '13px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#e7f0ff';
+            ctx.textAlign = 'center';
+            ctx.fillText(typeIcons[destination.type] || '📍', nodeX, nodeY - 16);
+            ctx.fillText(destination.name, nodeX, nodeY + 22);
+        });
+
+        // Current location marker
+        if (currentLocation) {
+            ctx.fillStyle = '#ffd166';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 16, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fff4c2';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.fillStyle = '#0a0f18';
+            ctx.font = '15px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(currentLocation.name, centerX, centerY - 28);
+            ctx.font = '12px "Segoe UI", sans-serif';
+            ctx.fillText(currentLocation.description, centerX, centerY - 10);
+        }
+
         // Draw active events
         const activeEvents = EventSystem.getActiveEvents();
         if (activeEvents.length > 0) {
-            ctx.font = '12px Arial';
+            ctx.font = '12px "Segoe UI", sans-serif';
             ctx.textAlign = 'right';
             ctx.fillStyle = '#ffaa00';
             let yOffset = 30;
             activeEvents.forEach(event => {
-                ctx.fillText(`📢 ${event.name}`, canvas.width - 10, yOffset);
-                yOffset += 20;
+                ctx.fillText(`📢 ${event.name}`, canvas.width - 14, yOffset);
+                yOffset += 18;
             });
         }
-        
-        // Draw player info
+
+        // Draw time info + load indicator
+        ctx.fillStyle = '#c8d6e8';
+        ctx.font = '15px "Segoe UI", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(TimeSystem.getFormattedTime(), 12, 26);
+
         if (this.player) {
+            const transport = transportationOptions[this.player.transportation];
+            const capacity = transport?.carryCapacity || 1;
+            const currentLoad = calculateCurrentLoad();
+            const loadRatio = Math.min(currentLoad / capacity, 1);
+
             ctx.fillStyle = '#4fc3f7';
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText(`💰 ${this.player.gold} gold`, 10, canvas.height - 40);
-            ctx.fillText(`🎒 ${this.player.currentLoad}/${transportationOptions[this.player.transportation].carryCapacity} lbs`, 10, canvas.height - 20);
+            ctx.fillText(`💰 ${this.player.gold} gold`, 12, canvas.height - 46);
+            ctx.fillText(`🎒 ${currentLoad}/${capacity} lbs`, 12, canvas.height - 28);
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.strokeRect(12, canvas.height - 24, 180, 10);
+            ctx.fillStyle = loadRatio > 0.8 ? '#ef5350' : '#81c784';
+            ctx.fillRect(12, canvas.height - 24, 180 * loadRatio, 10);
         }
     },
     
@@ -923,6 +1017,19 @@ const game = {
         this.marketPrices = saveData.marketPrices || {};
         this.settings = saveData.settings || this.settings;
         this.gameTick = saveData.gameTick || 0;
+
+        if (this.settings?.audio && window.AudioSystem) {
+            AudioSystem.applySettings({
+                master: this.settings.audio.master,
+                music: this.settings.audio.music,
+                sfx: this.settings.audio.sfx,
+                ambient: this.settings.audio.ambient,
+                muted: this.settings.audio.muted,
+                musicMuted: this.settings.audio.musicMuted,
+                sfxMuted: this.settings.audio.sfxMuted,
+                ambientEnabled: this.settings.audio.ambientEnabled
+            });
+        }
         
         // Restore property system
         if (saveData.properties) {
@@ -1504,7 +1611,11 @@ const GameWorld = {
         
         // Start travel
         addMessage(`🚶 Traveling to ${destination.name}... (Arrival in ${travelTime} minutes)`);
-        
+        if (window.AudioSystem) {
+            AudioSystem.playSfx('travelStart');
+            AudioSystem.setTheme('travel');
+        }
+
         // Update UI
         updatePlayerInfo();
         
@@ -1535,6 +1646,10 @@ const GameWorld = {
         StatsSystem.recordAction('travelCompleted', { locationId });
 
         addMessage(`✅ Arrived at ${destination.name}!`);
+        if (window.AudioSystem) {
+            AudioSystem.playSfx('arrival');
+            updateAudioThemeForState(GameState.PLAYING);
+        }
     },
     
     // Get location market data
@@ -2125,6 +2240,18 @@ const elements = {
     keyboardNavToggle: null,
     fontSizeRange: null,
     fontSizeLabel: null,
+    masterVolumeRange: null,
+    musicVolumeRange: null,
+    sfxVolumeRange: null,
+    ambientVolumeRange: null,
+    masterVolumeLabel: null,
+    musicVolumeLabel: null,
+    sfxVolumeLabel: null,
+    ambientVolumeLabel: null,
+    muteToggle: null,
+    musicMuteToggle: null,
+    sfxMuteToggle: null,
+    ambientToggle: null,
     statusBanner: null,
     controlsHelpOverlay: null,
     autosaveIndicator: null,
@@ -2171,6 +2298,16 @@ const defaultPreferences = {
     colorblind: false,
     keyboardNav: true,
     fontScale: 100,
+    audio: {
+        master: 80,
+        music: 60,
+        sfx: 75,
+        ambient: 50,
+        muted: false,
+        musicMuted: false,
+        sfxMuted: false,
+        ambientEnabled: true
+    },
     controlBindings: { ...defaultControlBindings }
 };
 
@@ -2499,6 +2636,18 @@ function initializeElements() {
     elements.keyboardNavToggle = document.getElementById('keyboard-nav-toggle');
     elements.fontSizeRange = document.getElementById('font-size-range');
     elements.fontSizeLabel = document.getElementById('font-size-label');
+    elements.masterVolumeRange = document.getElementById('master-volume-range');
+    elements.musicVolumeRange = document.getElementById('music-volume-range');
+    elements.sfxVolumeRange = document.getElementById('sfx-volume-range');
+    elements.ambientVolumeRange = document.getElementById('ambient-volume-range');
+    elements.masterVolumeLabel = document.getElementById('master-volume-label');
+    elements.musicVolumeLabel = document.getElementById('music-volume-label');
+    elements.sfxVolumeLabel = document.getElementById('sfx-volume-label');
+    elements.ambientVolumeLabel = document.getElementById('ambient-volume-label');
+    elements.muteToggle = document.getElementById('mute-toggle');
+    elements.musicMuteToggle = document.getElementById('music-mute-toggle');
+    elements.sfxMuteToggle = document.getElementById('sfx-mute-toggle');
+    elements.ambientToggle = document.getElementById('ambient-toggle');
     elements.statusBanner = document.getElementById('status-banner');
     elements.controlsHelpOverlay = document.getElementById('controls-help-overlay');
     elements.autosaveIndicator = document.getElementById('autosave-indicator');
@@ -2622,6 +2771,55 @@ function setupEventListeners() {
         });
     }
 
+    if (elements.masterVolumeRange) {
+        elements.masterVolumeRange.addEventListener('input', (event) => {
+            userPreferences.audio.master = parseInt(event.target.value, 10);
+            applyAudioPreferences();
+        });
+    }
+    if (elements.musicVolumeRange) {
+        elements.musicVolumeRange.addEventListener('input', (event) => {
+            userPreferences.audio.music = parseInt(event.target.value, 10);
+            applyAudioPreferences();
+        });
+    }
+    if (elements.sfxVolumeRange) {
+        elements.sfxVolumeRange.addEventListener('input', (event) => {
+            userPreferences.audio.sfx = parseInt(event.target.value, 10);
+            applyAudioPreferences();
+        });
+    }
+    if (elements.ambientVolumeRange) {
+        elements.ambientVolumeRange.addEventListener('input', (event) => {
+            userPreferences.audio.ambient = parseInt(event.target.value, 10);
+            applyAudioPreferences();
+        });
+    }
+    if (elements.muteToggle) {
+        elements.muteToggle.addEventListener('change', (event) => {
+            userPreferences.audio.muted = event.target.checked;
+            applyAudioPreferences();
+        });
+    }
+    if (elements.musicMuteToggle) {
+        elements.musicMuteToggle.addEventListener('change', (event) => {
+            userPreferences.audio.musicMuted = event.target.checked;
+            applyAudioPreferences();
+        });
+    }
+    if (elements.sfxMuteToggle) {
+        elements.sfxMuteToggle.addEventListener('change', (event) => {
+            userPreferences.audio.sfxMuted = event.target.checked;
+            applyAudioPreferences();
+        });
+    }
+    if (elements.ambientToggle) {
+        elements.ambientToggle.addEventListener('change', (event) => {
+            userPreferences.audio.ambientEnabled = event.target.checked;
+            applyAudioPreferences();
+        });
+    }
+
     setupControlBindingListeners();
     document.addEventListener('keydown', handleBindingKeydown, true);
 
@@ -2689,10 +2887,24 @@ function loadPreferencesFromStorage() {
         if (stored) {
             userPreferences = { ...defaultPreferences, ...JSON.parse(stored) };
             userPreferences.controlBindings = { ...defaultControlBindings, ...(userPreferences.controlBindings || {}) };
+            userPreferences.audio = { ...defaultPreferences.audio, ...(userPreferences.audio || {}) };
         }
     } catch (error) {
         console.warn('Unable to load preferences', error);
         userPreferences = { ...defaultPreferences };
+    }
+
+    if (window.AudioSystem) {
+        AudioSystem.init({
+            master: (userPreferences.audio?.master ?? 80) / 100,
+            music: (userPreferences.audio?.music ?? 60) / 100,
+            sfx: (userPreferences.audio?.sfx ?? 75) / 100,
+            ambient: (userPreferences.audio?.ambient ?? 50) / 100,
+            muted: userPreferences.audio?.muted,
+            musicMuted: userPreferences.audio?.musicMuted,
+            sfxMuted: userPreferences.audio?.sfxMuted,
+            ambientEnabled: userPreferences.audio?.ambientEnabled
+        });
     }
 
     applyPreferences();
@@ -2708,6 +2920,7 @@ function applyPreferences() {
     document.body.classList.toggle('colorblind-friendly', userPreferences.colorblind);
     document.body.classList.toggle('keyboard-nav-enabled', userPreferences.keyboardNav);
     document.documentElement.style.setProperty('--font-size', `${userPreferences.fontScale}%`);
+    applyAudioPreferences();
     updateFontSizeLabel();
 }
 
@@ -2741,6 +2954,7 @@ function syncSettingsUI() {
         elements.fontSizeRange.value = userPreferences.fontScale;
     }
     updateFontSizeLabel();
+    syncAudioUI();
     updateBindingInputs();
 }
 
@@ -2748,6 +2962,39 @@ function updateFontSizeLabel() {
     if (elements.fontSizeLabel) {
         elements.fontSizeLabel.textContent = `${userPreferences.fontScale}%`;
     }
+}
+
+function applyAudioPreferences() {
+    if (!window.AudioSystem) return;
+
+    const audioPrefs = userPreferences.audio;
+    AudioSystem.applySettings({
+        master: (audioPrefs.master ?? 80) / 100,
+        music: (audioPrefs.music ?? 60) / 100,
+        sfx: (audioPrefs.sfx ?? 75) / 100,
+        ambient: (audioPrefs.ambient ?? 50) / 100,
+        muted: audioPrefs.muted,
+        musicMuted: audioPrefs.musicMuted,
+        sfxMuted: audioPrefs.sfxMuted,
+        ambientEnabled: audioPrefs.ambientEnabled
+    });
+
+    syncAudioUI();
+}
+
+function syncAudioUI() {
+    if (elements.masterVolumeRange) elements.masterVolumeRange.value = userPreferences.audio.master;
+    if (elements.musicVolumeRange) elements.musicVolumeRange.value = userPreferences.audio.music;
+    if (elements.sfxVolumeRange) elements.sfxVolumeRange.value = userPreferences.audio.sfx;
+    if (elements.ambientVolumeRange) elements.ambientVolumeRange.value = userPreferences.audio.ambient;
+    if (elements.masterVolumeLabel) elements.masterVolumeLabel.textContent = `${userPreferences.audio.master}%`;
+    if (elements.musicVolumeLabel) elements.musicVolumeLabel.textContent = `${userPreferences.audio.music}%`;
+    if (elements.sfxVolumeLabel) elements.sfxVolumeLabel.textContent = `${userPreferences.audio.sfx}%`;
+    if (elements.ambientVolumeLabel) elements.ambientVolumeLabel.textContent = `${userPreferences.audio.ambient}%`;
+    if (elements.muteToggle) elements.muteToggle.checked = userPreferences.audio.muted;
+    if (elements.musicMuteToggle) elements.musicMuteToggle.checked = userPreferences.audio.musicMuted;
+    if (elements.sfxMuteToggle) elements.sfxMuteToggle.checked = userPreferences.audio.sfxMuted;
+    if (elements.ambientToggle) elements.ambientToggle.checked = userPreferences.audio.ambientEnabled;
 }
 
 function updateBindingInputs() {
@@ -2929,8 +3176,51 @@ function changeState(newState) {
             showPanel('transportation-panel');
             break;
     }
-    
+
+    updateAudioThemeForState(newState);
     console.log(`Game state changed from ${oldState} to ${newState}`);
+}
+
+function updateAudioThemeForState(state) {
+    if (!window.AudioSystem || !AudioSystem.initialized) return;
+
+    const timeInfo = typeof TimeSystem !== 'undefined' ? TimeSystem.getTimeInfo() : {};
+
+    switch (state) {
+        case GameState.MENU:
+            AudioSystem.setTheme('menu');
+            break;
+        case GameState.MARKET:
+            AudioSystem.setTheme('market');
+            break;
+        case GameState.TRAVEL:
+            AudioSystem.setTheme('travel');
+            break;
+        default:
+            if (timeInfo.isNight) {
+                AudioSystem.setTheme('night');
+            } else {
+                AudioSystem.setTheme('explore');
+            }
+            break;
+    }
+}
+
+function playAmbientForLocation(locationId) {
+    if (!window.AudioSystem || !AudioSystem.initialized) return;
+    const location = GameWorld.locations?.[locationId];
+    if (!location) return;
+
+    const ambientMap = {
+        city: 'city',
+        town: 'town',
+        village: 'forest',
+        mine: 'mine',
+        tavern: 'tavern'
+    };
+
+    const ambientType = ambientMap[location.type] || 'town';
+    AudioSystem.playAmbient(ambientType);
 }
 
 // Screen Management
@@ -3463,6 +3753,7 @@ function updateLocationInfo() {
     if (game.currentLocation) {
         document.getElementById('location-name').textContent = game.currentLocation.name;
         document.getElementById('location-description').textContent = game.currentLocation.description;
+        playAmbientForLocation(game.currentLocation.id);
     }
 
     updateNavigationPanel();
@@ -4563,10 +4854,13 @@ function buyItem(itemId, quantity = 1) {
     
     // Small reputation gain for trading
     CityReputationSystem.changeReputation(currentLocation.id, 0.1 * actualQuantity);
-    
+
     addMessage(`Bought ${actualQuantity} × ${item.name} for ${totalPrice} gold!`);
 
     ParticleSystem.spawnBurst('gold', { origin: elements.playerGold });
+    if (window.AudioSystem) {
+        AudioSystem.playSfx('purchase');
+    }
     
     updatePlayerInfo();
     if (typeof InventorySystem !== 'undefined') {
@@ -4645,10 +4939,13 @@ function sellItem(itemId, quantity = 1) {
     
     // Small reputation gain for trading
     CityReputationSystem.changeReputation(currentLocation.id, 0.1 * actualQuantity);
-    
+
     addMessage(`Sold ${actualQuantity} × ${item.name} for ${totalSellPrice} gold!`);
 
     ParticleSystem.spawnBurst('success', { origin: elements.playerGold });
+    if (window.AudioSystem) {
+        AudioSystem.playSfx('sell');
+    }
     
     updatePlayerInfo();
     if (typeof InventorySystem !== 'undefined') {
@@ -4687,6 +4984,10 @@ function addMessage(text, type = 'info') {
 
     if (NotificationCenter) {
         NotificationCenter.show(text, type === 'error' ? 'error' : (type === 'success' ? 'success' : 'info'));
+    }
+
+    if (window.AudioSystem && type === 'success') {
+        AudioSystem.playSfx('notification');
     }
 
     announceToScreenReaders(text);
