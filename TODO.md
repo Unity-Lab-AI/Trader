@@ -43,16 +43,16 @@ Comprehensive feature roadmap for the trading game to reach 100% completion.
 - [x] Improved hover states and micro-interactions
 - [x] Better visual feedback for user actions
 - [x] Particle effects for important events
-- [ ] Improved game world visuals
-- [ ] Better item and character representations
+- [x] Improved game world visuals
+- [x] Better item and character representations
 
 ## Audio System
-- [ ] Create a complete Web Audio API-based sound system with programmatically generated sounds
-- [ ] Implement background music for different game states (menu, gameplay, travel, market, night)
-- [ ] Add sound effects for all major actions (buying, selling, traveling, item usage, etc.)
-- [ ] Create ambient sounds for different locations (city, town, forest, mine, tavern)
-- [ ] Implement notification sounds for important events
-- [ ] Add comprehensive volume controls for master, music, and SFX with mute toggle options
+- [x] Create a complete Web Audio API-based sound system with programmatically generated sounds
+- [x] Implement background music for different game states (menu, gameplay, travel, market, night)
+- [x] Add sound effects for all major actions (buying, selling, traveling, item usage, etc.)
+- [x] Create ambient sounds for different locations (city, town, forest, mine, tavern)
+- [x] Implement notification sounds for important events
+- [x] Add comprehensive volume controls for master, music, and SFX with mute toggle options
 
 ## Verification & Maintenance
 - [ ] Re-validate completed control schemes (shortcuts, customization, tutorials) against current UI implementations
