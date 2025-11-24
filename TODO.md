@@ -3,10 +3,10 @@
 Comprehensive feature roadmap for the trading game to reach 100% completion.
 
 ## Game Controls Enhancement
-- [x] Keyboard shortcuts and context-sensitive controls
+- [ ] Keyboard shortcuts and context-sensitive controls
 - [ ] Control configuration/customization options
 - [ ] Tutorial/help system for controls
-- [x] Quick action buttons for frequently used features
+- [ ] Quick action buttons for frequently used features
 
 ## UI Improvements
 - [ ] Responsive design improvements for different screen sizes
