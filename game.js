@@ -2078,7 +2078,18 @@ const elements = {
     closeTransportationBtn: null,
     menuBtn: null,
     inventoryBtn: null,
+    loadBtn: null,
     saveBtn: null,
+    quickSaveBtn: null,
+    quickLoadBtn: null,
+    controlsHelpBtn: null,
+    closeControlsHelpBtn: null,
+    statusBanner: null,
+    controlsHelpOverlay: null,
+    autosaveIndicator: null,
+    lastSaveTime: null,
+    loadingMessage: null,
+    loadingProgressFill: null,
     
     // Forms
     characterForm: null,
@@ -2093,6 +2104,10 @@ const elements = {
     previewName: null,
     characterAvatar: null
 };
+
+const AUTO_SAVE_INTERVAL = 180000; // 3 minutes
+let autoSaveTimerId = null;
+let loadingProgressTimer = null;
 
 // Initialize the game when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -2147,7 +2162,18 @@ function initializeElements() {
     elements.closeTransportationBtn = document.getElementById('close-transportation-btn');
     elements.menuBtn = document.getElementById('menu-btn');
     elements.inventoryBtn = document.getElementById('inventory-btn');
+    elements.loadBtn = document.getElementById('load-btn');
     elements.saveBtn = document.getElementById('save-btn');
+    elements.quickSaveBtn = document.getElementById('quick-save-btn');
+    elements.quickLoadBtn = document.getElementById('quick-load-btn');
+    elements.controlsHelpBtn = document.getElementById('controls-help-btn');
+    elements.closeControlsHelpBtn = document.getElementById('close-controls-help');
+    elements.statusBanner = document.getElementById('status-banner');
+    elements.controlsHelpOverlay = document.getElementById('controls-help-overlay');
+    elements.autosaveIndicator = document.getElementById('autosave-indicator');
+    elements.lastSaveTime = document.getElementById('last-save-time');
+    elements.loadingMessage = document.getElementById('loading-message');
+    elements.loadingProgressFill = document.getElementById('loading-progress-fill');
     
     // Forms
     elements.characterForm = document.getElementById('character-form');
@@ -2186,7 +2212,20 @@ function setupEventListeners() {
     elements.closeTransportationBtn.addEventListener('click', closeTransportation);
     elements.menuBtn.addEventListener('click', toggleMenu);
     elements.inventoryBtn.addEventListener('click', openInventory);
+    elements.loadBtn.addEventListener('click', () => loadGame());
     elements.saveBtn.addEventListener('click', saveGame);
+    elements.quickSaveBtn.addEventListener('click', saveGame);
+    elements.quickLoadBtn.addEventListener('click', () => loadGame());
+    elements.controlsHelpBtn.addEventListener('click', toggleControlsHelp);
+    elements.closeControlsHelpBtn.addEventListener('click', toggleControlsHelp);
+
+    if (elements.controlsHelpOverlay) {
+        elements.controlsHelpOverlay.addEventListener('click', (event) => {
+            if (event.target === elements.controlsHelpOverlay) {
+                toggleControlsHelp();
+            }
+        });
+    }
     
     // Property & Employee Management
     const propertyEmployeeBtn = document.getElementById('property-employee-btn');
@@ -2225,7 +2264,11 @@ function setupEventListeners() {
 function changeState(newState) {
     const oldState = game.state;
     game.state = newState;
-    
+
+    if (newState !== GameState.PLAYING) {
+        stopAutoSaveTimer();
+    }
+
     // Handle state transitions
     switch (newState) {
         case GameState.MENU:
@@ -2244,6 +2287,7 @@ function changeState(newState) {
             hideAllPanels();
             showPanel('location-panel');
             startGameLoop();
+            startAutoSaveTimer();
             break;
         case GameState.PAUSED:
             // Pause game logic
@@ -2324,8 +2368,15 @@ function switchTab(tabName) {
 
 // Game Functions
 function startNewGame() {
-    changeState(GameState.CHARACTER_CREATION);
-    addMessage('Starting a new game...');
+    const stopProgress = startLoadingProgress('Preparing new adventure...', 25);
+
+    setTimeout(() => {
+        changeState(GameState.CHARACTER_CREATION);
+        addMessage('Starting a new game...');
+        if (stopProgress) {
+            stopProgress('Ready');
+        }
+    }, 450);
 }
 
 // Character Creation State
@@ -3971,7 +4022,170 @@ function addMessage(text, type = 'info') {
     }
 }
 
+function handleError(context, error, { silent = false } = {}) {
+    console.error(`${context} failed:`, error);
+    const friendly = 'Something went wrong. Please try again or check your connection.';
+    addMessage(friendly);
+    if (!silent) {
+        showStatusBanner(`${context} failed`, 'error');
+    }
+}
+
+function updateLastSaveTime(timestamp = new Date()) {
+    if (!elements.lastSaveTime) return;
+
+    const formatted = typeof timestamp === 'string'
+        ? timestamp
+        : timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    elements.lastSaveTime.textContent = `Last save: ${formatted}`;
+}
+
+function showAutoSaveIndicator(message, state = 'info', duration = 1800) {
+    if (!elements.autosaveIndicator) return;
+
+    const textElement = elements.autosaveIndicator.querySelector('.autosave-text');
+    if (textElement) {
+        textElement.textContent = message;
+    }
+
+    elements.autosaveIndicator.classList.remove('hidden', 'error', 'success');
+    if (state !== 'info') {
+        elements.autosaveIndicator.classList.add(state);
+    }
+
+    clearTimeout(elements.autosaveHideTimeout);
+    elements.autosaveHideTimeout = setTimeout(() => {
+        elements.autosaveIndicator.classList.add('hidden');
+    }, duration);
+}
+
+function startAutoSaveTimer() {
+    stopAutoSaveTimer();
+
+    if (!elements.autosaveIndicator) return;
+
+    autoSaveTimerId = setInterval(() => {
+        showAutoSaveIndicator('Auto-saving...');
+        saveGame({ silent: true, isAutoSave: true });
+    }, AUTO_SAVE_INTERVAL);
+}
+
+function stopAutoSaveTimer() {
+    if (autoSaveTimerId) {
+        clearInterval(autoSaveTimerId);
+        autoSaveTimerId = null;
+    }
+}
+
+function startLoadingProgress(message = 'Loading...', startingProgress = 10) {
+    if (!elements.loadingScreen) return null;
+
+    elements.loadingScreen.classList.remove('hidden');
+    if (elements.loadingMessage) {
+        elements.loadingMessage.textContent = message;
+    }
+    if (elements.loadingProgressFill) {
+        elements.loadingProgressFill.style.width = `${startingProgress}%`;
+    }
+
+    let progress = startingProgress;
+    loadingProgressTimer = setInterval(() => {
+        progress = Math.min(95, progress + Math.random() * 15);
+        if (elements.loadingProgressFill) {
+            elements.loadingProgressFill.style.width = `${progress}%`;
+        }
+    }, 200);
+
+    return stopLoadingProgress;
+}
+
+function stopLoadingProgress(finalMessage) {
+    if (loadingProgressTimer) {
+        clearInterval(loadingProgressTimer);
+        loadingProgressTimer = null;
+    }
+
+    if (elements.loadingMessage && finalMessage) {
+        elements.loadingMessage.textContent = finalMessage;
+    }
+
+    if (elements.loadingProgressFill) {
+        elements.loadingProgressFill.style.width = '100%';
+    }
+
+    setTimeout(() => {
+        if (elements.loadingScreen) {
+            elements.loadingScreen.classList.add('hidden');
+        }
+        if (elements.loadingProgressFill) {
+            elements.loadingProgressFill.style.width = '0%';
+        }
+    }, 350);
+}
+
+let statusBannerTimeout;
+
+function showStatusBanner(message, type = 'success') {
+    if (!elements.statusBanner) return;
+
+    elements.statusBanner.textContent = message;
+    elements.statusBanner.classList.remove('hidden', 'warning', 'error');
+    if (type !== 'success') {
+        elements.statusBanner.classList.add(type);
+    }
+
+    clearTimeout(statusBannerTimeout);
+    statusBannerTimeout = setTimeout(() => {
+        elements.statusBanner.classList.add('hidden');
+    }, 2500);
+}
+
+function toggleControlsHelp() {
+    if (!elements.controlsHelpOverlay) return;
+
+    const isHidden = elements.controlsHelpOverlay.classList.contains('hidden');
+    elements.controlsHelpOverlay.classList.toggle('hidden');
+
+    if (isHidden && elements.closeControlsHelpBtn) {
+        elements.closeControlsHelpBtn.focus();
+    }
+}
+
 function handleKeyPress(event) {
+    if (event.ctrlKey && !event.shiftKey && !event.altKey) {
+        if (event.key.toLowerCase() === 's') {
+            event.preventDefault();
+            saveGame();
+            return;
+        }
+
+        if (event.key.toLowerCase() === 'l') {
+            event.preventDefault();
+            loadGame();
+            return;
+        }
+    }
+
+    if (event.shiftKey && (event.key === '?' || event.key === '/')) {
+        event.preventDefault();
+        toggleControlsHelp();
+        return;
+    }
+
+    if (game.state === GameState.MARKET && ['1','2','3','4','5','6','7'].includes(event.key)) {
+        const marketTabs = ['buy', 'sell', 'compare', 'history', 'routes', 'alerts', 'news'];
+        const index = parseInt(event.key, 10) - 1;
+        if (marketTabs[index]) {
+            switchTab(marketTabs[index]);
+            return;
+        }
+    }
+
+    if (elements.controlsHelpOverlay && !elements.controlsHelpOverlay.classList.contains('hidden') && event.key === 'Escape') {
+        toggleControlsHelp();
+        return;
+    }
+
     // Keyboard shortcuts
     switch (event.key) {
         case 'Escape':
@@ -4014,18 +4228,46 @@ function toggleMenu() {
 }
 
 // Save/Load Functions
-function saveGame() {
+function saveGame(options = {}) {
+    const { silent = false, isAutoSave = false } = options;
+
     try {
         const saveData = game.saveState();
         localStorage.setItem('tradingGameSave', JSON.stringify(saveData));
-        addMessage('Game saved successfully!');
+
+        const now = new Date();
+        updateLastSaveTime(now);
+
+        if (!isAutoSave) {
+            addMessage('Game saved successfully!');
+        }
+
+        if (!silent) {
+            showStatusBanner('Game saved', 'success');
+        }
+
+        showAutoSaveIndicator(isAutoSave ? 'Auto-saved' : 'Saved', 'success');
     } catch (error) {
-        console.error('Save failed:', error);
-        addMessage('Failed to save game!');
+        handleError('Save', error, { silent });
+        if (isAutoSave) {
+            showAutoSaveIndicator('Auto-save failed', 'error', 2500);
+        }
     }
 }
 
-function loadGame() {
+function loadGame(options = {}) {
+    const { skipConfirm = false, showLoader = true } = options;
+
+    if (!skipConfirm && game && game.state && game.state !== GameState.MENU) {
+        const confirmLoad = window.confirm('Load saved game? Unsaved progress will be lost.');
+        if (!confirmLoad) {
+            showStatusBanner('Load cancelled', 'warning');
+            return;
+        }
+    }
+
+    const stopProgress = showLoader ? startLoadingProgress('Loading saved game...') : null;
+
     try {
         const saveData = localStorage.getItem('tradingGameSave');
         if (saveData) {
@@ -4034,12 +4276,21 @@ function loadGame() {
             updatePlayerInfo();
             updateLocationInfo();
             addMessage('Game loaded successfully!');
+            showStatusBanner('Game loaded', 'success');
+            updateLastSaveTime('just now');
+            if (game.state === GameState.PLAYING) {
+                startAutoSaveTimer();
+            }
         } else {
             addMessage('No saved game found!');
+            showStatusBanner('No save found', 'warning');
         }
     } catch (error) {
-        console.error('Load failed:', error);
-        addMessage('Failed to load game!');
+        handleError('Load', error);
+    } finally {
+        if (stopProgress) {
+            stopProgress('Loaded');
+        }
     }
 }
 
