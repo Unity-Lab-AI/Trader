@@ -2078,6 +2078,7 @@ const elements = {
     closeTransportationBtn: null,
     menuBtn: null,
     inventoryBtn: null,
+    loadBtn: null,
     saveBtn: null,
     quickSaveBtn: null,
     quickLoadBtn: null,
@@ -2153,6 +2154,7 @@ function initializeElements() {
     elements.closeTransportationBtn = document.getElementById('close-transportation-btn');
     elements.menuBtn = document.getElementById('menu-btn');
     elements.inventoryBtn = document.getElementById('inventory-btn');
+    elements.loadBtn = document.getElementById('load-btn');
     elements.saveBtn = document.getElementById('save-btn');
     elements.quickSaveBtn = document.getElementById('quick-save-btn');
     elements.quickLoadBtn = document.getElementById('quick-load-btn');
@@ -2198,6 +2200,7 @@ function setupEventListeners() {
     elements.closeTransportationBtn.addEventListener('click', closeTransportation);
     elements.menuBtn.addEventListener('click', toggleMenu);
     elements.inventoryBtn.addEventListener('click', openInventory);
+    elements.loadBtn.addEventListener('click', () => loadGame());
     elements.saveBtn.addEventListener('click', saveGame);
     elements.quickSaveBtn.addEventListener('click', saveGame);
     elements.quickLoadBtn.addEventListener('click', () => loadGame());
