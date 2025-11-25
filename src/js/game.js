@@ -1,0 +1,8848 @@
+// ═══════════════════════════════════════════════════════════════
+// 🖤 MEDIEVAL TRADING GAME - where capitalism meets darkness 🖤
+// ═══════════════════════════════════════════════════════════════
+// listen, this whole file is basically my 3am coding aesthetic
+// if you're reading this during normal human hours, i'm judging you
+
+// ═══════════════════════════════════════════════════════════════
+// 🐛 ON-SCREEN DEBUG CONSOLE - Capture all console logs
+// ═══════════════════════════════════════════════════════════════
+(function() {
+    // Get the content div for adding entries
+    const debugConsoleContent = () => document.getElementById('debug-console-content');
+    // Get the scrollable container (parent) for auto-scroll
+    const debugConsoleContainer = () => document.getElementById('debug-console');
+
+    const addToDebugConsole = (type, args) => {
+        const contentEl = debugConsoleContent();
+        const containerEl = debugConsoleContainer();
+        if (!contentEl) return;
+
+        const timestamp = new Date().toLocaleTimeString();
+        const colors = { log: '#0f0', warn: '#ff0', error: '#f00', info: '#0ff' };
+        const color = colors[type] || '#0f0';
+        const message = Array.from(args).map(arg =>
+            typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+        ).join(' ');
+
+        const entry = document.createElement('div');
+        entry.style.color = color;
+        entry.style.marginBottom = '3px';
+        entry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+        contentEl.appendChild(entry);
+
+        // Auto-scroll the CONTENT div to show latest entry
+        // The content div (debug-console-content) has overflow-y: auto
+        if (contentEl) {
+            contentEl.scrollTop = contentEl.scrollHeight;
+        }
+
+        // Keep up to 10000 log entries (effectively unlimited for this session)
+        while (contentEl.children.length > 10000) {
+            contentEl.removeChild(contentEl.firstChild);
+        }
+    };
+
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const originalError = console.error;
+
+    console.log = function(...args) { originalLog.apply(console, args); addToDebugConsole('log', args); };
+    console.warn = function(...args) { originalWarn.apply(console, args); addToDebugConsole('warn', args); };
+    console.error = function(...args) { originalError.apply(console, args); addToDebugConsole('error', args); };
+
+    // Log that debug console is ready
+    setTimeout(() => {
+        console.log('🐛 DEBUG CONSOLE INITIALIZED');
+        console.log('🐛 Click anywhere on the page to test...');
+    }, 100);
+
+    // CATCH ALL CLICKS ON THE ENTIRE DOCUMENT
+    document.addEventListener('click', function(e) {
+        console.log('🖱️ GLOBAL CLICK:', e.target.tagName, e.target.className, e.target.id);
+
+        // Check if it's a difficulty-related element
+        const diffOption = e.target.closest('.difficulty-option');
+        if (diffOption) {
+            const difficulty = diffOption.dataset.difficulty;
+            console.log('🎯 CLICKED DIFFICULTY OPTION:', difficulty);
+
+            // DIRECTLY check the radio button
+            const radio = document.getElementById(`difficulty-${difficulty}`);
+            if (radio) {
+                radio.checked = true;
+                console.log('✓ Radio checked:', difficulty);
+            }
+
+            // DIRECTLY call onDifficultyChange (if it exists)
+            setTimeout(() => {
+                if (typeof window.onDifficultyChange === 'function') {
+                    console.log('⚡ Calling onDifficultyChange directly...');
+                    window.onDifficultyChange();
+                } else {
+                    console.error('❌ onDifficultyChange function not found!');
+                }
+            }, 10);
+        }
+
+        // Check if it's an attribute button
+        const attrBtn = e.target.closest('.attr-btn');
+        if (attrBtn) {
+            const attrName = attrBtn.dataset.attr;
+            const isIncrease = attrBtn.classList.contains('attr-up');
+            console.log('🎯 CLICKED ATTRIBUTE BUTTON:', attrName, isIncrease ? 'UP' : 'DOWN');
+            // Let the inline onclick handler do its job - DON'T call it again here
+        }
+
+        // Check if it's the randomize button
+        const randomizeBtn = e.target.id === 'randomize-character-btn' ? e.target : e.target.closest('#randomize-character-btn');
+        if (randomizeBtn) {
+            console.log('🎲🎲🎲 RANDOMIZE BUTTON CLICKED! 🎲🎲🎲');
+            console.log('Button element:', randomizeBtn);
+            console.log('Button ID:', randomizeBtn.id);
+            e.preventDefault();
+            e.stopPropagation();
+
+            setTimeout(() => {
+                console.log('⏰ Timeout fired, checking for randomizeCharacter...');
+                console.log('Type of window.randomizeCharacter:', typeof window.randomizeCharacter);
+                if (typeof window.randomizeCharacter === 'function') {
+                    console.log('⚡⚡⚡ CALLING RANDOMIZE CHARACTER! ⚡⚡⚡');
+                    try {
+                        window.randomizeCharacter();
+                        console.log('✅ randomizeCharacter completed!');
+                    } catch (error) {
+                        console.error('❌ Error in randomizeCharacter:', error);
+                        console.error('Error message:', error.message);
+                        console.error('Error stack:', error.stack);
+                        console.error('Error name:', error.name);
+                    }
+                } else {
+                    console.error('❌ randomizeCharacter function not found!');
+                    console.error('window.randomizeCharacter is:', window.randomizeCharacter);
+                }
+            }, 10);
+        }
+
+        // Check if it's the start game button
+        const startGameBtn = e.target.id === 'start-game-btn' ? e.target : e.target.closest('#start-game-btn');
+        if (startGameBtn) {
+            console.log('🎮🎮🎮 START GAME BUTTON CLICKED! 🎮🎮🎮');
+            console.log('Button element:', startGameBtn);
+            console.log('Button ID:', startGameBtn.id);
+            console.log('Button disabled:', startGameBtn.disabled);
+
+            if (startGameBtn.disabled) {
+                console.warn('⚠️ Start Game button is DISABLED - not starting game');
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            setTimeout(() => {
+                console.log('⏰ Timeout fired, checking for createCharacter...');
+                console.log('Type of window.createCharacter:', typeof window.createCharacter);
+                if (typeof window.createCharacter === 'function') {
+                    console.log('⚡⚡⚡ CALLING CREATE CHARACTER! ⚡⚡⚡');
+                    try {
+                        window.createCharacter(e);
+                        console.log('✅ createCharacter completed!');
+                    } catch (error) {
+                        console.error('❌ Error in createCharacter:', error);
+                        console.error('Error message:', error.message);
+                        console.error('Error stack:', error.stack);
+                        console.error('Error name:', error.name);
+                    }
+                } else {
+                    console.error('❌ createCharacter function not found!');
+                    console.error('window.createCharacter is:', window.createCharacter);
+                }
+            }, 10);
+        }
+    }, true);
+
+    // CATCH ALL INPUT EVENTS for character name
+    document.addEventListener('input', function(e) {
+        if (e.target.id === 'character-name-input') {
+            const name = e.target.value.trim() || 'Player';
+            const playerNameElement = document.getElementById('player-name');
+            if (playerNameElement) {
+                playerNameElement.textContent = name;
+                playerNameElement.innerText = name;
+                console.log('🏷️ [GLOBAL INPUT] Player name updated to:', name);
+            }
+        }
+    }, true);
+
+    // CATCH BLUR EVENTS for character name
+    document.addEventListener('blur', function(e) {
+        if (e.target.id === 'character-name-input') {
+            const name = e.target.value.trim() || 'Player';
+            const playerNameElement = document.getElementById('player-name');
+            if (playerNameElement) {
+                playerNameElement.textContent = name;
+                playerNameElement.innerText = name;
+                console.log('🏷️ [GLOBAL BLUR] Player name updated to:', name);
+            }
+        }
+    }, true);
+})();
+
+// ═══════════════════════════════════════════════════════════════
+// ⌨️ KEYBOARD BINDINGS SYSTEM - because clicking is for casuals
+// ═══════════════════════════════════════════════════════════════
+const KeyBindings = {
+    // Default key bindings - the sacred scripture of shortcuts
+    defaults: {
+        pause: ' ',           // Space bar - freeze time like my emotions
+        inventory: 'i',       // I for inventory - duh
+        character: 'c',       // C for character sheet
+        financial: 'f',       // F for financial/money stuff
+        market: 'm',          // M for market
+        travel: 't',          // T for travel
+        map: 'w',             // W opens world map overlay
+        escape: 'Escape',     // Escape closes things
+        quickSave: 'F5',      // Quick save
+        quickLoad: 'F9',      // Quick load
+        mapUp: 'w',           // WASD for map panning
+        mapDown: 's',
+        mapLeft: 'a',
+        mapRight: 'd',
+        zoomIn: '=',          // + for zoom in
+        zoomOut: '-',         // - for zoom out
+        properties: 'p',      // P for properties
+        achievements: 'h',    // H for... honors? achievements
+        settings: ',',        // Comma for settings (like many games)
+    },
+
+    // Current bindings (loaded from localStorage or defaults)
+    current: {},
+
+    // Action descriptions for the settings UI
+    descriptions: {
+        pause: 'Pause/Resume Time',
+        inventory: 'Open Inventory',
+        character: 'Open Character Sheet',
+        financial: 'Open Financial Sheet',
+        market: 'Open Market',
+        travel: 'Open Travel Panel',
+        map: 'Open World Map',
+        escape: 'Close/Exit',
+        quickSave: 'Quick Save',
+        quickLoad: 'Quick Load',
+        mapUp: 'Pan Map Up',
+        mapDown: 'Pan Map Down',
+        mapLeft: 'Pan Map Left',
+        mapRight: 'Pan Map Right',
+        zoomIn: 'Zoom In',
+        zoomOut: 'Zoom Out',
+        properties: 'Open Properties',
+        achievements: 'Open Achievements',
+        settings: 'Open Settings',
+    },
+
+    // Is the user currently rebinding a key?
+    isRebinding: false,
+    rebindingAction: null,
+
+    // Initialize - wake up from the keyboard slumber
+    init() {
+        this.loadBindings();
+        this.setupGlobalKeyListener();
+        console.log('⌨️ Keyboard bindings initialized - your fingers are ready');
+    },
+
+    // Load bindings from localStorage or use defaults
+    loadBindings() {
+        try {
+            const saved = localStorage.getItem('tradingGame_keyBindings');
+            if (saved) {
+                this.current = { ...this.defaults, ...JSON.parse(saved) };
+                console.log('⌨️ Loaded custom key bindings from the void');
+            } else {
+                this.current = { ...this.defaults };
+                console.log('⌨️ Using default key bindings');
+            }
+        } catch (e) {
+            this.current = { ...this.defaults };
+            console.warn('⌨️ Failed to load key bindings, using defaults');
+        }
+    },
+
+    // Save bindings to localStorage
+    saveBindings() {
+        try {
+            localStorage.setItem('tradingGame_keyBindings', JSON.stringify(this.current));
+            console.log('⌨️ Key bindings saved to the eternal void');
+        } catch (e) {
+            console.error('⌨️ Failed to save key bindings:', e);
+        }
+    },
+
+    // Reset to defaults
+    resetToDefaults() {
+        this.current = { ...this.defaults };
+        this.saveBindings();
+        console.log('⌨️ Key bindings reset to defaults');
+        addMessage('🔄 Key bindings reset to defaults');
+    },
+
+    // Get the key for an action
+    getKey(action) {
+        return this.current[action] || this.defaults[action];
+    },
+
+    // Set a new key for an action
+    setKey(action, key, skipMessage = false) {
+        this.current[action] = key;
+        this.saveBindings();
+        if (!skipMessage) {
+            addMessage(`⌨️ "${this.descriptions[action]}" bound to ${this.formatKey(key)}`);
+        }
+        return true;
+    },
+
+    // Format key for display
+    formatKey(key) {
+        const specialKeys = {
+            ' ': 'Space',
+            'Escape': 'Esc',
+            'ArrowUp': '↑',
+            'ArrowDown': '↓',
+            'ArrowLeft': '←',
+            'ArrowRight': '→',
+            'Control': 'Ctrl',
+            'Shift': 'Shift',
+            'Alt': 'Alt',
+        };
+        return specialKeys[key] || key.toUpperCase();
+    },
+
+    // Check if a key matches an action
+    matches(event, action) {
+        const key = this.getKey(action);
+        if (!key) return false;
+
+        // Handle special keys
+        if (key === 'F5' || key === 'F9') {
+            return event.key === key;
+        }
+
+        // Case-insensitive comparison for letters
+        return event.key.toLowerCase() === key.toLowerCase() || event.key === key;
+    },
+
+    // Setup the global key listener - the all-seeing keyboard eye
+    setupGlobalKeyListener() {
+        document.addEventListener('keydown', (event) => {
+            // Don't intercept if typing in an input field
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            // Handle rebinding mode
+            if (this.isRebinding) {
+                event.preventDefault();
+                this.completeRebind(event.key);
+                return;
+            }
+
+            // Process key bindings based on game state
+            this.processKeyPress(event);
+        });
+    },
+
+    // Process a key press - the moment of truth
+    processKeyPress(event) {
+        // Escape always works - the universal exit
+        if (this.matches(event, 'escape')) {
+            event.preventDefault();
+            this.handleEscape();
+            return;
+        }
+
+        // Space for pause/resume - works in playing state
+        if (this.matches(event, 'pause')) {
+            if (game.state === GameState.PLAYING) {
+                event.preventDefault();
+                this.handlePause();
+                return;
+            }
+        }
+
+        // Only process other keys in PLAYING state
+        if (game.state !== GameState.PLAYING) return;
+
+        // WASD for map panning (when map is focused)
+        if (this.matches(event, 'mapUp') || this.matches(event, 'mapDown') ||
+            this.matches(event, 'mapLeft') || this.matches(event, 'mapRight')) {
+            this.handleMapPan(event);
+            return;
+        }
+
+        // Zoom controls
+        if (this.matches(event, 'zoomIn')) {
+            event.preventDefault();
+            if (typeof GameWorldRenderer !== 'undefined') GameWorldRenderer.zoomIn();
+            return;
+        }
+        if (this.matches(event, 'zoomOut')) {
+            event.preventDefault();
+            if (typeof GameWorldRenderer !== 'undefined') GameWorldRenderer.zoomOut();
+            return;
+        }
+
+        // Panel shortcuts
+        if (this.matches(event, 'inventory')) {
+            event.preventDefault();
+            openInventory();
+            addMessage('📦 Inventory opened [I]');
+            return;
+        }
+        if (this.matches(event, 'character')) {
+            event.preventDefault();
+            this.openCharacterSheet();
+            return;
+        }
+        if (this.matches(event, 'financial')) {
+            event.preventDefault();
+            this.openFinancialSheet();
+            return;
+        }
+        if (this.matches(event, 'market')) {
+            event.preventDefault();
+            openMarket();
+            addMessage('🏪 Market opened [M]');
+            return;
+        }
+        if (this.matches(event, 'travel')) {
+            event.preventDefault();
+            openTravel();
+            addMessage('🗺️ Travel panel opened [T]');
+            return;
+        }
+        if (this.matches(event, 'map')) {
+            event.preventDefault();
+            game.showOverlay('world-map-overlay');
+            addMessage('🌍 World map opened [W]');
+            return;
+        }
+        if (this.matches(event, 'properties')) {
+            event.preventDefault();
+            game.showOverlay('property-employee-panel');
+            addMessage('🏠 Properties opened [P]');
+            return;
+        }
+        if (this.matches(event, 'achievements')) {
+            event.preventDefault();
+            if (typeof openAchievementPanel === 'function') openAchievementPanel();
+            addMessage('🏆 Achievements opened [H]');
+            return;
+        }
+        if (this.matches(event, 'settings')) {
+            event.preventDefault();
+            if (typeof SettingsPanel !== 'undefined' && SettingsPanel.show) SettingsPanel.show();
+            addMessage('⚙️ Settings opened [,]');
+            return;
+        }
+
+        // Quick save/load
+        if (this.matches(event, 'quickSave')) {
+            event.preventDefault();
+            if (typeof SaveLoadSystem !== 'undefined') {
+                SaveLoadSystem.quickSave();
+                addMessage('💾 Quick saved! [F5]');
+            }
+            return;
+        }
+        if (this.matches(event, 'quickLoad')) {
+            event.preventDefault();
+            if (typeof SaveLoadSystem !== 'undefined') {
+                SaveLoadSystem.quickLoad();
+                addMessage('📂 Quick loaded! [F9]');
+            }
+            return;
+        }
+    },
+
+    // Handle escape key - the great closer
+    handleEscape() {
+        // Check for fullscreen first
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+            addMessage('🖥️ Exited fullscreen');
+            return;
+        }
+
+        // Close any open overlay
+        if (typeof game !== 'undefined' && game.hideAllOverlays) {
+            const overlays = document.querySelectorAll('.overlay.active');
+            if (overlays.length > 0) {
+                game.hideAllOverlays();
+                addMessage('✖️ Closed overlay');
+                return;
+            }
+        }
+
+        // Close panels or toggle menu
+        if (game.state === GameState.PLAYING) {
+            toggleMenu();
+        } else if (game.state !== GameState.MENU) {
+            hideAllPanels();
+            changeState(GameState.PLAYING);
+        }
+    },
+
+    // Handle pause/resume
+    handlePause() {
+        if (typeof TimeSystem !== 'undefined') {
+            if (TimeSystem.isPaused) {
+                TimeSystem.setSpeed('NORMAL');
+                addMessage('▶️ Time resumed [Space]');
+            } else {
+                TimeSystem.setSpeed('PAUSED');
+                addMessage('⏸️ Time paused [Space]');
+            }
+            if (typeof game !== 'undefined' && game.updateTimeControls) {
+                game.updateTimeControls();
+            }
+        }
+    },
+
+    // Handle map panning with WASD
+    handleMapPan(event) {
+        const panAmount = 50;
+        let dx = 0, dy = 0;
+
+        if (this.matches(event, 'mapUp')) dy = panAmount;
+        if (this.matches(event, 'mapDown')) dy = -panAmount;
+        if (this.matches(event, 'mapLeft')) dx = panAmount;
+        if (this.matches(event, 'mapRight')) dx = -panAmount;
+
+        // Pan the GameWorldRenderer map
+        if (typeof GameWorldRenderer !== 'undefined' && GameWorldRenderer.mapState) {
+            GameWorldRenderer.mapState.offsetX += dx;
+            GameWorldRenderer.mapState.offsetY += dy;
+            GameWorldRenderer.render();
+        }
+
+        // Also pan TravelSystem if its overlay is open
+        if (typeof TravelSystem !== 'undefined' && TravelSystem.worldMap) {
+            const overlay = document.getElementById('world-map-overlay');
+            if (overlay && overlay.classList.contains('active')) {
+                TravelSystem.worldMap.offsetX += dx;
+                TravelSystem.worldMap.offsetY += dy;
+                TravelSystem.render();
+            }
+        }
+    },
+
+    // Open character sheet (we'll create this panel)
+    openCharacterSheet() {
+        if (typeof showCharacterSheet === 'function') {
+            showCharacterSheet();
+        } else {
+            // Create the character sheet if it doesn't exist
+            this.createCharacterSheetOverlay();
+        }
+        addMessage('👤 Character sheet opened [C]');
+    },
+
+    // Create character sheet overlay dynamically
+    createCharacterSheetOverlay() {
+        let overlay = document.getElementById('character-sheet-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'character-sheet-overlay';
+            overlay.className = 'overlay';
+            overlay.innerHTML = `
+                <div class="overlay-content character-sheet-content">
+                    <button class="overlay-close" data-close-overlay="character-sheet-overlay">×</button>
+                    <h2>👤 Character Sheet</h2>
+                    <div id="character-sheet-body"></div>
+                </div>
+            `;
+            document.getElementById('overlay-container').appendChild(overlay);
+
+            // Add close handler
+            overlay.querySelector('.overlay-close').addEventListener('click', () => {
+                overlay.classList.remove('active');
+                overlay.style.display = 'none';
+            });
+        }
+
+        // Populate the character sheet
+        this.populateCharacterSheet();
+
+        // Show the overlay
+        overlay.style.display = 'flex';
+        overlay.classList.add('active');
+    },
+
+    // Populate character sheet with all player info
+    populateCharacterSheet() {
+        const body = document.getElementById('character-sheet-body');
+        if (!body || !game.player) return;
+
+        const player = game.player;
+        const stats = player.stats || {};
+        const attrs = player.attributes || {};
+
+        body.innerHTML = `
+            <div class="char-sheet-section">
+                <h3>🏷️ Identity</h3>
+                <div class="char-info-row"><span>Name:</span><span class="char-value">${player.name || 'Unknown'}</span></div>
+                <div class="char-info-row"><span>Gold:</span><span class="char-value gold">💰 ${(player.gold || 0).toLocaleString()}</span></div>
+                <div class="char-info-row"><span>Location:</span><span class="char-value">${game.currentLocation?.name || 'Unknown'}</span></div>
+            </div>
+
+            <div class="char-sheet-section">
+                <h3>📊 Attributes</h3>
+                <div class="char-attrs-grid">
+                    <div class="char-attr"><span>💪 Strength</span><span>${attrs.strength || 5}</span></div>
+                    <div class="char-attr"><span>🧠 Intelligence</span><span>${attrs.intelligence || 5}</span></div>
+                    <div class="char-attr"><span>😊 Charisma</span><span>${attrs.charisma || 5}</span></div>
+                    <div class="char-attr"><span>🏃 Endurance</span><span>${attrs.endurance || 5}</span></div>
+                    <div class="char-attr"><span>🍀 Luck</span><span>${attrs.luck || 5}</span></div>
+                </div>
+            </div>
+
+            <div class="char-sheet-section">
+                <h3>❤️ Vitals</h3>
+                <div class="char-vitals">
+                    <div class="char-vital"><span>Health</span><div class="vital-bar-inline"><div style="width: ${(stats.health / stats.maxHealth) * 100}%; background: #e53935;"></div></div><span>${stats.health}/${stats.maxHealth}</span></div>
+                    <div class="char-vital"><span>Hunger</span><div class="vital-bar-inline"><div style="width: ${(stats.hunger / stats.maxHunger) * 100}%; background: #ff9800;"></div></div><span>${stats.hunger}/${stats.maxHunger}</span></div>
+                    <div class="char-vital"><span>Thirst</span><div class="vital-bar-inline"><div style="width: ${(stats.thirst / stats.maxThirst) * 100}%; background: #2196f3;"></div></div><span>${stats.thirst}/${stats.maxThirst}</span></div>
+                    <div class="char-vital"><span>Stamina</span><div class="vital-bar-inline"><div style="width: ${(stats.stamina / stats.maxStamina) * 100}%; background: #9c27b0;"></div></div><span>${stats.stamina}/${stats.maxStamina}</span></div>
+                    <div class="char-vital"><span>Happiness</span><div class="vital-bar-inline"><div style="width: ${(stats.happiness / stats.maxHappiness) * 100}%; background: #4caf50;"></div></div><span>${stats.happiness}/${stats.maxHappiness}</span></div>
+                </div>
+            </div>
+
+            <div class="char-sheet-section">
+                <h3>⚡ Active Effects</h3>
+                <div class="char-effects" id="char-effects-list">
+                    ${this.getActiveEffectsHTML()}
+                </div>
+            </div>
+
+            <div class="char-sheet-section">
+                <h3>🎒 Equipment</h3>
+                <div class="char-equipment" id="char-equipment-list">
+                    ${this.getEquipmentHTML()}
+                </div>
+            </div>
+
+            <div class="char-sheet-section">
+                <h3>⭐ Perks</h3>
+                <div class="char-perks" id="char-perks-list">
+                    ${this.getPerksHTML()}
+                </div>
+            </div>
+        `;
+    },
+
+    // Get active effects HTML
+    getActiveEffectsHTML() {
+        if (!game.player || !game.player.temporaryEffects) {
+            return '<div class="no-effects">No active effects</div>';
+        }
+        const effects = Object.entries(game.player.temporaryEffects);
+        if (effects.length === 0) {
+            return '<div class="no-effects">No active effects</div>';
+        }
+        return effects.map(([stat, effect]) => `
+            <div class="effect-item ${effect.value > 0 ? 'buff' : 'debuff'}">
+                <span>${stat}: ${effect.value > 0 ? '+' : ''}${effect.value}</span>
+                <span class="effect-duration">${effect.duration}min left</span>
+            </div>
+        `).join('');
+    },
+
+    // Get equipment HTML
+    getEquipmentHTML() {
+        if (!game.player || !game.player.equipment) {
+            return '<div class="no-equipment">No equipment</div>';
+        }
+        const equipment = Object.entries(game.player.equipment).filter(([_, item]) => item);
+        if (equipment.length === 0) {
+            return '<div class="no-equipment">No equipment</div>';
+        }
+        return equipment.map(([slot, item]) => `
+            <div class="equipment-slot">
+                <span class="slot-name">${slot}:</span>
+                <span class="item-name">${item.name || 'Unknown'}</span>
+            </div>
+        `).join('');
+    },
+
+    // Get perks HTML
+    getPerksHTML() {
+        if (!game.player || !game.player.perks || game.player.perks.length === 0) {
+            return '<div class="no-perks">No perks selected</div>';
+        }
+        return game.player.perks.map(perk => `
+            <div class="perk-item ${perk.type || ''}">
+                <span class="perk-name">${perk.icon || '⭐'} ${perk.name}</span>
+                <span class="perk-desc">${perk.description || ''}</span>
+            </div>
+        `).join('');
+    },
+
+    // Open financial sheet
+    openFinancialSheet() {
+        this.createFinancialSheetOverlay();
+        addMessage('💰 Financial sheet opened [F]');
+    },
+
+    // Create financial sheet overlay
+    createFinancialSheetOverlay() {
+        let overlay = document.getElementById('financial-sheet-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'financial-sheet-overlay';
+            overlay.className = 'overlay';
+            overlay.innerHTML = `
+                <div class="overlay-content financial-sheet-content">
+                    <button class="overlay-close" data-close-overlay="financial-sheet-overlay">×</button>
+                    <h2>💰 Financial Report</h2>
+                    <div id="financial-sheet-body"></div>
+                </div>
+            `;
+            document.getElementById('overlay-container').appendChild(overlay);
+
+            // Add close handler
+            overlay.querySelector('.overlay-close').addEventListener('click', () => {
+                overlay.classList.remove('active');
+                overlay.style.display = 'none';
+            });
+        }
+
+        // Populate the financial sheet
+        this.populateFinancialSheet();
+
+        // Show the overlay
+        overlay.style.display = 'flex';
+        overlay.classList.add('active');
+    },
+
+    // Populate financial sheet
+    populateFinancialSheet() {
+        const body = document.getElementById('financial-sheet-body');
+        if (!body) return;
+
+        const gold = game.player?.gold || 0;
+        const properties = typeof PropertySystem !== 'undefined' ? PropertySystem.getProperties() : [];
+        const employees = typeof EmployeeSystem !== 'undefined' ? EmployeeSystem.getEmployees() : [];
+        const tradeRoutes = typeof TradeRouteSystem !== 'undefined' ? TradeRouteSystem.getTradeRoutes() : [];
+
+        // Calculate income/expenses
+        let dailyIncome = 0;
+        let weeklyWages = 0;
+        properties.forEach(p => { dailyIncome += p.income || 0; });
+        employees.forEach(e => { weeklyWages += e.wage || 0; });
+
+        body.innerHTML = `
+            <div class="fin-section">
+                <h3>💎 Current Assets</h3>
+                <div class="fin-row main"><span>Gold on Hand:</span><span class="gold-value">💰 ${gold.toLocaleString()}</span></div>
+            </div>
+
+            <div class="fin-section">
+                <h3>📈 Income</h3>
+                <div class="fin-row"><span>Daily Property Income:</span><span class="positive">+${dailyIncome.toLocaleString()}/day</span></div>
+                <div class="fin-row"><span>Active Trade Routes:</span><span>${tradeRoutes.length}</span></div>
+            </div>
+
+            <div class="fin-section">
+                <h3>📉 Expenses</h3>
+                <div class="fin-row"><span>Weekly Employee Wages:</span><span class="negative">-${weeklyWages.toLocaleString()}/week</span></div>
+            </div>
+
+            <div class="fin-section">
+                <h3>🏠 Properties (${properties.length})</h3>
+                ${properties.length > 0 ? properties.map(p => `
+                    <div class="fin-property">
+                        <span>${p.name || 'Property'}</span>
+                        <span class="positive">+${(p.income || 0).toLocaleString()}/day</span>
+                    </div>
+                `).join('') : '<div class="no-data">No properties owned</div>'}
+            </div>
+
+            <div class="fin-section">
+                <h3>👥 Employees (${employees.length})</h3>
+                ${employees.length > 0 ? employees.map(e => `
+                    <div class="fin-employee">
+                        <span>${e.name || 'Employee'} - ${e.role || 'Worker'}</span>
+                        <span class="negative">-${(e.wage || 0).toLocaleString()}/week</span>
+                    </div>
+                `).join('') : '<div class="no-data">No employees hired</div>'}
+            </div>
+
+            <div class="fin-section summary">
+                <h3>📊 Summary</h3>
+                <div class="fin-row"><span>Est. Daily Profit:</span><span class="${dailyIncome - (weeklyWages / 7) >= 0 ? 'positive' : 'negative'}">${(dailyIncome - (weeklyWages / 7)).toFixed(0)}/day</span></div>
+                <div class="fin-row"><span>Est. Weekly Profit:</span><span class="${(dailyIncome * 7) - weeklyWages >= 0 ? 'positive' : 'negative'}">${((dailyIncome * 7) - weeklyWages).toLocaleString()}/week</span></div>
+            </div>
+        `;
+    },
+
+    // Start rebinding a key
+    startRebind(action) {
+        this.isRebinding = true;
+        this.rebindingAction = action;
+        addMessage(`⌨️ Press any key to bind to "${this.descriptions[action]}"...`);
+    },
+
+    // Complete rebinding
+    completeRebind(key) {
+        if (this.rebindingAction) {
+            this.setKey(this.rebindingAction, key);
+        }
+        this.isRebinding = false;
+        this.rebindingAction = null;
+
+        // Refresh the settings UI if open
+        if (typeof SettingsPanel !== 'undefined' && SettingsPanel.refreshKeyBindingsUI) {
+            SettingsPanel.refreshKeyBindingsUI();
+        }
+    },
+
+    // Get all bindings for settings UI
+    getAllBindings() {
+        return Object.entries(this.current).map(([action, key]) => ({
+            action,
+            key,
+            description: this.descriptions[action] || action,
+            displayKey: this.formatKey(key)
+        }));
+    },
+
+    // Open Market panel
+    openMarket() {
+        if (typeof openMarket === 'function') {
+            openMarket();
+        } else {
+            game.showOverlay('market-panel');
+        }
+    },
+
+    // Open Travel panel
+    openTravel() {
+        if (typeof openTravel === 'function') {
+            openTravel();
+        } else {
+            game.showOverlay('travel-panel');
+        }
+    },
+
+    // Open Transportation panel
+    openTransportation() {
+        if (typeof openTransportation === 'function') {
+            openTransportation();
+        } else {
+            game.showOverlay('transportation-panel');
+        }
+    },
+
+    // Open Inventory panel
+    openInventory() {
+        if (typeof openInventory === 'function') {
+            openInventory();
+        } else {
+            game.showOverlay('inventory-panel');
+        }
+    },
+
+    // Open Properties/Employee panel
+    openProperties() {
+        game.showOverlay('property-employee-panel');
+        if (typeof PropertyEmployeeUI !== 'undefined' && PropertyEmployeeUI.refresh) {
+            PropertyEmployeeUI.refresh();
+        }
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 📝 GAME LOG MANAGER - tracking everything for debugging
+// ═══════════════════════════════════════════════════════════════
+const GameLogger = {
+    logs: [],
+    maxLogs: 500, // keep last 500 logs
+    startTime: Date.now(),
+
+    // 📝 log anything and everything
+    log: function(category, message, data = null) {
+        const timestamp = Date.now() - this.startTime;
+        const logEntry = {
+            time: timestamp,
+            timestamp: new Date().toLocaleTimeString(),
+            category: category,
+            message: message,
+            data: data
+        };
+
+        this.logs.push(logEntry);
+
+        // keep only the last maxLogs entries
+        if (this.logs.length > this.maxLogs) {
+            this.logs.shift();
+        }
+
+        // also log to console with fancy formatting
+        const emoji = this.getCategoryEmoji(category);
+        if (data) {
+            console.log(`${emoji} [${category}] ${message}`, data);
+        } else {
+            console.log(`${emoji} [${category}] ${message}`);
+        }
+
+        return logEntry;
+    },
+
+    // 🎨 get emoji for category
+    getCategoryEmoji: function(category) {
+        const emojis = {
+            'INIT': '🌙',
+            'EVENT': '⚡',
+            'GOLD': '💰',
+            'DIFFICULTY': '🎯',
+            'PERK': '✨',
+            'ATTRIBUTE': '📊',
+            'TRAVEL': '🗺️',
+            'MARKET': '🏪',
+            'ERROR': '❌',
+            'WARNING': '⚠️',
+            'SUCCESS': '✅',
+            'DEBUG': '🔍'
+        };
+        return emojis[category] || '📝';
+    },
+
+    // 📋 get all logs
+    getAllLogs: function() {
+        return this.logs;
+    },
+
+    // 📋 get logs by category
+    getLogsByCategory: function(category) {
+        return this.logs.filter(log => log.category === category);
+    },
+
+    // 📋 get recent logs
+    getRecentLogs: function(count = 50) {
+        return this.logs.slice(-count);
+    },
+
+    // 💾 export logs as text
+    exportLogs: function() {
+        let text = '═══════════════════════════════════════\n';
+        text += '📝 GAME LOG EXPORT\n';
+        text += `Generated: ${new Date().toLocaleString()}\n`;
+        text += `Total Logs: ${this.logs.length}\n`;
+        text += '═══════════════════════════════════════\n\n';
+
+        this.logs.forEach(log => {
+            text += `[${log.timestamp}] ${log.category}: ${log.message}\n`;
+            if (log.data) {
+                text += `  Data: ${JSON.stringify(log.data)}\n`;
+            }
+        });
+
+        return text;
+    },
+
+    // 📤 download logs as file
+    downloadLogs: function() {
+        const text = this.exportLogs();
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `game-log-${Date.now()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log('✅ Logs downloaded!');
+    },
+
+    // 🖨️ print logs to console
+    printLogs: function(count = 50) {
+        console.log('═══════════════════════════════════════');
+        console.log('📝 GAME LOGS (Last', count, 'entries)');
+        console.log('═══════════════════════════════════════');
+        const logs = this.getRecentLogs(count);
+        logs.forEach(log => {
+            const emoji = this.getCategoryEmoji(log.category);
+            console.log(`${emoji} [${log.timestamp}] [${log.category}] ${log.message}`);
+            if (log.data) {
+                console.log('  └─', log.data);
+            }
+        });
+        console.log('═══════════════════════════════════════');
+        console.log('💡 Tip: Use GameLogger.downloadLogs() to save logs to file');
+    },
+
+    // 🗑️ clear logs
+    clear: function() {
+        this.logs = [];
+        console.log('🗑️ Logs cleared');
+    }
+};
+
+// expose globally so you can access it from console
+window.GameLogger = GameLogger;
+
+// add helper commands
+window.showLogs = () => GameLogger.printLogs();
+window.downloadLogs = () => GameLogger.downloadLogs();
+window.clearLogs = () => GameLogger.clear();
+
+// 🔍 DEBUG HELPER - test difficulty system manually from console
+window.testDifficulty = (difficulty = 'easy') => {
+    console.log('🔥🔥🔥 MANUAL DIFFICULTY TEST 🔥🔥🔥');
+    console.log('Testing difficulty:', difficulty);
+
+    // Find and check the radio
+    const radio = document.getElementById(`difficulty-${difficulty}`);
+    console.log('Radio element:', radio);
+    console.log('Radio exists:', !!radio);
+
+    if (radio) {
+        console.log('Before click - checked:', radio.checked);
+        radio.checked = true;
+        console.log('After manual check - checked:', radio.checked);
+
+        // Manually trigger the change
+        console.log('Calling onDifficultyChange()...');
+        if (typeof onDifficultyChange === 'function') {
+            onDifficultyChange();
+        } else {
+            console.error('onDifficultyChange function not found!');
+        }
+
+        // Check the gold display
+        const goldEl = document.getElementById('setup-gold-amount');
+        console.log('Gold display element:', goldEl);
+        console.log('Gold display text:', goldEl ? goldEl.textContent : 'NOT FOUND');
+    } else {
+        console.error('Radio button not found for difficulty:', difficulty);
+    }
+
+    console.log('GameLogger entries:', GameLogger.logs.length);
+    console.log('Call showLogs() to see all logs');
+};
+
+// 🔍 DEBUG HELPER - test attribute system manually from console
+window.testAttribute = (attr = 'strength', direction = 'up') => {
+    console.log('🔥🔥🔥 MANUAL ATTRIBUTE TEST 🔥🔥🔥');
+    console.log('Testing attribute:', attr, 'direction:', direction);
+    console.log('Current state:', {
+        manualValue: characterCreationState.manualAttributes[attr],
+        finalValue: characterCreationState.attributes[attr],
+        availablePoints: characterCreationState.availableAttributePoints
+    });
+
+    if (direction === 'up') {
+        console.log('Calling increaseAttribute...');
+        increaseAttribute(attr);
+    } else {
+        console.log('Calling decreaseAttribute...');
+        decreaseAttribute(attr);
+    }
+
+    console.log('After change:', {
+        manualValue: characterCreationState.manualAttributes[attr],
+        finalValue: characterCreationState.attributes[attr],
+        availablePoints: characterCreationState.availableAttributePoints
+    });
+};
+
+// 🔍 DEBUG HELPER - check button states
+window.checkButtons = () => {
+    console.log('🔥🔥🔥 CHECKING ALL ATTRIBUTE BUTTONS 🔥🔥🔥');
+    const buttons = document.querySelectorAll('.attr-btn');
+    console.log('Found', buttons.length, 'buttons');
+    buttons.forEach(btn => {
+        console.log(`Button [${btn.dataset.attr}] [${btn.classList.contains('attr-up') ? 'UP' : 'DOWN'}]:`, {
+            disabled: btn.disabled,
+            visible: btn.offsetParent !== null,
+            inDOM: document.contains(btn)
+        });
+    });
+
+    console.log('Character creation state:', {
+        availablePoints: characterCreationState.availableAttributePoints,
+        manualAttributes: characterCreationState.manualAttributes,
+        finalAttributes: characterCreationState.attributes
+    });
+};
+
+// okay so GameState is like... the different moods of our game
+// (kinda like my spotify playlists but for code)
+const GameState = {
+    MENU: 'menu',
+    LOADING: 'loading',
+    CHARACTER_CREATION: 'character_creation',
+    PLAYING: 'playing',
+    PAUSED: 'paused',
+    TRAVEL: 'travel',
+    MARKET: 'market',
+    INVENTORY: 'inventory',
+    TRANSPORTATION: 'transportation'
+};
+
+// ⏰ TIME MANAGEMENT - aka "time is a construct but we need it anyway"
+// fun fact: time moves differently when you're coding at night
+// (spoiler: it moves FAST and suddenly it's 4am and you haven't eaten)
+const TimeSystem = {
+    // these are just... time being time, nothing poetic here
+    MINUTES_PER_HOUR: 60,
+    HOURS_PER_DAY: 24,
+    DAYS_PER_WEEK: 7,
+    DAYS_PER_MONTH: 30,  // medieval calendar says screw accuracy
+    MONTHS_PER_YEAR: 12,
+
+    // ⚡ speed settings - 2 game minutes = 1 real second at NORMAL
+    SPEEDS: {
+        PAUSED: 0,        // frozen like my heart
+        NORMAL: 2,        // 2 game minutes per real second (1 hour = 30 real seconds)
+        FAST: 10,         // 10 game minutes per real second (1 hour = 6 real seconds)
+        VERY_FAST: 30     // 30 game minutes per real second (1 hour = 2 real seconds)
+    },
+
+    // the actual time variables living rent-free in memory
+    currentTime: {
+        day: 1,
+        hour: 8,
+        minute: 0,
+        year: 1,
+        month: 1,
+        week: 1
+    },
+
+    // control variables (because we're control freaks but like, in a time way)
+    currentSpeed: 'NORMAL',
+    isPaused: false,
+    lastUpdateTime: 0,
+    accumulatedTime: 0,
+
+    // 🌙 init - where time begins its dark journey
+    init() {
+        this.currentTime = {
+            day: 1,
+            hour: 8,
+            minute: 0,
+            year: 1,
+            month: 1,
+            week: 1
+        };
+        // Game starts PAUSED so player can read the intro
+        this.currentSpeed = 'PAUSED';
+        this.isPaused = true;
+        this.lastUpdateTime = Date.now();
+        this.accumulatedTime = 0;
+        console.log('⏸️ Game starting PAUSED - press play when ready!');
+    },
+
+    // ⚙️ update - making time move like the existential dread that it is
+    update(deltaTime) {
+        if (this.isPaused || this.currentSpeed === 'PAUSED') {
+            return false;  // time stands still (wouldn't that be nice?)
+        }
+
+        const speedMultiplier = this.SPEEDS[this.currentSpeed];
+        if (speedMultiplier === 0) return false;
+
+        // converting real time to game time (basically time travel but boring)
+        const gameMinutesPassed = (deltaTime / 1000) * speedMultiplier;
+        this.accumulatedTime += gameMinutesPassed;
+
+        // only process whole minutes cause we're not THAT precise
+        const minutesToProcess = Math.floor(this.accumulatedTime);
+        if (minutesToProcess > 0) {
+            this.accumulatedTime -= minutesToProcess;
+            this.addMinutes(minutesToProcess);
+            return true;  // ✨ time marches on, as it does ✨
+        }
+
+        return false;
+    },
+
+    // 📅 addMinutes - the cascade of time's cruel progression
+    addMinutes(minutes) {
+        this.currentTime.minute += minutes;
+
+        // when minutes overflow into hours (just like my emotions)
+        while (this.currentTime.minute >= this.MINUTES_PER_HOUR) {
+            this.currentTime.minute -= this.MINUTES_PER_HOUR;
+            this.currentTime.hour++;
+
+            // hours overflow into days... the cycle continues
+            if (this.currentTime.hour >= this.HOURS_PER_DAY) {
+                this.currentTime.hour -= this.HOURS_PER_DAY;
+                this.currentTime.day++;
+                this.currentTime.week = Math.ceil(this.currentTime.day / this.DAYS_PER_WEEK);
+
+
+                // days roll into months (the calendar doesn't care about your feelings)
+                if (this.currentTime.day > this.DAYS_PER_MONTH) {
+                    this.currentTime.day = 1;
+                    this.currentTime.month++;
+
+                    // months become years and suddenly we're all older
+                    if (this.currentTime.month > this.MONTHS_PER_YEAR) {
+                        this.currentTime.month = 1;
+                        this.currentTime.year++;
+                    }
+                }
+            }
+        }
+    },
+
+    // ⚡ setSpeed - controlling how fast we spiral through time
+    setSpeed(speed) {
+        if (this.SPEEDS.hasOwnProperty(speed)) {
+            this.currentSpeed = speed;
+            this.isPaused = (speed === 'PAUSED');
+            return true;
+        }
+        return false;
+    },
+
+    // ⏸️ togglePause - freezing time like a dramatic movie scene
+    togglePause() {
+        this.isPaused = !this.isPaused;
+        if (this.isPaused) {
+            this.currentSpeed = 'PAUSED';
+        } else {
+            this.currentSpeed = 'NORMAL';
+        }
+        return this.isPaused;
+    },
+
+    // 🕰️ getFormattedTime - making time pretty for the UI
+    getFormattedTime() {
+        const hourStr = this.currentTime.hour.toString().padStart(2, '0');
+        const minuteStr = this.currentTime.minute.toString().padStart(2, '0');
+        return `Day ${this.currentTime.day}, ${hourStr}:${minuteStr}`;
+    },
+
+    // 📊 getTimeInfo - all the time data your dark heart desires
+    getTimeInfo() {
+        return {
+            ...this.currentTime,
+            formatted: this.getFormattedTime(),
+            speed: this.currentSpeed,
+            isPaused: this.isPaused,
+            isDaytime: this.currentTime.hour >= 6 && this.currentTime.hour < 20,
+            isMorning: this.currentTime.hour >= 6 && this.currentTime.hour < 12,
+            isAfternoon: this.currentTime.hour >= 12 && this.currentTime.hour < 18,
+            isEvening: this.currentTime.hour >= 18 && this.currentTime.hour < 22,
+            isNight: this.currentTime.hour >= 22 || this.currentTime.hour < 6  // best time tbh
+        };
+    },
+
+    // ⏳ time calculations because math is inevitable
+    getMinutesUntilHour(targetHour) {
+        let minutes = 0;
+        let currentHour = this.currentTime.hour;
+        let currentMinute = this.currentTime.minute;
+        
+        if (targetHour > currentHour) {
+            minutes = (targetHour - currentHour) * this.MINUTES_PER_HOUR - currentMinute;
+        } else if (targetHour < currentHour) {
+            minutes = ((this.HOURS_PER_DAY - currentHour) + targetHour) * this.MINUTES_PER_HOUR - currentMinute;
+        } else {
+            minutes = currentMinute === 0 ? 0 : this.HOURS_PER_DAY * this.MINUTES_PER_HOUR - currentMinute;
+        }
+        
+        return minutes;
+    },
+
+    // 🧮 getTotalMinutes - converting all of existence into one big number
+    // (this is how the universe tracks its pain)
+    getTotalMinutes() {
+        return this.currentTime.minute +
+               (this.currentTime.hour * this.MINUTES_PER_HOUR) +
+               (this.currentTime.day * this.HOURS_PER_DAY * this.MINUTES_PER_HOUR) +
+               (this.currentTime.month * this.DAYS_PER_MONTH * this.HOURS_PER_DAY * this.MINUTES_PER_HOUR) +
+               (this.currentTime.year * this.MONTHS_PER_YEAR * this.DAYS_PER_MONTH * this.HOURS_PER_DAY * this.MINUTES_PER_HOUR);
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 🎲 EVENT SYSTEM - because chaos is more fun than order
+// ═══════════════════════════════════════════════════════════════
+// random events popping off like my intrusive thoughts
+const EventSystem = {
+    events: [],
+    scheduledEvents: [],
+    randomEventChance: 0.05,  // 5% chaos factor (seems low but trust me)
+
+    // 🌙 init - summoning the event demons
+    init() {
+        this.events = [];
+        this.scheduledEvents = [];
+        this.setupRandomEvents();
+    },
+
+    // 📜 setupRandomEvents - defining the chaos that awaits
+    setupRandomEvents() {
+        // 💰 market events (capitalism but make it medieval)
+        this.addEventType('market_boom', {
+            name: 'Market Boom',
+            description: 'The merchant guild prospers! Prices are favorable.',
+            effects: { priceBonus: 0.2 },
+            duration: 120, // 2 hours
+            chance: 0.02
+        });
+        
+        this.addEventType('market_crash', {
+            name: 'Market Crash',
+            description: 'The king imposes new taxes! Prices are falling.',
+            effects: { pricePenalty: -0.3 },
+            duration: 180, // 3 hours
+            chance: 0.01
+        });
+        
+        this.addEventType('merchant_arrival', {
+            name: 'Foreign Merchant',
+            description: 'A merchant from distant kingdoms has arrived with exotic goods.',
+            effects: { newItems: true },
+            duration: 240, // 4 hours
+            chance: 0.03
+        });
+        
+        // Weather events
+        this.addEventType('rain_storm', {
+            name: 'Rain Storm',
+            description: 'Heavy rains turn the roads to mud, making travel difficult.',
+            effects: { travelSpeedPenalty: -0.3 },
+            duration: 90, // 1.5 hours
+            chance: 0.04
+        });
+        
+        this.addEventType('clear_skies', {
+            name: 'Clear Skies',
+            description: 'Perfect weather for travel and trade along the kingdom roads.',
+            effects: { travelSpeedBonus: 0.2 },
+            duration: 180, // 3 hours
+            chance: 0.05
+        });
+        
+        // Travel event
+        this.addEventType('travel_complete', {
+            name: 'Travel Complete',
+            description: 'You have arrived at your destination.',
+            effects: {},
+            duration: 0,
+            chance: 0
+        });
+        
+        // Market events
+        this.addEventType('weekly_market', {
+            name: 'Weekly Market Day',
+            description: 'The weekly gathering of merchants with rare goods from distant lands!',
+            effects: { newItems: true, priceBonus: 0.1 },
+            duration: 240, // 4 hours
+            chance: 0
+        });
+        
+        this.addEventType('merchant_caravan', {
+            name: 'Merchant Caravan',
+            description: 'A grand merchant caravan has arrived with exotic goods from the east.',
+            effects: { newItems: true, rareItems: true },
+            duration: 360, // 6 hours
+            chance: 0
+        });
+    },
+    
+    // Add event type definition
+    addEventType(id, eventData) {
+        this.eventTypes = this.eventTypes || {};
+        this.eventTypes[id] = eventData;
+    },
+    
+    // Schedule an event for specific time
+    scheduleEvent(eventId, triggerTime, data = {}) {
+        this.scheduledEvents.push({
+            id: eventId,
+            triggerTime: triggerTime,
+            data: data,
+            triggered: false
+        });
+    },
+    
+    // Trigger random events
+    checkRandomEvents() {
+        if (Math.random() < this.randomEventChance) {
+            const eventTypes = Object.keys(this.eventTypes || {});
+            if (eventTypes.length > 0) {
+                const randomType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+                this.triggerEvent(randomType);
+            }
+        }
+    },
+    
+    // Trigger a specific event
+    triggerEvent(eventId, data = {}) {
+        const eventType = this.eventTypes?.[eventId];
+        if (!eventType) return;
+        
+        const event = {
+            id: eventId,
+            name: eventType.name,
+            description: eventType.description,
+            effects: { ...eventType.effects, ...data },
+            startTime: TimeSystem.getTotalMinutes(),
+            duration: eventType.duration || 60,
+            active: true
+        };
+        
+        this.events.push(event);
+        this.applyEventEffects(event);
+        
+        // Notify UI
+        if (game.ui) {
+            game.ui.showEventNotification(event);
+        }
+        
+        console.log(`Event triggered: ${event.name}`);
+    },
+    
+    // Apply event effects to game state
+    applyEventEffects(event) {
+        // This will be expanded as more game systems are implemented
+        if (event.effects.priceBonus) {
+            game.marketPriceModifier = (game.marketPriceModifier || 1) * (1 + event.effects.priceBonus);
+        }
+        
+        if (event.effects.pricePenalty) {
+            game.marketPriceModifier = (game.marketPriceModifier || 1) * (1 + event.effects.pricePenalty);
+        }
+        
+        if (event.effects.travelSpeedBonus) {
+            game.travelSpeedModifier = (game.travelSpeedModifier || 1) * (1 + event.effects.travelSpeedBonus);
+        }
+        
+        if (event.effects.travelSpeedPenalty) {
+            game.travelSpeedModifier = (game.travelSpeedModifier || 1) * (1 + event.effects.travelSpeedPenalty);
+        }
+        
+        // Handle special events
+        if (event.id === 'travel_complete' && event.data.destination) {
+            GameWorld.completeTravel(event.data.destination);
+        }
+        
+        if (event.effects.newItems) {
+            this.refreshMarketItems();
+        }
+    },
+    
+    // Refresh market items for all locations
+    refreshMarketItems() {
+        Object.keys(GameWorld.locations).forEach(locationId => {
+            const location = GameWorld.locations[locationId];
+            
+            // Add new items based on location specialties
+            location.specialties.forEach(specialty => {
+                if (!location.marketPrices[specialty]) {
+                    location.marketPrices[specialty] = {
+                        price: GameWorld.getBasePrice(specialty),
+                        stock: Math.floor(Math.random() * 10) + 5
+                    };
+                }
+            });
+            
+            // Restock existing items
+            Object.keys(location.marketPrices).forEach(itemType => {
+                const restockAmount = Math.floor(Math.random() * 5) + 2;
+                location.marketPrices[itemType].stock = Math.min(
+                    location.marketPrices[itemType].stock + restockAmount,
+                    this.getMaxStock(location.type, itemType)
+                );
+            });
+        });
+        
+        addMessage('🛒 Markets have been refreshed with new goods!');
+    },
+    
+    // Get maximum stock based on location type and item
+    getMaxStock(locationType, itemType) {
+        const stockLimits = {
+            village: { base: 20, specialty: 15 },
+            town: { base: 40, specialty: 30 },
+            city: { base: 80, specialty: 60 }
+        };
+        
+        const limits = stockLimits[locationType] || stockLimits.town;
+        return limits.base;
+    },
+    
+    // Update events (remove expired ones)
+    update() {
+        const currentTime = TimeSystem.getTotalMinutes();
+        
+        // Check scheduled events
+        this.scheduledEvents.forEach(event => {
+            if (!event.triggered && currentTime >= event.triggerTime) {
+                this.triggerEvent(event.id, event.data);
+                event.triggered = true;
+            }
+        });
+        
+        // Remove expired events
+        this.events = this.events.filter(event => {
+            if (currentTime >= event.startTime + event.duration) {
+                this.removeEventEffects(event);
+                return false;
+            }
+            return true;
+        });
+        
+        // Check for random events
+        this.checkRandomEvents();
+    },
+    
+    // Remove event effects
+    removeEventEffects(event) {
+        // Reverse the effects (simplified version)
+        if (event.effects.priceBonus) {
+            game.marketPriceModifier = (game.marketPriceModifier || 1) / (1 + event.effects.priceBonus);
+        }
+        
+        if (event.effects.pricePenalty) {
+            game.marketPriceModifier = (game.marketPriceModifier || 1) / (1 + event.effects.pricePenalty);
+        }
+        
+        if (event.effects.travelSpeedBonus) {
+            game.travelSpeedModifier = (game.travelSpeedModifier || 1) / (1 + event.effects.travelSpeedBonus);
+        }
+        
+        if (event.effects.travelSpeedPenalty) {
+            game.travelSpeedModifier = (game.travelSpeedModifier || 1) / (1 + event.effects.travelSpeedPenalty);
+        }
+    },
+    
+    // Get active events
+    getActiveEvents() {
+        return this.events.filter(event => event.active);
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 🏆 HIGH SCORE SYSTEM - flex on the peasants with your wealth
+// ═══════════════════════════════════════════════════════════════
+const HighScoreSystem = {
+    maxScores: 10,
+    
+    // Initialize high score system
+    init() {
+        this.loadHighScores();
+    },
+    
+    // Load high scores from localStorage
+    loadHighScores() {
+        const savedScores = localStorage.getItem('tradingGameHighScores');
+        if (savedScores) {
+            try {
+                this.highScores = JSON.parse(savedScores);
+            } catch (e) {
+                this.highScores = [];
+            }
+        } else {
+            this.highScores = [];
+        }
+    },
+    
+    // Save high scores to localStorage
+    saveHighScores() {
+        localStorage.setItem('tradingGameHighScores', JSON.stringify(this.highScores));
+    },
+    
+    // Add a new high score
+    addHighScore(playerName, gold, survivedDays, deathCause) {
+        const score = {
+            name: playerName,
+            gold: gold,
+            survivedDays: survivedDays,
+            deathCause: deathCause,
+            date: new Date().toISOString()
+        };
+        
+        this.highScores.push(score);
+        
+        // Sort by gold (descending)
+        this.highScores.sort((a, b) => b.gold - a.gold);
+        
+        // Keep only top scores
+        this.highScores = this.highScores.slice(0, this.maxScores);
+        
+        this.saveHighScores();
+        
+        // Check if player made it to top 10
+        const rank = this.highScores.findIndex(s => s.name === playerName && s.gold === gold) + 1;
+        if (rank <= this.maxScores) {
+            return rank;
+        }
+        return null;
+    },
+    
+    // Get high scores
+    getHighScores() {
+        return this.highScores;
+    },
+    
+    // Show high scores
+    showHighScores() {
+        const highScores = this.getHighScores();
+        
+        if (highScores.length === 0) {
+            addMessage("No high scores yet. Be the first!");
+            return;
+        }
+        
+        addMessage("🏆 HIGH SCORES 🏆");
+        highScores.forEach((score, index) => {
+            const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
+            const deathInfo = score.deathCause ? ` (${score.deathCause})` : "";
+            addMessage(`${medal} ${score.name}: ${score.gold} gold - ${score.survivedDays} days${deathInfo}`);
+        });
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 🎮 GAME STATE OBJECT - the beating heart of this dark empire
+// ═══════════════════════════════════════════════════════════════
+const game = {
+    state: GameState.MENU,
+    player: null,
+    currentLocation: null,
+    locations: [],
+    items: [],
+    marketPrices: {},
+    gameTick: 0,
+    settings: {
+        soundVolume: 0.7,
+        musicVolume: 0.5,
+        autoSave: true,
+        autoSaveInterval: 300000 // 5 minutes
+    },
+    
+    // Death timer system
+    deathTimer: {
+        isActive: false,
+        startTime: 0,
+        duration: 24 * 60, // 24 hours in minutes
+        warningShown: false
+    },
+    
+    // Game engine properties
+    isRunning: false,
+    lastFrameTime: 0,
+    frameCount: 0,
+    fps: 0,
+    targetFPS: 60,
+    maxFrameTime: 100, // Cap frame time to avoid spiral of death
+    
+    // Modifiers from events
+    marketPriceModifier: 1,
+    travelSpeedModifier: 1,
+
+    // Tracking for periodic updates (prevents double-processing)
+    lastWageProcessedDay: -1,
+    
+    // Initialize game engine
+    init() {
+        TimeSystem.init();
+        EventSystem.init();
+        this.isRunning = true;
+        this.lastFrameTime = performance.now();
+        this.frameCount = 0;
+        this.fps = 0;
+        
+        // Initialize new systems (with safety checks)
+        if (typeof CityReputationSystem !== 'undefined') CityReputationSystem.init();
+        if (typeof CityEventSystem !== 'undefined') CityEventSystem.init();
+        if (typeof MarketPriceHistory !== 'undefined') MarketPriceHistory.init();
+        if (typeof DynamicMarketSystem !== 'undefined') DynamicMarketSystem.init();
+        if (typeof PropertySystem !== 'undefined') PropertySystem.init();
+        if (typeof EmployeeSystem !== 'undefined') EmployeeSystem.init();
+        if (typeof TradeRouteSystem !== 'undefined') TradeRouteSystem.init();
+        
+        // Initialize notification system
+        this.initNotificationSystem();
+        
+        // Initialize overlay system
+        this.initOverlaySystem();
+        
+        // Initialize UI enhancements system
+        if (typeof KeyboardShortcuts !== 'undefined') {
+            KeyboardShortcuts.initialize();
+        }
+        
+        // Initialize PropertyEmployeeUI if it exists
+        if (typeof PropertyEmployeeUI !== 'undefined') {
+            PropertyEmployeeUI.init();
+        }
+    },
+    
+    // Main game loop
+    gameLoop(currentTime) {
+        if (!this.isRunning) return;
+        
+        // Calculate delta time
+        const deltaTime = Math.min(currentTime - this.lastFrameTime, this.maxFrameTime);
+        this.lastFrameTime = currentTime;
+        
+        // Update FPS counter
+        this.frameCount++;
+        if (this.frameCount % 60 === 0) {
+            this.fps = Math.round(1000 / deltaTime);
+        }
+        
+        // Update game systems
+        this.update(deltaTime);
+        
+        // Render
+        this.render();
+        
+        // Continue loop
+        requestAnimationFrame((time) => this.gameLoop(time));
+    },
+    
+    // Update game state
+    update(deltaTime) {
+        if (this.state !== GameState.PLAYING) return;
+        
+        // Update time system
+        const timeAdvanced = TimeSystem.update(deltaTime);
+        
+        // Update event system if time advanced
+        if (timeAdvanced) {
+            EventSystem.update();
+            this.updateMarketPrices();
+            this.checkScheduledEvents();
+            
+            // Update new systems (with safety checks)
+            if (typeof CityEventSystem !== 'undefined') CityEventSystem.updateEvents();
+            if (typeof DynamicMarketSystem !== 'undefined') DynamicMarketSystem.updateMarketPrices();
+
+            // Process property work queues every update
+            if (typeof PropertySystem !== 'undefined') PropertySystem.processWorkQueues();
+
+            // Process daily income/trade only at midnight (hour=0, minute=0)
+            if (TimeSystem.currentTime.hour === 0 && TimeSystem.currentTime.minute === 0) {
+                if (typeof PropertySystem !== 'undefined') PropertySystem.processDailyIncome();
+                TradeRouteSystem.processDailyTrade();
+            }
+
+            // Process weekly wages every 7 days (with tracking to prevent double-processing)
+            if (typeof EmployeeSystem !== 'undefined' && TimeSystem.currentTime.day % 7 === 0) {
+                if (this.lastWageProcessedDay !== TimeSystem.currentTime.day) {
+                    this.lastWageProcessedDay = TimeSystem.currentTime.day;
+                    EmployeeSystem.processWeeklyWages();
+                }
+            }
+            
+            // Update travel system
+            if (typeof TravelSystem !== 'undefined') {
+                TravelSystem.update();
+            }
+            
+            // Check for city events
+            if (this.currentLocation && typeof CityEventSystem !== 'undefined') {
+                CityEventSystem.checkRandomEvents(this.currentLocation.id);
+            }
+            
+            // Check price alerts
+            if (typeof TradingSystem !== 'undefined') {
+                TradingSystem.checkPriceAlerts();
+            }
+            
+            // Update death timer
+            this.updateDeathTimer();
+            
+            this.updatePlayerStatsOverTime = this.updatePlayerStatsOverTime || function() {
+                if (!game.player || !game.player.stats) return;
+                
+                const timeInfo = TimeSystem.getTimeInfo();
+                
+                // Only update every few game minutes to avoid rapid changes
+                if (timeInfo.minute % 5 !== 0) return;
+                
+                // Natural stat changes over time
+                game.player.stats.hunger = Math.max(0, game.player.stats.hunger - 1);
+                game.player.stats.thirst = Math.max(0, game.player.stats.thirst - 2);
+                game.player.stats.stamina = Math.max(0, game.player.stats.stamina - 0.5);
+                
+                // Health effects from hunger/thirst
+                if (game.player.stats.hunger <= 0) {
+                    game.player.stats.health = Math.max(0, game.player.stats.health - 2);
+                    addMessage("⚠️ You're starving! Health decreasing.", 'warning');
+                }
+                
+                if (game.player.stats.thirst <= 0) {
+                    game.player.stats.health = Math.max(0, game.player.stats.health - 3);
+                    addMessage("⚠️ You're dehydrated! Health decreasing.", 'warning');
+                }
+                
+                // Update temporary effects
+                if (game.player.temporaryEffects) {
+                    const currentTime = Date.now();
+                    for (const [stat, effect] of Object.entries(game.player.temporaryEffects)) {
+                        const elapsedMinutes = (currentTime - effect.startTime) / 60000;
+                        if (elapsedMinutes >= effect.duration) {
+                            // Remove expired effect
+                            delete game.player.temporaryEffects[stat];
+                            addMessage(`The effect on ${stat} has worn off.`);
+                        }
+                    }
+                }
+                
+                // Check if player is dead
+                if (game.player.stats.health <= 0) {
+                    handlePlayerDeath();
+                }
+                
+                updatePlayerStats();
+            };
+        }
+        
+        // Update UI
+        this.updateUI();
+        
+        // Auto-save check
+        if (this.settings.autoSave && Date.now() - this.lastSaveTime > this.settings.autoSaveInterval) {
+            this.autoSave();
+        }
+    },
+    
+    // Render game
+    render() {
+        if (this.state !== GameState.PLAYING) return;
+        
+        // Render canvas
+        this.renderGameWorld();
+        
+        // Apply day/night effects
+        this.applyDayNightEffects();
+    },
+    
+    // Render game world on canvas
+    renderGameWorld() {
+        const ctx = elements.ctx;
+        const canvas = elements.gameCanvas;
+        
+        if (!ctx || !canvas) return;
+        
+        // Clear canvas
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Get time info for dynamic rendering
+        const timeInfo = TimeSystem.getTimeInfo();
+        
+        // Draw background based on time of day
+        if (timeInfo.isNight) {
+            ctx.fillStyle = '#0a0a1a';
+        } else if (timeInfo.isEvening) {
+            ctx.fillStyle = '#1a0f0a';
+        } else if (timeInfo.isMorning) {
+            ctx.fillStyle = '#f5f5dc';
+        } else {
+            ctx.fillStyle = '#87ceeb';
+        }
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw time info
+        ctx.fillStyle = timeInfo.isNight ? '#ffffff' : '#000000';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(TimeSystem.getFormattedTime(), 10, 30);
+        
+        // Draw location info
+        if (this.currentLocation) {
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.currentLocation.name, canvas.width / 2, 50);
+            ctx.font = '14px Arial';
+            ctx.fillText(this.currentLocation.description, canvas.width / 2, 80);
+        }
+        
+        // Draw active events
+        const activeEvents = EventSystem.getActiveEvents();
+        if (activeEvents.length > 0) {
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#ffaa00';
+            let yOffset = 30;
+            activeEvents.forEach(event => {
+                ctx.fillText(`📢 ${event.name}`, canvas.width - 10, yOffset);
+                yOffset += 20;
+            });
+        }
+        
+        // Draw player info
+        if (this.player) {
+            ctx.fillStyle = '#4fc3f7';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`💰 ${this.player.gold} gold`, 10, canvas.height - 40);
+            const transport = transportationOptions && transportationOptions[this.player.transportation];
+            const carryCapacity = transport ? transport.carryCapacity : 50;
+            ctx.fillText(`🎒 ${this.player.currentLoad}/${carryCapacity} lbs`, 10, canvas.height - 20);
+        }
+    },
+    
+    // Update market prices based on time and events
+    updateMarketPrices() {
+        const timeInfo = TimeSystem.getTimeInfo();
+        
+        // Base price fluctuations
+        Object.keys(this.marketPrices).forEach(itemId => {
+            if (!this.marketPrices[itemId].basePrice) {
+                this.marketPrices[itemId].basePrice = this.marketPrices[itemId].price;
+            }
+            
+            // Random fluctuation
+            const fluctuation = (Math.random() - 0.5) * 0.1; // ±5% fluctuation
+            let newPrice = this.marketPrices[itemId].basePrice * (1 + fluctuation);
+            
+            // Apply time-based modifiers
+            if (timeInfo.isMorning) {
+                newPrice *= 1.02; // Morning premium
+            } else if (timeInfo.isEvening) {
+                newPrice *= 0.98; // Evening discount
+            }
+            
+            // Apply event modifiers
+            newPrice *= this.marketPriceModifier;
+            
+            this.marketPrices[itemId].price = Math.round(newPrice);
+        });
+    },
+    
+    // Check for scheduled time-based events
+    checkScheduledEvents() {
+        const timeInfo = TimeSystem.getTimeInfo();
+        
+        // Daily market reset
+        if (timeInfo.hour === 6 && timeInfo.minute === 0) {
+            this.resetDailyMarket();
+        }
+        
+        // Weekly special events
+        if (timeInfo.day === 1 && timeInfo.hour === 10 && timeInfo.minute === 0) {
+            EventSystem.triggerEvent('weekly_market');
+        }
+        
+        // Monthly merchant caravan
+        if (timeInfo.day === 15 && timeInfo.hour === 14 && timeInfo.minute === 0) {
+            EventSystem.triggerEvent('merchant_caravan');
+        }
+    },
+    
+    // Reset daily market
+    resetDailyMarket() {
+        // Refresh inventory and prices
+        console.log('Daily market reset');
+        addMessage('The market has refreshed with new goods!');
+    },
+    
+    // Apply day/night visual effects
+    applyDayNightEffects() {
+        const timeInfo = TimeSystem.getTimeInfo();
+        const canvas = elements.gameCanvas;
+        
+        if (!canvas) return;
+        
+        let overlayColor = '';
+        let overlayOpacity = 0;
+        
+        if (timeInfo.isNight) {
+            overlayColor = 'rgba(0, 0, 50, '; // Dark blue tint
+            overlayOpacity = 0.4;
+        } else if (timeInfo.isEvening) {
+            overlayColor = 'rgba(50, 30, 0, '; // Orange tint
+            overlayOpacity = 0.2;
+        } else if (timeInfo.isMorning) {
+            overlayColor = 'rgba(255, 255, 200, '; // Light yellow tint
+            overlayOpacity = 0.1;
+        }
+        
+        canvas.style.filter = overlayColor ? `${overlayColor}${overlayOpacity})` : 'none';
+    },
+    
+    // Update UI elements
+    updateUI() {
+        // Update time display
+        const timeDisplay = document.getElementById('game-time');
+        if (timeDisplay) {
+            timeDisplay.textContent = TimeSystem.getFormattedTime();
+        }
+        
+        // Update time control buttons
+        this.updateTimeControls();
+    },
+    
+    // Update time control button states
+    updateTimeControls() {
+        const buttons = {
+            'pause-btn': TimeSystem.isPaused,
+            'normal-speed-btn': TimeSystem.currentSpeed === 'NORMAL',
+            'fast-speed-btn': TimeSystem.currentSpeed === 'FAST',
+            'very-fast-speed-btn': TimeSystem.currentSpeed === 'VERY_FAST'
+        };
+        
+        Object.entries(buttons).forEach(([id, isActive]) => {
+            const button = document.getElementById(id);
+            if (button) {
+                button.classList.toggle('active', isActive);
+            }
+        });
+    },
+    
+    // Save game state
+    saveState() {
+        return {
+            player: this.player,
+            currentLocation: this.currentLocation,
+            locations: this.locations,
+            items: this.items,
+            marketPrices: this.marketPrices,
+            settings: this.settings,
+            timeState: TimeSystem.currentTime,
+            timeSpeed: TimeSystem.currentSpeed,
+            activeEvents: EventSystem.getActiveEvents(),
+            gameTick: this.gameTick,
+            properties: PropertySystem.getProperties(),
+            employees: EmployeeSystem.getEmployees(),
+            tradeRoutes: TradeRouteSystem.getTradeRoutes(),
+            travelState: typeof TravelSystem !== 'undefined' ? TravelSystem.getState() : null
+        };
+    },
+    
+    // Load game state
+    loadState(saveData) {
+        this.player = saveData.player;
+        this.currentLocation = saveData.currentLocation;
+        this.locations = saveData.locations || [];
+        this.items = saveData.items || [];
+        this.marketPrices = saveData.marketPrices || {};
+        this.settings = saveData.settings || this.settings;
+        this.gameTick = saveData.gameTick || 0;
+        
+        // Restore property system
+        if (saveData.properties) {
+            PropertySystem.loadProperties(saveData.properties);
+        }
+        
+        // Restore employee system
+        if (saveData.employees) {
+            EmployeeSystem.loadEmployees(saveData.employees);
+        }
+        
+        // Restore trade routes
+        if (saveData.tradeRoutes) {
+            TradeRouteSystem.loadTradeRoutes(saveData.tradeRoutes);
+        }
+        
+        // Restore travel system
+        if (saveData.travelState && typeof TravelSystem !== 'undefined') {
+            TravelSystem.loadState(saveData.travelState);
+        }
+        
+        // Restore time system
+        if (saveData.timeState) {
+            TimeSystem.currentTime = saveData.timeState;
+        }
+        if (saveData.timeSpeed) {
+            TimeSystem.setSpeed(saveData.timeSpeed);
+        }
+        
+        // Restore active events
+        if (saveData.activeEvents) {
+            EventSystem.events = saveData.activeEvents;
+        }
+    },
+    
+    // Auto-save functionality
+    lastSaveTime: 0,
+    autoSave() {
+        if (typeof SaveLoadSystem !== 'undefined') {
+            SaveLoadSystem.autoSave();
+        } else {
+            // Fallback to basic auto-save
+            this.lastSaveTime = Date.now();
+            const saveData = this.saveState();
+            try {
+                localStorage.setItem('tradingGameAutoSave', JSON.stringify(saveData));
+            } catch (error) {
+                console.error('Failed to save game data:', error);
+                addMessage('Failed to auto-save game!', 'error');
+            }
+            console.log('Game auto-saved');
+        }
+    },
+    
+    // Start the game engine
+    start() {
+        this.init();
+        requestAnimationFrame((time) => this.gameLoop(time));
+    },
+    
+    // Stop the game engine
+    stop() {
+        this.isRunning = false;
+        
+        // Clean up all event listeners
+        if (typeof EventManager !== 'undefined') {
+            EventManager.removeAllListeners();
+        }
+    }
+};
+
+// 🐴 MEDIEVAL TRANSPORTATION - from walking sadly to riding majestically
+// carry weights in pounds because medieval people didn't do metric
+const transportationOptions = {
+    satchel: {
+        id: 'satchel',
+        name: 'Leather Satchel',
+        price: 0,
+        carryCapacity: 40,
+        description: 'A simple leather satchel for carrying basic supplies.',
+        speedModifier: 1.0,
+        required: false
+    },
+    handCart: {
+        id: 'hand_cart',
+        name: 'Hand Cart',
+        price: 30,
+        carryCapacity: 180,
+        description: 'A small wooden cart that you pull by hand.',
+        speedModifier: 0.8,
+        required: false
+    },
+    mule: {
+        id: 'mule',
+        name: 'Mule',
+        price: 85,
+        carryCapacity: 160,
+        description: 'A sturdy mule for carrying moderate loads over rough terrain.',
+        speedModifier: 0.9,
+        required: false
+    },
+    warhorse: {
+        id: 'warhorse',
+        name: 'Warhorse',
+        price: 180,
+        carryCapacity: 120,
+        description: 'A swift warhorse for quick travel and light loads.',
+        speedModifier: 1.5,
+        required: false
+    },
+    cart: {
+        id: 'cart',
+        name: 'Merchant Cart',
+        price: 220,
+        carryCapacity: 450,
+        description: 'A sturdy wooden cart for heavy loads.',
+        speedModifier: 0.7,
+        required: false,
+        requiresAnimal: true
+    },
+    horseAndCart: {
+        id: 'horse_and_cart',
+        name: 'Horse & Cart',
+        price: 380,
+        carryCapacity: 550,
+        description: 'A horse pulling a cart for balanced speed and capacity.',
+        speedModifier: 1.2,
+        required: false
+    },
+    oxen: {
+        id: 'oxen',
+        name: 'Oxen',
+        price: 120,
+        carryCapacity: 220,
+        description: 'Strong oxen for pulling heavy loads through mud.',
+        speedModifier: 0.6,
+        required: false
+    },
+    oxenAndCart: {
+        id: 'oxen_and_cart',
+        name: 'Oxen & Cart',
+        price: 320,
+        carryCapacity: 750,
+        description: 'Oxen pulling a heavy cart for maximum capacity.',
+        speedModifier: 0.5,
+        required: false
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 🗺️ GAME WORLD SYSTEM - the realm where dreams die and gold lives
+// ═══════════════════════════════════════════════════════════════
+const GameWorld = {
+    // Medieval Map regions
+    regions: {
+        starter: {
+            id: 'starter',
+            name: 'Riverlands',
+            description: 'A peaceful realm perfect for new merchants.',
+            unlockRequirement: null, // Always available
+            goldRequirement: 0
+        },
+        northern: {
+            id: 'northern',
+            name: 'Northern Highlands',
+            description: 'Cold, harsh highlands with valuable furs and iron.',
+            unlockRequirement: 'starter',
+            goldRequirement: 500
+        },
+        eastern: {
+            id: 'eastern',
+            name: 'Eastern Kingdoms',
+            description: 'Rich kingdoms with exotic spices and silks.',
+            unlockRequirement: 'starter',
+            goldRequirement: 750
+        },
+        western: {
+            id: 'western',
+            name: 'Western Marches',
+            description: 'Wild frontiers with untapped resources and ancient ruins.',
+            unlockRequirement: 'starter',
+            goldRequirement: 600
+        },
+        southern: {
+            id: 'southern',
+            name: 'Southern Trade Routes',
+            description: 'Prosperous merchant cities with luxury goods from distant lands.',
+            unlockRequirement: 'northern',
+            goldRequirement: 1000
+        },
+        capital: {
+            id: 'capital',
+            name: 'Royal Capital',
+            description: 'The heart of the kingdom with rare treasures and noble patronage.',
+            unlockRequirement: 'eastern',
+            goldRequirement: 2000
+        }
+    },
+    
+    // Locations - SPOKE LAYOUT radiating from Royal Capital at center
+    // Includes cities, towns, villages, mines, forests, farms, dungeons, caves, inns, ruins, ports
+    locations: {
+        // ═══════════════════════════════════════════════════════════
+        // ROYAL CAPITAL - CENTER HUB (400, 300)
+        // ═══════════════════════════════════════════════════════════
+        royal_capital: {
+            id: 'royal_capital',
+            name: 'Royal Capital',
+            region: 'capital',
+            type: 'capital',
+            description: 'The magnificent seat of the king - all roads lead here. The grand market sells luxury goods and buys rare treasures from across the realm.',
+            population: 10000,
+            marketSize: 'grand',
+            travelCost: { base: 5 },
+            connections: ['ironforge_city', 'jade_harbor', 'greendale', 'stonebridge', 'kings_inn'],
+            mapPosition: { x: 400, y: 300 },
+            // What this location SELLS (produces/has in stock)
+            sells: ['royal_goods', 'luxury_items', 'fine_clothes', 'jewelry', 'silk_garments', 'perfume', 'wine', 'spices'],
+            // What this location BUYS (needs/wants to purchase)
+            buys: ['artifacts', 'rare_gems', 'silk', 'gems', 'gold_bar', 'exotic_goods', 'furs', 'spices']
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // CITIES (6 major cities around the capital)
+        // ═══════════════════════════════════════════════════════════
+        ironforge_city: {
+            id: 'ironforge_city',
+            name: 'Ironforge City',
+            region: 'northern',
+            type: 'city',
+            description: 'A mighty fortress city built around ancient forges. Master smiths craft weapons and armor from raw ore.',
+            population: 3000,
+            marketSize: 'large',
+            travelCost: { base: 8 },
+            connections: ['royal_capital', 'frostholm_village', 'iron_mines', 'northern_outpost'],
+            mapPosition: { x: 400, y: 160 },
+            sells: ['iron_sword', 'steel_sword', 'iron_armor', 'chainmail', 'plate_armor', 'helmet', 'shield', 'iron_bar', 'steel_bar', 'iron_tools'],
+            buys: ['iron_ore', 'coal', 'leather', 'wood', 'gold_ore']
+        },
+        jade_harbor: {
+            id: 'jade_harbor',
+            name: 'Jade Harbor',
+            region: 'eastern',
+            type: 'city',
+            description: 'A prosperous port city where ships bring exotic goods from distant lands. Traders exchange silk, spices, and treasures.',
+            population: 4000,
+            marketSize: 'large',
+            travelCost: { base: 8 },
+            connections: ['royal_capital', 'fishermans_port', 'eastern_farm', 'silk_road_inn'],
+            mapPosition: { x: 560, y: 280 },
+            sells: ['silk', 'spices', 'tea', 'exotic_goods', 'porcelain', 'jade', 'perfume', 'rope', 'canvas', 'salt'],
+            buys: ['fish', 'grain', 'timber', 'furs', 'iron_bar', 'gems', 'wine']
+        },
+        greendale: {
+            id: 'greendale',
+            name: 'Greendale',
+            region: 'starter',
+            type: 'city',
+            description: 'The breadbasket of the realm. Farmers bring wheat and livestock; bakers and brewers turn them into bread and ale.',
+            population: 2500,
+            marketSize: 'large',
+            travelCost: { base: 8 },
+            connections: ['royal_capital', 'vineyard_village', 'wheat_farm', 'riverside_inn'],
+            mapPosition: { x: 400, y: 440 },
+            sells: ['bread', 'ale', 'flour', 'cheese', 'butter', 'eggs', 'meat', 'vegetables', 'livestock'],
+            buys: ['wheat', 'grain', 'milk', 'honey', 'salt', 'herbs', 'wool']
+        },
+        stonebridge: {
+            id: 'stonebridge',
+            name: 'Stonebridge',
+            region: 'western',
+            type: 'city',
+            description: 'An ancient city of master masons. They buy raw stone and timber to craft tools and building materials.',
+            population: 2800,
+            marketSize: 'large',
+            travelCost: { base: 8 },
+            connections: ['royal_capital', 'darkwood_village', 'stone_quarry', 'western_outpost'],
+            mapPosition: { x: 240, y: 300 },
+            sells: ['bricks', 'mortar', 'tools', 'hammer', 'pickaxe', 'nails', 'planks', 'furniture'],
+            buys: ['stone', 'timber', 'wood', 'iron_bar', 'clay', 'coal']
+        },
+        silverkeep: {
+            id: 'silverkeep',
+            name: 'Silverkeep',
+            region: 'northern',
+            type: 'city',
+            description: 'A wealthy city of jewelers and silversmiths. They craft fine jewelry from precious metals and gems.',
+            population: 2200,
+            marketSize: 'large',
+            travelCost: { base: 10 },
+            connections: ['ironforge_city', 'silver_mine', 'mountain_pass_inn'],
+            mapPosition: { x: 280, y: 160 },
+            sells: ['jewelry', 'gemstone', 'mirror', 'crown', 'gold_bar', 'fine_clothes'],
+            buys: ['silver_ore', 'gold_ore', 'gems', 'raw_gems', 'coal']
+        },
+        sunhaven: {
+            id: 'sunhaven',
+            name: 'Sunhaven',
+            region: 'southern',
+            type: 'city',
+            description: 'A beautiful coastal city known for wine, olive oil, and fresh seafood. Fishermen and vintners trade here.',
+            population: 3200,
+            marketSize: 'large',
+            travelCost: { base: 8 },
+            connections: ['greendale', 'sunny_farm', 'coastal_cave', 'lighthouse_inn'],
+            mapPosition: { x: 520, y: 460 },
+            sells: ['wine', 'fish', 'oil', 'salt', 'rope', 'canvas', 'rum'],
+            buys: ['grapes', 'olives', 'wheat', 'timber', 'iron_bar', 'glass']
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // VILLAGES (6 small settlements)
+        // ═══════════════════════════════════════════════════════════
+        frostholm_village: {
+            id: 'frostholm_village',
+            name: 'Frostholm',
+            region: 'northern',
+            type: 'village',
+            description: 'A hardy village of hunters and trappers in the frozen north. They sell furs and winter gear, and need food and tools.',
+            population: 200,
+            marketSize: 'small',
+            travelCost: { base: 10 },
+            connections: ['ironforge_city', 'frozen_cave', 'winterwatch_outpost'],
+            mapPosition: { x: 460, y: 100 },
+            sells: ['furs', 'leather', 'hide', 'winter_clothing', 'meat'],
+            buys: ['bread', 'ale', 'tools', 'rope', 'salt', 'grain']
+        },
+        vineyard_village: {
+            id: 'vineyard_village',
+            name: 'Vineyard Village',
+            region: 'starter',
+            type: 'village',
+            description: 'A peaceful village of vintners. They grow grapes and produce fine wines and honey.',
+            population: 300,
+            marketSize: 'small',
+            travelCost: { base: 6 },
+            connections: ['greendale', 'orchard_farm'],
+            mapPosition: { x: 320, y: 480 },
+            sells: ['wine', 'grapes', 'honey', 'wax', 'cider'],
+            buys: ['bread', 'cheese', 'tools', 'glass', 'barrels']
+        },
+        darkwood_village: {
+            id: 'darkwood_village',
+            name: 'Darkwood',
+            region: 'western',
+            type: 'village',
+            description: 'A logging village. Lumberjacks fell trees and sell raw timber. The sawmill buys logs to make planks.',
+            population: 180,
+            marketSize: 'small',
+            travelCost: { base: 10 },
+            connections: ['stonebridge', 'ancient_forest', 'hermit_grove'],
+            mapPosition: { x: 160, y: 240 },
+            sells: ['timber', 'planks', 'wood', 'mushrooms', 'herbs', 'rope'],
+            buys: ['axe', 'food', 'ale', 'nails', 'iron_tools']
+        },
+        riverwood: {
+            id: 'riverwood',
+            name: 'Riverwood',
+            region: 'starter',
+            type: 'village',
+            description: 'A quiet fishing hamlet by the Silver River. Fishermen sell fresh catch and need bait and nets.',
+            population: 150,
+            marketSize: 'small',
+            travelCost: { base: 8 },
+            connections: ['greendale', 'river_cave'],
+            mapPosition: { x: 480, y: 500 },
+            sells: ['fish', 'pearls', 'timber', 'rope'],
+            buys: ['bread', 'ale', 'salt', 'fishing_rod', 'canvas']
+        },
+        hillcrest: {
+            id: 'hillcrest',
+            name: 'Hillcrest',
+            region: 'eastern',
+            type: 'village',
+            description: 'A village of shepherds and dairy farmers. They sell wool, cheese, and leather.',
+            population: 220,
+            marketSize: 'small',
+            travelCost: { base: 8 },
+            connections: ['jade_harbor', 'eastern_farm', 'shepherds_inn'],
+            mapPosition: { x: 620, y: 200 },
+            sells: ['wool', 'cheese', 'leather', 'milk', 'butter', 'wool_cloth'],
+            buys: ['bread', 'salt', 'dye', 'tools', 'grain']
+        },
+        miners_rest: {
+            id: 'miners_rest',
+            name: "Miner's Rest",
+            region: 'western',
+            type: 'village',
+            description: 'A small settlement serving the nearby mines. Miners rest here and trade coal and tools.',
+            population: 120,
+            marketSize: 'small',
+            travelCost: { base: 8 },
+            connections: ['stone_quarry', 'deep_mine'],
+            mapPosition: { x: 140, y: 380 },
+            sells: ['coal', 'ale', 'simple_tools', 'torch', 'lamp'],
+            buys: ['food', 'bread', 'meat', 'pickaxe', 'rope', 'bandages']
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // MINES (4 mining locations) - Sell raw ore, buy tools and supplies
+        // ═══════════════════════════════════════════════════════════
+        iron_mines: {
+            id: 'iron_mines',
+            name: 'Iron Mines',
+            region: 'northern',
+            type: 'mine',
+            description: 'Deep mines producing iron ore and coal. Miners need tools, food, and light sources.',
+            population: 80,
+            marketSize: 'small',
+            travelCost: { base: 12 },
+            connections: ['ironforge_city', 'deep_cavern'],
+            mapPosition: { x: 340, y: 100 },
+            sells: ['iron_ore', 'coal', 'stone'],
+            buys: ['pickaxe', 'torch', 'lamp', 'rope', 'food', 'ale', 'bandages']
+        },
+        silver_mine: {
+            id: 'silver_mine',
+            name: 'Silver Mine',
+            region: 'northern',
+            type: 'mine',
+            description: 'A lucrative silver mine. Miners extract precious silver ore and occasionally find gems.',
+            population: 60,
+            marketSize: 'small',
+            travelCost: { base: 14 },
+            connections: ['silverkeep', 'crystal_cave'],
+            mapPosition: { x: 200, y: 100 },
+            sells: ['silver_ore', 'gems', 'stone'],
+            buys: ['pickaxe', 'torch', 'food', 'ale', 'rope', 'bandages']
+        },
+        deep_mine: {
+            id: 'deep_mine',
+            name: 'Deep Mine',
+            region: 'western',
+            type: 'mine',
+            description: 'An incredibly deep mine where brave miners seek gold and rare gems. Very dangerous but lucrative.',
+            population: 40,
+            marketSize: 'tiny',
+            travelCost: { base: 18 },
+            connections: ['miners_rest', 'shadow_dungeon'],
+            mapPosition: { x: 100, y: 420 },
+            sells: ['gold_ore', 'gems', 'rare_gems', 'coal'],
+            buys: ['steel_pickaxe', 'lamp', 'rope', 'food', 'bandages', 'ale']
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // FORESTS (5 forest locations) - Sell gathered goods, buy tools
+        // ═══════════════════════════════════════════════════════════
+        ancient_forest: {
+            id: 'ancient_forest',
+            name: 'Ancient Forest',
+            region: 'western',
+            type: 'forest',
+            description: 'A primordial forest where foragers gather rare herbs and ancient timber. Druids trade mystical goods.',
+            population: 30,
+            marketSize: 'tiny',
+            travelCost: { base: 15 },
+            connections: ['darkwood_village', 'druid_grove', 'forest_dungeon'],
+            mapPosition: { x: 120, y: 180 },
+            sells: ['herbs', 'medical_plants', 'mushrooms', 'timber', 'berries'],
+            buys: ['bread', 'cheese', 'ale', 'axe', 'rope']
+        },
+        whispering_woods: {
+            id: 'whispering_woods',
+            name: 'Whispering Woods',
+            region: 'eastern',
+            type: 'forest',
+            description: 'A mystical forest where rare magical herbs grow. Herbalists and alchemists gather here.',
+            population: 20,
+            marketSize: 'tiny',
+            travelCost: { base: 12 },
+            connections: ['hillcrest', 'fairy_cave'],
+            mapPosition: { x: 680, y: 160 },
+            sells: ['herbs', 'medical_plants', 'mushrooms', 'honey', 'berries'],
+            buys: ['bread', 'salt', 'glass', 'cloth']
+        },
+        hunters_wood: {
+            id: 'hunters_wood',
+            name: "Hunter's Wood",
+            region: 'starter',
+            type: 'forest',
+            description: 'A forest teeming with game. Hunters sell pelts, meat, and leather. They need arrows and food.',
+            population: 25,
+            marketSize: 'small',
+            travelCost: { base: 10 },
+            connections: ['vineyard_village', 'hunting_lodge'],
+            mapPosition: { x: 260, y: 520 },
+            sells: ['furs', 'leather', 'hide', 'meat', 'mutton'],
+            buys: ['bow', 'arrows', 'bread', 'ale', 'rope', 'salt']
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // FARMS (4 farming locations) - Sell crops, buy tools and seeds
+        // ═══════════════════════════════════════════════════════════
+        wheat_farm: {
+            id: 'wheat_farm',
+            name: 'Golden Wheat Farm',
+            region: 'starter',
+            type: 'farm',
+            description: 'Vast golden fields of wheat. Farmers sell raw wheat and grain. Mills buy wheat to make flour.',
+            population: 50,
+            marketSize: 'small',
+            travelCost: { base: 6 },
+            connections: ['greendale', 'riverside_inn'],
+            mapPosition: { x: 340, y: 380 },
+            sells: ['wheat', 'grain', 'eggs', 'vegetables', 'straw'],
+            buys: ['scythe', 'tools', 'seeds', 'salt', 'cloth']
+        },
+        eastern_farm: {
+            id: 'eastern_farm',
+            name: 'Sunrise Farm',
+            region: 'eastern',
+            type: 'farm',
+            description: 'A farm growing exotic eastern crops - tea, rice, and silkworms. Trades with Jade Harbor.',
+            population: 45,
+            marketSize: 'small',
+            travelCost: { base: 8 },
+            connections: ['jade_harbor', 'hillcrest'],
+            mapPosition: { x: 620, y: 340 },
+            sells: ['tea', 'silk', 'vegetables', 'herbs', 'eggs'],
+            buys: ['tools', 'seeds', 'cloth', 'salt', 'iron_tools']
+        },
+        orchard_farm: {
+            id: 'orchard_farm',
+            name: 'Orchard Farm',
+            region: 'starter',
+            type: 'farm',
+            description: 'Beautiful orchards producing apples, pears, and cider. Beekeepers also sell honey here.',
+            population: 35,
+            marketSize: 'small',
+            travelCost: { base: 6 },
+            connections: ['vineyard_village', 'hunters_wood'],
+            mapPosition: { x: 220, y: 480 },
+            sells: ['apples', 'fruits', 'cider', 'honey', 'wax'],
+            buys: ['tools', 'seeds', 'barrels', 'cloth']
+        },
+        sunny_farm: {
+            id: 'sunny_farm',
+            name: 'Sunny Meadows',
+            region: 'southern',
+            type: 'farm',
+            description: 'Sun-drenched meadows growing olives and grapes. Produces olive oil and supplies Sunhaven.',
+            population: 40,
+            marketSize: 'small',
+            travelCost: { base: 8 },
+            connections: ['sunhaven', 'lighthouse_inn'],
+            mapPosition: { x: 580, y: 520 },
+            sells: ['grapes', 'oil', 'vegetables', 'herbs', 'honey'],
+            buys: ['tools', 'seeds', 'barrels', 'salt', 'cloth']
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // DUNGEONS (2) & RUINS (1) - Sell artifacts, buy supplies
+        // ═══════════════════════════════════════════════════════════
+        shadow_dungeon: {
+            id: 'shadow_dungeon',
+            name: 'Shadow Dungeon',
+            region: 'western',
+            type: 'dungeon',
+            description: 'A terrifying dungeon where adventurers find ancient treasures. Dangerous but profitable.',
+            population: 0,
+            marketSize: 'tiny',
+            travelCost: { base: 20 },
+            connections: ['deep_mine'],
+            mapPosition: { x: 60, y: 480 },
+            sells: ['artifacts', 'gems', 'gold_bar', 'rare_gems'],
+            buys: ['torch', 'lamp', 'rope', 'bandages', 'food', 'weapons']
+        },
+        forest_dungeon: {
+            id: 'forest_dungeon',
+            name: 'Overgrown Crypt',
+            region: 'western',
+            type: 'dungeon',
+            description: 'An ancient crypt overtaken by forest. Treasure hunters find relics and enchanted items.',
+            population: 0,
+            marketSize: 'tiny',
+            travelCost: { base: 18 },
+            connections: ['ancient_forest'],
+            mapPosition: { x: 80, y: 120 },
+            sells: ['artifacts', 'old_books', 'gems', 'jewelry'],
+            buys: ['torch', 'rope', 'bandages', 'food', 'weapons']
+        },
+        ruins_of_eldoria: {
+            id: 'ruins_of_eldoria',
+            name: 'Ruins of Eldoria',
+            region: 'northern',
+            type: 'ruins',
+            description: 'The crumbling remains of an ancient elven city. Scholars and treasure hunters trade artifacts.',
+            population: 10,
+            marketSize: 'tiny',
+            travelCost: { base: 16 },
+            connections: ['winterwatch_outpost', 'frozen_cave'],
+            mapPosition: { x: 540, y: 60 },
+            sells: ['artifacts', 'old_books', 'crystals', 'parchment'],
+            buys: ['torch', 'food', 'tools', 'ink', 'parchment']
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // CAVES (6 cave locations) - Sell gathered cave goods
+        // ═══════════════════════════════════════════════════════════
+        deep_cavern: {
+            id: 'deep_cavern',
+            name: 'Deep Cavern',
+            region: 'northern',
+            type: 'cave',
+            description: 'A vast underground cavern where explorers find mushrooms and crystal formations.',
+            population: 15,
+            marketSize: 'tiny',
+            travelCost: { base: 14 },
+            connections: ['iron_mines'],
+            mapPosition: { x: 300, y: 60 },
+            sells: ['mushrooms', 'crystals', 'stone'],
+            buys: ['torch', 'lamp', 'rope', 'food']
+        },
+        frozen_cave: {
+            id: 'frozen_cave',
+            name: 'Frozen Cave',
+            region: 'northern',
+            type: 'cave',
+            description: 'An icy cave with beautiful frozen formations and rare ice crystals.',
+            population: 5,
+            marketSize: 'tiny',
+            travelCost: { base: 16 },
+            connections: ['frostholm_village', 'ruins_of_eldoria'],
+            mapPosition: { x: 520, y: 40 },
+            sells: ['crystals', 'fish', 'ice_goods'],
+            buys: ['torch', 'food', 'furs', 'ale']
+        },
+        crystal_cave: {
+            id: 'crystal_cave',
+            name: 'Crystal Cave',
+            region: 'northern',
+            type: 'cave',
+            description: 'A dazzling cave filled with natural crystal formations. Collectors pay well for rare specimens.',
+            population: 10,
+            marketSize: 'tiny',
+            travelCost: { base: 12 },
+            connections: ['silver_mine'],
+            mapPosition: { x: 140, y: 60 },
+            sells: ['crystals', 'gems', 'mushrooms', 'stone'],
+            buys: ['torch', 'lamp', 'rope', 'pickaxe', 'food']
+        },
+        river_cave: {
+            id: 'river_cave',
+            name: 'River Cave',
+            region: 'starter',
+            type: 'cave',
+            description: 'A cave carved by an underground river. Divers find pearls and rare cave fish in its depths.',
+            population: 8,
+            marketSize: 'tiny',
+            travelCost: { base: 10 },
+            connections: ['riverwood'],
+            mapPosition: { x: 540, y: 540 },
+            sells: ['pearls', 'fish', 'stone', 'mushrooms'],
+            buys: ['torch', 'rope', 'food', 'ale']
+        },
+        coastal_cave: {
+            id: 'coastal_cave',
+            name: 'Coastal Cave',
+            region: 'southern',
+            type: 'cave',
+            description: 'A sea cave rumored to hold pirate treasure. Divers find pearls, coral, and occasional gold coins.',
+            population: 5,
+            marketSize: 'tiny',
+            travelCost: { base: 12 },
+            connections: ['sunhaven', 'smugglers_cove'],
+            mapPosition: { x: 640, y: 500 },
+            sells: ['pearls', 'gems', 'gold_bar', 'artifacts'],
+            buys: ['torch', 'rope', 'food', 'weapons']
+        },
+        fairy_cave: {
+            id: 'fairy_cave',
+            name: 'Fairy Grotto',
+            region: 'eastern',
+            type: 'cave',
+            description: 'A magical cave where fairies are said to dwell. Rare glowing mushrooms and enchanted herbs grow here.',
+            population: 0,
+            marketSize: 'tiny',
+            travelCost: { base: 14 },
+            connections: ['whispering_woods'],
+            mapPosition: { x: 720, y: 120 },
+            sells: ['mushrooms', 'herbs', 'medical_plants', 'crystals', 'honey'],
+            buys: ['bread', 'cheese', 'cloth', 'glass']
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // INNS (6 rest stops and taverns)
+        // ═══════════════════════════════════════════════════════════
+        kings_inn: {
+            id: 'kings_inn',
+            name: "King's Rest Inn",
+            region: 'capital',
+            type: 'inn',
+            description: 'A luxurious inn near the capital, favored by nobles. Serves fine wines and gourmet meals.',
+            population: 30,
+            marketSize: 'small',
+            travelCost: { base: 5 },
+            connections: ['royal_capital', 'silk_road_inn'],
+            mapPosition: { x: 460, y: 360 },
+            sells: ['wine', 'ale', 'bread', 'cheese', 'meat', 'perfume'],
+            buys: ['grapes', 'wheat', 'milk', 'eggs', 'spices', 'honey']
+        },
+        silk_road_inn: {
+            id: 'silk_road_inn',
+            name: 'Silk Road Inn',
+            region: 'eastern',
+            type: 'inn',
+            description: 'A famous waystation for traveling merchants. Serves exotic eastern dishes and tea.',
+            population: 50,
+            marketSize: 'medium',
+            travelCost: { base: 6 },
+            connections: ['jade_harbor', 'kings_inn'],
+            mapPosition: { x: 520, y: 360 },
+            sells: ['tea', 'ale', 'bread', 'spices', 'exotic_goods'],
+            buys: ['silk', 'wheat', 'vegetables', 'herbs', 'meat']
+        },
+        riverside_inn: {
+            id: 'riverside_inn',
+            name: 'Riverside Inn',
+            region: 'starter',
+            type: 'inn',
+            description: 'A cozy inn by the river, perfect for weary travelers. Fresh fish and cold ale served daily.',
+            population: 25,
+            marketSize: 'small',
+            travelCost: { base: 6 },
+            connections: ['greendale', 'wheat_farm'],
+            mapPosition: { x: 380, y: 500 },
+            sells: ['fish', 'ale', 'bread', 'cheese', 'cider'],
+            buys: ['wheat', 'vegetables', 'salt', 'eggs', 'honey']
+        },
+        mountain_pass_inn: {
+            id: 'mountain_pass_inn',
+            name: 'Mountain Pass Inn',
+            region: 'northern',
+            type: 'inn',
+            description: 'A sturdy inn at a treacherous mountain pass. Hot stew and warm fires for cold travelers.',
+            population: 20,
+            marketSize: 'small',
+            travelCost: { base: 10 },
+            connections: ['silverkeep', 'northern_outpost'],
+            mapPosition: { x: 220, y: 200 },
+            sells: ['ale', 'bread', 'meat', 'furs', 'torch', 'rope'],
+            buys: ['wheat', 'vegetables', 'coal', 'wood', 'salt']
+        },
+        shepherds_inn: {
+            id: 'shepherds_inn',
+            name: "Shepherd's Rest",
+            region: 'eastern',
+            type: 'inn',
+            description: 'A rustic inn popular with shepherds and farmers. Famous for lamb stew and local cheese.',
+            population: 15,
+            marketSize: 'small',
+            travelCost: { base: 8 },
+            connections: ['hillcrest'],
+            mapPosition: { x: 680, y: 260 },
+            sells: ['meat', 'cheese', 'ale', 'bread', 'wool', 'leather'],
+            buys: ['wheat', 'salt', 'vegetables', 'herbs', 'grain']
+        },
+        lighthouse_inn: {
+            id: 'lighthouse_inn',
+            name: 'Lighthouse Inn',
+            region: 'southern',
+            type: 'inn',
+            description: 'An inn built around an old lighthouse. Famous for fresh seafood and sailors\' tales.',
+            population: 20,
+            marketSize: 'small',
+            travelCost: { base: 8 },
+            connections: ['sunhaven', 'sunny_farm'],
+            mapPosition: { x: 640, y: 440 },
+            sells: ['fish', 'ale', 'bread', 'salt', 'rope', 'canvas'],
+            buys: ['wheat', 'vegetables', 'oil', 'grapes', 'timber']
+        },
+        hunting_lodge: {
+            id: 'hunting_lodge',
+            name: 'Hunting Lodge',
+            region: 'starter',
+            type: 'inn',
+            description: 'A rustic lodge for hunters and adventurers. Sells game meat and hunting supplies.',
+            population: 15,
+            marketSize: 'small',
+            travelCost: { base: 8 },
+            connections: ['hunters_wood'],
+            mapPosition: { x: 200, y: 560 },
+            sells: ['meat', 'furs', 'leather', 'ale', 'bow', 'arrows'],
+            buys: ['bread', 'salt', 'rope', 'herbs', 'bandages']
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // OUTPOSTS (3 frontier locations)
+        // ═══════════════════════════════════════════════════════════
+        northern_outpost: {
+            id: 'northern_outpost',
+            name: 'Northern Outpost',
+            region: 'northern',
+            type: 'outpost',
+            description: 'A military outpost guarding the northern frontier. Soldiers trade weapons and supplies.',
+            population: 100,
+            marketSize: 'small',
+            travelCost: { base: 12 },
+            connections: ['ironforge_city', 'mountain_pass_inn'],
+            mapPosition: { x: 340, y: 200 },
+            sells: ['iron_sword', 'shield', 'helmet', 'chainmail', 'bandages', 'torch'],
+            buys: ['food', 'bread', 'meat', 'ale', 'furs', 'leather', 'coal']
+        },
+        winterwatch_outpost: {
+            id: 'winterwatch_outpost',
+            name: 'Winterwatch',
+            region: 'northern',
+            type: 'outpost',
+            description: 'The northernmost outpost, guarding against wilderness threats. Soldiers buy furs and sell weapons.',
+            population: 80,
+            marketSize: 'small',
+            travelCost: { base: 14 },
+            connections: ['frostholm_village', 'ruins_of_eldoria'],
+            mapPosition: { x: 480, y: 40 },
+            sells: ['iron_sword', 'shield', 'iron_armor', 'rope', 'torch', 'bandages'],
+            buys: ['furs', 'food', 'meat', 'ale', 'coal', 'wood']
+        },
+        western_outpost: {
+            id: 'western_outpost',
+            name: 'Western Watch',
+            region: 'western',
+            type: 'outpost',
+            description: 'An outpost watching the wild western frontier. Scouts trade survival gear and maps.',
+            population: 70,
+            marketSize: 'small',
+            travelCost: { base: 12 },
+            connections: ['stonebridge', 'stone_quarry'],
+            mapPosition: { x: 160, y: 340 },
+            sells: ['iron_sword', 'bow', 'arrows', 'rope', 'torch', 'bandages'],
+            buys: ['food', 'bread', 'ale', 'leather', 'timber', 'coal']
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // PORTS (2 water locations)
+        // ═══════════════════════════════════════════════════════════
+        fishermans_port: {
+            id: 'fishermans_port',
+            name: "Fisherman's Port",
+            region: 'eastern',
+            type: 'port',
+            description: 'A bustling fishing port with the freshest catch. Buy fish and salt, sell bread and ale.',
+            population: 300,
+            marketSize: 'medium',
+            travelCost: { base: 8 },
+            connections: ['jade_harbor', 'smugglers_cove'],
+            mapPosition: { x: 680, y: 340 },
+            sells: ['fish', 'salt', 'rope', 'canvas', 'pearls', 'oil'],
+            buys: ['bread', 'ale', 'timber', 'iron_bar', 'cloth', 'grain']
+        },
+        smugglers_cove: {
+            id: 'smugglers_cove',
+            name: "Smuggler's Cove",
+            region: 'eastern',
+            type: 'port',
+            description: 'A hidden cove where... questionable goods change hands. Rare items at inflated prices.',
+            population: 60,
+            marketSize: 'small',
+            travelCost: { base: 14 },
+            connections: ['fishermans_port', 'coastal_cave'],
+            mapPosition: { x: 720, y: 420 },
+            sells: ['exotic_goods', 'spices', 'rum', 'gems', 'silk', 'artifacts'],
+            buys: ['gold_bar', 'jewelry', 'weapons', 'furs', 'rare_gems']
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // SPECIAL LOCATIONS
+        // ═══════════════════════════════════════════════════════════
+        hermit_grove: {
+            id: 'hermit_grove',
+            name: "Hermit's Grove",
+            region: 'western',
+            type: 'forest',
+            description: 'A mysterious clearing where a wise hermit trades rare herbs and ancient knowledge.',
+            population: 5,
+            marketSize: 'tiny',
+            travelCost: { base: 15 },
+            connections: ['darkwood_village'],
+            mapPosition: { x: 100, y: 280 },
+            sells: ['herbs', 'medical_plants', 'mushrooms', 'honey', 'berries'],
+            buys: ['bread', 'cheese', 'cloth', 'parchment', 'ink']
+        },
+        druid_grove: {
+            id: 'druid_grove',
+            name: 'Druid Grove',
+            region: 'western',
+            type: 'forest',
+            description: 'A sacred grove tended by mysterious druids. They trade rare healing herbs and enchanted seeds.',
+            population: 15,
+            marketSize: 'tiny',
+            travelCost: { base: 16 },
+            connections: ['ancient_forest'],
+            mapPosition: { x: 60, y: 220 },
+            sells: ['medical_plants', 'herbs', 'honey', 'berries', 'mushrooms'],
+            buys: ['bread', 'fruit', 'vegetables', 'cloth', 'glass']
+        },
+        stone_quarry: {
+            id: 'stone_quarry',
+            name: 'Stone Quarry',
+            region: 'western',
+            type: 'mine',
+            description: 'A massive quarry producing the finest building stone. Workers need tools and food.',
+            population: 90,
+            marketSize: 'medium',
+            travelCost: { base: 10 },
+            connections: ['stonebridge', 'western_outpost', 'miners_rest'],
+            mapPosition: { x: 180, y: 420 },
+            sells: ['stone', 'clay', 'sand', 'bricks'],
+            buys: ['pickaxe', 'tools', 'food', 'ale', 'rope', 'bandages']
+        }
+    },
+    
+    // Initialize game world
+    init() {
+        console.log('🌍 Initializing GameWorld...');
+        this.unlockedRegions = ['starter', 'capital', 'northern', 'eastern', 'western', 'southern']; // All regions available
+        this.visitedLocations = ['greendale']; // Start at Greendale (starter city)
+        this.currentRegion = 'starter';
+
+        // Try to setup market prices (may fail if ItemDatabase not loaded)
+        try {
+            this.setupMarketPrices();
+        } catch (error) {
+            console.error('❌ setupMarketPrices failed:', error.message);
+        }
+
+        // Initialize new systems (wrap each in try-catch)
+        try {
+            if (typeof CityReputationSystem !== 'undefined') {
+                CityReputationSystem.init();
+                console.log('✅ CityReputationSystem initialized');
+            }
+        } catch (error) {
+            console.error('❌ CityReputationSystem.init failed:', error.message);
+        }
+
+        try {
+            if (typeof CityEventSystem !== 'undefined') {
+                CityEventSystem.init();
+                console.log('✅ CityEventSystem initialized');
+            }
+        } catch (error) {
+            console.error('❌ CityEventSystem.init failed:', error.message);
+        }
+
+        try {
+            if (typeof MarketPriceHistory !== 'undefined') {
+                MarketPriceHistory.init();
+                console.log('✅ MarketPriceHistory initialized');
+            }
+        } catch (error) {
+            console.error('❌ MarketPriceHistory.init failed:', error.message);
+        }
+
+        try {
+            if (typeof DynamicMarketSystem !== 'undefined') {
+                DynamicMarketSystem.init();
+                console.log('✅ DynamicMarketSystem initialized');
+            }
+        } catch (error) {
+            console.error('❌ DynamicMarketSystem.init failed:', error.message);
+        }
+
+        console.log('✅ GameWorld initialization complete');
+    },
+    
+    // Setup initial market prices for all locations
+    setupMarketPrices() {
+        // Check if ItemDatabase is loaded using try-catch
+        try {
+            if (!window.ItemDatabase) {
+                throw new Error('ItemDatabase not on window object');
+            }
+            console.log('✅ ItemDatabase is available, setting up market prices...');
+        } catch (error) {
+            console.error('❌ ItemDatabase is not loaded! Skipping market setup.');
+            console.error('Error:', error.message);
+            console.error('This means item-database.js did not load properly.');
+            console.error('Market prices will not be available.');
+            // Set empty market prices to prevent further errors
+            Object.values(this.locations).forEach(location => {
+                location.marketPrices = {};
+            });
+            return;
+        }
+
+        Object.values(this.locations).forEach(location => {
+            location.marketPrices = {};
+
+            // Base items available everywhere
+            const baseItems = ['food', 'water', 'bread'];
+            baseItems.forEach(itemId => {
+                const item = ItemDatabase.getItem(itemId);
+                if (item) {
+                    location.marketPrices[itemId] = {
+                        price: ItemDatabase.calculatePrice(itemId),
+                        stock: Math.floor(Math.random() * 20) + 10
+                    };
+                }
+            });
+            
+            // Specialties with better prices - check if specialties array exists first
+            if (location.specialties && Array.isArray(location.specialties)) {
+                location.specialties.forEach(specialty => {
+                    const item = ItemDatabase.getItem(specialty);
+                    if (item) {
+                        location.marketPrices[specialty] = {
+                            price: ItemDatabase.calculatePrice(specialty, { locationMultiplier: 0.8 }), // 20% discount for specialties
+                            stock: Math.floor(Math.random() * 15) + 5
+                        };
+                    }
+                });
+            }
+            
+            // Add random additional items based on location type
+            this.addRandomMarketItems(location);
+            
+            // Ensure ALL items from ItemDatabase are available with proper stock
+            Object.keys(ItemDatabase.items).forEach(itemId => {
+                if (!location.marketPrices[itemId]) {
+                    const item = ItemDatabase.getItem(itemId);
+                    if (item) {
+                        // Calculate stock based on location type and item rarity
+                        let baseStock = 5;
+                        if (location.type === 'city') baseStock = 15;
+                        else if (location.type === 'town') baseStock = 10;
+                        else if (location.type === 'village') baseStock = 5;
+                        
+                        // Adjust stock based on item rarity (rarity is now a string like 'common')
+                        if (item.rarity === 'common') baseStock *= 2;
+                        else if (item.rarity === 'uncommon') baseStock *= 1.5;
+                        else if (item.rarity === 'rare') baseStock *= 1;
+                        else if (item.rarity === 'epic') baseStock *= 0.5;
+                        else if (item.rarity === 'legendary') baseStock *= 0.2;
+                        
+                        location.marketPrices[itemId] = {
+                            price: ItemDatabase.calculatePrice(itemId),
+                            stock: Math.max(1, Math.floor(baseStock + Math.random() * 10))
+                        };
+                    }
+                }
+            });
+        });
+    },
+    
+    // Add random items to market based on location type
+    addRandomMarketItems(location) {
+        const locationItemPools = {
+            village: ['herbs', 'logs', 'stone', 'seeds', 'wool', 'clay', 'wood', 'food', 'water', 'bread', 'vegetables'],
+            town: ['meat', 'fish', 'vegetables', 'fruits', 'cheese', 'tools', 'arrows', 'grain', 'ale', 'mead', 'wool', 'timber', 'bread'],
+            city: ['iron_ore', 'copper_ore', 'tin', 'coal', 'hammer', 'axe', 'pickaxe', 'sword', 'spear', 'bow', 'bricks', 'mortar', 'nails', 'armor', 'steel_bar', 'iron_bar', 'gems', 'silk']
+        };
+        
+        const itemPool = locationItemPools[location.type] || locationItemPools.town;
+        const numAdditionalItems = Math.floor(Math.random() * 10) + 5; // Increased to 5-15 additional items
+        
+        for (let i = 0; i < numAdditionalItems; i++) {
+            const randomItemId = itemPool[Math.floor(Math.random() * itemPool.length)];
+            const item = ItemDatabase.getItem(randomItemId);
+            
+            if (item && !location.marketPrices[randomItemId]) {
+                location.marketPrices[randomItemId] = {
+                    price: ItemDatabase.calculatePrice(randomItemId),
+                    stock: Math.floor(Math.random() * 20) + 10 // Increased stock
+                };
+            }
+        }
+    },
+    
+    // Get base price for an item type
+    getBasePrice(itemType) {
+        const basePrices = {
+            // Consumables
+            food: 5,
+            water: 2,
+            bread: 3,
+            fish: 8,
+            meat: 12,
+            vegetables: 6,
+            cheese: 15,
+            fruits: 10,
+            ale: 10,
+            mead: 18,
+            wine: 25,
+            tea: 20,
+            honey: 15,
+            grain: 6,
+            herbs: 8,
+            medical_plants: 30,
+
+            // Basic resources
+            wood: 8,
+            logs: 6,
+            timber: 12,
+            stone: 5,
+            clay: 5,
+            seeds: 4,
+            wool: 12,
+            bricks: 15,
+            mortar: 8,
+            coal: 6,
+            trade_goods: 25,
+
+            // Ores and metals
+            iron_ore: 12,
+            copper_ore: 10,
+            tin: 18,
+            iron_bar: 35,
+            steel_bar: 100,
+            minerals: 45,
+
+            // Tools
+            basic_tools: 15,
+            tools: 25,
+            hammer: 15,
+            axe: 20,
+            pickaxe: 25,
+            nails: 12,
+
+            // Weapons and armor
+            weapons: 80,
+            armor: 120,
+            sword: 50,
+            spear: 30,
+            bow: 40,
+            arrows: 10,
+
+            // Livestock
+            livestock: 50,
+
+            // Luxury goods
+            luxury_goods: 200,
+            luxury_items: 200,
+            furs: 35,
+            winter_clothing: 60,
+            silk: 150,
+            spices: 40,
+            exotic_goods: 120,
+            gems: 150,
+            rare_gems: 800,
+            crystals: 300,
+            jade: 400,
+            porcelain: 250,
+            ice_goods: 30,
+            magic_items: 500,
+
+            // Royal/Imperial goods
+            royal_goods: 300,
+            imperial_goods: 600,
+            documents: 100,
+            services: 75,
+            information: 50,
+            artifacts: 1000,
+            rare_treasures: 2000,
+            royal_favors: 5000,
+            imperial_favors: 5000
+        };
+
+        return basePrices[itemType] || 50;
+    },
+    
+    // Check if a region is unlocked
+    isRegionUnlocked(regionId) {
+        return this.unlockedRegions.includes(regionId);
+    },
+    
+    // Unlock a new region
+    unlockRegion(regionId) {
+        if (!this.isRegionUnlocked(regionId)) {
+            const region = this.regions[regionId];
+            if (region && this.canUnlockRegion(regionId)) {
+                this.unlockedRegions.push(regionId);
+                addMessage(`🎉 New region unlocked: ${region.name}!`);
+                return true;
+            }
+        }
+        return false;
+    },
+    
+    // Check if player can unlock a region
+    canUnlockRegion(regionId) {
+        const region = this.regions[regionId];
+        if (!region) return false;
+        
+        // Check if required region is unlocked
+        if (region.unlockRequirement && !this.isRegionUnlocked(region.unlockRequirement)) {
+            return false;
+        }
+        
+        // Check gold requirement
+        if (game.player && game.player.gold >= region.goldRequirement) {
+            return true;
+        }
+        
+        return false;
+    },
+    
+    // Get available travel destinations from current location
+    getAvailableDestinations() {
+        const currentLocation = this.locations[game.currentLocation.id];
+        if (!currentLocation) return [];
+        
+        return currentLocation.connections
+            .map(destId => this.locations[destId])
+            .filter(dest => dest && this.isRegionUnlocked(dest.region))
+            .map(dest => ({
+                ...dest,
+                travelCost: this.calculateTravelCost(game.currentLocation.id, dest.id),
+                travelTime: this.calculateTravelTime(game.currentLocation.id, dest.id)
+            }));
+    },
+    
+    // Calculate travel cost between locations
+    calculateTravelCost(fromId, toId) {
+        const fromLocation = this.locations[fromId];
+        const toLocation = this.locations[toId];
+        
+        if (!fromLocation || !toLocation) return 0;
+        
+        let baseCost = (fromLocation.travelCost.base + toLocation.travelCost.base) / 2;
+        
+        // Apply transportation modifier
+        const transport = transportationOptions[game.player.transportation];
+        const speedModifier = transport ? transport.speedModifier : 1.0;
+        
+        // Apply travel speed modifier from events
+        const eventModifier = game.travelSpeedModifier || 1.0;
+        
+        // Calculate final cost (inverse of speed - faster travel costs more)
+        const finalCost = Math.round(baseCost / (speedModifier * eventModifier));
+        
+        return Math.max(finalCost, 1); // Minimum cost of 1 gold
+    },
+    
+    // Calculate travel time between locations
+    calculateTravelTime(fromId, toId) {
+        const fromLocation = this.locations[fromId];
+        const toLocation = this.locations[toId];
+        
+        if (!fromLocation || !toLocation) return 0;
+        
+        let baseTime = (fromLocation.travelCost.base + toLocation.travelCost.base) * 5; // Base time in minutes
+        
+        // Apply transportation modifier
+        const transport = transportationOptions[game.player.transportation];
+        const speedModifier = transport ? transport.speedModifier : 1.0;
+        
+        // Apply travel speed modifier from events
+        const eventModifier = game.travelSpeedModifier || 1.0;
+        
+        // Calculate final time
+        const finalTime = Math.round(baseTime / (speedModifier * eventModifier));
+        
+        return Math.max(finalTime, 10); // Minimum time of 10 minutes
+    },
+    
+    // Travel to a new location
+    travelTo(locationId) {
+        const destination = this.locations[locationId];
+        if (!destination) {
+            addMessage('Invalid destination!');
+            return false;
+        }
+        
+        if (!this.isRegionUnlocked(destination.region)) {
+            addMessage('This region is not yet unlocked!');
+            return false;
+        }
+        
+        const travelCost = this.calculateTravelCost(game.currentLocation.id, locationId);
+        const travelTime = this.calculateTravelTime(game.currentLocation.id, locationId);
+        
+        if (game.player.gold < travelCost) {
+            addMessage(`You need ${travelCost} gold to travel to ${destination.name}!`);
+            return false;
+        }
+        
+        // Deduct travel cost
+        game.player.gold -= travelCost;
+        
+        // Schedule arrival event
+        const arrivalTime = TimeSystem.getTotalMinutes() + travelTime;
+        EventSystem.scheduleEvent('travel_complete', arrivalTime, {
+            destination: locationId,
+            cost: travelCost
+        });
+        
+        // Start travel
+        addMessage(`🚶 Traveling to ${destination.name}... (Arrival in ${travelTime} minutes)`);
+        
+        // Update UI
+        updatePlayerInfo();
+        
+        return true;
+    },
+    
+    // Complete travel (called by event system)
+    completeTravel(locationId) {
+        const destination = this.locations[locationId];
+        if (!destination) return;
+        
+        // Update current location
+        game.currentLocation = {
+            id: destination.id,
+            name: destination.name,
+            description: destination.description
+        };
+        
+        // Mark as visited
+        if (!this.visitedLocations.includes(locationId)) {
+            this.visitedLocations.push(locationId);
+            addMessage(`📍 First time visiting ${destination.name}!`);
+        }
+        
+        // Update UI
+        updateLocationInfo();
+        updateLocationPanel();
+        
+        addMessage(`✅ Arrived at ${destination.name}!`);
+    },
+    
+    // Get location market data
+    getLocationMarket(locationId) {
+        const location = this.locations[locationId];
+        if (!location) return null;
+        
+        return {
+            ...location.marketPrices,
+            locationInfo: {
+                name: location.name,
+                type: location.type,
+                specialties: location.specialties,
+                marketSize: location.marketSize
+            }
+        };
+    },
+    
+    // Update market prices for a location
+    updateLocationMarket(locationId) {
+        const location = this.locations[locationId];
+        if (!location) return;
+        
+        // Update existing items
+        Object.keys(location.marketPrices).forEach(itemType => {
+            const currentPrice = location.marketPrices[itemType].price;
+            const fluctuation = (Math.random() - 0.5) * 0.2; // ±10% fluctuation
+            location.marketPrices[itemType].price = Math.round(currentPrice * (1 + fluctuation));
+            
+            // Update stock
+            const stockChange = Math.floor((Math.random() - 0.5) * 4);
+            location.marketPrices[itemType].stock = Math.max(0,
+                location.marketPrices[itemType].stock + stockChange);
+        });
+    },
+    
+    // Tool and Upgrade System
+    tools: {
+        // Basic tools
+        axe: {
+            id: 'axe',
+            name: 'Basic Axe',
+            description: 'A simple axe for chopping wood.',
+            type: 'tool',
+            resource: 'wood',
+            efficiency: 1.0,
+            durability: 100,
+            price: 15,
+            requiredSkill: 0
+        },
+        pickaxe: {
+            id: 'pickaxe',
+            name: 'Pickaxe',
+            description: 'For mining stone and minerals.',
+            type: 'tool',
+            resource: 'stone',
+            efficiency: 1.0,
+            durability: 120,
+            price: 20,
+            requiredSkill: 0
+        },
+        hammer: {
+            id: 'hammer',
+            name: 'Hammer',
+            description: 'Basic hammer for construction.',
+            type: 'tool',
+            resource: 'iron',
+            efficiency: 1.0,
+            durability: 80,
+            price: 12,
+            requiredSkill: 0
+        },
+        fishing_rod: {
+            id: 'fishing_rod',
+            name: 'Fishing Rod',
+            description: 'For catching fish.',
+            type: 'tool',
+            resource: 'fish',
+            efficiency: 1.0,
+            durability: 60,
+            price: 18,
+            requiredSkill: 0
+        },
+        cooking_pot: {
+            id: 'cooking_pot',
+            name: 'Cooking Pot',
+            description: 'Basic pot for cooking food.',
+            type: 'tool',
+            resource: 'food',
+            efficiency: 1.0,
+            durability: 90,
+            price: 25,
+            requiredSkill: 0
+        },
+        shovel: {
+            id: 'shovel',
+            name: 'Shovel',
+            description: 'For digging and gathering resources.',
+            type: 'tool',
+            resource: 'stone',
+            efficiency: 1.0,
+            durability: 100,
+            price: 15,
+            requiredSkill: 0
+        },
+        knife: {
+            id: 'knife',
+            name: 'Knife',
+            description: 'Sharp knife for various tasks.',
+            type: 'tool',
+            resource: 'herbs',
+            efficiency: 1.0,
+            durability: 70,
+            price: 10,
+            requiredSkill: 0
+        },
+        saw: {
+            id: 'saw',
+            name: 'Hand Saw',
+            description: 'For cutting wood efficiently.',
+            type: 'tool',
+            resource: 'wood',
+            efficiency: 1.2,
+            durability: 110,
+            price: 30,
+            requiredSkill: 1
+        },
+        
+        // Upgraded tools
+        strong_axe: {
+            id: 'strong_axe',
+            name: 'Strong Axe',
+            description: 'A sturdy axe that chops wood 50% faster.',
+            type: 'upgrade',
+            resource: 'wood',
+            efficiency: 1.5,
+            durability: 200,
+            price: 50,
+            requiredSkill: 2,
+            requires: 'axe'
+        },
+        hot_oven: {
+            id: 'hot_oven',
+            name: 'Hot Oven',
+            description: 'Cooks food 30% faster and preserves nutrients.',
+            type: 'upgrade',
+            resource: 'food',
+            efficiency: 1.3,
+            durability: 300,
+            price: 80,
+            requiredSkill: 3,
+            requires: 'cooking_pot'
+        },
+        fast_hammer: {
+            id: 'fast_hammer',
+            name: 'Fast Hammer',
+            description: 'Works 40% faster than basic hammer.',
+            type: 'upgrade',
+            resource: 'iron',
+            efficiency: 1.4,
+            durability: 150,
+            price: 35,
+            requiredSkill: 2,
+            requires: 'hammer'
+        },
+        sharp_knife: {
+            id: 'sharp_knife',
+            name: 'Sharp Knife',
+            description: 'Gathers herbs 25% more efficiently.',
+            type: 'upgrade',
+            resource: 'herbs',
+            efficiency: 1.25,
+            durability: 120,
+            price: 25,
+            requiredSkill: 1,
+            requires: 'knife'
+        },
+        durable_saw: {
+            id: 'durable_saw',
+            name: 'Durable Saw',
+            description: 'Cuts wood 60% faster with less wear.',
+            type: 'upgrade',
+            resource: 'wood',
+            efficiency: 1.6,
+            durability: 250,
+            price: 60,
+            requiredSkill: 3,
+            requires: 'saw'
+        },
+        golden_fishing_rod: {
+            id: 'golden_fishing_rod',
+            name: 'Golden Fishing Rod',
+            description: 'Catches fish twice as often.',
+            type: 'upgrade',
+            resource: 'fish',
+            efficiency: 2.0,
+            durability: 180,
+            price: 100,
+            requiredSkill: 4,
+            requires: 'fishing_rod'
+        },
+        iron_cooking_pot: {
+            id: 'iron_cooking_pot',
+            name: 'Iron Cooking Pot',
+            description: 'Cooks 20% more food at once.',
+            type: 'upgrade',
+            resource: 'food',
+            efficiency: 1.2,
+            durability: 200,
+            price: 45,
+            requiredSkill: 2,
+            requires: 'cooking_pot'
+        },
+        steel_pickaxe: {
+            id: 'steel_pickaxe',
+            name: 'Steel Pickaxe',
+            description: 'Mines minerals 50% faster.',
+            type: 'upgrade',
+            resource: 'minerals',
+            efficiency: 1.5,
+            durability: 220,
+            price: 75,
+            requiredSkill: 3,
+            requires: 'pickaxe'
+        }
+    },
+    
+    // Get tool by ID
+    getTool(toolId) {
+        return this.tools[toolId] || null;
+    },
+    
+    // Get available tools for player
+    getAvailableTools() {
+        if (!game.player) return [];
+        
+        return Object.values(this.tools).filter(tool => {
+            // Check if player has required skill
+            const skillLevel = game.player.skills[tool.resource] || 0;
+            if (skillLevel < tool.requiredSkill) {
+                return false;
+            }
+            
+            // Check if player has required base tool for upgrades
+            if (tool.requires && !game.player.ownedTools?.includes(tool.requires)) {
+                return false;
+            }
+            
+            // Check if player already owns this tool
+            if (game.player.ownedTools?.includes(tool.id)) {
+                return false;
+            }
+            
+            return true;
+        });
+    },
+    
+    // Get player's owned tools
+    getPlayerTools() {
+        if (!game.player || !game.player.ownedTools) return [];
+        
+        return game.player.ownedTools.map(toolId => this.getTool(toolId)).filter(tool => tool);
+    },
+    
+    // Purchase tool
+    purchaseTool(toolId) {
+        const tool = this.getTool(toolId);
+        if (!tool) {
+            addMessage('Invalid tool!');
+            return false;
+        }
+        
+        if (game.player.gold < tool.price) {
+            addMessage(`You need ${tool.price} gold to purchase ${tool.name}!`);
+            return false;
+        }
+        
+        // Check requirements
+        const skillLevel = game.player.skills[tool.resource] || 0;
+        if (skillLevel < tool.requiredSkill) {
+            addMessage(`You need skill level ${tool.requiredSkill} in ${tool.resource} to use this tool!`);
+            return false;
+        }
+        
+        // Purchase tool
+        game.player.gold -= tool.price;
+        
+        if (!game.player.ownedTools) {
+            game.player.ownedTools = [];
+        }
+        
+        game.player.ownedTools.push(toolId);
+        
+        // Initialize tool durability
+        if (!game.player.toolDurability) {
+            game.player.toolDurability = {};
+        }
+        game.player.toolDurability[toolId] = tool.durability;
+        
+        addMessage(`Purchased ${tool.name} for ${tool.price} gold!`);
+        updatePlayerInfo();
+        
+        return true;
+    },
+    
+    // Use tool for resource gathering
+    useTool(toolId, amount = 1) {
+        const tool = this.getTool(toolId);
+        if (!tool) return null;
+        
+        if (!game.player.ownedTools?.includes(toolId)) {
+            addMessage(`You don't own a ${tool.name}!`);
+            return null;
+        }
+        
+        const durability = game.player.toolDurability?.[toolId] || 0;
+        if (durability <= 0) {
+            addMessage(`Your ${tool.name} is broken!`);
+            return null;
+        }
+        
+        // Calculate resource gain
+        const baseAmount = amount * tool.efficiency;
+        const skillBonus = 1 + ((game.player.skills[tool.resource] || 0) * 0.1);
+        const finalAmount = Math.round(baseAmount * skillBonus);
+        
+        // Reduce durability
+        game.player.toolDurability[toolId] = Math.max(0, durability - amount);
+        
+        return {
+            resource: tool.resource,
+            amount: finalAmount,
+            toolUsed: toolId,
+            durabilityRemaining: game.player.toolDurability[toolId]
+        };
+    },
+    
+    // Repair tool
+    repairTool(toolId) {
+        const tool = this.getTool(toolId);
+        if (!tool) return false;
+        
+        const repairCost = Math.round(tool.price * 0.3); // 30% of original price
+        
+        if (game.player.gold < repairCost) {
+            addMessage(`You need ${repairCost} gold to repair ${tool.name}!`);
+            return false;
+        }
+        
+        game.player.gold -= repairCost;
+        game.player.toolDurability[toolId] = tool.durability;
+        
+        addMessage(`Repaired ${tool.name} for ${repairCost} gold!`);
+        updatePlayerInfo();
+        
+        return true;
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// ✨ PERK SYSTEM - your tragic backstory determines your stats
+// ═══════════════════════════════════════════════════════════════
+// medieval character backgrounds (aka choose your trauma)
+const perks = {
+    lumberjack: {
+        id: 'lumberjack',
+        name: "Lumberjack",
+        description: "You spent years in the forest, felling trees with axe and saw.",
+        startingLocation: 'darkwood_village', // Start at the logging village
+        startingItems: {
+            timber: 20,
+            rope: 5,
+            ale: 3,
+            bread: 5
+        },
+        effects: {
+            carryBonus: 0.3, // +30% carry capacity
+            woodcuttingBonus: 0.5, // +50% woodcutting efficiency
+            strengthBonus: 2, // +2 strength
+            travelCostReduction: 0.1 // -10% travel costs in forests
+        },
+        negativeEffects: {
+            negotiationPenalty: 0.1 // -10% negotiation with merchants
+        },
+        icon: '🪓'
+    },
+    disbandedSoldier: {
+        id: 'disbandedSoldier',
+        name: "Disbanded Soldier",
+        description: "You served in the king's army until the regiment was disbanded.",
+        startingLocation: 'royal_capital', // Start near capital
+        startingItems: {
+            iron_sword: 1,
+            leather_armor: 1,
+            military_rations: 10,
+            bandages: 5,
+            wine: 2
+        },
+        effects: {
+            combatBonus: 0.4, // +40% combat effectiveness
+            strengthBonus: 3, // +3 strength
+            enduranceBonus: 2, // +2 endurance
+            weaponDiscount: 0.2 // -20% cost of weapons
+        },
+        negativeEffects: {
+            goldPenalty: 0.1, // -10% starting gold
+            negotiationPenalty: 0.15 // -15% negotiation effectiveness
+        },
+        icon: '⚔️'
+    },
+    oustedLord: {
+        id: 'oustedLord',
+        name: "Ousted Lord",
+        description: "Once a noble, you lost your lands but retained your wealth and connections.",
+        startingLocation: 'royal_capital', // Start at capital
+        startingItems: {
+            silk_garments: 2,
+            jewelry: 3,
+            fine_wine: 5,
+            documents: 1,
+            spices: 10
+        },
+        effects: {
+            goldBonus: 0.5, // +50% starting gold
+            reputationBonus: 3, // +3 starting reputation
+            negotiationBonus: 0.3, // +30% negotiation effectiveness
+            marketAccessBonus: 0.2 // +20% access to rare goods
+        },
+        negativeEffects: {
+            carryPenalty: 0.2, // -20% carry capacity
+            survivalPenalty: 0.1 // -10% survival in harsh conditions
+        },
+        icon: '👑'
+    },
+    peasant: {
+        id: 'peasant',
+        name: "Peasant",
+        description: "You come from humble beginnings, knowing the value of hard work and every coin.",
+        startingLocation: 'greendale', // Start at village
+        startingItems: {
+            wheat: 30,
+            vegetables: 20,
+            bread: 10,
+            simple_tools: 1,
+            burlap_sack: 3
+        },
+        effects: {
+            frugalBonus: 0.3, // +30% effectiveness of cost-saving measures
+            enduranceBonus: 2, // +2 endurance
+            maintenanceCostReduction: 0.25, // -25% maintenance costs
+            foodBonus: 0.2 // +20% effectiveness of food
+        },
+        negativeEffects: {
+            goldPenalty: 0.2, // -20% starting gold
+            reputationPenalty: 1 // -1 starting reputation
+        },
+        icon: '🌾'
+    },
+    knight: {
+        id: 'knight',
+        name: "Knight",
+        description: "You were sworn to service, trained in combat and honor.",
+        startingLocation: 'royal_capital', // Start at capital
+        startingItems: {
+            steel_sword: 1,
+            plate_armor: 1,
+            shield: 1,
+            war_horse_deed: 1,
+            noble_cloak: 1
+        },
+        effects: {
+            combatBonus: 0.6, // +60% combat effectiveness
+            strengthBonus: 2, // +2 strength
+            reputationBonus: 2, // +2 starting reputation
+            protectionBonus: 0.3 // +30% protection from harm
+        },
+        negativeEffects: {
+            goldPenalty: 0.15, // -15% starting gold
+            negotiationPenalty: 0.2 // -20% negotiation effectiveness
+        },
+        icon: '🛡️'
+    },
+    merchantApprentice: {
+        id: 'merchantApprentice',
+        name: "Merchant's Apprentice",
+        description: "You learned trade from a master merchant in the bustling markets.",
+        startingLocation: 'jade_harbor', // Start at the trading port
+        startingItems: {
+            trade_goods: 15,
+            merchant_ledger: 1,
+            scales: 1,
+            various_coins: 20,
+            trade_contract: 2
+        },
+        effects: {
+            negotiationBonus: 0.25, // +25% negotiation effectiveness
+            priceBonus: 0.15, // +15% better prices
+            marketInsightBonus: 0.2, // +20% market prediction accuracy
+            reputationGainBonus: 0.2 // +20% reputation gain
+        },
+        negativeEffects: {
+            combatPenalty: 0.3, // -30% combat effectiveness
+            carryPenalty: 0.1 // -10% carry capacity
+        },
+        icon: '🏪'
+    },
+    wanderingMinstrel: {
+        id: 'wanderingMinstrel',
+        name: "Wandering Minstrel",
+        description: "You traveled the land singing tales, learning many secrets.",
+        startingLocation: 'silk_road_inn', // Start at the famous waystation
+        startingItems: {
+            lute: 1,
+            colorful_clothes: 1,
+            wine: 3,
+            bread: 5,
+            tale_scrolls: 5
+        },
+        effects: {
+            charismaBonus: 3, // +3 charisma
+            reputationBonus: 1, // +1 starting reputation
+            informationBonus: 0.3, // +30% chance to learn valuable information
+            travelSpeedBonus: 0.2 // +20% travel speed
+        },
+        negativeEffects: {
+            goldPenalty: 0.15, // -15% starting gold
+            strengthPenalty: 1 // -1 strength
+        },
+        icon: '🎭'
+    },
+    villageElder: {
+        id: 'villageElder',
+        name: "Village Elder",
+        description: "You've lived a long life and gained wisdom through experience.",
+        startingLocation: 'vineyard_village', // Start at peaceful village
+        startingItems: {
+            herbs: 15,
+            old_books: 3,
+            walking_staff: 1,
+            tea: 10,
+            wisdom_scrolls: 2
+        },
+        effects: {
+            intelligenceBonus: 3, // +3 intelligence
+            wisdomBonus: 0.4, // +40% chance to avoid problems
+            reputationBonus: 1, // +1 starting reputation
+            skillGainBonus: 0.3 // +30% faster skill improvement
+        },
+        negativeEffects: {
+            strengthPenalty: 2, // -2 strength
+            endurancePenalty: 1, // -1 endurance
+            goldPenalty: 0.1 // -10% starting gold
+        },
+        icon: '👴'
+    },
+    templeAcolyte: {
+        id: 'templeAcolyte',
+        name: "Temple Acolyte",
+        description: "You served in the sacred temples, learning ancient knowledge.",
+        startingLocation: 'royal_capital', // Start at capital (has temples)
+        startingItems: {
+            holy_symbol: 1,
+            prayer_beads: 1,
+            incense: 10,
+            holy_water: 5,
+            religious_texts: 3
+        },
+        effects: {
+            intelligenceBonus: 2, // +2 intelligence
+            luckBonus: 0.3, // +30% luck in finding rare items
+            healingBonus: 0.4, // +40% healing effectiveness
+            divineFavor: 0.2 // +20% chance of divine intervention
+        },
+        negativeEffects: {
+            goldPenalty: 0.2, // -20% starting gold
+            combatPenalty: 0.2 // -20% combat effectiveness
+        },
+        icon: '⛪'
+    }
+};
+
+// Character attributes
+const baseAttributes = {
+    strength: 5,  // Start at 5 (can go down to 1, up to 10)
+    intelligence: 5,
+    charisma: 5,
+    endurance: 5,
+    luck: 5
+};
+
+// DOM Elements
+const elements = {
+    // Screens
+    loadingScreen: null,
+    mainMenu: null,
+    gameContainer: null,
+    
+    // Panels
+    characterPanel: null,
+    marketPanel: null,
+    inventoryPanel: null,
+    locationPanel: null,
+    travelPanel: null,
+    transportationPanel: null,
+    messageLog: null,
+    
+    // Game World
+    gameCanvas: null,
+    ctx: null,
+    
+    // UI Elements
+    playerName: null,
+    playerGold: null,
+    messages: null,
+    
+    // Buttons
+    newGameBtn: null,
+    loadGameBtn: null,
+    settingsBtn: null,
+    createCharacterBtn: null,
+    visitMarketBtn: null,
+    travelBtn: null,
+    transportationBtn: null,
+    transportationQuickBtn: null,
+    closeMarketBtn: null,
+    closeInventoryBtn: null,
+    closeTravelBtn: null,
+    closeTransportationBtn: null,
+    menuBtn: null,
+    inventoryBtn: null,
+    saveBtn: null,
+    
+    // Forms
+    characterForm: null,
+    characterNameInput: null,
+    characterClass: null,
+    
+    // Character Creation Elements
+    perksContainer: null,
+    selectedPerksCount: null,
+    randomizeCharacterBtn: null
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 💰 UNIFIED GOLD MANAGEMENT SYSTEM - one source of truth to rule them all
+// ═══════════════════════════════════════════════════════════════
+// this is basically how i wish my bank account worked
+const GoldManager = {
+    _gold: 100,  // the sacred number (single source of truth)
+    _displays: [],  // all the places we flex our wealth
+
+    // 🌙 init - birth of the gold empire
+    init: function(initialGold = 100) {
+        console.log('🪙 GoldManager initialized with', initialGold, 'gold');
+        this._gold = initialGold;
+        this._displays = [];
+        this.updateAllDisplays();
+    },
+
+    // 📝 registerDisplay - telling UI elements to show off the gold
+    registerDisplay: function(elementId, formatter = null) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            this._displays.push({ element, formatter });
+            console.log('🪙 Registered gold display:', elementId);
+            return true;
+        } else {
+            console.warn('🪙 Could not register display:', elementId, '- element not found');
+            return false;
+        }
+    },
+
+    // 💎 getGold - check how much we're worth
+    getGold: function() {
+        return this._gold;
+    },
+
+    // 💸 setGold - changing our fortune (for better or worse)
+    setGold: function(amount, reason = '') {
+        const oldGold = this._gold;
+        this._gold = Math.max(0, Math.round(amount));  // no negatives, we're not THAT broke
+        console.log(`🪙 Gold changed: ${oldGold} → ${this._gold}`, reason ? `(${reason})` : '');
+
+        // Sync with game.player.gold (single source of truth)
+        if (typeof game !== 'undefined' && game.player) {
+            game.player.gold = this._gold;
+            if (game.player.inventory) {
+                game.player.inventory.gold = this._gold;
+            }
+        }
+
+        this.updateAllDisplays();
+        return this._gold;
+    },
+
+    // ✨ addGold - making it rain (medieval style)
+    addGold: function(amount, reason = '') {
+        return this.setGold(this._gold + amount, reason || `+${amount}`);
+    },
+
+    // 💀 removeGold - watching our dreams disappear
+    removeGold: function(amount, reason = '') {
+        if (this._gold >= amount) {
+            this.setGold(this._gold - amount, reason || `-${amount}`);
+            return true;
+        } else {
+            console.warn(`🪙 Insufficient gold! Need ${amount}, have ${this._gold}`);
+            return false;
+        }
+    },
+
+    // 🤔 canAfford - reality check before we make bad decisions
+    canAfford: function(amount) {
+        return this._gold >= amount;
+    },
+
+    // 🔄 updateAllDisplays - sync the gold count everywhere
+    updateAllDisplays: function() {
+        console.log(`🪙 Updating ${this._displays.length} displays with gold: ${this._gold}`);
+        this._displays.forEach(({ element, formatter }, index) => {
+            if (element) {
+                const oldText = element.textContent;
+                if (formatter && typeof formatter === 'function') {
+                    element.textContent = formatter(this._gold);
+                } else {
+                    element.textContent = this._gold;
+                }
+                console.log(`  ✓ Display ${index} (${element.id}): "${oldText}" → "${element.textContent}"`);
+            } else {
+                console.warn(`  ✗ Display ${index}: element is null!`);
+            }
+        });
+    },
+
+    // Force re-register all displays (call after DOM changes)
+    reregisterDisplays: function() {
+        console.log('🪙 Re-registering all gold displays...');
+        this._displays = [];
+
+        // Register setup gold display (character creation panel)
+        const setupRegistered = this.registerDisplay('setup-gold-amount');
+        if (!setupRegistered) {
+            console.error('🪙 FAILED to register setup-gold-amount! Element not found in DOM.');
+        }
+
+        // Register player gold display (side panel - just the number)
+        const playerRegistered = this.registerDisplay('player-gold', (gold) => gold.toLocaleString());
+        if (!playerRegistered) {
+            console.warn('🪙 player-gold not found (may not be visible yet)');
+        }
+
+        console.log('🪙 Registered', this._displays.length, 'gold displays');
+        this.updateAllDisplays();
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 👤 CHARACTER CREATION STATE - who are you in this pit of despair?
+// ═══════════════════════════════════════════════════════════════
+let selectedPerks = [];
+let characterCreationState = {
+    difficulty: 'normal',
+    baseGold: 100,
+    manualAttributes: {...baseAttributes}, // Attributes with manual point distribution (no perks)
+    attributes: {...baseAttributes}, // Final attributes (manual + perks)
+    availableAttributePoints: 5, // Player can distribute 5 additional points
+    maxAttributeValue: 10, // Max value for any single attribute
+    maxTotalAttributes: 30 // Max total of all attributes (5 base each = 25, + 5 points = 30)
+};
+
+// Initialize the game when DOM is loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, initializing game...');
+
+        // First initialize basic elements and event listeners
+        initializeElements();
+        setupEventListeners();
+
+    // Setup attribute buttons (one-time setup with event delegation)
+    setupAttributeButtons();
+
+    // Initialize Gold Manager and register displays
+    console.log('🪙 Setting up GoldManager...');
+    GoldManager.init(100);
+    GoldManager.registerDisplay('setup-gold-amount'); // Character creation display
+    GoldManager.registerDisplay('player-gold', (gold) => gold.toLocaleString()); // Side panel display
+    console.log('🪙 GoldManager setup complete');
+
+    // Initialize Keyboard Bindings
+    console.log('⌨️ Setting up KeyBindings...');
+    KeyBindings.init();
+    console.log('⌨️ KeyBindings setup complete');
+
+    // Show main menu
+    showScreen('main-menu');
+    addMessage('Welcome to the Trading Game!');
+    
+    // Then initialize all systems with proper order
+    setTimeout(() => {
+        initializeAllSystems();
+    }, 100);
+    });
+} else {
+    // DOM already loaded
+    console.log('DOM already loaded, initializing game...');
+    initializeElements();
+    setupEventListeners();
+    setupAttributeButtons();
+
+    console.log('🪙 Setting up GoldManager...');
+    GoldManager.init(100);
+    GoldManager.registerDisplay('setup-gold-amount');
+    GoldManager.registerDisplay('player-gold', (gold) => gold.toLocaleString());
+    console.log('🪙 GoldManager setup complete');
+
+    // Initialize Keyboard Bindings
+    console.log('⌨️ Setting up KeyBindings...');
+    KeyBindings.init();
+    console.log('⌨️ KeyBindings setup complete');
+
+    showScreen('main-menu');
+    addMessage('Welcome to the Trading Game!');
+
+    setTimeout(() => {
+        initializeAllSystems();
+    }, 100);
+}
+
+// Function to initialize all systems in proper order
+function initializeAllSystems() {
+    console.log('Initializing all game systems...');
+    
+    // Only initialize systems if game is in MENU state (not during gameplay)
+    if (game.state !== GameState.MENU) {
+        console.log('Game not in MENU state, skipping system initialization');
+        return;
+    }
+    
+    // Initialize core systems first
+    if (typeof ItemDatabase !== 'undefined') {
+        ItemDatabase.init();
+        console.log('ItemDatabase initialized');
+    }
+    
+    if (typeof CityReputationSystem !== 'undefined') {
+        CityReputationSystem.init();
+        console.log('CityReputationSystem initialized');
+    }
+    
+    if (typeof CityEventSystem !== 'undefined') {
+        CityEventSystem.init();
+        console.log('CityEventSystem initialized');
+    }
+    
+    if (typeof MarketPriceHistory !== 'undefined') {
+        MarketPriceHistory.init();
+        console.log('MarketPriceHistory initialized');
+    }
+    
+    if (typeof DynamicMarketSystem !== 'undefined') {
+        DynamicMarketSystem.init();
+        console.log('DynamicMarketSystem initialized');
+    }
+    
+    // Initialize inventory and trading systems
+    if (typeof InventorySystem !== 'undefined') {
+        InventorySystem.init();
+        console.log('InventorySystem initialized');
+    }
+    
+    if (typeof TradingSystem !== 'undefined') {
+        TradingSystem.init();
+        console.log('TradingSystem initialized');
+    }
+    
+    // Initialize new systems
+    if (typeof PropertySystem !== 'undefined') {
+        PropertySystem.init();
+        console.log('PropertySystem initialized');
+    }
+    
+    if (typeof EmployeeSystem !== 'undefined') {
+        EmployeeSystem.init();
+        console.log('EmployeeSystem initialized');
+    }
+    
+    if (typeof TradeRouteSystem !== 'undefined') {
+        TradeRouteSystem.init();
+        console.log('TradeRouteSystem initialized');
+    }
+    
+    // Initialize travel system after all other systems
+    if (typeof TravelSystem !== 'undefined') {
+        TravelSystem.init();
+        console.log('TravelSystem initialized');
+    }
+    
+    // Initialize UI enhancements
+    if (typeof KeyboardShortcuts !== 'undefined') {
+        KeyboardShortcuts.initialize();
+        console.log('KeyboardShortcuts initialized');
+    }
+    
+    // Initialize PropertyEmployeeUI if it exists
+    if (typeof PropertyEmployeeUI !== 'undefined') {
+        PropertyEmployeeUI.init();
+        console.log('PropertyEmployeeUI initialized');
+    }
+    
+    // Check if tutorial should be shown
+    if (typeof KeyboardShortcuts !== 'undefined') {
+        TimerManager.setTimeout(() => {
+            KeyboardShortcuts.checkTutorialStatus();
+        }, 2000);
+    }
+    
+    console.log('All systems initialized successfully!');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎨 DOM ELEMENT INITIALIZATION - grabbing all the HTML pieces
+// ═══════════════════════════════════════════════════════════════
+// if any of these are missing, the whole thing crashes spectacularly
+function initializeElements() {
+    // Screens
+    elements.loadingScreen = document.getElementById('loading-screen');
+    elements.mainMenu = document.getElementById('main-menu');
+    elements.gameContainer = document.getElementById('game-container');
+    
+    // Panels
+    elements.characterPanel = document.getElementById('character-panel');
+    elements.marketPanel = document.getElementById('market-panel');
+    elements.inventoryPanel = document.getElementById('inventory-panel');
+    elements.locationPanel = document.getElementById('location-panel');
+    elements.travelPanel = document.getElementById('travel-panel');
+    elements.transportationPanel = document.getElementById('transportation-panel');
+    elements.messageLog = document.getElementById('message-log');
+    
+    // Game World
+    elements.gameCanvas = document.getElementById('game-canvas');
+    elements.ctx = elements.gameCanvas.getContext('2d');
+    
+    // UI Elements
+    elements.playerName = document.getElementById('player-name');
+    elements.playerGold = document.getElementById('player-gold');
+    elements.messages = document.getElementById('messages');
+    elements.playerStrength = document.getElementById('player-strength');
+    elements.playerIntelligence = document.getElementById('player-intelligence');
+    elements.playerCharisma = document.getElementById('player-charisma');
+    elements.playerEndurance = document.getElementById('player-endurance');
+    elements.playerLuck = document.getElementById('player-luck');
+    
+    // Buttons
+    elements.newGameBtn = document.getElementById('new-game-btn');
+    elements.loadGameBtn = document.getElementById('load-game-btn');
+    elements.settingsBtn = document.getElementById('settings-btn');
+    elements.createCharacterBtn = document.getElementById('create-character-btn');
+    elements.visitMarketBtn = document.getElementById('visit-market-btn');
+    elements.travelBtn = document.getElementById('travel-btn');
+    elements.transportationBtn = document.getElementById('transportation-btn');
+    elements.transportationQuickBtn = document.getElementById('transportation-quick-btn');
+    elements.closeMarketBtn = document.getElementById('close-market-btn');
+    elements.closeInventoryBtn = document.getElementById('close-inventory-btn');
+    elements.closeTravelBtn = document.getElementById('close-travel-btn');
+    elements.closeTransportationBtn = document.getElementById('close-transportation-btn');
+    elements.menuBtn = document.getElementById('menu-btn');
+    elements.inventoryBtn = document.getElementById('inventory-btn');
+    elements.saveBtn = document.getElementById('save-btn');
+    
+    // Forms
+    elements.characterForm = document.getElementById('character-form');
+    elements.characterNameInput = document.getElementById('character-name-input');
+    elements.characterClass = document.getElementById('character-class');
+
+    // Character Creation Elements
+    elements.perksContainer = document.getElementById('perks-container');
+    elements.selectedPerksCount = document.getElementById('selected-perks-count');
+    console.log('Initialized elements.selectedPerksCount:', elements.selectedPerksCount);
+    elements.randomizeCharacterBtn = document.getElementById('randomize-character-btn');
+
+    console.log('Element initialization complete. Key elements:');
+    console.log('- selectedPerksCount:', !!elements.selectedPerksCount);
+    console.log('- perksContainer:', !!elements.perksContainer);
+    console.log('- randomizeCharacterBtn:', !!elements.randomizeCharacterBtn);
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Main Menu
+    EventManager.addEventListener(elements.newGameBtn, 'click', startNewGame);
+    EventManager.addEventListener(elements.loadGameBtn, 'click', loadGame);
+    EventManager.addEventListener(elements.settingsBtn, 'click', showSettings);
+    
+    // Character Creation - change to button click instead of form submit
+    const createCharacterBtn = document.getElementById('create-character-btn');
+    if (createCharacterBtn) {
+        EventManager.addEventListener(createCharacterBtn, 'click', createCharacter);
+    }
+    if (elements.randomizeCharacterBtn) {
+        console.log('Setting up Randomize button event listener');
+        EventManager.addEventListener(elements.randomizeCharacterBtn, 'click', () => {
+            console.log('Randomize button clicked!');
+            randomizeCharacter();
+        });
+    } else {
+        console.error('randomize-character-btn element not found!');
+    }
+    EventManager.addEventListener(elements.characterNameInput, 'input', updateCharacterPreview);
+
+    // Update player name display in real-time
+    const updatePlayerNameDisplay = () => {
+        const name = elements.characterNameInput.value.trim() || 'Player';
+        const playerNameElement = document.getElementById('player-name');
+        if (playerNameElement) {
+            playerNameElement.textContent = name;
+            playerNameElement.innerText = name;
+            console.log('🏷️ Player name updated to:', name);
+        }
+    };
+
+    // Update on input (as user types)
+    EventManager.addEventListener(elements.characterNameInput, 'input', updatePlayerNameDisplay);
+
+    // Update on blur (when user leaves the field)
+    EventManager.addEventListener(elements.characterNameInput, 'blur', updatePlayerNameDisplay);
+
+    // Perk Selection Modal
+    const openPerkModalBtn = document.getElementById('open-perk-modal-btn');
+    if (openPerkModalBtn) {
+        EventManager.addEventListener(openPerkModalBtn, 'click', openPerkModal);
+    }
+
+    const confirmPerkBtn = document.getElementById('confirm-perk-selection-btn');
+    if (confirmPerkBtn) {
+        EventManager.addEventListener(confirmPerkBtn, 'click', confirmPerkSelection);
+    }
+
+    const cancelPerkBtn = document.getElementById('cancel-perk-selection-btn');
+    if (cancelPerkBtn) {
+        EventManager.addEventListener(cancelPerkBtn, 'click', closePerkModal);
+    }
+    
+    // Game Controls
+    EventManager.addEventListener(elements.visitMarketBtn, 'click', openMarket);
+    EventManager.addEventListener(elements.travelBtn, 'click', openTravel);
+    EventManager.addEventListener(elements.transportationBtn, 'click', openTransportation);
+    EventManager.addEventListener(elements.transportationQuickBtn, 'click', openTransportation);
+    EventManager.addEventListener(elements.closeMarketBtn, 'click', () => game.hideOverlay('market-panel'));
+    EventManager.addEventListener(elements.closeInventoryBtn, 'click', () => game.hideOverlay('inventory-panel'));
+    EventManager.addEventListener(elements.closeTravelBtn, 'click', () => game.hideOverlay('travel-panel'));
+    EventManager.addEventListener(elements.closeTransportationBtn, 'click', () => game.hideOverlay('transportation-panel'));
+    EventManager.addEventListener(elements.menuBtn, 'click', toggleMenu);
+    EventManager.addEventListener(elements.inventoryBtn, 'click', openInventory);
+    EventManager.addEventListener(elements.saveBtn, 'click', saveGame);
+    
+    // Property & Employee Management
+    const propertyEmployeeBtn = document.getElementById('property-employee-btn');
+    if (propertyEmployeeBtn) {
+        EventManager.addEventListener(propertyEmployeeBtn, 'click', () => game.showOverlay('property-employee-panel'));
+    }
+    
+    // World Map Overlay Button
+    const openWorldMapOverlayBtn = document.getElementById('open-world-map-overlay-btn');
+    if (openWorldMapOverlayBtn) {
+        EventManager.addEventListener(openWorldMapOverlayBtn, 'click', () => {
+            game.showOverlay('world-map-overlay');
+            
+            // Switch TravelSystem to use overlay canvas
+            if (typeof TravelSystem !== 'undefined') {
+                TravelSystem.switchToOverlayCanvas();
+            }
+        });
+    }
+    
+    // Setup overlay close buttons
+    document.querySelectorAll('[data-close-overlay]').forEach(button => {
+        EventManager.addEventListener(button, 'click', (e) => {
+            const overlayId = e.target.getAttribute('data-close-overlay');
+            game.hideOverlay(overlayId);
+        });
+    });
+    
+    // Game Setup
+    if (elements.startGameBtn) {
+        EventManager.addEventListener(elements.startGameBtn, 'click', (e) => {
+            console.log('Start Game button clicked via elements.startGameBtn');
+            createCharacter(e);
+        });
+    }
+    if (elements.cancelSetupBtn) {
+        EventManager.addEventListener(elements.cancelSetupBtn, 'click', cancelGameSetup);
+    }
+
+    // New game setup buttons
+    const startGameBtn = document.getElementById('start-game-btn');
+    const cancelSetupBtn = document.getElementById('cancel-setup-btn');
+
+    if (startGameBtn) {
+        console.log('Setting up Start Game button event listener');
+        EventManager.addEventListener(startGameBtn, 'click', (e) => {
+            console.log('Start Game button clicked!');
+            createCharacter(e);
+        });
+    } else {
+        console.error('start-game-btn element not found!');
+    }
+    if (cancelSetupBtn) {
+        EventManager.addEventListener(cancelSetupBtn, 'click', cancelGameSetup);
+    }
+
+    // Note: Difficulty listeners are now set up in setupDifficultyListeners()
+    // which is called when the game setup panel becomes visible
+
+    // 🖤 POLLING FAILSAFE - because events are fucking unreliable 🖤
+    // This polls for difficulty changes every 100ms as a backup
+    let lastKnownDifficulty = 'normal';
+    let difficultyPoller = null;
+
+    window.startDifficultyPolling = function() {
+        console.log('🔄 Starting difficulty polling failsafe...');
+        GameLogger.log('EVENT', 'Starting difficulty polling');
+
+        // Clear any existing poller
+        if (difficultyPoller) {
+            clearInterval(difficultyPoller);
+        }
+
+        // Get initial difficulty
+        const initialRadio = document.querySelector('input[name="difficulty"]:checked');
+        if (initialRadio) {
+            lastKnownDifficulty = initialRadio.value;
+            console.log('Initial difficulty:', lastKnownDifficulty);
+        }
+
+        // Poll every 100ms
+        difficultyPoller = setInterval(() => {
+            const currentRadio = document.querySelector('input[name="difficulty"]:checked');
+            if (currentRadio && currentRadio.value !== lastKnownDifficulty) {
+                console.log('🔄 POLLING DETECTED DIFFICULTY CHANGE!');
+                console.log('Changed from', lastKnownDifficulty, 'to', currentRadio.value);
+                GameLogger.log('DIFFICULTY', 'Polling detected change', {
+                    from: lastKnownDifficulty,
+                    to: currentRadio.value
+                });
+                lastKnownDifficulty = currentRadio.value;
+                onDifficultyChange();
+            }
+        }, 100);
+
+        console.log('✓ Difficulty polling started');
+    };
+
+    window.stopDifficultyPolling = function() {
+        if (difficultyPoller) {
+            clearInterval(difficultyPoller);
+            difficultyPoller = null;
+            console.log('✓ Difficulty polling stopped');
+            GameLogger.log('EVENT', 'Difficulty polling stopped');
+        }
+    };
+
+    // Attribute buttons are now set up in setupAttributeButtons() when the panel becomes visible
+    // This ensures they're properly initialized with the game state
+
+    // Save/Load
+    if (elements.saveGameBtn) {
+        EventManager.addEventListener(elements.saveGameBtn, 'click', saveGame);
+    }
+    if (elements.loadGameBtn) {
+        // Check if there are any saved games
+        const savedGames = game.getSavedGames();
+        if (savedGames && savedGames.length > 0) {
+            elements.loadGameBtn.disabled = false;
+            EventManager.addEventListener(elements.loadGameBtn, 'click', loadGame);
+        } else {
+            elements.loadGameBtn.disabled = true;
+            elements.loadGameBtn.title = 'No saved games found';
+        }
+    }
+    
+    // Get saved games list
+    game.getSavedGames = function() {
+        try {
+            const saves = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('tradingGameSave_')) {
+                    const saveDataString = localStorage.getItem(key);
+                    if (saveDataString) {
+                        let saveData;
+                        try {
+                            saveData = JSON.parse(saveDataString);
+                        } catch (error) {
+                            console.error('Failed to parse save data:', error);
+                            continue;
+                        }
+                        if (saveData && saveData.player) {
+                            saves.push({
+                                name: saveData.player.name || 'Unknown',
+                                date: saveData.saveDate || new Date().toISOString(),
+                                slot: key
+                            });
+                        }
+                    }
+                }
+            }
+            return saves.sort((a, b) => new Date(b.date) - new Date(a.date));
+        } catch (error) {
+            console.error('Error loading saved games:', error);
+            return [];
+        }
+    };
+    
+    // Market Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        EventManager.addEventListener(btn, 'click', function() {
+            switchTab(this.dataset.tab);
+        });
+    });
+
+    // ⏰ TIME CONTROL BUTTONS - finally making these damn buttons work
+    const pauseBtn = document.getElementById('pause-btn');
+    const normalSpeedBtn = document.getElementById('normal-speed-btn');
+    const fastSpeedBtn = document.getElementById('fast-speed-btn');
+    const veryFastSpeedBtn = document.getElementById('very-fast-speed-btn');
+
+    if (pauseBtn) {
+        EventManager.addEventListener(pauseBtn, 'click', () => {
+            console.log('⏸️ Pause button clicked - freezing time like my cold heart');
+            TimeSystem.setSpeed('PAUSED');
+            game.updateTimeControls();
+        });
+    }
+
+    if (normalSpeedBtn) {
+        EventManager.addEventListener(normalSpeedBtn, 'click', () => {
+            console.log('⏱️ Normal speed clicked - time crawls forward');
+            TimeSystem.setSpeed('NORMAL');
+            game.updateTimeControls();
+        });
+    }
+
+    if (fastSpeedBtn) {
+        EventManager.addEventListener(fastSpeedBtn, 'click', () => {
+            console.log('⏩ Fast speed clicked - rushing toward the void');
+            TimeSystem.setSpeed('FAST');
+            game.updateTimeControls();
+        });
+    }
+
+    if (veryFastSpeedBtn) {
+        EventManager.addEventListener(veryFastSpeedBtn, 'click', () => {
+            console.log('⏭️ Very fast speed clicked - time flies when youre suffering');
+            TimeSystem.setSpeed('VERY_FAST');
+            game.updateTimeControls();
+        });
+    }
+
+    console.log('⏰ Time control buttons initialized:', {
+        pauseBtn: !!pauseBtn,
+        normalSpeedBtn: !!normalSpeedBtn,
+        fastSpeedBtn: !!fastSpeedBtn,
+        veryFastSpeedBtn: !!veryFastSpeedBtn
+    });
+
+    // Travel tab buttons
+    document.querySelectorAll('.travel-tab-btn').forEach(btn => {
+        EventManager.addEventListener(btn, 'click', function() {
+            const tabName = this.dataset.travelTab;
+            if (tabName) {
+                // Switch to the selected tab
+                document.querySelectorAll('.travel-tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.travel-tab-content').forEach(c => c.classList.remove('active'));
+                
+                this.classList.add('active');
+                const tabContent = document.getElementById(`${tabName}-tab`);
+                if (tabContent) {
+                    tabContent.classList.add('active');
+                }
+                
+                // Special handling for map tab
+                if (tabName === 'map' && typeof TravelSystem !== 'undefined') {
+                    TravelSystem.switchToTabCanvas();
+                }
+            }
+        });
+    });
+    
+    // Keyboard shortcuts
+    EventManager.addEventListener(document, 'keydown', handleKeyPress);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎯 GAME STATE MANAGEMENT - keeping track of the chaos
+// ═══════════════════════════════════════════════════════════════
+function changeState(newState) {
+    const oldState = game.state;
+    game.state = newState;
+    
+    // Handle state transitions
+    switch (newState) {
+        case GameState.MENU:
+            showScreen('main-menu');
+            break;
+        case GameState.LOADING:
+            showScreen('loading-screen');
+            break;
+        case GameState.CHARACTER_CREATION:
+            showScreen('game-container');
+            game.showOverlay('character-panel');
+            initializeCharacterCreation();
+            break;
+        case GameState.PLAYING:
+            showScreen('game-container');
+            hideAllPanels();
+            game.hideAllOverlays();
+            showPanel('location-panel');
+            startGameLoop();
+            // 🖤 initialize the world map renderer - rise from the ashes
+            if (typeof GameWorldRenderer !== 'undefined') {
+                GameWorldRenderer.init();
+                console.log('GameWorldRenderer initialized - the void now has pretty dots');
+            } else {
+                console.error('GameWorldRenderer not found... we are truly lost');
+            }
+            // 🎮 Start the GameEngine for time and travel management
+            if (typeof GameEngine !== 'undefined') {
+                GameEngine.init();
+                GameEngine.start();
+                console.log('🎮 GameEngine started - time flows once more');
+            }
+            break;
+        case GameState.PAUSED:
+            // Pause game logic
+            break;
+        case GameState.MARKET:
+            game.showOverlay('market-panel');
+            break;
+        case GameState.INVENTORY:
+            game.showOverlay('inventory-panel');
+            break;
+        case GameState.TRAVEL:
+            game.showOverlay('travel-panel');
+            break;
+        case GameState.TRANSPORTATION:
+            game.showOverlay('transportation-panel');
+            break;
+    }
+    
+    console.log(`Game state changed from ${oldState} to ${newState}`);
+}
+
+// 📺 SCREEN MANAGEMENT - show/hide the suffering
+function showScreen(screenId) {
+    // Hide all screens
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.add('hidden');
+    });
+
+    // Also hide game-container (it's a special case without .screen class)
+    const gameContainer = document.getElementById('game-container');
+    if (gameContainer) {
+        gameContainer.classList.add('hidden');
+    }
+
+    // Show the requested screen
+    const screen = document.getElementById(screenId);
+    if (screen) {
+        screen.classList.remove('hidden');
+    }
+
+    // Special case: if showing game-container, also remove hidden from it
+    if (screenId === 'game-container' && gameContainer) {
+        gameContainer.classList.remove('hidden');
+    }
+}
+
+// 🗂️ PANEL MANAGEMENT - nested UI hell
+function showPanel(panelId) {
+    const panel = document.getElementById(panelId);
+    if (panel) {
+        panel.classList.remove('hidden');
+        panel.classList.add('fade-in');
+    }
+}
+
+function hidePanel(panelId) {
+    const panel = document.getElementById(panelId);
+    if (panel) {
+        panel.classList.add('hidden');
+    }
+}
+
+function hideAllPanels() {
+    document.querySelectorAll('.panel').forEach(panel => {
+        panel.classList.add('hidden');
+    });
+    
+    // Also hide any overlay panels
+    document.querySelectorAll('.overlay-panel').forEach(panel => {
+        panel.classList.add('hidden');
+    });
+
+    // Hide all overlays
+    if (typeof game !== 'undefined' && game.hideAllOverlays) {
+        game.hideAllOverlays();
+    }
+
+    // Hide travel system if available
+    if (typeof TravelSystem !== 'undefined') {
+        TravelSystem.hideTravelPanel();
+    }
+}
+
+// 📑 TAB MANAGEMENT - because one panel wasn't enough suffering
+function switchTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    const activeContent = document.getElementById(`${tabName}-tab`);
+    if (activeContent) {
+        activeContent.classList.add('active');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎲 GAME FUNCTIONS - where the magic (trauma) happens
+// ═══════════════════════════════════════════════════════════════
+// 🎯 Setup difficulty event listeners (called when panel is shown)
+let difficultyListenersSetup = false;
+function setupDifficultyListeners() {
+    // Prevent duplicate listeners
+    if (difficultyListenersSetup) {
+        console.log('⚠️ Difficulty listeners already set up, skipping...');
+        return;
+    }
+
+    console.log('═══════════════════════════════════════');
+    console.log('🎯 SETTING UP DIFFICULTY LISTENERS');
+    console.log('═══════════════════════════════════════');
+
+    const difficultyContainer = document.querySelector('.difficulty-selection');
+    const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
+
+    console.log('  - Container found:', !!difficultyContainer);
+    console.log('  - Radio buttons found:', difficultyRadios.length);
+
+    if (!difficultyContainer) {
+        console.error('❌ difficulty-selection container NOT FOUND!');
+        return;
+    }
+
+    if (difficultyRadios.length === 0) {
+        console.error('❌ NO difficulty radio buttons found!');
+        return;
+    }
+
+    // Method 1: Click on parent container
+    difficultyContainer.addEventListener('click', (e) => {
+        console.log('🖱️ CLICK in difficulty container');
+        const clickedOption = e.target.closest('.difficulty-option');
+        if (clickedOption) {
+            const difficulty = clickedOption.dataset.difficulty;
+            console.log('🎯 Clicked difficulty:', difficulty);
+
+            // Check the radio
+            const radio = document.getElementById(`difficulty-${difficulty}`);
+            if (radio) {
+                radio.checked = true;
+            }
+
+            // Trigger change
+            console.log('⚡ Triggering onDifficultyChange...');
+            try {
+                onDifficultyChange();
+            } catch (error) {
+                console.error('❌ ERROR:', error);
+            }
+        }
+    });
+
+    // Method 2: Direct listeners on each radio
+    difficultyRadios.forEach((radio, index) => {
+        console.log(`  - Attaching to radio ${index + 1}: ${radio.value}`);
+
+        radio.addEventListener('change', () => {
+            console.log('📻 CHANGE event:', radio.value);
+            try {
+                onDifficultyChange();
+            } catch (error) {
+                console.error('❌ ERROR:', error);
+            }
+        });
+
+        radio.addEventListener('click', () => {
+            console.log('📻 CLICK event:', radio.value);
+            try {
+                onDifficultyChange();
+            } catch (error) {
+                console.error('❌ ERROR:', error);
+            }
+        });
+    });
+
+    difficultyListenersSetup = true;
+    console.log('✅ Difficulty listeners setup complete!');
+    console.log('═══════════════════════════════════════');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎬 SETUP UI VISIBILITY - hide game UI during character creation
+// ═══════════════════════════════════════════════════════════════
+function hideGameUIForSetup() {
+    console.log('🎬 Hiding game UI for setup...');
+
+    // Hide top bar (time controls)
+    const topBar = document.getElementById('top-bar');
+    if (topBar) topBar.classList.add('hidden');
+
+    // Hide side panel (player info)
+    const sidePanel = document.getElementById('side-panel');
+    if (sidePanel) sidePanel.classList.add('hidden');
+
+    // Hide bottom action bar
+    const bottomBar = document.getElementById('bottom-action-bar');
+    if (bottomBar) bottomBar.classList.add('hidden');
+
+    // Hide map container
+    const mapContainer = document.getElementById('map-container');
+    if (mapContainer) mapContainer.classList.add('hidden');
+
+    // Hide message log
+    const messageLog = document.getElementById('message-log');
+    if (messageLog) messageLog.classList.add('hidden');
+
+    // Hide panel toolbar (the floating panels button list)
+    const panelToolbar = document.getElementById('panel-toolbar');
+    if (panelToolbar) panelToolbar.classList.add('hidden');
+
+    // Hide game layout (contains main game area)
+    const gameLayout = document.getElementById('game-layout');
+    if (gameLayout) gameLayout.classList.add('hidden');
+
+    // Make game-container take full screen with dark background for setup
+    const gameContainer = document.getElementById('game-container');
+    if (gameContainer) {
+        gameContainer.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f1a 100%)';
+        gameContainer.style.display = 'flex';
+        gameContainer.style.justifyContent = 'center';
+        gameContainer.style.alignItems = 'center';
+        gameContainer.style.minHeight = '100vh';
+    }
+
+    // Ensure ui-panels is visible and centered for setup
+    const uiPanels = document.getElementById('ui-panels');
+    if (uiPanels) {
+        uiPanels.style.position = 'relative';
+        uiPanels.style.transform = 'none';
+        uiPanels.style.top = 'auto';
+        uiPanels.style.left = 'auto';
+    }
+
+    console.log('🎬 Game UI hidden for setup');
+}
+
+function showGameUI() {
+    console.log('🎬 Showing game UI...');
+
+    // Show top bar
+    const topBar = document.getElementById('top-bar');
+    if (topBar) topBar.classList.remove('hidden');
+
+    // Show side panel
+    const sidePanel = document.getElementById('side-panel');
+    if (sidePanel) sidePanel.classList.remove('hidden');
+
+    // Show bottom action bar
+    const bottomBar = document.getElementById('bottom-action-bar');
+    if (bottomBar) bottomBar.classList.remove('hidden');
+
+    // Show map container
+    const mapContainer = document.getElementById('map-container');
+    if (mapContainer) mapContainer.classList.remove('hidden');
+
+    // Show message log
+    const messageLog = document.getElementById('message-log');
+    if (messageLog) messageLog.classList.remove('hidden');
+
+    // Show panel toolbar
+    const panelToolbar = document.getElementById('panel-toolbar');
+    if (panelToolbar) panelToolbar.classList.remove('hidden');
+
+    // Show game layout
+    const gameLayout = document.getElementById('game-layout');
+    if (gameLayout) gameLayout.classList.remove('hidden');
+
+    // Reset game-container styles
+    const gameContainer = document.getElementById('game-container');
+    if (gameContainer) {
+        gameContainer.style.background = '';
+        gameContainer.style.display = '';
+        gameContainer.style.justifyContent = '';
+        gameContainer.style.alignItems = '';
+        gameContainer.style.minHeight = '';
+    }
+
+    // Reset ui-panels to default positioning
+    const uiPanels = document.getElementById('ui-panels');
+    if (uiPanels) {
+        uiPanels.style.position = '';
+        uiPanels.style.transform = '';
+        uiPanels.style.top = '';
+        uiPanels.style.left = '';
+    }
+
+    console.log('🎬 Game UI revealed');
+}
+
+function startNewGame() {
+    console.log('=== Starting new game ===');
+    // Show game setup panel with difficulty selection first
+    showScreen('game-container');
+
+    // Hide all game UI elements - only setup panel should be visible
+    hideGameUIForSetup();
+
+    showPanel('game-setup-panel');
+
+    // Re-register gold displays now that panel is visible
+    console.log('🪙 Re-registering gold displays after panel shown...');
+    GoldManager.reregisterDisplays();
+
+    // ⚡ SETUP DIFFICULTY LISTENERS NOW (panel is visible)
+    console.log('⚡ Setting up difficulty listeners NOW...');
+    setupDifficultyListeners();
+
+    // Start difficulty polling failsafe
+    if (typeof startDifficultyPolling === 'function') {
+        startDifficultyPolling();
+    }
+
+    // Attribute buttons are already set up during DOMContentLoaded via event delegation
+    // BUT we need to make sure they're visible and working
+    console.log('🎯 FORCE re-setting up attribute buttons...');
+    attributeButtonsSetup = false; // Reset the flag to force re-setup
+    setupAttributeButtons();
+
+    // Initialize character creation with currently selected difficulty
+    console.log('Initializing character creation...');
+    const selectedDifficulty = document.querySelector('input[name="difficulty"]:checked')?.value || 'normal';
+    console.log('Selected difficulty from radio:', selectedDifficulty);
+    initializeCharacterCreation(selectedDifficulty);
+
+    // IMPORTANT: Force an immediate gold recalculation to update UI
+    console.log('🎯 Force recalculating stats to update gold display...');
+    calculateCharacterStats();
+
+    addMessage('Starting a new game...');
+    console.log('=== New game setup complete ===');
+}
+
+// Initialize character creation
+function initializeCharacterCreation(difficulty = 'normal') {
+    console.log('=== Initializing Character Creation ===');
+    selectedPerks = [];
+
+    // Calculate base gold based on difficulty
+    let baseGold = 100;
+    switch (difficulty) {
+        case 'easy':
+            baseGold = 120; // 20% more
+            break;
+        case 'hard':
+            baseGold = 80; // 20% less
+            break;
+        case 'normal':
+        default:
+            baseGold = 100;
+            break;
+    }
+
+    characterCreationState = {
+        difficulty: difficulty,
+        baseGold: baseGold,
+        currentGold: baseGold,
+        manualAttributes: {...baseAttributes},  // Start at 5 each = 25 total
+        attributes: {...baseAttributes},
+        availableAttributePoints: 5,  // 5 points to distribute (25 + 5 = 30 total)
+        maxAttributeValue: 10,
+        maxTotalAttributes: 30
+    };
+
+    console.log('Initial character state:', characterCreationState);
+    console.log('🪙 Setting initial gold via GoldManager:', baseGold);
+
+    // Make sure the correct difficulty radio button is checked
+    const difficultyRadio = document.getElementById(`difficulty-${difficulty}`);
+    if (difficultyRadio) {
+        difficultyRadio.checked = true;
+        console.log(`✓ Set ${difficulty} radio button as checked`);
+    } else {
+        console.warn(`✗ Could not find difficulty-${difficulty} radio button!`);
+    }
+
+    // Initialize GoldManager with base gold
+    GoldManager.setGold(baseGold, `Initialized with ${difficulty} difficulty`);
+
+    populatePerks();
+    displaySelectedPerks(); // Initialize empty perks display
+    updatePerkSelection();
+    updateAttributeDisplay(); // Initialize attribute button states
+
+    // Calculate stats AFTER setting initial gold (this will recalculate with perks)
+    calculateCharacterStats();
+
+    console.log('=== Character Creation Initialized ===');
+}
+
+// Populate perks in the character creation UI
+function populatePerks() {
+    elements.perksContainer.innerHTML = '';
+    
+    for (const [key, perk] of Object.entries(perks)) {
+        const perkCard = createPerkCard(perk);
+        elements.perksContainer.appendChild(perkCard);
+    }
+}
+
+// Create a perk card element
+function createPerkCard(perk) {
+    const card = document.createElement('div');
+    card.className = 'perk-card';
+    card.dataset.perkId = perk.id;
+    
+    // Create header with icon and name
+    const header = document.createElement('div');
+    header.className = 'perk-header';
+    header.innerHTML = `
+        <span class="perk-icon">${perk.icon}</span>
+        <span class="perk-name">${perk.name}</span>
+    `;
+    
+    // Create description
+    const description = document.createElement('div');
+    description.className = 'perk-description';
+    description.textContent = perk.description;
+    
+    // Create effects
+    const effects = document.createElement('div');
+    effects.className = 'perk-effects';
+    
+    // Add positive effects
+    for (const [effectName, value] of Object.entries(perk.effects)) {
+        const effect = document.createElement('div');
+        effect.className = 'perk-effect positive';
+        const formattedEffect = formatPerkEffect(effectName, value, true);
+        effect.innerHTML = `<span class="perk-effect-icon">✓</span> ${formattedEffect}`;
+        effects.appendChild(effect);
+    }
+    
+    // Add negative effects
+    for (const [effectName, value] of Object.entries(perk.negativeEffects)) {
+        const effect = document.createElement('div');
+        effect.className = 'perk-effect negative';
+        const formattedEffect = formatPerkEffect(effectName, value, false);
+        effect.innerHTML = `<span class="perk-effect-icon">✗</span> ${formattedEffect}`;
+        effects.appendChild(effect);
+    }
+    
+    card.appendChild(header);
+    card.appendChild(description);
+    card.appendChild(effects);
+
+    // Add click event using standard addEventListener
+    card.addEventListener('click', () => togglePerkSelection(perk.id));
+
+    return card;
+}
+
+// Format perk effect for display
+function formatPerkEffect(effectName, value, isPositive) {
+    const sign = isPositive ? '+' : '';
+    
+    switch(effectName) {
+        case 'goldBonus':
+            return `${sign}${Math.round(value * 100)}% starting gold`;
+        case 'goldPenalty':
+            return `${sign}${Math.round(value * 100)}% starting gold`;
+        case 'priceBonus':
+            return `${sign}${Math.round(value * 100)}% better prices`;
+        case 'negotiationBonus':
+            return `${sign}${Math.round(value * 100)}% negotiation`;
+        case 'negotiationPenalty':
+            return `${sign}${Math.round(value * 100)}% negotiation`;
+        case 'carryBonus':
+            return `${sign}${Math.round(value * 100)}% carry capacity`;
+        case 'carryPenalty':
+            return `${sign}${Math.round(value * 100)}% carry capacity`;
+        case 'travelCostReduction':
+            return `${sign}${Math.round(value * 100)}% travel costs`;
+        case 'reputationBonus':
+            return `${sign}${Math.round(value)} reputation`;
+        case 'reputationPenalty':
+            return `${sign}${Math.round(value)} reputation`;
+        case 'randomEventBonus':
+            return `${sign}${Math.round(value * 100)}% positive events`;
+        case 'findBonus':
+            return `${sign}${Math.round(value * 100)}% find items`;
+        case 'skillGainBonus':
+            return `${sign}${Math.round(value * 100)}% skill improvement`;
+        case 'experienceBonus':
+            return `${sign}${Math.round(value * 100)}% experience gain`;
+        case 'startingSkillPenalty':
+            return `${sign}${Math.round(value)} starting skills`;
+        case 'marketAccessBonus':
+            return `${sign}${Math.round(value * 100)}% market access`;
+        case 'maintenanceCostReduction':
+            return `${sign}${Math.round(value * 100)}% maintenance`;
+        case 'luxuryPenalty':
+            return `${sign}${Math.round(value * 100)}% luxury effectiveness`;
+        case 'highRiskBonus':
+            return `${sign}${Math.round(value * 100)}% high-risk returns`;
+        case 'highRiskPenalty':
+            return `${sign}${Math.round(value * 100)}% high-risk losses`;
+        case 'adventureBonus':
+            return `${sign}${Math.round(value * 100)}% adventure rewards`;
+        case 'travelSpeedBonus':
+            return `${sign}${Math.round(value * 100)}% travel speed`;
+        case 'survivalBonus':
+            return `${sign}${Math.round(value * 100)}% survival`;
+        case 'marketPenalty':
+            return `${sign}${Math.round(value * 100)}% market prices`;
+        case 'marketInsightBonus':
+            return `${sign}${Math.round(value * 100)}% market insight`;
+        case 'rareItemBonus':
+            return `${sign}${Math.round(value * 100)}% rare item identification`;
+        case 'reputationGainBonus':
+            return `${sign}${Math.round(value * 100)}% reputation gain`;
+        default:
+            return `${effectName}: ${value}`;
+    }
+}
+
+// Toggle perk selection
+function togglePerkSelection(perkId) {
+    console.log('togglePerkSelection called for:', perkId);
+    const perkCard = document.querySelector(`[data-perk-id="${perkId}"]`);
+
+    if (selectedPerks.includes(perkId)) {
+        // Deselect perk
+        selectedPerks = selectedPerks.filter(id => id !== perkId);
+        perkCard.classList.remove('selected');
+        console.log('Deselected perk:', perkId);
+    } else {
+        // Select perk if we haven't reached the limit
+        if (selectedPerks.length < 2) {
+            selectedPerks.push(perkId);
+            perkCard.classList.add('selected');
+            console.log('Selected perk:', perkId);
+        } else {
+            addMessage('You can only select up to 2 perks.');
+            console.log('Cannot select more perks, limit reached');
+            return;
+        }
+    }
+
+    console.log('Current selectedPerks:', selectedPerks);
+    updatePerkSelection();
+    calculateCharacterStats();
+}
+
+// Update perk selection display
+function updatePerkSelection() {
+    console.log('=== updatePerkSelection called ===');
+    console.log('selectedPerks array:', selectedPerks);
+    console.log('selectedPerks.length:', selectedPerks.length);
+    console.log('elements.selectedPerksCount:', elements.selectedPerksCount);
+
+    // Try to get the element directly if not in elements object yet
+    const counterElement = elements.selectedPerksCount || document.getElementById('selected-perks-count');
+
+    console.log('counterElement found:', !!counterElement);
+    if (counterElement) {
+        console.log('Current counter textContent:', counterElement.textContent);
+        counterElement.textContent = selectedPerks.length;
+        console.log('Updated counter textContent to:', counterElement.textContent);
+        console.log('Verified counter now shows:', document.getElementById('selected-perks-count')?.textContent);
+
+        // Update elements object if it wasn't set
+        if (!elements.selectedPerksCount) {
+            elements.selectedPerksCount = counterElement;
+            console.log('Initialized elements.selectedPerksCount');
+        }
+    } else {
+        console.error('❌ Counter element not found! Checking DOM...');
+        console.log('Looking for element with id: selected-perks-count');
+        const debugElement = document.getElementById('selected-perks-count');
+        console.log('Direct getElementById result:', debugElement);
+        console.log('document.readyState:', document.readyState);
+    }
+
+    // Also update modal counter if it exists
+    const modalCounter = document.getElementById('modal-selected-count');
+    console.log('Modal counter found:', !!modalCounter);
+    if (modalCounter) {
+        modalCounter.textContent = selectedPerks.length;
+        console.log('Updated modal counter to:', selectedPerks.length);
+    }
+
+    // Update card states
+    const perkCards = document.querySelectorAll('.perk-card');
+    console.log('Found perk cards:', perkCards.length);
+    perkCards.forEach(card => {
+        const perkId = card.dataset.perkId;
+        const isSelected = selectedPerks.includes(perkId);
+        const isDisabled = !isSelected && selectedPerks.length >= 2;
+
+        card.classList.toggle('selected', isSelected);
+        card.classList.toggle('disabled', isDisabled);
+    });
+    console.log('=== updatePerkSelection complete ===');
+}
+
+// Open perk selection modal
+function openPerkModal() {
+    console.log('Opening perk modal...');
+
+    // Get modal element
+    const modal = document.getElementById('perk-selection-modal');
+    if (!modal) {
+        console.error('Perk modal not found!');
+        alert('Error: Perk selection modal not found!');
+        return;
+    }
+
+    // Ensure perks container exists
+    if (!elements.perksContainer) {
+        elements.perksContainer = document.getElementById('perks-container');
+    }
+
+    if (!elements.perksContainer) {
+        console.error('Perks container not found!');
+        alert('Error: Perks container not found!');
+        return;
+    }
+
+    console.log('Populating perks...');
+    try {
+        populatePerks(); // Refresh perks in modal
+        updatePerkSelection(); // Update selection states
+    } catch (error) {
+        console.error('Error populating perks:', error);
+        alert('Error populating perks: ' + error.message);
+        return;
+    }
+
+    console.log('Showing modal...');
+    // Show modal directly
+    modal.classList.remove('hidden');
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+
+    console.log('Perk modal opened successfully!');
+}
+
+// Close perk selection modal
+function closePerkModal() {
+    console.log('Closing perk modal...');
+    const modal = document.getElementById('perk-selection-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+}
+
+// Confirm perk selection and close modal
+function confirmPerkSelection() {
+    console.log('Confirming perk selection...', selectedPerks);
+    closePerkModal();
+    updatePerkSelection(); // Update the perk counter badge
+    displaySelectedPerks(); // Show selected perks in the UI
+    calculateCharacterStats(); // Recalculate stats with perk bonuses
+    addMessage(`Selected ${selectedPerks.length} perk(s).`);
+}
+
+// Display selected perks in the character creation UI
+function displaySelectedPerks() {
+    const container = document.getElementById('selected-perks-display');
+    if (!container) {
+        console.error('Selected perks display container not found!');
+        return;
+    }
+
+    if (selectedPerks.length === 0) {
+        container.innerHTML = '<p class="no-perks-message">No perks selected</p>';
+        return;
+    }
+
+    container.innerHTML = '';
+    selectedPerks.forEach(perkId => {
+        const perk = perks[perkId];
+        if (!perk) return;
+
+        const perkTag = document.createElement('div');
+        perkTag.className = 'selected-perk-tag';
+        perkTag.innerHTML = `
+            <span class="perk-tag-icon">${perk.icon}</span>
+            <span class="perk-tag-name">${perk.name}</span>
+            <button class="perk-tag-remove" onclick="removePerk('${perkId}')" title="Remove perk">×</button>
+        `;
+        container.appendChild(perkTag);
+    });
+}
+
+// Remove a selected perk
+function removePerk(perkId) {
+    selectedPerks = selectedPerks.filter(id => id !== perkId);
+    updatePerkSelection();
+    displaySelectedPerks();
+    calculateCharacterStats();
+    addMessage(`Removed perk: ${perks[perkId]?.name || perkId}`);
+}
+
+// 💰 exposing GoldManager to the world (it's a whole mood)
+game.GoldManager = GoldManager;
+window.GoldManager = GoldManager;
+
+// Expose modal functions to game object for onclick handlers
+game.openPerkModal = openPerkModal;
+game.closePerkModal = closePerkModal;
+game.confirmPerkSelection = confirmPerkSelection;
+
+// Expose functions to global scope for onclick handlers in HTML
+window.openPerkModal = openPerkModal;
+window.closePerkModal = closePerkModal;
+window.confirmPerkSelection = confirmPerkSelection;
+window.removePerk = removePerk;
+
+// Calculate character stats based on selected perks
+function calculateCharacterStats() {
+    console.log('=== calculateCharacterStats called ===');
+    console.log('Base gold:', characterCreationState.baseGold);
+    console.log('Selected perks:', selectedPerks);
+    console.log('Manual attributes:', characterCreationState.manualAttributes);
+
+    // Calculate gold with GoldManager
+    let calculatedGold = characterCreationState.baseGold;
+    console.log('Starting with base gold:', calculatedGold);
+
+    // Start with manual attributes (base + player distribution)
+    characterCreationState.attributes = {...characterCreationState.manualAttributes};
+    console.log('Starting attributes (manual):', characterCreationState.attributes);
+
+    // Apply perk effects
+    selectedPerks.forEach(perkId => {
+        const perk = perks[perkId];
+        if (!perk) {
+            console.warn('Perk not found:', perkId);
+            return;
+        }
+
+        console.log('Processing perk:', perk.name);
+
+        // Apply gold bonuses/penalties (these stack on top of difficulty-adjusted base)
+        if (perk.effects && perk.effects.goldBonus) {
+            const bonus = Math.round(characterCreationState.baseGold * perk.effects.goldBonus);
+            calculatedGold += bonus;
+            console.log(`  Gold bonus: +${bonus} (${perk.effects.goldBonus * 100}%)`);
+        }
+        if (perk.negativeEffects && perk.negativeEffects.goldPenalty) {
+            const penalty = Math.round(characterCreationState.baseGold * perk.negativeEffects.goldPenalty);
+            calculatedGold -= penalty;
+            console.log(`  Gold penalty: -${penalty} (${perk.negativeEffects.goldPenalty * 100}%)`);
+        }
+
+        // Apply attribute modifiers (ON TOP of manual distribution)
+        applyAttributeModifiers(perk);
+    });
+
+    // Update characterCreationState with final gold
+    characterCreationState.currentGold = calculatedGold;
+
+    // Update GoldManager with final calculated gold
+    GoldManager.setGold(calculatedGold, 'Character stats calculated');
+
+    console.log('Final calculated gold:', calculatedGold);
+    console.log('CharacterCreationState currentGold:', characterCreationState.currentGold);
+    console.log('Final attributes (manual + perks):', characterCreationState.attributes);
+
+    // Also update the setup gold display directly to ensure it's visible
+    const setupGoldElement = document.getElementById('setup-gold-amount');
+    if (setupGoldElement) {
+        const oldValue = setupGoldElement.textContent;
+        setupGoldElement.textContent = calculatedGold;
+        console.log('✓ Directly updated setup-gold-amount:', oldValue, '→', calculatedGold);
+
+        // Add visual flash effect to show the change
+        setupGoldElement.style.transition = 'none';
+        setupGoldElement.style.backgroundColor = 'rgba(255, 215, 0, 0.3)';
+        setupGoldElement.style.transform = 'scale(1.1)';
+        setTimeout(() => {
+            setupGoldElement.style.transition = 'all 0.3s ease';
+            setupGoldElement.style.backgroundColor = '';
+            setupGoldElement.style.transform = 'scale(1)';
+        }, 50);
+    } else {
+        console.warn('✗ setup-gold-amount element not found!');
+    }
+
+    // Update UI
+    updateCharacterPreview();
+}
+
+// Apply attribute modifiers from perks
+function applyAttributeModifiers(perk) {
+    console.log('Applying attribute modifiers for perk:', perk.id, perk.effects);
+
+    // Apply attribute bonuses from perk effects
+    if (perk.effects) {
+        // Check for each attribute bonus
+        if (perk.effects.strengthBonus && characterCreationState.attributes.strength !== undefined) {
+            characterCreationState.attributes.strength += perk.effects.strengthBonus;
+            console.log('Added', perk.effects.strengthBonus, 'to strength');
+        }
+        if (perk.effects.intelligenceBonus && characterCreationState.attributes.intelligence !== undefined) {
+            characterCreationState.attributes.intelligence += perk.effects.intelligenceBonus;
+            console.log('Added', perk.effects.intelligenceBonus, 'to intelligence');
+        }
+        if (perk.effects.charismaBonus && characterCreationState.attributes.charisma !== undefined) {
+            characterCreationState.attributes.charisma += perk.effects.charismaBonus;
+            console.log('Added', perk.effects.charismaBonus, 'to charisma');
+        }
+        if (perk.effects.enduranceBonus && characterCreationState.attributes.endurance !== undefined) {
+            characterCreationState.attributes.endurance += perk.effects.enduranceBonus;
+            console.log('Added', perk.effects.enduranceBonus, 'to endurance');
+        }
+        if (perk.effects.luckBonus && characterCreationState.attributes.luck !== undefined) {
+            characterCreationState.attributes.luck += perk.effects.luckBonus;
+            console.log('Added', perk.effects.luckBonus, 'to luck');
+        }
+    }
+
+    // Apply negative attribute effects
+    if (perk.negativeEffects) {
+        if (perk.negativeEffects.strengthPenalty && characterCreationState.attributes.strength !== undefined) {
+            characterCreationState.attributes.strength -= perk.negativeEffects.strengthPenalty;
+            console.log('Subtracted', perk.negativeEffects.strengthPenalty, 'from strength');
+        }
+        if (perk.negativeEffects.intelligencePenalty && characterCreationState.attributes.intelligence !== undefined) {
+            characterCreationState.attributes.intelligence -= perk.negativeEffects.intelligencePenalty;
+            console.log('Subtracted', perk.negativeEffects.intelligencePenalty, 'from intelligence');
+        }
+        if (perk.negativeEffects.charismaPenalty && characterCreationState.attributes.charisma !== undefined) {
+            characterCreationState.attributes.charisma -= perk.negativeEffects.charismaPenalty;
+            console.log('Subtracted', perk.negativeEffects.charismaPenalty, 'from charisma');
+        }
+        if (perk.negativeEffects.endurancePenalty && characterCreationState.attributes.endurance !== undefined) {
+            characterCreationState.attributes.endurance -= perk.negativeEffects.endurancePenalty;
+            console.log('Subtracted', perk.negativeEffects.endurancePenalty, 'from endurance');
+        }
+        if (perk.negativeEffects.luckPenalty && characterCreationState.attributes.luck !== undefined) {
+            characterCreationState.attributes.luck -= perk.negativeEffects.luckPenalty;
+            console.log('Subtracted', perk.negativeEffects.luckPenalty, 'from luck');
+        }
+    }
+
+    console.log('Attributes after applying perk:', characterCreationState.attributes);
+}
+
+// Update character preview display
+function updateCharacterPreview() {
+    console.log('=== updateCharacterPreview called ===');
+    console.log('Current attributes:', characterCreationState.attributes);
+    console.log('Current gold (GoldManager):', GoldManager.getGold());
+
+    // Update player name in header
+    const characterNameInput = document.getElementById('character-name-input');
+    const name = characterNameInput ? characterNameInput.value.trim() : 'Player';
+    const playerNameElement = document.getElementById('player-name');
+    if (playerNameElement) {
+        playerNameElement.textContent = name;
+        console.log('Updated player name to:', name);
+    }
+
+    // NOTE: Gold is automatically updated by GoldManager across all displays
+
+    // Update attributes display in setup form
+    for (const [attr, value] of Object.entries(characterCreationState.attributes)) {
+        const attrElement = document.getElementById(`attr-${attr}`);
+        if (attrElement) {
+            attrElement.textContent = value;
+        }
+    }
+
+    // Update TOP BANNER attributes (player-strength, player-intelligence, etc.)
+    for (const [attr, value] of Object.entries(characterCreationState.attributes)) {
+        const bannerAttrElement = document.getElementById(`player-${attr}`);
+        if (bannerAttrElement) {
+            bannerAttrElement.textContent = value;
+            bannerAttrElement.innerText = value;
+            console.log(`💥 Updated banner #player-${attr} = ${value}`);
+        }
+    }
+
+    console.log('=== updateCharacterPreview complete ===');
+}
+
+// Global flag to track if attribute buttons are set up
+let attributeButtonsSetup = false;
+
+// Setup attribute button listeners using event delegation (only once)
+function setupAttributeButtons() {
+    // Only set up once to avoid duplicate listeners
+    if (attributeButtonsSetup) {
+        console.log('📊 Attribute buttons already set up, skipping...');
+        return;
+    }
+
+    console.log('📊 Setting up attribute button listeners with event delegation...');
+
+    // Find the attributes grid container
+    const attributesGrid = document.querySelector('.attributes-grid');
+    if (!attributesGrid) {
+        console.error('✗ attributes-grid container not found!');
+        return;
+    }
+
+    // Add a single event listener to the parent container using event delegation
+    attributesGrid.addEventListener('click', (event) => {
+        console.log('═══════════════════════════════════════');
+        console.log('🔥 CLICK DETECTED IN ATTRIBUTES GRID! 🔥');
+        console.log('═══════════════════════════════════════');
+        console.log('Event target:', event.target);
+        console.log('Event target tag:', event.target.tagName);
+        console.log('Event target class:', event.target.className);
+
+        // Check if click was on a button or inside a button
+        const button = event.target.closest('.attr-btn');
+        console.log('Closest .attr-btn:', button);
+
+        if (!button) {
+            console.log('⚠️ Click was not on an attribute button, ignoring');
+            return; // Not a button click
+        }
+
+        event.preventDefault(); // Prevent any default behavior
+        event.stopPropagation(); // Stop event bubbling
+
+        const attr = button.dataset.attr;
+        const isUpBtn = button.classList.contains('attr-up');
+        const isDownBtn = button.classList.contains('attr-down');
+
+        console.log('═══════════════════════════════════════');
+        console.log(`🖱️ ATTRIBUTE BUTTON CLICKED!`);
+        console.log('═══════════════════════════════════════');
+        console.log('Attribute:', attr);
+        console.log('Direction:', isUpBtn ? 'UP ▲' : 'DOWN ▼');
+        console.log('Button disabled:', button.disabled);
+        console.log('Available points:', characterCreationState.availableAttributePoints);
+        console.log('Current manual value:', characterCreationState.manualAttributes[attr]);
+
+        // Don't process if button is disabled
+        if (button.disabled) {
+            console.log('⚠️ Button is disabled, ignoring click');
+            return;
+        }
+
+        if (isUpBtn) {
+            console.log('═══════════════════════════════════════');
+            console.log(`▲▲▲ INCREASING ${attr.toUpperCase()} ▲▲▲`);
+            console.log('═══════════════════════════════════════');
+            increaseAttribute(attr);
+        } else if (isDownBtn) {
+            console.log('═══════════════════════════════════════');
+            console.log(`▼▼▼ DECREASING ${attr.toUpperCase()} ▼▼▼`);
+            console.log('═══════════════════════════════════════');
+            decreaseAttribute(attr);
+        }
+    }, true); // Use capture phase to ensure we get the event first
+
+    attributeButtonsSetup = true;
+    console.log('✓ Attribute button event delegation setup complete');
+}
+
+// 🎮 button validation - can't start til you've suffered through character creation
+function updateStartGameButton() {
+    const startGameBtn = document.getElementById('start-game-btn');
+    if (!startGameBtn) return;
+
+    // Check if all attribute points are spent
+    const allPointsSpent = characterCreationState.availableAttributePoints === 0;
+
+    // Enable button only if all points are spent
+    startGameBtn.disabled = !allPointsSpent;
+
+    if (!allPointsSpent) {
+        startGameBtn.title = `You must spend all ${characterCreationState.availableAttributePoints} remaining attribute points before starting`;
+        console.log('Start Game button disabled - points remaining:', characterCreationState.availableAttributePoints);
+    } else {
+        startGameBtn.title = 'Start your adventure!';
+        console.log('Start Game button enabled - all points spent');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 📊 ATTRIBUTE POINT DISTRIBUTION - min-maxing your medieval self
+// ═══════════════════════════════════════════════════════════════
+function increaseAttribute(attrName) {
+    console.log(`=== Increasing ${attrName} ===`);
+    const currentValue = characterCreationState.manualAttributes[attrName];
+    const availablePoints = characterCreationState.availableAttributePoints;
+
+    console.log('Current manual value:', currentValue);
+    console.log('Available points:', availablePoints);
+    console.log('Max value:', characterCreationState.maxAttributeValue);
+
+    // Check if we have points available and haven't reached max for this attribute
+    if (availablePoints > 0 && currentValue < characterCreationState.maxAttributeValue) {
+        characterCreationState.manualAttributes[attrName]++;
+        characterCreationState.availableAttributePoints--;
+        console.log(`Increased ${attrName} to ${characterCreationState.manualAttributes[attrName]}`);
+        console.log(`Points remaining: ${characterCreationState.availableAttributePoints}`);
+
+        // IMMEDIATELY UPDATE THE DOM - FORCE IT
+        const attrElement = document.getElementById(`attr-${attrName}`);
+        const pointsElement = document.getElementById('attr-points-remaining');
+
+        if (attrElement) {
+            const newValue = characterCreationState.manualAttributes[attrName];
+            attrElement.textContent = newValue;
+            attrElement.innerText = newValue;
+            attrElement.innerHTML = `<strong>${newValue}</strong>`;
+            console.log(`💥 FORCED UI UPDATE: #attr-${attrName} = ${newValue}`);
+        } else {
+            console.error(`❌ Element #attr-${attrName} NOT FOUND!`);
+        }
+
+        if (pointsElement) {
+            const newPoints = characterCreationState.availableAttributePoints;
+            pointsElement.textContent = newPoints;
+            pointsElement.innerText = newPoints;
+            pointsElement.innerHTML = `<strong style="color: red; font-size: 24px;">${newPoints}</strong>`;
+            console.log(`💥 FORCED UI UPDATE: Points = ${newPoints}`);
+        } else {
+            console.error(`❌ Element #attr-points-remaining NOT FOUND!`);
+        }
+
+        calculateCharacterStats(); // Recalculate final attributes with perks
+        updateAttributeDisplay();
+    } else {
+        if (availablePoints <= 0) {
+            console.warn('No attribute points remaining');
+            addMessage('No attribute points remaining!');
+        } else if (currentValue >= characterCreationState.maxAttributeValue) {
+            console.warn(`${attrName} is already at maximum (${characterCreationState.maxAttributeValue})`);
+            addMessage(`${attrName.charAt(0).toUpperCase() + attrName.slice(1)} is already at maximum!`);
+        }
+    }
+}
+
+function decreaseAttribute(attrName) {
+    console.log(`=== Decreasing ${attrName} ===`);
+    const currentValue = characterCreationState.manualAttributes[attrName];
+    const minValue = 1; // Minimum is 1, not base value
+
+    console.log('Current manual value:', currentValue);
+    console.log('Minimum value:', minValue);
+
+    // Check if we can decrease (must be above minimum)
+    if (currentValue > minValue) {
+        characterCreationState.manualAttributes[attrName]--;
+        characterCreationState.availableAttributePoints++;
+        console.log(`Decreased ${attrName} to ${characterCreationState.manualAttributes[attrName]}`);
+        console.log(`Points remaining: ${characterCreationState.availableAttributePoints}`);
+
+        // IMMEDIATELY UPDATE THE DOM - FORCE IT
+        const attrElement = document.getElementById(`attr-${attrName}`);
+        const pointsElement = document.getElementById('attr-points-remaining');
+
+        if (attrElement) {
+            const newValue = characterCreationState.manualAttributes[attrName];
+            attrElement.textContent = newValue;
+            attrElement.innerText = newValue;
+            attrElement.innerHTML = `<strong>${newValue}</strong>`;
+            console.log(`💥 FORCED UI UPDATE: #attr-${attrName} = ${newValue}`);
+        } else {
+            console.error(`❌ Element #attr-${attrName} NOT FOUND!`);
+        }
+
+        if (pointsElement) {
+            const newPoints = characterCreationState.availableAttributePoints;
+            pointsElement.textContent = newPoints;
+            pointsElement.innerText = newPoints;
+            pointsElement.innerHTML = `<strong style="color: red; font-size: 24px;">${newPoints}</strong>`;
+            console.log(`💥 FORCED UI UPDATE: Points = ${newPoints}`);
+        } else {
+            console.error(`❌ Element #attr-points-remaining NOT FOUND!`);
+        }
+
+        calculateCharacterStats(); // Recalculate final attributes with perks
+        updateAttributeDisplay();
+    } else {
+        console.warn(`${attrName} is already at minimum (${minValue})`);
+        addMessage(`${attrName.charAt(0).toUpperCase() + attrName.slice(1)} is already at minimum!`);
+    }
+}
+
+// 🖤 Expose attribute functions globally for onclick handlers 🖤
+window.increaseAttribute = increaseAttribute;
+window.decreaseAttribute = decreaseAttribute;
+
+function updateAttributeDisplay() {
+    console.log('=== Updating Attribute Display ===');
+    console.log('characterCreationState.attributes:', characterCreationState.attributes);
+
+    // Update attribute values (show FINAL values with perks applied)
+    for (const [attr, value] of Object.entries(characterCreationState.attributes)) {
+        const attrElement = document.getElementById(`attr-${attr}`);
+        console.log(`Looking for #attr-${attr}:`, attrElement ? 'FOUND' : 'NOT FOUND');
+        if (attrElement) {
+            const oldValue = attrElement.textContent;
+
+            // FORCE UPDATE - multiple methods
+            attrElement.textContent = value;
+            attrElement.innerText = value;
+            attrElement.innerHTML = value;
+
+            // Force reflow/repaint
+            void attrElement.offsetHeight;
+            attrElement.style.display = 'none';
+            void attrElement.offsetHeight;
+            attrElement.style.display = '';
+
+            console.log(`✓ Updated ${attr}: ${oldValue} → ${value} (FORCED)`);
+            console.log(`   Element now shows: "${attrElement.textContent}"`);
+
+            // Add visual flash
+            attrElement.style.transition = 'all 0.2s';
+            attrElement.style.backgroundColor = 'rgba(255, 215, 0, 0.9)';
+            attrElement.style.transform = 'scale(1.5)';
+            attrElement.style.fontWeight = 'bold';
+            setTimeout(() => {
+                attrElement.style.backgroundColor = '';
+                attrElement.style.transform = 'scale(1)';
+                attrElement.style.fontWeight = '';
+            }, 300);
+        } else {
+            console.error(`❌ Element #attr-${attr} NOT FOUND!`);
+        }
+    }
+
+    // Update points remaining
+    const pointsElement = document.getElementById('attr-points-remaining');
+    console.log('Points element:', pointsElement ? 'FOUND' : 'NOT FOUND');
+    if (pointsElement) {
+        const oldPoints = pointsElement.textContent;
+
+        // FORCE UPDATE - multiple methods
+        pointsElement.textContent = characterCreationState.availableAttributePoints;
+        pointsElement.innerText = characterCreationState.availableAttributePoints;
+        pointsElement.innerHTML = characterCreationState.availableAttributePoints;
+
+        // Force reflow/repaint
+        void pointsElement.offsetHeight;
+        pointsElement.style.display = 'none';
+        void pointsElement.offsetHeight;
+        pointsElement.style.display = '';
+
+        console.log(`✓ Updated points: ${oldPoints} → ${characterCreationState.availableAttributePoints} (FORCED)`);
+        console.log(`   Element now shows: "${pointsElement.textContent}"`);
+
+        // Add VERY OBVIOUS visual flash
+        pointsElement.style.transition = 'all 0.2s';
+        pointsElement.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+        pointsElement.style.transform = 'scale(2)';
+        pointsElement.style.fontWeight = 'bold';
+        pointsElement.style.color = '#fff';
+        setTimeout(() => {
+            pointsElement.style.backgroundColor = '';
+            pointsElement.style.transform = 'scale(1)';
+            pointsElement.style.fontWeight = '';
+            pointsElement.style.color = '';
+        }, 300);
+    } else {
+        console.error('❌ Points element NOT FOUND!');
+    }
+
+    // Update button states (based on MANUAL values, not final)
+    document.querySelectorAll('.attr-btn').forEach(btn => {
+        const attr = btn.dataset.attr;
+        const isUpBtn = btn.classList.contains('attr-up');
+        const isDownBtn = btn.classList.contains('attr-down');
+
+        if (isUpBtn) {
+            // Disable if no points left or manual attribute at max
+            const canIncrease = characterCreationState.availableAttributePoints > 0 &&
+                              characterCreationState.manualAttributes[attr] < characterCreationState.maxAttributeValue;
+            btn.disabled = !canIncrease;
+        } else if (isDownBtn) {
+            // Disable if manual attribute at minimum (1)
+            const canDecrease = characterCreationState.manualAttributes[attr] > 1;
+            btn.disabled = !canDecrease;
+        }
+    });
+
+    // Update Start Game button state
+    updateStartGameButton();
+}
+
+// Randomize character
+function randomizeCharacter() {
+    console.log('=== Randomizing Character ===');
+
+    try {
+        // Generate random name
+        console.log('📝 Step 1: Generating random name...');
+        const names = ['Alex', 'Morgan', 'Taylor', 'Jordan', 'Casey', 'Riley', 'Avery', 'Quinn', 'Blake', 'Drew'];
+        const randomName = names[Math.floor(Math.random() * names.length)];
+        console.log('Random name generated:', randomName);
+
+        console.log('📝 Step 2: Setting input value...');
+        const characterNameInput = document.getElementById('character-name-input');
+        console.log('characterNameInput element:', characterNameInput);
+        if (!characterNameInput) {
+            throw new Error('character-name-input element not found in DOM!');
+        }
+        characterNameInput.value = randomName;
+        console.log('✓ Input value set to:', randomName);
+
+        // Update player name display at top
+        console.log('📝 Step 3: Updating player name display...');
+        const playerNameElement = document.getElementById('player-name');
+        if (playerNameElement) {
+            playerNameElement.textContent = randomName;
+            playerNameElement.innerText = randomName;
+            console.log('✓ Player name display updated to:', randomName);
+        }
+
+        // Select random difficulty
+        console.log('📝 Step 4: Selecting random difficulty...');
+        const difficulties = ['easy', 'normal', 'hard'];
+        const randomDifficulty = difficulties[Math.floor(Math.random() * difficulties.length)];
+        console.log('Random difficulty selected:', randomDifficulty);
+
+        const difficultyRadio = document.getElementById(`difficulty-${randomDifficulty}`);
+        console.log('Difficulty radio element:', difficultyRadio);
+        if (difficultyRadio) {
+            difficultyRadio.checked = true;
+            console.log('✓ Difficulty radio checked');
+            console.log('📝 Step 5: Calling onDifficultyChange...');
+            onDifficultyChange(); // Update gold based on difficulty
+            console.log('✓ onDifficultyChange completed');
+        }
+
+        // Clear current perk selection
+        console.log('📝 Step 6: Clearing current perk selection...');
+        selectedPerks = [];
+        document.querySelectorAll('.perk-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        console.log('✓ Perk selection cleared');
+
+        // Select exactly 2 random perks
+        console.log('📝 Step 7: Selecting 2 random perks...');
+        const perkIds = Object.keys(perks);
+        console.log('Available perks:', perkIds.length);
+        while (selectedPerks.length < 2 && perkIds.length >= 2) {
+            const randomPerkId = perkIds[Math.floor(Math.random() * perkIds.length)];
+            if (!selectedPerks.includes(randomPerkId)) {
+                selectedPerks.push(randomPerkId);
+                console.log('✓ Selected random perk:', randomPerkId);
+
+                // Mark perk card as selected in UI
+                const perkCard = document.querySelector(`.perk-card[data-perk-id="${randomPerkId}"]`);
+                if (perkCard) {
+                    perkCard.classList.add('selected');
+                    console.log('✓ Marked perk card as selected in UI');
+                }
+            }
+        }
+        console.log('✅ Random perks selected:', selectedPerks);
+
+        // Reset manual attributes to base
+        console.log('📝 Step 8: Resetting attributes...');
+        characterCreationState.manualAttributes = {...baseAttributes};
+        characterCreationState.availableAttributePoints = 5;
+        console.log('✓ Attributes reset to base');
+
+        // Distribute 5 attribute points randomly (for total of 30)
+        console.log('📝 Step 9: Distributing attribute points...');
+        const attributeNames = Object.keys(baseAttributes);
+        for (let i = 0; i < 5; i++) {
+            // Pick random attribute that isn't already at max
+            let validAttrs = attributeNames.filter(attr =>
+                characterCreationState.manualAttributes[attr] < characterCreationState.maxAttributeValue
+            );
+            if (validAttrs.length > 0) {
+                const randomAttr = validAttrs[Math.floor(Math.random() * validAttrs.length)];
+                characterCreationState.manualAttributes[randomAttr]++;
+                characterCreationState.availableAttributePoints--;
+            }
+        }
+        console.log('✓ Random manual attributes:', characterCreationState.manualAttributes);
+        console.log('✓ Points remaining:', characterCreationState.availableAttributePoints);
+
+        // Update all displays
+        console.log('📝 Step 10: Updating all displays...');
+        updatePerkSelection();
+        displaySelectedPerks();
+        calculateCharacterStats(); // This calls updateCharacterPreview
+        updateAttributeDisplay(); // This calls updateStartGameButton
+        console.log('✓ Display functions called');
+
+        // Force update all attribute displays
+        console.log('📝 Step 11: Force updating attribute displays...');
+        Object.keys(characterCreationState.manualAttributes).forEach(attr => {
+            const attrElement = document.getElementById(`attr-${attr}`);
+            if (attrElement) {
+                attrElement.textContent = characterCreationState.manualAttributes[attr];
+                attrElement.innerHTML = `<strong>${characterCreationState.manualAttributes[attr]}</strong>`;
+                console.log(`💥 Updated #attr-${attr} = ${characterCreationState.manualAttributes[attr]}`);
+            }
+        });
+
+        // Force update points display
+        console.log('📝 Step 12: Force updating points display...');
+        const pointsElement = document.getElementById('attr-points-remaining');
+        if (pointsElement) {
+            pointsElement.textContent = characterCreationState.availableAttributePoints;
+            pointsElement.innerHTML = `<strong style="color: green; font-size: 20px;">${characterCreationState.availableAttributePoints}</strong>`;
+            console.log(`💥 Updated points = ${characterCreationState.availableAttributePoints}`);
+        }
+
+        // addMessage('✨ Character randomized!'); // Disabled - messages element might not exist
+        console.log('✨ Character randomized!');
+        console.log('✅✅✅ RANDOMIZATION COMPLETE ✅✅✅');
+
+    } catch (error) {
+        console.error('💥💥💥 ERROR IN RANDOMIZE CHARACTER 💥💥💥');
+        console.error('Error:', error);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        throw error; // Re-throw so outer catch can also log it
+    }
+}
+
+// 🖤 Expose randomizeCharacter globally for global click handler 🖤
+window.randomizeCharacter = randomizeCharacter;
+
+function createCharacter(event) {
+    console.log('=== createCharacter called ===');
+    if (event && event.preventDefault) {
+        event.preventDefault();
+    }
+
+    const characterNameInput = document.getElementById('character-name-input');
+    const name = characterNameInput ? characterNameInput.value.trim() : '';
+    const difficulty = characterCreationState.difficulty;
+
+    console.log('Character name:', name);
+    console.log('Difficulty:', difficulty);
+    console.log('Character creation state:', characterCreationState);
+    console.log('Selected perks:', selectedPerks);
+
+    if (!name) {
+        addMessage('Please enter a character name.');
+        console.warn('Character creation aborted: no name entered');
+        return;
+    }
+
+    // Get starting gold from GoldManager (single source of truth)
+    const startingGold = GoldManager.getGold();
+    console.log('Starting gold from GoldManager:', startingGold);
+    
+    // Initialize player with stats
+    game.player = {
+        name: name,
+        difficulty: difficulty,
+        gold: startingGold,
+        inventory: {},
+        reputation: 0,
+        skills: {
+            trading: 1,
+            negotiation: 1,
+            perception: 1
+        },
+        stats: {
+            health: 100,
+            maxHealth: 100,
+            hunger: 50,
+            maxHunger: 100,
+            thirst: 50,
+            maxThirst: 100,
+            stamina: 100,
+            maxStamina: 100,
+            happiness: 50,
+            maxHappiness: 100
+        },
+        attributes: {...characterCreationState.attributes},
+        transportation: 'backpack', // Start with backpack
+        ownedTransportation: ['backpack'], // Track owned transportation
+        currentLoad: 0, // Current weight carried
+        lastRestTime: 0,
+        perks: selectedPerks
+    };
+    
+    // Give starting items
+    game.player.inventory = {
+        food: 5,
+        water: 3,
+        bread: 3,
+        gold: startingGold
+    };
+    
+    // Initialize game world
+    initializeGameWorld();
+    
+    // Update UI
+    updatePlayerInfo();
+    updatePlayerStats();
+    
+    // Hide setup panel and reveal full game UI
+    hidePanel('game-setup-panel');
+    showGameUI();  // Reveal all game UI elements that were hidden during setup
+    changeState(GameState.PLAYING);
+    addMessage(`Welcome, ${name}! Starting on ${difficulty} difficulty.`);
+    addMessage('You start with some basic supplies for your journey.');
+}
+
+// 🖤 Expose createCharacter globally for global click handler 🖤
+window.createCharacter = createCharacter;
+
+// 🖤 Handle difficulty change to update gold preview - FORCE UPDATE DISPLAYS 🖤
+function onDifficultyChange() {
+    console.log('═══════════════════════════════════════');
+    console.log('🔥🔥🔥 DIFFICULTY CHANGED! 🔥🔥🔥');
+    console.log('═══════════════════════════════════════');
+
+    const difficulty = document.querySelector('input[name="difficulty"]:checked')?.value || 'normal';
+    console.log('Selected difficulty:', difficulty);
+
+    // Calculate base gold based on difficulty
+    let baseGold = 100;
+    switch (difficulty) {
+        case 'easy':
+            baseGold = 120; // +20%
+            console.log('✓ Easy: 120 gold (+20%)');
+            break;
+        case 'hard':
+            baseGold = 80; // -20%
+            console.log('✓ Hard: 80 gold (-20%)');
+            break;
+        case 'normal':
+        default:
+            baseGold = 100;
+            console.log('✓ Normal: 100 gold');
+            break;
+    }
+
+    console.log('OLD baseGold:', characterCreationState?.baseGold);
+    console.log('NEW baseGold:', baseGold);
+
+    // Update character creation state
+    if (!characterCreationState) {
+        console.error('❌ characterCreationState is undefined!');
+        return;
+    }
+
+    characterCreationState.difficulty = difficulty;
+    characterCreationState.baseGold = baseGold;
+    characterCreationState.currentGold = baseGold; // Set current gold immediately
+
+    console.log('🎯 Recalculating with perks...');
+
+    // Recalculate with perks applied
+    calculateCharacterStats();
+
+    // FORCE update the setup gold display directly
+    const setupGoldElement = document.getElementById('setup-gold-amount');
+    if (setupGoldElement) {
+        setupGoldElement.textContent = characterCreationState.currentGold;
+        console.log('💰 FORCED setup-gold-amount to:', characterCreationState.currentGold);
+    } else {
+        console.error('❌ setup-gold-amount element NOT FOUND!');
+    }
+
+    // FORCE GoldManager to update all displays
+    GoldManager.setGold(characterCreationState.currentGold, `Difficulty: ${difficulty}`);
+    console.log('💰 FORCED GoldManager to:', characterCreationState.currentGold);
+
+    console.log('✅ Final gold:', characterCreationState.currentGold);
+    console.log('═══════════════════════════════════════');
+}
+
+// 🖤 Expose functions for debugging 🖤
+window.onDifficultyChange = onDifficultyChange;
+
+// Helper function to set difficulty from console
+window.setDifficulty = function(difficulty) {
+    const validDifficulties = ['easy', 'normal', 'hard'];
+    if (!validDifficulties.includes(difficulty)) {
+        console.error('❌ Invalid difficulty! Use: easy, normal, or hard');
+        return;
+    }
+
+    console.log(`🎯 Setting difficulty to: ${difficulty}`);
+
+    // Make sure listeners are set up
+    if (!difficultyListenersSetup) {
+        console.log('⚠️ Setting up listeners first...');
+        setupDifficultyListeners();
+    }
+
+    const radio = document.getElementById(`difficulty-${difficulty}`);
+    if (radio) {
+        radio.checked = true;
+        console.log('✓ Radio button checked');
+
+        // Simulate click event
+        radio.click();
+
+        // Also call directly
+        onDifficultyChange();
+    } else {
+        console.error('❌ Radio button not found!');
+    }
+};
+
+// 🖤 Test function to verify difficulty system is working 🖤
+window.testDifficultySystem = function() {
+    console.log('═══════════════════════════════════════');
+    console.log('🧪 TESTING DIFFICULTY SYSTEM');
+    console.log('═══════════════════════════════════════');
+
+    const container = document.querySelector('.difficulty-selection');
+    const radios = document.querySelectorAll('input[name="difficulty"]');
+    const setupGoldDisplay = document.getElementById('setup-gold-amount');
+    const playerGoldDisplay = document.getElementById('player-gold');
+
+    console.log('1. Difficulty container:', container ? '✓ FOUND' : '✗ NOT FOUND');
+    console.log('2. Radio buttons:', radios.length, 'found');
+    radios.forEach((r, i) => {
+        console.log(`   - Radio ${i + 1}: value="${r.value}", checked=${r.checked}`);
+    });
+
+    console.log('3. Setup gold display (new game panel):', setupGoldDisplay ? '✓ FOUND' : '✗ NOT FOUND');
+    if (setupGoldDisplay) {
+        console.log('   - Current value:', setupGoldDisplay.textContent);
+        console.log('   - Visible:', setupGoldDisplay.offsetParent !== null);
+    }
+
+    console.log('4. Player gold display (header):', playerGoldDisplay ? '✓ FOUND' : '✗ NOT FOUND');
+    if (playerGoldDisplay) {
+        console.log('   - Current value:', playerGoldDisplay.textContent);
+        console.log('   - Visible:', playerGoldDisplay.offsetParent !== null);
+    }
+
+    console.log('5. CharacterCreationState:');
+    console.log('   - baseGold:', characterCreationState?.baseGold);
+    console.log('   - currentGold:', characterCreationState?.currentGold);
+    console.log('   - difficulty:', characterCreationState?.difficulty);
+
+    console.log('6. GoldManager:');
+    console.log('   - Current gold:', GoldManager.getGold());
+    console.log('   - Registered displays:', GoldManager._displays.length);
+
+    console.log('\n🧪 Manually triggering onDifficultyChange()...');
+    onDifficultyChange();
+
+    console.log('\n✅ AFTER onDifficultyChange():');
+    console.log('   - Setup gold display:', setupGoldDisplay ? setupGoldDisplay.textContent : 'NOT FOUND');
+    console.log('   - Player gold display:', playerGoldDisplay ? playerGoldDisplay.textContent : 'NOT FOUND');
+    console.log('   - baseGold:', characterCreationState?.baseGold);
+    console.log('   - currentGold:', characterCreationState?.currentGold);
+    console.log('   - GoldManager:', GoldManager.getGold());
+    console.log('═══════════════════════════════════════');
+
+    return {
+        setupGold: setupGoldDisplay?.textContent,
+        playerGold: playerGoldDisplay?.textContent,
+        baseGold: characterCreationState?.baseGold,
+        currentGold: characterCreationState?.currentGold,
+        goldManager: GoldManager.getGold()
+    };
+};
+
+// Start game with difficulty selection
+function startGameWithDifficulty() {
+    const difficulty = document.querySelector('input[name="difficulty"]:checked')?.value || 'normal';
+
+    // Hide game setup and show character creation
+    hidePanel('game-setup-panel');
+    changeState(GameState.CHARACTER_CREATION);
+    showPanel('character-panel');
+    initializeCharacterCreation(difficulty);
+    addMessage(`Selected ${difficulty} difficulty. Now create your character.`);
+}
+
+// Cancel game setup and return to menu
+function cancelGameSetup() {
+    hidePanel('game-setup-panel');
+    showGameUI();  // Reset UI visibility in case they start a new game later
+    showScreen('main-menu');
+    changeState(GameState.MENU);
+}
+
+function initializeGameWorld() {
+    // Initialize GameWorld system
+    GameWorld.init();
+
+    // Determine starting location based on selected perks
+    let startLocationId = 'south_gate'; // Default starting location
+
+    // Map old location names to new ones
+    const locationMapping = {
+        'riverwood': 'riverwood',
+        'royal_capital': 'royal_capital',
+        'greendale': 'greendale',
+        'stonebridge': 'stonebridge',
+        'amberhaven': 'jade_harbor',
+        'ironhold': 'ironforge',
+        'frostfall': 'frostholm',
+        'jade_palace': 'jade_harbor',
+        'market_crossroads': 'silk_road_inn',
+        'darkwood_village': 'darkwood'
+    };
+
+    // Check selected perks for starting locations
+    if (selectedPerks && selectedPerks.length > 0) {
+        // Collect all valid starting locations from perks
+        const possibleLocations = [];
+
+        for (const perkId of selectedPerks) {
+            const perk = perks[perkId];
+            if (perk && perk.startingLocation) {
+                let mappedLocation = locationMapping[perk.startingLocation] || perk.startingLocation;
+
+                // Verify the location exists in GameWorld
+                if (GameWorld.locations[mappedLocation]) {
+                    possibleLocations.push({
+                        locationId: mappedLocation,
+                        perkName: perk.name
+                    });
+                }
+            }
+        }
+
+        // If we have possible locations, pick one randomly
+        if (possibleLocations.length > 0) {
+            const chosen = possibleLocations[Math.floor(Math.random() * possibleLocations.length)];
+            startLocationId = chosen.locationId;
+            console.log(`Starting at ${startLocationId} based on perk: ${chosen.perkName}`);
+
+            // Log if there was a conflict
+            if (possibleLocations.length > 1) {
+                const locationNames = possibleLocations.map(p => `${p.perkName} (${p.locationId})`).join(', ');
+                console.log(`Multiple starting locations from perks: ${locationNames}`);
+                console.log(`Randomly chose: ${chosen.perkName}'s location`);
+            }
+        }
+    }
+
+    // Get the actual location data
+    const startLocation = GameWorld.locations[startLocationId];
+    if (!startLocation) {
+        console.error(`Starting location ${startLocationId} not found! Defaulting to south_gate`);
+        startLocationId = 'south_gate';
+    }
+
+    const location = GameWorld.locations[startLocationId];
+
+    // Set starting location
+    game.currentLocation = {
+        id: startLocationId,
+        name: location.name,
+        description: location.description
+    };
+
+    // Initialize gatehouse system with starting zone
+    // This ensures the starting zone + capital are always accessible
+    if (typeof GatehouseSystem !== 'undefined' && GatehouseSystem.setStartingZone) {
+        GatehouseSystem.setStartingZone(startLocationId);
+    }
+
+    // Add to visited locations
+    if (!GameWorld.visitedLocations.includes(startLocationId)) {
+        GameWorld.visitedLocations.push(startLocationId);
+    }
+
+    console.log(`Player starting at: ${location.name}`);
+
+    updateLocationInfo();
+
+    // Center world view on player after initialization
+    TimerManager.setTimeout(() => {
+        if (typeof GameWorldRenderer !== 'undefined' && GameWorldRenderer.centerOnPlayer) {
+            GameWorldRenderer.centerOnPlayer();
+        }
+        if (typeof TravelSystem !== 'undefined' && TravelSystem.centerOnPlayer) {
+            TravelSystem.centerOnPlayer();
+        }
+    }, 500);
+}
+
+function updatePlayerInfo() {
+    if (game.player) {
+        elements.playerName.textContent = game.player.name;
+        elements.playerGold.textContent = game.player.gold.toLocaleString();
+        
+        // Update attribute displays
+        if (elements.playerStrength) elements.playerStrength.textContent = game.player.attributes.strength;
+        if (elements.playerIntelligence) elements.playerIntelligence.textContent = game.player.attributes.intelligence;
+        if (elements.playerCharisma) elements.playerCharisma.textContent = game.player.attributes.charisma;
+        if (elements.playerEndurance) elements.playerEndurance.textContent = game.player.attributes.endurance;
+        if (elements.playerLuck) elements.playerLuck.textContent = game.player.attributes.luck;
+    }
+}
+
+// Update player stats display - now updates side panel vitals
+function updatePlayerStats() {
+    if (!game.player || !game.player.stats) return;
+
+    const stats = game.player.stats;
+
+    // Update side panel vital bars
+    const healthFill = document.getElementById('health-fill');
+    const hungerFill = document.getElementById('hunger-fill');
+    const thirstFill = document.getElementById('thirst-fill');
+    const energyFill = document.getElementById('energy-fill');
+
+    const healthDisplay = document.getElementById('player-health-display');
+    const hungerDisplay = document.getElementById('player-hunger-display');
+    const thirstDisplay = document.getElementById('player-thirst-display');
+    const energyDisplay = document.getElementById('player-energy-display');
+
+    if (healthFill) healthFill.style.width = `${(stats.health / stats.maxHealth) * 100}%`;
+    if (hungerFill) hungerFill.style.width = `${(stats.hunger / stats.maxHunger) * 100}%`;
+    if (thirstFill) thirstFill.style.width = `${(stats.thirst / stats.maxThirst) * 100}%`;
+    if (energyFill) energyFill.style.width = `${(stats.stamina / stats.maxStamina) * 100}%`;
+
+    if (healthDisplay) healthDisplay.textContent = stats.health;
+    if (hungerDisplay) hungerDisplay.textContent = stats.hunger;
+    if (thirstDisplay) thirstDisplay.textContent = stats.thirst;
+    if (energyDisplay) energyDisplay.textContent = stats.stamina;
+
+    // Legacy: keep old stats display working if it exists elsewhere
+    let statsDisplay = document.getElementById('player-stats');
+    if (statsDisplay) {
+        statsDisplay.innerHTML = `
+            <div class="stat-bar">
+                <span class="stat-label">❤️ Health</span>
+                <div class="stat-progress">
+                    <div class="stat-fill health-fill" style="width: ${(stats.health / stats.maxHealth) * 100}%"></div>
+                </div>
+                <span class="stat-value">${stats.health}/${stats.maxHealth}</span>
+            </div>
+            <div class="stat-bar">
+                <span class="stat-label">🍖 Hunger</span>
+                <div class="stat-progress">
+                    <div class="stat-fill hunger-fill" style="width: ${(stats.hunger / stats.maxHunger) * 100}%"></div>
+                </div>
+                <span class="stat-value">${stats.hunger}/${stats.maxHunger}</span>
+            </div>
+            <div class="stat-bar">
+                <span class="stat-label">💧 Thirst</span>
+                <div class="stat-progress">
+                    <div class="stat-fill thirst-fill" style="width: ${(stats.thirst / stats.maxThirst) * 100}%"></div>
+                </div>
+                <span class="stat-value">${stats.thirst}/${stats.maxThirst}</span>
+            </div>
+            <div class="stat-bar">
+                <span class="stat-label">⚡ Stamina</span>
+                <div class="stat-progress">
+                    <div class="stat-fill stamina-fill" style="width: ${(stats.stamina / stats.maxStamina) * 100}%"></div>
+                </div>
+                <span class="stat-value">${stats.stamina}/${stats.maxStamina}</span>
+            </div>
+            <div class="stat-bar">
+                <span class="stat-label">😊 Happiness</span>
+                <div class="stat-progress">
+                    <div class="stat-fill happiness-fill" style="width: ${(stats.happiness / stats.maxHappiness) * 100}%"></div>
+                </div>
+                <span class="stat-value">${stats.happiness}/${stats.maxHappiness}</span>
+            </div>
+        `;
+    }
+}
+
+function updateLocationInfo() {
+    if (game.currentLocation) {
+        document.getElementById('location-name').textContent = game.currentLocation.name;
+        document.getElementById('location-description').textContent = game.currentLocation.description;
+    }
+}
+
+function updateLocationPanel() {
+    const location = GameWorld.locations[game.currentLocation.id];
+    if (!location) return;
+    
+    const locationPanel = document.getElementById('location-panel');
+    if (!locationPanel) return;
+    
+    // Update location name and description
+    locationPanel.querySelector('h2').textContent = location.name;
+    const descElement = locationPanel.querySelector('#location-description');
+    if (descElement) {
+        descElement.textContent = location.description;
+    }
+    
+    // Add location details after description
+    let detailsElement = locationPanel.querySelector('.location-details');
+    if (!detailsElement) {
+        detailsElement = document.createElement('div');
+        detailsElement.className = 'location-details';
+        descElement.parentNode.insertBefore(detailsElement, descElement.nextSibling);
+    }
+    
+    detailsElement.innerHTML = `
+        <p><strong>Type:</strong> ${location.type.charAt(0).toUpperCase() + location.type.slice(1)}</p>
+        <p><strong>Population:</strong> ${location.population.toLocaleString()}</p>
+        <p><strong>Region:</strong> ${GameWorld.regions[location.region].name}</p>
+        <p><strong>Specialties:</strong> ${location.specialties.map(s => ItemDatabase.getItem(s)?.name || s).join(', ')}</p>
+    `;
+    
+    // Add rest/recovery options
+    let restElement = locationPanel.querySelector('.location-rest-options');
+    if (!restElement) {
+        restElement = document.createElement('div');
+        restElement.className = 'location-rest-options';
+        detailsElement.parentNode.insertBefore(restElement, detailsElement.nextSibling);
+    }
+    
+    const isInn = location.type === 'town' || location.type === 'city';
+    restElement.innerHTML = `
+        <h3>Rest & Recovery</h3>
+        ${isInn ? `<button class="rest-btn" onclick="restAtInn()">Rest at Inn (20 gold)</button>` : ''}
+        ${game.player && game.player.ownsHouse && isInn ? `<button class="rest-btn" onclick="restInHouse()">Rest in House (Free)</button>` : ''}
+        ${!game.player || !game.player.ownsHouse ? `<button class="buy-house-btn" onclick="buyHouse()">Buy House (1000 gold)</button>` : ''}
+    `;
+    
+    // Add region unlock info
+    const unlockedRegions = GameWorld.unlockedRegions;
+    const availableRegions = Object.values(GameWorld.regions).filter(region =>
+        !unlockedRegions.includes(region.id) && GameWorld.canUnlockRegion(region.id)
+    );
+    
+    if (availableRegions.length > 0) {
+        let unlockElement = locationPanel.querySelector('.region-unlocks');
+        if (!unlockElement) {
+            unlockElement = document.createElement('div');
+            unlockElement.className = 'region-unlocks';
+            detailsElement.parentNode.insertBefore(unlockElement, detailsElement.nextSibling);
+        }
+        
+        unlockElement.innerHTML = `
+            <h3>Available Regions to Unlock:</h3>
+            ${availableRegions.map(region => `
+                <div class="region-option">
+                    <strong>${region.name}</strong> - ${region.description}
+                    <span class="region-cost">💰 ${region.goldRequirement} gold</span>
+                    <button class="unlock-btn" onclick="unlockRegion('${region.id}')">Unlock</button>
+                </div>
+            `).join('')}
+        `;
+    }
+}
+
+// Unlock region function
+function unlockRegion(regionId) {
+    const region = GameWorld.regions[regionId];
+    if (!region) return;
+    
+    if (!GameWorld.canUnlockRegion(regionId)) {
+        addMessage(`Cannot unlock ${region.name}! Requirements not met.`);
+        return;
+    }
+    
+    if (game.player.gold < region.goldRequirement) {
+        addMessage(`You need ${region.goldRequirement} gold to unlock ${region.name}!`);
+        return;
+    }
+    
+    // Deduct gold and unlock region
+    game.player.gold -= region.goldRequirement;
+    GameWorld.unlockRegion(regionId);
+    
+    // Update UI
+    updatePlayerInfo();
+    updateLocationPanel();
+    
+    addMessage(`🎉 Unlocked ${region.name}! New destinations are now available.`);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🏪 MARKET FUNCTIONS - capitalism: the game
+// ═══════════════════════════════════════════════════════════════
+function openMarket() {
+    changeState(GameState.MARKET);
+    populateMarketItems();
+    updateMarketHeader();
+    updateMarketEvents();
+    populateItemFilter();
+    populateComparisonSelect();
+    updateMarketNews();
+    updateMerchantInfo(); // Display merchant personality and info
+}
+
+// Update merchant info display
+function updateMerchantInfo() {
+    if (typeof NPCMerchantSystem === 'undefined') return;
+
+    const merchant = NPCMerchantSystem.getCurrentMerchant();
+    if (!merchant) return;
+
+    // Update greeting
+    const greetingElement = document.getElementById('merchant-greeting-text');
+    if (greetingElement) {
+        const greeting = NPCMerchantSystem.getGreeting(merchant.id);
+        greetingElement.textContent = `"${greeting}"`;
+    }
+
+    // Update merchant details
+    const merchantInfo = NPCMerchantSystem.getMerchantInfo(merchant);
+
+    const nameElement = document.getElementById('merchant-name');
+    if (nameElement) nameElement.textContent = merchantInfo.name;
+
+    const personalityElement = document.getElementById('merchant-personality');
+    if (personalityElement) personalityElement.textContent = merchantInfo.personality;
+
+    const relationshipElement = document.getElementById('merchant-relationship');
+    if (relationshipElement) relationshipElement.textContent = merchantInfo.relationship;
+
+    const specialtiesElement = document.getElementById('merchant-specialties');
+    if (specialtiesElement) specialtiesElement.textContent = merchantInfo.specialties || 'None';
+}
+
+function closeMarket() {
+    game.hideOverlay('market-panel');
+    changeState(GameState.PLAYING);
+}
+
+function updateMarketHeader() {
+    const location = GameWorld.locations[game.currentLocation.id];
+    if (!location) return;
+    
+    // Update market location
+    const marketLocation = document.getElementById('market-location');
+    if (marketLocation) {
+        marketLocation.textContent = `${location.name} Market`;
+    }
+    
+    // Update reputation display
+    const reputationDisplay = document.getElementById('market-reputation');
+    if (reputationDisplay && location.reputation) {
+        const reputation = location.reputation.player;
+        let reputationText = 'Neutral';
+        let reputationClass = 'neutral';
+        
+        if (reputation >= 75) {
+            reputationText = 'Elite';
+            reputationClass = 'elite';
+        } else if (reputation >= 50) {
+            reputationText = 'Trusted';
+            reputationClass = 'trusted';
+        } else if (reputation >= 25) {
+            reputationText = 'Friendly';
+            reputationClass = 'friendly';
+        } else if (reputation >= 0) {
+            reputationText = 'Neutral';
+            reputationClass = 'neutral';
+        } else if (reputation >= -25) {
+            reputationText = 'Suspicious';
+            reputationClass = 'suspicious';
+        } else if (reputation >= -50) {
+            reputationText = 'Untrusted';
+            reputationClass = 'untrusted';
+        } else {
+            reputationText = 'Hostile';
+            reputationClass = 'hostile';
+        }
+        
+        reputationDisplay.textContent = `Reputation: ${reputationText} (${reputation})`;
+        reputationDisplay.className = `reputation-display ${reputationClass}`;
+    }
+}
+
+function updateMarketEvents() {
+    const marketEvents = document.getElementById('market-events');
+    if (!marketEvents) return;
+    
+    const location = GameWorld.locations[game.currentLocation.id];
+    if (!location || !location.reputation) return;
+    
+    const events = (typeof CityEventSystem !== 'undefined') ? CityEventSystem.getCityEvents(location.id) : [];
+    
+    if (events.length === 0) {
+        marketEvents.innerHTML = '<span>No active events</span>';
+        return;
+    }
+    
+    marketEvents.innerHTML = events.map(event =>
+        `<div class="market-event">${event.name}</div>`
+    ).join('');
+}
+
+function populateItemFilter() {
+    const itemFilter = document.getElementById('item-filter');
+    if (!itemFilter) return;
+    
+    // Filter options are already in HTML, just need to add event listener
+    itemFilter.addEventListener('change', updateMarketDisplay);
+}
+
+function populateComparisonSelect() {
+    const compareSelect = document.getElementById('compare-item-select');
+    if (!compareSelect) return;
+    
+    // Get all items that exist in any market
+    const allItems = new Set();
+    Object.values(GameWorld.locations).forEach(location => {
+        if (location.marketPrices) {
+            Object.keys(location.marketPrices).forEach(itemId => {
+                allItems.add(itemId);
+            });
+        }
+    });
+    
+    // Clear existing options except first one
+    while (compareSelect.children.length > 1) {
+        compareSelect.removeChild(compareSelect.lastChild);
+    }
+    
+    // Add item options
+    Array.from(allItems).sort().forEach(itemId => {
+        const item = ItemDatabase.getItem(itemId);
+        if (item) {
+            const option = document.createElement('option');
+            option.value = itemId;
+            option.textContent = item.name;
+            compareSelect.appendChild(option);
+        }
+    });
+}
+
+function updateMarketNews() {
+    const marketNews = document.getElementById('market-news');
+    if (!marketNews) return;
+    
+    const news = DynamicMarketSystem.generateMarketNews();
+    
+    if (news.length === 0) {
+        marketNews.innerHTML = '<div class="news-item"><div class="news-content">No market news available.</div></div>';
+        return;
+    }
+    
+    marketNews.innerHTML = news.map(newsItem => {
+        let newsClass = 'news-item';
+        if (newsItem.includes('📈')) newsClass += ' price-rise';
+        else if (newsItem.includes('📉')) newsClass += ' price-fall';
+        else if (newsItem.includes('📢')) newsClass += ' event';
+        
+        return `
+            <div class="${newsClass}">
+                <div class="news-time">${TimeSystem.getFormattedTime()}</div>
+                <div class="news-content">${newsItem}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function populateMarketItems() {
+    updateMarketDisplay();
+    
+    const sellItemsContainer = document.getElementById('sell-items');
+    if (!sellItemsContainer) return;
+    
+    sellItemsContainer.innerHTML = '';
+    
+    if (!game.player.inventory || Object.keys(game.player.inventory).length === 0) {
+        sellItemsContainer.innerHTML = '<p>You have no items to sell.</p>';
+        return;
+    }
+    
+    for (const [itemId, quantity] of Object.entries(game.player.inventory)) {
+        if (quantity <= 0) continue;
+        
+        const item = ItemDatabase.getItem(itemId);
+        if (!item) continue;
+        
+        const location = GameWorld.locations[game.currentLocation.id];
+        const reputationModifier = CityReputationSystem.getPriceModifier(location.id);
+        const baseSellPrice = Math.round(ItemDatabase.calculatePrice(itemId) * 0.7);
+        const sellPrice = Math.round(baseSellPrice * reputationModifier);
+        
+        const itemElement = document.createElement('div');
+        itemElement.className = `market-item ${item.rarity} ${TradingSystem.selectedTradeItems.has(itemId) ? 'selected' : ''}`;
+        itemElement.dataset.itemId = itemId;
+        
+        itemElement.innerHTML = `
+            <div class="item-icon">${item.icon}</div>
+            <div class="item-name">${item.name}</div>
+            <div class="item-quantity">×${quantity}</div>
+            <div class="item-price">${sellPrice} gold</div>
+            <div class="item-weight">${ItemDatabase.calculateWeight(itemId, quantity).toFixed(1)} lbs</div>
+            <button class="sell-item-btn" onclick="sellItem('${itemId}')">Sell</button>
+        `;
+        
+        // Add event listeners for bulk selection
+        if (TradingSystem.tradeMode === 'bulk') {
+            EventManager.addEventListener(itemElement, 'click', (e) => {
+                if (e.shiftKey || e.ctrlKey || e.altKey) return;
+                
+                if (TradingSystem.selectedTradeItems.has(itemId)) {
+                    TradingSystem.selectedTradeItems.delete(itemId);
+                    itemElement.classList.remove('selected');
+                } else {
+                    TradingSystem.selectedTradeItems.set(itemId, 1);
+                    itemElement.classList.add('selected');
+                }
+                
+                TradingSystem.updateTradeSummary();
+            });
+            
+            EventManager.addEventListener(itemElement, 'contextmenu', (e) => {
+                e.preventDefault();
+                TradingSystem.updateTradePreview(itemId, 1);
+            });
+        }
+        
+        sellItemsContainer.appendChild(itemElement);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🗺️ TRAVEL FUNCTIONS - wandering through medieval misery
+// ═══════════════════════════════════════════════════════════════
+function openTravel() {
+    changeState(GameState.TRAVEL);
+    
+    // Use new travel system if available
+    if (typeof TravelSystem !== 'undefined') {
+        TravelSystem.showTravelPanel();
+    } else {
+        // Fallback to old system
+        populateDestinations();
+    }
+}
+
+function closeTravel() {
+    game.hideOverlay('travel-panel');
+    changeState(GameState.PLAYING);
+    
+    // Hide travel system if available
+    if (typeof TravelSystem !== 'undefined') {
+        TravelSystem.hideTravelPanel();
+    }
+}
+
+function populateDestinations() {
+    const destinationsContainer = document.getElementById('destinations');
+    destinationsContainer.innerHTML = '';
+    
+    const destinations = GameWorld.getAvailableDestinations();
+    
+    if (destinations.length === 0) {
+        destinationsContainer.innerHTML = '<p>No destinations available from current location.</p>';
+        return;
+    }
+    
+    destinations.forEach(destination => {
+        const destElement = document.createElement('div');
+        destElement.className = 'destination';
+        destElement.innerHTML = `
+            <div class="destination-name">${destination.name}</div>
+            <div class="destination-info">
+                <span class="destination-type">${destination.type.charAt(0).toUpperCase() + destination.type.slice(1)}</span>
+                <span class="destination-population">Pop: ${destination.population.toLocaleString()}</span>
+            </div>
+            <div class="destination-details">
+                <span class="destination-cost">💰 ${destination.travelCost} gold</span>
+                <span class="destination-time">⏱️ ${destination.travelTime} minutes</span>
+            </div>
+            <div class="destination-specialties">
+                <strong>Specialties:</strong> ${destination.specialties.join(', ')}
+            </div>
+        `;
+        
+        EventManager.addEventListener(destElement, 'click', () => {
+            if (GameWorld.travelTo(destination.id)) {
+                closeTravel();
+            }
+        });
+        
+        destinationsContainer.appendChild(destElement);
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎒 INVENTORY FUNCTIONS - hoarding like the dragon you are
+// ═══════════════════════════════════════════════════════════════
+function openInventory() {
+    changeState(GameState.INVENTORY);
+    populateInventory();
+}
+
+function closeInventory() {
+    game.hideOverlay('inventory-panel');
+    changeState(GameState.PLAYING);
+}
+
+function populateInventory() {
+    updateInventoryDisplay();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🐎 TRANSPORTATION FUNCTIONS - upgrading your sad walk
+// ═══════════════════════════════════════════════════════════════
+function openTransportation() {
+    changeState(GameState.TRANSPORTATION);
+    updateTransportationInfo();
+    populateTransportationOptions();
+}
+
+function closeTransportation() {
+    game.hideOverlay('transportation-panel');
+    changeState(GameState.PLAYING);
+}
+
+function updateTransportationInfo() {
+    if (game.player) {
+        const currentTransport = transportationOptions[game.player.transportation];
+        document.getElementById('current-transport').textContent = currentTransport.name;
+        document.getElementById('carry-capacity').textContent = `${currentTransport.carryCapacity} lbs`;
+        document.getElementById('current-load').textContent = `${game.player.currentLoad} lbs`;
+    }
+}
+
+function populateTransportationOptions() {
+    const container = document.getElementById('transportation-options');
+    container.innerHTML = '';
+    
+    for (const [key, transport] of Object.entries(transportationOptions)) {
+        // Skip if player already owns this transportation
+        if (game.player.ownedTransportation.includes(key)) {
+            continue;
+        }
+        
+        const transportElement = document.createElement('div');
+        transportElement.className = 'item';
+        transportElement.innerHTML = `
+            <div class="item-name">${transport.name}</div>
+            <div class="item-price">${transport.price} gold</div>
+            <div class="item-quantity">Capacity: ${transport.carryCapacity} lbs</div>
+        `;
+        
+        EventManager.addEventListener(transportElement, 'click', () => purchaseTransportation(key));
+        container.appendChild(transportElement);
+    }
+    
+    if (container.innerHTML === '') {
+        container.innerHTML = '<p>You own all available transportation options!</p>';
+    }
+}
+
+function purchaseTransportation(transportId) {
+    const transport = transportationOptions[transportId];
+    
+    if (!transport) {
+        addMessage('Invalid transportation option.');
+        return;
+    }
+    
+    if (game.player.gold < transport.price) {
+        addMessage(`You don't have enough gold to purchase a ${transport.name}.`);
+        return;
+    }
+    
+    // Check for requirements (e.g., need an animal for wagon)
+    if (transport.requiresAnimal) {
+        const hasAnimal = game.player.ownedTransportation.includes('horse') ||
+                         game.player.ownedTransportation.includes('donkey') ||
+                         game.player.ownedTransportation.includes('oxen');
+        
+        if (!hasAnimal) {
+            addMessage(`You need an animal (horse, donkey, or oxen) to use a ${transport.name}.`);
+            return;
+        }
+    }
+    
+    // Purchase transportation
+    game.player.gold -= transport.price;
+    game.player.ownedTransportation.push(transportId);
+    
+    addMessage(`You purchased a ${transport.name} for ${transport.price} gold!`);
+    
+    // Update UI
+    updatePlayerInfo();
+    updateTransportationInfo();
+    populateTransportationOptions();
+}
+
+function switchTransportation(transportId) {
+    const transport = transportationOptions[transportId];
+    
+    if (!transport) {
+        addMessage('Invalid transportation option.');
+        return;
+    }
+    
+    if (!game.player.ownedTransportation.includes(transportId)) {
+        addMessage(`You don't own a ${transport.name}.`);
+        return;
+    }
+    
+    // Check if current load exceeds new capacity
+    if (game.player.currentLoad > transport.carryCapacity) {
+        addMessage(`You cannot switch to ${transport.name} - your current load (${game.player.currentLoad} lbs) exceeds its capacity (${transport.carryCapacity} lbs).`);
+        return;
+    }
+    
+    game.player.transportation = transportId;
+    addMessage(`You are now using ${transport.name}.`);
+    
+    // Update UI
+    updateTransportationInfo();
+}
+
+function calculateCurrentLoad() {
+    if (!game.player || !game.player.inventory) return 0;
+    
+    let totalWeight = 0;
+    for (const [itemId, quantity] of Object.entries(game.player.inventory)) {
+        if (itemId === 'gold') continue; // Gold doesn't count toward weight
+        totalWeight += ItemDatabase.calculateWeight(itemId, quantity);
+    }
+    
+    return totalWeight;
+}
+
+function updateCurrentLoad() {
+    game.player.currentLoad = calculateCurrentLoad();
+    updateTransportationInfo();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 💊 ITEM USAGE SYSTEM - consuming things for temporary happiness
+// ═══════════════════════════════════════════════════════════════
+function useItem(itemId) {
+    if (!game.player || !game.player.inventory) return false;
+    
+    const item = ItemDatabase.getItem(itemId);
+    if (!item) {
+        addMessage(`Unknown item: ${itemId}`);
+        return false;
+    }
+    
+    // Check if player has item
+    const quantity = game.player.inventory[itemId] || 0;
+    if (quantity <= 0) {
+        addMessage(`You don't have any ${item.name}!`);
+        return false;
+    }
+    
+    // Use item based on its type
+    if (item.consumable) {
+        return useConsumable(item);
+    } else if (item.toolType) {
+        return useTool(item);
+    } else if (item.damage) {
+        return equipWeapon(item);
+    } else {
+        addMessage(`${item.name} cannot be used directly.`);
+        return false;
+    }
+}
+
+// Use consumable items
+function useConsumable(item) {
+    if (!item.effects) {
+        addMessage(`${item.name} has no effect.`);
+        return false;
+    }
+    
+    // Apply effects to player stats
+    let effectMessage = `You used ${item.name}. `;
+    const effects = [];
+    
+    for (const [stat, value] of Object.entries(item.effects)) {
+        if (stat === 'duration') continue; // Skip duration, handled separately
+        
+        const currentValue = game.player.stats[stat] || 0;
+        const maxValue = game.player.stats[`max${stat.charAt(0).toUpperCase() + stat.slice(1)}`] || 100;
+        
+        let newValue = currentValue + value;
+        
+        // Special handling for food and medical items based on user feedback
+        if (item.category === 'food' || item.category === 'consumables') {
+            // Food items refill health and stamina
+            if (stat === 'health') {
+                newValue = Math.max(0, Math.min(maxValue, newValue));
+                game.player.stats.health = newValue;
+                effects.push(`Health +${Math.min(value, maxValue - currentValue)}`);
+            } else if (stat === 'stamina') {
+                newValue = Math.max(0, Math.min(maxValue, newValue));
+                game.player.stats.stamina = newValue;
+                effects.push(`Stamina +${Math.min(value, maxValue - currentValue)}`);
+            }
+        } else if (item.category === 'medical') {
+            // Medical items refill health
+            if (stat === 'health') {
+                newValue = Math.max(0, Math.min(maxValue, newValue));
+                game.player.stats.health = newValue;
+                effects.push(`Health +${Math.min(value, maxValue - currentValue)}`);
+            }
+        } else {
+            // Handle temporary effects for other items
+            if (item.effects.duration) {
+                // Apply temporary effect
+                if (!game.player.temporaryEffects) game.player.temporaryEffects = {};
+                game.player.temporaryEffects[stat] = {
+                    value: value,
+                    duration: item.effects.duration,
+                    startTime: Date.now()
+                };
+                effects.push(`${stat} +${value} for ${Math.floor(item.effects.duration / 60)} minutes`);
+            } else {
+                // Apply permanent effect
+                newValue = Math.max(0, Math.min(maxValue, newValue));
+                game.player.stats[stat] = newValue;
+                
+                if (value > 0) {
+                    effects.push(`${stat} +${Math.min(value, maxValue - currentValue)}`);
+                } else {
+                    effects.push(`${stat} ${value}`);
+                }
+            }
+        }
+    }
+    
+    // Remove one item from inventory
+    game.player.inventory[item.id]--;
+    if (game.player.inventory[item.id] <= 0) {
+        delete game.player.inventory[item.id];
+    }
+    
+    effectMessage += effects.join(', ');
+    addMessage(effectMessage);
+    
+    // Update UI
+    updatePlayerStats();
+    updateInventoryDisplay();
+    
+    return true;
+}
+
+// Use tool items
+function useTool(item) {
+    if (!item.toolType) return false;
+    
+    // Check tool durability
+    if (item.durability && game.player.toolDurability && game.player.toolDurability[item.id]) {
+        const currentDurability = game.player.toolDurability[item.id];
+        if (currentDurability <= 0) {
+            addMessage(`Your ${item.name} is broken and needs repair!`);
+            return false;
+        }
+    }
+    
+    addMessage(`You equipped your ${item.name} for ${item.toolType}.`);
+    game.player.equippedTool = item.id;
+    
+    return true;
+}
+
+// Equip weapon items
+function equipWeapon(item) {
+    if (!item.damage) return false;
+    
+    addMessage(`You equipped ${item.name} (Damage: ${item.damage}).`);
+    game.player.equippedWeapon = item.id;
+    
+    return true;
+}
+
+
+// Handle player death
+function handlePlayerDeath() {
+    addMessage("💀 You have died! Game Over.");
+    changeState(GameState.MENU);
+    // Could implement respawn system here
+}
+
+// Rest and Recovery System
+function restAtInn() {
+    const innCost = 20;
+    const currentHour = TimeSystem.currentTime.hour;
+    
+    // Check if inn is open (2pm to 8am)
+    if (currentHour >= 8 && currentHour < 14) {
+        addMessage("The inn is closed during the day. It's only open from 2pm to 8am.");
+        return false;
+    }
+    
+    if (game.player.gold < innCost) {
+        addMessage(`You need ${innCost} gold to rest at inn.`);
+        return false;
+    }
+    
+    // Pay for inn
+    game.player.gold -= innCost;
+    
+    // Calculate health restoration (6 hours of rest = 60% of max health)
+    const healthRestoreAmount = Math.floor(game.player.stats.maxHealth * 0.6);
+    game.player.stats.health = Math.min(game.player.stats.maxHealth, game.player.stats.health + healthRestoreAmount);
+    
+    // Restore all other stats completely
+    game.player.stats.hunger = game.player.stats.maxHunger;
+    game.player.stats.thirst = game.player.stats.maxThirst;
+    game.player.stats.stamina = game.player.stats.maxStamina;
+    game.player.stats.happiness = Math.min(100, game.player.stats.happiness + 20);
+    
+    // Advance time by 6 hours
+    TimeSystem.addMinutes(6 * 60);
+    
+    addMessage("💤 You rested at the inn for 6 hours.");
+    addMessage(`Health restored by ${healthRestoreAmount} points. Other stats fully restored!`);
+    addMessage(`⏰ 6 hours have passed.`);
+    
+    updatePlayerInfo();
+    updatePlayerStats();
+    
+    return true;
+}
+
+function restInHouse() {
+    if (!game.player.ownsHouse) {
+        addMessage("You don't own a house to rest in.");
+        return false;
+    }
+    
+    // Restore all stats (free for house owners)
+    game.player.stats.health = game.player.stats.maxHealth;
+    game.player.stats.hunger = game.player.stats.maxHunger;
+    game.player.stats.thirst = game.player.stats.maxThirst;
+    game.player.stats.stamina = game.player.stats.maxStamina;
+    game.player.stats.happiness = Math.min(100, game.player.stats.happiness + 30);
+    
+    // Advance time by 8 hours
+    TimeSystem.addMinutes(8 * 60);
+    
+    addMessage("🏠 You rested comfortably in your house. All stats restored!");
+    addMessage(`⏰ 8 hours have passed.`);
+    
+    updatePlayerStats();
+    
+    return true;
+}
+
+function buyHouse() {
+    const houseCost = 1000;
+    
+    if (game.player.gold < houseCost) {
+        addMessage(`You need ${houseCost} gold to buy a house.`);
+        return false;
+    }
+    
+    if (game.player.ownsHouse) {
+        addMessage("You already own a house!");
+        return false;
+    }
+    
+    game.player.gold -= houseCost;
+    game.player.ownsHouse = true;
+    
+    addMessage("🏠 Congratulations! You bought a house in city!");
+    addMessage("You can now rest for free anytime you're in this city.");
+    
+    updatePlayerInfo();
+    
+    return true;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🏰 PROPERTY & EMPLOYEE MANAGEMENT - medieval landlord simulator
+// ═══════════════════════════════════════════════════════════════
+function openPropertyEmployeePanel() {
+    game.showOverlay('property-employee-panel');
+    
+    // Initialize PropertyEmployeeUI if it exists
+    if (typeof PropertyEmployeeUI !== 'undefined') {
+        PropertyEmployeeUI.init();
+        PropertyEmployeeUI.updateDisplay();
+    }
+    
+    // Update property and employee displays
+    if (typeof PropertySystem !== 'undefined') {
+        PropertySystem.updatePropertyDisplay();
+    }
+    if (typeof EmployeeSystem !== 'undefined') {
+        EmployeeSystem.updateEmployeeDisplay();
+    }
+}
+
+// Update inventory display with new items (legacy function - now handled by InventorySystem)
+function updateInventoryDisplay() {
+    if (typeof InventorySystem !== 'undefined') {
+        InventorySystem.updateInventoryDisplay();
+    } else {
+        // Fallback to original implementation
+        const inventoryContainer = document.getElementById('inventory-items');
+        if (!inventoryContainer) return;
+        
+        inventoryContainer.innerHTML = '';
+        
+        if (!game.player.inventory || Object.keys(game.player.inventory).length === 0) {
+            inventoryContainer.innerHTML = '<p>Your inventory is empty.</p>';
+            return;
+        }
+        
+        for (const [itemId, quantity] of Object.entries(game.player.inventory)) {
+            if (quantity <= 0) continue;
+            
+            const item = ItemDatabase.getItem(itemId);
+            if (!item) continue;
+            
+            const itemElement = document.createElement('div');
+            itemElement.className = 'inventory-item';
+            itemElement.innerHTML = `
+                <div class="item-icon">${item.icon}</div>
+                <div class="item-name">${item.name}</div>
+                <div class="item-quantity">×${quantity}</div>
+                <div class="item-weight">${ItemDatabase.calculateWeight(itemId, quantity).toFixed(1)} lbs</div>
+                ${item.consumable ? `<button class="use-item-btn" onclick="useItem('${itemId}')">Use</button>` : ''}
+            `;
+            
+            inventoryContainer.appendChild(itemElement);
+        }
+    }
+}
+
+// Update market display with new items (enhanced for new trading system)
+function updateMarketDisplay() {
+    const buyItemsContainer = document.getElementById('buy-items');
+    if (!buyItemsContainer) return;
+    
+    buyItemsContainer.innerHTML = '';
+    
+    const currentLocation = GameWorld.locations[game.currentLocation.id];
+    if (!currentLocation || !currentLocation.marketPrices) {
+        buyItemsContainer.innerHTML = '<p>No items available at this market.</p>';
+        return;
+    }
+    
+    // Get filter value
+    const itemFilter = document.getElementById('item-filter');
+    const filterValue = itemFilter ? itemFilter.value : 'all';
+    
+    for (const [itemId, marketData] of Object.entries(currentLocation.marketPrices)) {
+        const item = ItemDatabase.getItem(itemId);
+        if (!item) continue;
+        
+        if (marketData.stock <= 0) continue;
+        
+        // Apply category filter
+        if (filterValue !== 'all') {
+            let itemCategory = 'other';
+            if (item.category === ItemDatabase.categories.CONSUMABLES) itemCategory = 'consumables';
+            else if (item.category === ItemDatabase.categories.BASIC_RESOURCES ||
+                     item.category === ItemDatabase.categories.RAW_ORES) itemCategory = 'resources';
+            else if (item.category === ItemDatabase.categories.TOOLS) itemCategory = 'tools';
+            else if (item.category === ItemDatabase.categories.LUXURY) itemCategory = 'luxury';
+            
+            if (itemCategory !== filterValue) continue;
+        }
+        
+        // Get price trend
+        const trend = MarketPriceHistory.getPriceTrend(currentLocation.id, itemId);
+        const trendClass = trend === 'rising' ? 'rising' : trend === 'falling' ? 'falling' : 'stable';
+        const trendIcon = trend === 'rising' ? '📈' : trend === 'falling' ? '📉' : '➡️';
+        
+        // Get demand level
+        let demandClass = '';
+        let demandText = '';
+        if (marketData.supplyDemandRatio) {
+            if (marketData.supplyDemandRatio > 1.3) {
+                demandClass = 'high';
+                demandText = 'High Demand';
+            } else if (marketData.supplyDemandRatio < 0.7) {
+                demandClass = 'low';
+                demandText = 'Low Demand';
+            }
+        }
+        
+        // Check if item is special
+        const isSpecial = marketData.special || false;
+        
+        const itemElement = document.createElement('div');
+        itemElement.className = `market-item ${item.rarity} ${isSpecial ? 'special' : ''} ${TradingSystem.selectedTradeItems.has(itemId) ? 'selected' : ''}`;
+        itemElement.dataset.itemId = itemId;
+        
+        itemElement.innerHTML = `
+            ${trend !== 'stable' ? `<div class="item-trend ${trendClass}">${trendIcon}</div>` : ''}
+            <div class="item-icon">${item.icon}</div>
+            <div class="item-name">${item.name}</div>
+            <div class="item-price">${marketData.price} gold</div>
+            <div class="item-stock">Stock: ${marketData.stock}</div>
+            <div class="item-weight">${item.weight} lbs</div>
+            ${demandText ? `<div class="item-demand ${demandClass}">${demandText}</div>` : ''}
+            <button class="buy-item-btn" onclick="buyItem('${itemId}')">Buy</button>
+        `;
+        
+        // Add event listeners for bulk selection
+        if (TradingSystem.tradeMode === 'bulk') {
+            EventManager.addEventListener(itemElement, 'click', (e) => {
+                if (e.shiftKey || e.ctrlKey || e.altKey) return;
+                
+                if (TradingSystem.selectedTradeItems.has(itemId)) {
+                    TradingSystem.selectedTradeItems.delete(itemId);
+                    itemElement.classList.remove('selected');
+                } else {
+                    TradingSystem.selectedTradeItems.set(itemId, 1);
+                    itemElement.classList.add('selected');
+                }
+                
+                TradingSystem.updateTradeSummary();
+            });
+            
+            EventManager.addEventListener(itemElement, 'contextmenu', (e) => {
+                e.preventDefault();
+                TradingSystem.updateTradePreview(itemId, 1);
+            });
+        }
+        
+        buyItemsContainer.appendChild(itemElement);
+    }
+}
+
+// Update price comparison display
+function updatePriceComparison() {
+    const compareSelect = document.getElementById('compare-item-select');
+    const priceComparison = document.getElementById('price-comparison');
+    
+    if (!compareSelect || !priceComparison) return;
+    
+    const selectedItemId = compareSelect.value;
+    if (!selectedItemId) {
+        priceComparison.innerHTML = '<p>Please select an item to compare prices.</p>';
+        return;
+    }
+    
+    const comparisons = MarketPriceHistory.comparePrices(selectedItemId);
+    
+    if (comparisons.length === 0) {
+        priceComparison.innerHTML = '<p>No price data available for this item.</p>';
+        return;
+    }
+    
+    const bestPrice = comparisons[0];
+    
+    priceComparison.innerHTML = comparisons.map(comp => {
+        const isBestPrice = comp.cityId === bestPrice.cityId;
+        const trendClass = comp.trend === 'rising' ? 'price-rise' :
+                         comp.trend === 'falling' ? 'price-fall' : '';
+        const trendIcon = comp.trend === 'rising' ? '📈' :
+                        comp.trend === 'falling' ? '📉' : '➡️';
+        
+        return `
+            <div class="price-comparison-item ${isBestPrice ? 'best-price' : ''}">
+                <div>
+                    <div class="price-comparison-city">${comp.cityName}</div>
+                    <div class="price-comparison-stock">Stock: ${comp.stock}</div>
+                </div>
+                <div>
+                    <div class="price-comparison-price">${comp.currentPrice} gold</div>
+                    <div class="price-comparison-trend ${trendClass}">${trendIcon} ${comp.trend}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Refresh market
+function refreshMarket() {
+    const currentLocation = GameWorld.locations[game.currentLocation.id];
+    if (!currentLocation) return;
+    
+    // Restock some items
+    Object.keys(currentLocation.marketPrices).forEach(itemId => {
+        const marketData = currentLocation.marketPrices[itemId];
+        const restockAmount = Math.floor(Math.random() * 3) + 1;
+        marketData.stock = Math.min(marketData.stock + restockAmount, 50);
+    });
+    
+    // Check for city events
+    if (typeof CityEventSystem !== 'undefined') {
+        CityEventSystem.checkRandomEvents(currentLocation.id);
+    }
+    
+    // Update displays
+    updateMarketDisplay();
+    updateMarketEvents();
+    updateMarketNews();
+    
+    addMessage('Market refreshed with new goods!');
+}
+
+// Buy item from market (enhanced for new trading system)
+function buyItem(itemId, quantity = 1) {
+    const item = ItemDatabase.getItem(itemId);
+    if (!item) return;
+    
+    const currentLocation = GameWorld.locations[game.currentLocation.id];
+    if (!currentLocation || !currentLocation.marketPrices) return;
+    
+    const marketData = currentLocation.marketPrices[itemId];
+    if (!marketData || marketData.stock <= 0) {
+        addMessage(`${item.name} is out of stock!`);
+        return;
+    }
+    
+    // Check if buying in bulk
+    const actualQuantity = TradingSystem.tradeMode === 'bulk' ?
+        TradingSystem.selectedTradeItems.get(itemId) || quantity : quantity;
+
+    // Apply charisma modifier to buy price (higher charisma = better prices)
+    // Base: 5 charisma = no modifier, each point above/below = 2% difference
+    const charismaModifier = 1 - ((game.player.attributes.charisma - 5) * 0.02);
+    const modifiedPrice = Math.round(marketData.price * charismaModifier);
+    const totalPrice = modifiedPrice * actualQuantity;
+
+    // Use UniversalGoldManager if available (checks all gold sources)
+    const canAffordPurchase = typeof UniversalGoldManager !== 'undefined' ?
+        UniversalGoldManager.canAfford(totalPrice) :
+        game.player.gold >= totalPrice;
+
+    if (!canAffordPurchase) {
+        const totalGold = typeof UniversalGoldManager !== 'undefined' ?
+            UniversalGoldManager.getTotalGold() : game.player.gold;
+        addMessage(`You need ${totalPrice} gold to buy ${actualQuantity} × ${item.name}! (You have ${totalGold} total)`);
+        return;
+    }
+    
+    // Check weight capacity with strength bonus
+    const currentWeight = calculateCurrentLoad();
+    const newWeight = currentWeight + (item.weight * actualQuantity);
+    const transport = transportationOptions[game.player.transportation];
+
+    // Apply strength modifier to carry capacity (each point of strength adds 5 lbs)
+    const strengthBonus = (game.player.attributes.strength - 5) * 5;
+    const maxCapacity = transport.carryCapacity + strengthBonus;
+
+    if (newWeight > maxCapacity) {
+        addMessage(`You don't have enough carrying capacity! Need ${Math.ceil(newWeight - maxCapacity)} lbs more capacity.`);
+        return;
+    }
+    
+    // Complete purchase - remove gold from all sources (personal first, then storage)
+    if (typeof UniversalGoldManager !== 'undefined') {
+        UniversalGoldManager.removeGold(totalPrice, `bought ${actualQuantity}x ${itemId}`);
+        // Sync game.player.gold with personal gold
+        game.player.gold = UniversalGoldManager.getPersonalGold();
+    } else {
+        game.player.gold -= totalPrice;
+    }
+    marketData.stock = Math.max(0, marketData.stock - actualQuantity);
+    
+    // Update supply and demand
+    DynamicMarketSystem.updateSupplyDemand(currentLocation.id, itemId, actualQuantity);
+    
+    // Apply market saturation
+    DynamicMarketSystem.applyMarketSaturation(currentLocation.id, itemId);
+    
+    // Add to inventory
+    if (!game.player.inventory[itemId]) {
+        game.player.inventory[itemId] = 0;
+    }
+    game.player.inventory[itemId] += actualQuantity;
+    
+    // Record trade if in bulk mode
+    if (TradingSystem.tradeMode === 'bulk') {
+        const tradeItems = new Map();
+        tradeItems.set(itemId, actualQuantity);
+        TradingSystem.recordTrade('buy', tradeItems);
+    }
+    
+    // Small reputation gain for trading
+    CityReputationSystem.changeReputation(currentLocation.id, 0.1 * actualQuantity);
+    
+    addMessage(`Bought ${actualQuantity} × ${item.name} for ${totalPrice} gold!`);
+    
+    updatePlayerInfo();
+    if (typeof InventorySystem !== 'undefined') {
+        InventorySystem.updateInventoryDisplay();
+    } else {
+        updateInventoryDisplay();
+    }
+    updateMarketDisplay();
+    updateCurrentLoad();
+    
+    // Check price alerts
+    TradingSystem.checkPriceAlerts();
+}
+
+// Sell item to market (enhanced for new trading system)
+function sellItem(itemId, quantity = 1) {
+    const item = ItemDatabase.getItem(itemId);
+    if (!item) return;
+    
+    const availableQuantity = game.player.inventory[itemId] || 0;
+    if (availableQuantity <= 0) {
+        addMessage(`You don't have any ${item.name} to sell!`);
+        return;
+    }
+    
+    // Check if selling in bulk mode
+    const actualQuantity = TradingSystem.tradeMode === 'bulk' ?
+        TradingSystem.selectedTradeItems.get(itemId) || quantity : quantity;
+    
+    if (actualQuantity > availableQuantity) {
+        addMessage(`You only have ${availableQuantity} × ${item.name} to sell!`);
+        return;
+    }
+    
+    const currentLocation = GameWorld.locations[game.currentLocation.id];
+    if (!currentLocation) return;
+    
+    // Calculate sell price with reputation and charisma modifiers
+    const reputationModifier = CityReputationSystem.getPriceModifier(currentLocation.id);
+    const baseSellPrice = Math.round(ItemDatabase.calculatePrice(itemId) * 0.7);
+
+    // Apply charisma modifier to sell price (higher charisma = better prices when selling)
+    // Base: 5 charisma = no modifier, each point above/below = 2% difference
+    const charismaModifier = 1 + ((game.player.attributes.charisma - 5) * 0.02);
+    const sellPrice = Math.round(baseSellPrice * reputationModifier * charismaModifier);
+    const totalSellPrice = sellPrice * actualQuantity;
+    
+    // Remove from inventory
+    game.player.inventory[itemId] -= actualQuantity;
+    if (game.player.inventory[itemId] <= 0) {
+        delete game.player.inventory[itemId];
+    }
+
+    // Add gold to personal inventory (always goes to personal, not storage)
+    if (typeof UniversalGoldManager !== 'undefined') {
+        UniversalGoldManager.addPersonalGold(totalSellPrice, `sold ${actualQuantity}x ${itemId}`);
+        // Sync game.player.gold
+        game.player.gold = UniversalGoldManager.getPersonalGold();
+    } else {
+        game.player.gold += totalSellPrice;
+    }
+    
+    // Add to market stock
+    if (!currentLocation.marketPrices[itemId]) {
+        currentLocation.marketPrices[itemId] = {
+            price: ItemDatabase.calculatePrice(itemId),
+            stock: 0
+        };
+    }
+    currentLocation.marketPrices[itemId].stock += actualQuantity;
+    
+    // Update supply and demand
+    DynamicMarketSystem.updateSupplyDemand(currentLocation.id, itemId, -actualQuantity);
+    
+    // Apply market saturation
+    DynamicMarketSystem.applyMarketSaturation(currentLocation.id, itemId);
+    
+    // Record trade if in bulk mode
+    if (TradingSystem.tradeMode === 'bulk') {
+        const tradeItems = new Map();
+        tradeItems.set(itemId, actualQuantity);
+        TradingSystem.recordTrade('sell', tradeItems);
+    }
+    
+    // Small reputation gain for trading
+    CityReputationSystem.changeReputation(currentLocation.id, 0.1 * actualQuantity);
+    
+    addMessage(`Sold ${actualQuantity} × ${item.name} for ${totalSellPrice} gold!`);
+    
+    updatePlayerInfo();
+    if (typeof InventorySystem !== 'undefined') {
+        InventorySystem.updateInventoryDisplay();
+    } else {
+        updateInventoryDisplay();
+    }
+    updateMarketDisplay();
+    updateCurrentLoad();
+    
+    // Check price alerts
+    TradingSystem.checkPriceAlerts();
+}
+
+// ♾️ GAME LOOP - the cycle of suffering continues
+// (legacy function but it's vintage, okay?)
+function startGameLoop() {
+    // Start the game engine
+    game.start();
+}
+
+// Render game world (now part of game object)
+function renderGameWorld() {
+    // Delegate to game object's render method
+    if (game && typeof game.renderGameWorld === 'function') {
+        game.renderGameWorld();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🔧 UTILITY FUNCTIONS - random helpful stuff
+// ═══════════════════════════════════════════════════════════════
+function addMessage(text, type = 'info') {
+    const messageElement = document.createElement('p');
+    messageElement.className = 'message';
+    messageElement.textContent = text;
+    
+    elements.messages.appendChild(messageElement);
+    
+    // Auto-scroll to bottom
+    elements.messages.scrollTop = elements.messages.scrollHeight;
+    
+    // Limit message history
+    while (elements.messages.children.length > 50) {
+        elements.messages.removeChild(elements.messages.firstChild);
+    }
+}
+
+function handleKeyPress(event) {
+    // Keyboard shortcuts
+    switch (event.key) {
+        case 'Escape':
+            // Let PanelManager handle ESC for closing panels in order
+            if (typeof PanelManager !== 'undefined' && PanelManager.openPanels.length > 0) {
+                // PanelManager will handle this via its capture handler
+                return;
+            }
+            // Fallback: Close any open panel and return to playing state
+            if (game.state === GameState.PLAYING) {
+                toggleMenu();
+            } else if (game.state !== GameState.MENU) {
+                // Close all open panels
+                hideAllPanels();
+                changeState(GameState.PLAYING);
+
+                // Stop any playing music/ambient sounds
+                if (typeof AudioSystem !== 'undefined') {
+                    AudioSystem.stopMusic();
+                    AudioSystem.stopAmbient();
+                }
+            }
+            break;
+        case 'i':
+        case 'I':
+            if (game.state === GameState.PLAYING) {
+                openInventory();
+            } else if (game.state === GameState.INVENTORY) {
+                closeInventory();
+            }
+            break;
+        case 'm':
+        case 'M':
+            if (game.state === GameState.PLAYING) {
+                openMarket();
+            } else if (game.state === GameState.MARKET) {
+                closeMarket();
+            }
+            break;
+        case 't':
+        case 'T':
+            if (game.state === GameState.PLAYING) {
+                openTravel();
+            } else if (game.state === GameState.TRAVEL) {
+                closeTravel();
+            }
+            break;
+        case 's':
+        case 'S':
+            if (game.state === GameState.PLAYING) {
+                saveGame();
+            }
+            break;
+        case 'F5':
+            event.preventDefault();
+            if (game.state === GameState.PLAYING && typeof SaveLoadSystem !== 'undefined') {
+                SaveLoadSystem.quickSave();
+                addMessage('Quick saved!');
+            }
+            break;
+        case 'F9':
+            event.preventDefault();
+            if (game.state === GameState.PLAYING && typeof SaveLoadSystem !== 'undefined') {
+                SaveLoadSystem.quickLoad();
+                addMessage('Quick loaded!');
+            }
+            break;
+        case 'c':
+        case 'C':
+            // Close current panel
+            if (game.state === GameState.MARKET) {
+                closeMarket();
+            } else if (game.state === GameState.INVENTORY) {
+                closeInventory();
+            } else if (game.state === GameState.TRAVEL) {
+                closeTravel();
+            } else if (game.state === GameState.TRANSPORTATION) {
+                closeTransportation();
+            }
+            break;
+    }
+}
+
+function toggleMenu() {
+    // Create and show the game menu overlay
+    let menuOverlay = document.getElementById('game-menu-overlay');
+
+    if (!menuOverlay) {
+        // Create the menu overlay
+        menuOverlay = document.createElement('div');
+        menuOverlay.id = 'game-menu-overlay';
+        menuOverlay.className = 'overlay';
+        menuOverlay.innerHTML = `
+            <div class="overlay-content game-menu-content">
+                <h2>📋 Game Menu</h2>
+                <div class="game-menu-buttons">
+                    <button class="menu-btn" id="menu-resume-btn">▶️ Resume Game</button>
+                    <button class="menu-btn" id="menu-save-btn">💾 Save Game</button>
+                    <button class="menu-btn" id="menu-load-btn">📂 Load Game</button>
+                    <button class="menu-btn" id="menu-settings-btn">⚙️ Settings</button>
+                    <button class="menu-btn" id="menu-achievements-btn">🏆 Achievements</button>
+                    <button class="menu-btn" id="menu-help-btn">❓ Help</button>
+                    <button class="menu-btn danger" id="menu-quit-btn">🚪 Quit to Main Menu</button>
+                </div>
+                <div class="game-menu-footer">
+                    <p>Press ESC to close</p>
+                </div>
+            </div>
+        `;
+
+        // Style the menu
+        const style = document.createElement('style');
+        style.textContent = `
+            .game-menu-content {
+                background: linear-gradient(135deg, rgba(20, 20, 40, 0.98) 0%, rgba(30, 30, 60, 0.98) 100%);
+                border: 2px solid #4fc3f7;
+                border-radius: 16px;
+                padding: 2rem;
+                min-width: 320px;
+                max-width: 400px;
+                box-shadow: 0 0 40px rgba(79, 195, 247, 0.3);
+            }
+            .game-menu-content h2 {
+                text-align: center;
+                color: #4fc3f7;
+                margin-bottom: 1.5rem;
+                font-size: 1.8rem;
+            }
+            .game-menu-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            .game-menu-buttons .menu-btn {
+                padding: 1rem 1.5rem;
+                font-size: 1.1rem;
+                background: linear-gradient(135deg, rgba(79, 195, 247, 0.2) 0%, rgba(79, 195, 247, 0.1) 100%);
+                border: 1px solid rgba(79, 195, 247, 0.4);
+                border-radius: 8px;
+                color: #e0e0e0;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                text-align: left;
+            }
+            .game-menu-buttons .menu-btn:hover {
+                background: linear-gradient(135deg, rgba(79, 195, 247, 0.4) 0%, rgba(79, 195, 247, 0.2) 100%);
+                border-color: #4fc3f7;
+                transform: translateX(5px);
+            }
+            .game-menu-buttons .menu-btn.danger {
+                background: linear-gradient(135deg, rgba(244, 67, 54, 0.2) 0%, rgba(244, 67, 54, 0.1) 100%);
+                border-color: rgba(244, 67, 54, 0.4);
+            }
+            .game-menu-buttons .menu-btn.danger:hover {
+                background: linear-gradient(135deg, rgba(244, 67, 54, 0.4) 0%, rgba(244, 67, 54, 0.2) 100%);
+                border-color: #f44336;
+            }
+            .game-menu-footer {
+                text-align: center;
+                margin-top: 1.5rem;
+                color: #888;
+                font-size: 0.9rem;
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.getElementById('overlay-container').appendChild(menuOverlay);
+
+        // Add event listeners
+        document.getElementById('menu-resume-btn').addEventListener('click', () => {
+            menuOverlay.classList.remove('active');
+            menuOverlay.style.display = 'none';
+            addMessage('Game resumed');
+        });
+
+        document.getElementById('menu-save-btn').addEventListener('click', () => {
+            if (typeof SaveLoadUI !== 'undefined') {
+                SaveLoadUI.show('saves');
+            } else {
+                saveGame();
+            }
+        });
+
+        document.getElementById('menu-load-btn').addEventListener('click', () => {
+            if (typeof SaveLoadUI !== 'undefined') {
+                SaveLoadUI.show('load');
+            } else {
+                loadGame();
+            }
+        });
+
+        document.getElementById('menu-settings-btn').addEventListener('click', () => {
+            menuOverlay.classList.remove('active');
+            menuOverlay.style.display = 'none';
+            if (typeof SettingsPanel !== 'undefined' && SettingsPanel.show) {
+                SettingsPanel.show();
+            }
+        });
+
+        document.getElementById('menu-achievements-btn').addEventListener('click', () => {
+            menuOverlay.classList.remove('active');
+            menuOverlay.style.display = 'none';
+            if (typeof openAchievementPanel === 'function') {
+                openAchievementPanel();
+            }
+        });
+
+        document.getElementById('menu-help-btn').addEventListener('click', () => {
+            showHelpOverlay();
+        });
+
+        document.getElementById('menu-quit-btn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to quit? Unsaved progress will be lost.')) {
+                menuOverlay.classList.remove('active');
+                menuOverlay.style.display = 'none';
+                showScreen('main-menu');
+                changeState(GameState.MENU);
+                addMessage('Returned to main menu');
+            }
+        });
+
+        // Click outside to close
+        menuOverlay.addEventListener('click', (e) => {
+            if (e.target === menuOverlay) {
+                menuOverlay.classList.remove('active');
+                menuOverlay.style.display = 'none';
+            }
+        });
+    }
+
+    // Toggle visibility
+    if (menuOverlay.classList.contains('active')) {
+        menuOverlay.classList.remove('active');
+        menuOverlay.style.display = 'none';
+    } else {
+        menuOverlay.style.display = 'flex';
+        menuOverlay.classList.add('active');
+    }
+}
+
+// Show help overlay with controls and game info
+function showHelpOverlay() {
+    let helpOverlay = document.getElementById('help-overlay');
+
+    if (!helpOverlay) {
+        helpOverlay = document.createElement('div');
+        helpOverlay.id = 'help-overlay';
+        helpOverlay.className = 'overlay';
+        helpOverlay.innerHTML = `
+            <div class="overlay-content help-content">
+                <button class="overlay-close" onclick="document.getElementById('help-overlay').classList.remove('active'); document.getElementById('help-overlay').style.display='none';">×</button>
+                <h2>❓ Help & Controls</h2>
+
+                <div class="help-section">
+                    <h3>⌨️ Keyboard Shortcuts</h3>
+                    <div class="help-grid">
+                        <div class="help-item"><span class="key">I</span> Inventory</div>
+                        <div class="help-item"><span class="key">M</span> Market</div>
+                        <div class="help-item"><span class="key">T</span> Travel</div>
+                        <div class="help-item"><span class="key">W</span> Transportation</div>
+                        <div class="help-item"><span class="key">C</span> Character</div>
+                        <div class="help-item"><span class="key">F</span> Finances</div>
+                        <div class="help-item"><span class="key">P</span> Properties</div>
+                        <div class="help-item"><span class="key">H</span> Achievements</div>
+                        <div class="help-item"><span class="key">,</span> Settings</div>
+                        <div class="help-item"><span class="key">Space</span> Pause/Resume</div>
+                        <div class="help-item"><span class="key">ESC</span> Close/Menu</div>
+                        <div class="help-item"><span class="key">F5</span> Quick Save</div>
+                        <div class="help-item"><span class="key">F9</span> Quick Load</div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <h3>🗺️ Map Controls</h3>
+                    <div class="help-grid">
+                        <div class="help-item"><span class="key">+/-</span> Zoom In/Out</div>
+                        <div class="help-item"><span class="key">Drag</span> Pan Map</div>
+                        <div class="help-item"><span class="key">Scroll</span> Zoom</div>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <h3>🎮 How to Play</h3>
+                    <p>Buy low, sell high! Travel between locations to find the best deals. Upgrade your transportation to carry more goods. Build your trading empire!</p>
+                </div>
+            </div>
+        `;
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .help-content {
+                background: linear-gradient(135deg, rgba(20, 20, 40, 0.98) 0%, rgba(30, 30, 60, 0.98) 100%);
+                border: 2px solid #4fc3f7;
+                border-radius: 16px;
+                padding: 2rem;
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+            .help-content h2 {
+                text-align: center;
+                color: #4fc3f7;
+                margin-bottom: 1.5rem;
+            }
+            .help-section {
+                margin-bottom: 1.5rem;
+            }
+            .help-section h3 {
+                color: #81c784;
+                margin-bottom: 0.75rem;
+                font-size: 1.1rem;
+            }
+            .help-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 0.5rem;
+            }
+            .help-item {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.9rem;
+                color: #e0e0e0;
+            }
+            .help-item .key {
+                background: rgba(79, 195, 247, 0.2);
+                border: 1px solid rgba(79, 195, 247, 0.4);
+                border-radius: 4px;
+                padding: 0.2rem 0.5rem;
+                font-family: monospace;
+                font-size: 0.85rem;
+                min-width: 45px;
+                text-align: center;
+            }
+            .help-section p {
+                color: #b0b0b0;
+                line-height: 1.6;
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.getElementById('overlay-container').appendChild(helpOverlay);
+
+        helpOverlay.addEventListener('click', (e) => {
+            if (e.target === helpOverlay) {
+                helpOverlay.classList.remove('active');
+                helpOverlay.style.display = 'none';
+            }
+        });
+    }
+
+    helpOverlay.style.display = 'flex';
+    helpOverlay.classList.add('active');
+}
+
+// Save/Load Functions
+function saveGame() {
+    if (typeof SaveLoadSystem !== 'undefined') {
+        SaveLoadUI.show('saves');
+    } else {
+        // Fallback to basic save
+        try {
+            const saveData = game.saveState();
+            try {
+                localStorage.setItem('tradingGameSave', JSON.stringify(saveData));
+            } catch (error) {
+                console.error('Failed to save game:', error);
+                addMessage('Failed to save game!', 'error');
+            }
+            addMessage('Game saved successfully!');
+        } catch (error) {
+            console.error('Save failed:', error);
+            addMessage('Failed to save game!');
+        }
+    }
+}
+
+function loadGame() {
+    if (typeof SaveLoadSystem !== 'undefined') {
+        SaveLoadUI.show('load');
+    } else {
+        // Fallback to basic load
+        try {
+            const saveData = localStorage.getItem('tradingGameSave');
+            if (saveData) {
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(saveData);
+                } catch (error) {
+                    console.error('Failed to parse save data:', error);
+                    addMessage('Save data is corrupted!', 'error');
+                    return;
+                }
+                game.loadState(parsedData);
+                updatePlayerInfo();
+                updateLocationInfo();
+                addMessage('Game loaded successfully!');
+            } else {
+                addMessage('No saved game found!');
+            }
+        } catch (error) {
+            console.error('Load failed:', error);
+            addMessage('Failed to load game!');
+        }
+    }
+}
+
+function showSettings() {
+    // Show settings overlay
+    game.showOverlay('settings-overlay');
+
+    // Populate settings content if empty
+    const settingsContent = document.getElementById('settings-content');
+    if (settingsContent && !settingsContent.hasChildNodes()) {
+        settingsContent.innerHTML = `
+            <div class="settings-section">
+                <h3>🏆 High Scores</h3>
+                <div id="high-scores-list" class="high-scores-list">
+                    ${getHighScoresHTML()}
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>⚙️ Game Settings</h3>
+                <div class="settings-options">
+                    <label class="settings-option">
+                        <span>Sound Effects</span>
+                        <input type="checkbox" id="sound-enabled" checked>
+                    </label>
+                    <label class="settings-option">
+                        <span>Music</span>
+                        <input type="checkbox" id="music-enabled" checked>
+                    </label>
+                    <label class="settings-option">
+                        <span>Notifications</span>
+                        <input type="checkbox" id="notifications-enabled" checked>
+                    </label>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>📖 How to Play</h3>
+                <p>Buy low, sell high! Travel between cities to find the best deals.</p>
+                <ul>
+                    <li>Visit markets to buy and sell goods</li>
+                    <li>Travel to different locations for better prices</li>
+                    <li>Manage your inventory and transportation</li>
+                    <li>Build reputation for better deals</li>
+                </ul>
+            </div>
+            <div class="settings-actions">
+                <button onclick="game.hideOverlay('settings-overlay')" class="btn-primary">Close</button>
+            </div>
+        `;
+    }
+}
+
+function getHighScoresHTML() {
+    const highScores = HighScoreSystem.getHighScores();
+    if (highScores.length === 0) {
+        return '<p>No high scores yet. Be the first!</p>';
+    }
+
+    return highScores.map((score, index) => {
+        const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
+        const deathInfo = score.deathCause ? ` (${score.deathCause})` : "";
+        return `<div class="high-score-entry">${medal} ${score.name}: ${score.gold} gold - ${score.survivedDays} days${deathInfo}</div>`;
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 📢 NOTIFICATION SYSTEM - telling you things you don't wanna hear
+// ═══════════════════════════════════════════════════════════════
+game.initNotificationSystem = function() {
+    // Create notification container if it doesn't exist
+    let notificationContainer = document.getElementById('notification-container');
+    if (!notificationContainer) {
+        notificationContainer = document.createElement('div');
+        notificationContainer.id = 'notification-container';
+        notificationContainer.className = 'notification-container';
+        document.body.appendChild(notificationContainer);
+    }
+
+    // Initialize the UI object for event notifications
+    this.ui = this.ui || {};
+
+    // Event notification function
+    this.ui.showEventNotification = (event) => {
+        if (!event || !event.name) return;
+
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'event-notification';
+        notification.innerHTML = `
+            <div class="event-notification-header">
+                <span class="event-icon">📢</span>
+                <span class="event-name">${event.name}</span>
+            </div>
+            <div class="event-description">${event.description || ''}</div>
+        `;
+
+        // Add to container
+        const container = document.getElementById('notification-container');
+        if (container) {
+            container.appendChild(notification);
+
+            // Animate in
+            setTimeout(() => notification.classList.add('show'), 10);
+
+            // Remove after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Also add to message log
+        addMessage(`📢 ${event.name}: ${event.description}`);
+    };
+
+    // General notification function
+    this.ui.showNotification = (message, type = 'info', duration = 3000) => {
+        const notification = document.createElement('div');
+        notification.className = `game-notification ${type}`;
+        notification.textContent = message;
+
+        const container = document.getElementById('notification-container');
+        if (container) {
+            container.appendChild(notification);
+            setTimeout(() => notification.classList.add('show'), 10);
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, duration);
+        }
+    };
+
+    console.log('Notification system initialized');
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 🎭 ENHANCED OVERLAY SYSTEM - layers on layers on layers
+// ═══════════════════════════════════════════════════════════════
+game.initOverlaySystem = function() {
+    // Setup overlay container event listeners
+    const overlayContainer = document.getElementById('overlay-container');
+    if (!overlayContainer) return;
+    
+    // Add click event to close overlays when clicking outside
+    EventManager.addEventListener(overlayContainer, 'click', (e) => {
+        if (e.target === overlayContainer) {
+            this.hideAllOverlays();
+        }
+    });
+    
+    // Add escape key listener for overlays (PanelManager handles panel-by-panel closing)
+    EventManager.addEventListener(document, 'keydown', (e) => {
+        if (e.key === 'Escape') {
+            // Let PanelManager handle if it has panels open
+            if (typeof PanelManager !== 'undefined' && PanelManager.openPanels.length > 0) {
+                return; // PanelManager handles this
+            }
+            this.hideAllOverlays();
+        }
+    });
+    
+    // Setup close button listeners for all overlays
+    document.querySelectorAll('[data-close-overlay]').forEach(button => {
+        EventManager.addEventListener(button, 'click', (e) => {
+            e.preventDefault();
+            const overlayId = button.getAttribute('data-close-overlay');
+            this.hideOverlay(overlayId);
+        });
+    });
+    
+    // Initialize world map overlay
+    this.initWorldMapOverlay();
+    
+    console.log('Enhanced overlay system initialized');
+};
+
+// Initialize world map overlay
+game.initWorldMapOverlay = function() {
+    const worldMapOverlay = document.getElementById('world-map-overlay');
+    if (!worldMapOverlay) return;
+    
+    const canvas = document.getElementById('world-map-overlay-canvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Store canvas context for later use
+    this.worldMapCanvas = canvas;
+    this.worldMapCtx = ctx;
+    
+    // Setup map controls
+    this.setupMapControls();
+    
+    // Setup map interactions
+    this.setupMapInteractions();
+    
+    // Initialize TravelSystem if it exists and hasn't been initialized
+    if (typeof TravelSystem !== 'undefined' && !TravelSystem.canvas) {
+        TravelSystem.setupCanvas();
+        TravelSystem.canvas = canvas;
+        TravelSystem.ctx = ctx;
+        TravelSystem.generateWorldMap();
+        TravelSystem.setupEventListeners();
+        TravelSystem.updatePlayerPosition();
+        TravelSystem.render();
+        console.log('TravelSystem integrated with world map overlay');
+    }
+    
+    console.log('World map overlay initialized');
+};
+
+// Setup map controls
+game.setupMapControls = function() {
+    const zoomInBtn = document.getElementById('overlay-zoom-in-btn');
+    const zoomOutBtn = document.getElementById('overlay-zoom-out-btn');
+    const resetViewBtn = document.getElementById('overlay-reset-view-btn');
+    const centerPlayerBtn = document.getElementById('overlay-center-player-btn');
+    
+    // If TravelSystem exists, delegate controls to it
+    if (typeof TravelSystem !== 'undefined') {
+        if (zoomInBtn) {
+            EventManager.addEventListener(zoomInBtn, 'click', () => {
+                if (TravelSystem.worldMap) {
+                    TravelSystem.worldMap.zoom = Math.min(
+                        TravelSystem.worldMap.maxZoom,
+                        TravelSystem.worldMap.zoom * 1.2
+                    );
+                    TravelSystem.render();
+                }
+            });
+        }
+        if (zoomOutBtn) {
+            EventManager.addEventListener(zoomOutBtn, 'click', () => {
+                if (TravelSystem.worldMap) {
+                    TravelSystem.worldMap.zoom = Math.max(
+                        TravelSystem.worldMap.minZoom,
+                        TravelSystem.worldMap.zoom * 0.8
+                    );
+                    TravelSystem.render();
+                }
+            });
+        }
+        if (resetViewBtn) {
+            EventManager.addEventListener(resetViewBtn, 'click', () => {
+                if (TravelSystem.worldMap) {
+                    TravelSystem.worldMap.zoom = 1;
+                    TravelSystem.worldMap.offsetX = 0;
+                    TravelSystem.worldMap.offsetY = 0;
+                    TravelSystem.autoFocusOnPlayer();
+                }
+            });
+        }
+        if (centerPlayerBtn) {
+            EventManager.addEventListener(centerPlayerBtn, 'click', () => {
+                if (typeof TravelSystem.autoFocusOnPlayer === 'function') {
+                    TravelSystem.autoFocusOnPlayer();
+                }
+            });
+        }
+        
+        console.log('Map controls delegated to TravelSystem');
+        return;
+    }
+    
+    // Fallback to basic controls if TravelSystem is not available
+    if (zoomInBtn) {
+        EventManager.addEventListener(zoomInBtn, 'click', () => this.zoomMap(1.2));
+    }
+    if (zoomOutBtn) {
+        EventManager.addEventListener(zoomOutBtn, 'click', () => this.zoomMap(0.8));
+    }
+    if (resetViewBtn) {
+        EventManager.addEventListener(resetViewBtn, 'click', () => this.resetMapView());
+    }
+    if (centerPlayerBtn) {
+        EventManager.addEventListener(centerPlayerBtn, 'click', () => this.centerMapOnPlayer());
+    }
+};
+
+// Setup map interactions
+game.setupMapInteractions = function() {
+    const canvas = this.worldMapCanvas;
+    if (!canvas) return;
+    
+    // If TravelSystem exists, delegate to it for better interaction handling
+    if (typeof TravelSystem !== 'undefined' && TravelSystem.canvas) {
+        // Remove existing event listeners to avoid conflicts
+        const newCanvas = canvas.cloneNode(true);
+        canvas.parentNode.replaceChild(newCanvas, canvas);
+        
+        // Update references
+        this.worldMapCanvas = newCanvas;
+        this.worldMapCtx = newCanvas.getContext('2d');
+        TravelSystem.canvas = newCanvas;
+        TravelSystem.ctx = this.worldMapCtx;
+        
+        // Let TravelSystem handle all interactions
+        TravelSystem.setupEventListeners();
+        
+        // Update map state to match TravelSystem
+        this.mapState = {
+            offsetX: TravelSystem.worldMap.offsetX,
+            offsetY: TravelSystem.worldMap.offsetY,
+            zoomLevel: TravelSystem.worldMap.zoom
+        };
+        
+        console.log('Map interactions delegated to TravelSystem');
+        return;
+    }
+    
+    // Fallback to basic interactions if TravelSystem is not available
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let mapOffsetX = 0;
+    let mapOffsetY = 0;
+    let zoomLevel = 1;
+    
+    // Mouse events
+    EventManager.addEventListener(canvas, 'mousedown', (e) => {
+        isDragging = true;
+        dragStartX = e.clientX - mapOffsetX;
+        dragStartY = e.clientY - mapOffsetY;
+        canvas.style.cursor = 'grabbing';
+    });
+    
+    EventManager.addEventListener(canvas, 'mousemove', (e) => {
+        if (!isDragging) return;
+        
+        mapOffsetX = e.clientX - dragStartX;
+        mapOffsetY = e.clientY - dragStartY;
+        
+        // Limit panning
+        const maxOffset = 100 * zoomLevel;
+        mapOffsetX = Math.max(-maxOffset, Math.min(maxOffset, mapOffsetX));
+        mapOffsetY = Math.max(-maxOffset, Math.min(maxOffset, mapOffsetY));
+        
+        this.renderWorldMap();
+    });
+    
+    EventManager.addEventListener(canvas, 'mouseup', () => {
+        isDragging = false;
+        canvas.style.cursor = 'grab';
+    });
+    
+    EventManager.addEventListener(canvas, 'click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Convert to world coordinates
+        const worldX = (x - mapOffsetX) / zoomLevel;
+        const worldY = (y - mapOffsetY) / zoomLevel;
+        
+        this.handleMapClick(worldX, worldY, e);
+    });
+    
+    // Store map state
+    this.mapState = {
+        offsetX: mapOffsetX,
+        offsetY: mapOffsetY,
+        zoomLevel: zoomLevel
+    };
+};
+
+// Handle map clicks
+game.handleMapClick = function(x, y, event) {
+    // If TravelSystem exists, delegate to it for proper location detection
+    if (typeof TravelSystem !== 'undefined' && TravelSystem.handleClick) {
+        const rect = this.worldMapCanvas.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
+        
+        // Create a synthetic mouse event for TravelSystem
+        const syntheticEvent = {
+            clientX: event.clientX,
+            clientY: event.clientY,
+            preventDefault: () => {},
+            target: this.worldMapCanvas
+        };
+        
+        TravelSystem.handleClick(syntheticEvent);
+        return;
+    }
+    
+    // Fallback to basic location detection
+    const locations = Object.values(GameWorld.locations);
+    const clickRadius = 20 / this.mapState.zoomLevel;
+    
+    for (const location of locations) {
+        // Simple distance check (would need proper world coordinates in a real implementation)
+        const distance = Math.sqrt(
+            Math.pow(x - location.x || 0, 2) +
+            Math.pow(y - location.y || 0, 2)
+        );
+        
+        if (distance < clickRadius) {
+            // Show location details
+            this.showLocationDetails(location);
+            return;
+        }
+    }
+    
+    // If no location clicked, hide details
+    this.hideLocationDetails();
+};
+
+// Show location details
+game.showLocationDetails = function(location) {
+    const detailsPanel = document.getElementById('overlay-location-details');
+    if (!detailsPanel) return;
+    
+    detailsPanel.innerHTML = `
+        <h3>${location.name}</h3>
+        <div class="location-type">${location.type}</div>
+        <div class="description">${location.description}</div>
+        <div class="location-info">
+            <p><strong>Population:</strong> ${location.population.toLocaleString()}</p>
+            <p><strong>Region:</strong> ${GameWorld.regions[location.region].name}</p>
+            <p><strong>Specialties:</strong> ${location.specialties.join(', ')}</p>
+        </div>
+        <div class="travel-info">
+            <p><strong>Travel Cost:</strong> ${GameWorld.calculateTravelCost(game.currentLocation.id, location.id)} gold</p>
+            <p><strong>Travel Time:</strong> ${GameWorld.calculateTravelTime(game.currentLocation.id, location.id)} minutes</p>
+        </div>
+        <button class="travel-btn" onclick="game.travelToLocation('${location.id}')">Travel Here</button>
+    `;
+    
+    detailsPanel.classList.remove('hidden');
+};
+
+// Hide location details
+game.hideLocationDetails = function() {
+    const detailsPanel = document.getElementById('overlay-location-details');
+    if (detailsPanel) {
+        detailsPanel.classList.add('hidden');
+    }
+};
+
+// Travel to location from map
+game.travelToLocation = function(locationId) {
+    if (GameWorld.travelTo(locationId)) {
+        this.hideOverlay('world-map-overlay');
+        this.hideLocationDetails();
+    }
+};
+
+// Zoom map
+game.zoomMap = function(factor) {
+    this.mapState.zoomLevel *= factor;
+    this.mapState.zoomLevel = Math.max(0.5, Math.min(3, this.mapState.zoomLevel));
+    this.renderWorldMap();
+};
+
+// Reset map view
+game.resetMapView = function() {
+    this.mapState.zoomLevel = 1;
+    this.mapState.offsetX = 0;
+    this.mapState.offsetY = 0;
+    this.centerMapOnPlayer();
+};
+
+// Center map on player
+game.centerMapOnPlayer = function() {
+    if (!game.currentLocation) return;
+    
+    // Simple centering (would need proper world coordinates)
+    this.mapState.offsetX = 0;
+    this.mapState.offsetY = 0;
+    this.renderWorldMap();
+};
+
+// Render world map
+game.renderWorldMap = function() {
+    // If TravelSystem exists, delegate to it for proper rendering
+    if (typeof TravelSystem !== 'undefined' && TravelSystem.render) {
+        // Update map state to match TravelSystem
+        if (TravelSystem.worldMap) {
+            this.mapState = {
+                offsetX: TravelSystem.worldMap.offsetX,
+                offsetY: TravelSystem.worldMap.offsetY,
+                zoomLevel: TravelSystem.worldMap.zoom
+            };
+        }
+        
+        TravelSystem.render();
+        return;
+    }
+    
+    // Fallback to basic rendering
+    const canvas = this.worldMapCanvas;
+    const ctx = this.worldMapCtx;
+    if (!canvas || !ctx) return;
+    
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Clear canvas
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Apply transformations
+    ctx.save();
+    ctx.translate(this.mapState.offsetX, this.mapState.offsetY);
+    ctx.scale(this.mapState.zoomLevel, this.mapState.zoomLevel);
+    
+    // Draw grid (optional)
+    if (this.showGrid) {
+        this.drawMapGrid(ctx, width, height);
+    }
+    
+    // Draw locations
+    this.drawMapLocations(ctx, width, height);
+    
+    // Draw paths
+    this.drawMapPaths(ctx, width, height);
+    
+    // Draw player position
+    this.drawPlayerPosition(ctx);
+    
+    ctx.restore();
+};
+
+// Draw map grid
+game.drawMapGrid = function(ctx, width, height) {
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 1;
+    
+    const gridSize = 50;
+    for (let x = 0; x < width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+    }
+    
+    for (let y = 0; y < height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+    }
+};
+
+// Draw map locations
+game.drawMapLocations = function(ctx, width, height) {
+    const locations = Object.values(GameWorld.locations);
+
+    locations.forEach(location => {
+        // Use actual map coordinates
+        const x = location.mapPosition?.x || width / 2;
+        const y = location.mapPosition?.y || height / 2;
+
+        // Draw location marker based on type and size
+        const markerSize = location.type === 'city' ? 12 : location.type === 'town' ? 9 : 6;
+
+        ctx.fillStyle = this.getLocationColor(location.type);
+        ctx.beginPath();
+        ctx.arc(x, y, markerSize, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw border for visited locations
+        if (GameWorld.visitedLocations.includes(location.id)) {
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // Draw location name
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(location.name, x, y - markerSize - 5);
+
+        // Draw population indicator
+        ctx.font = '10px Arial';
+        ctx.fillStyle = '#aaaaaa';
+        ctx.fillText(`Pop: ${location.population}`, x, y + markerSize + 12);
+    });
+};
+
+// Get location color by type
+game.getLocationColor = function(type) {
+    const colors = {
+        village: '#4ECDC4',
+        town: '#4FC3F7',
+        city: '#FF6B6B'
+    };
+    return colors[type] || '#888888';
+};
+
+// Draw map paths
+game.drawMapPaths = function(ctx, width, height) {
+    const locations = Object.values(GameWorld.locations);
+    const drawn = new Set(); // Track drawn connections to avoid duplicates
+
+    locations.forEach(location => {
+        if (location.connections && location.mapPosition) {
+            const x1 = location.mapPosition.x;
+            const y1 = location.mapPosition.y;
+
+            location.connections.forEach(connectionId => {
+                const connectedLocation = GameWorld.locations[connectionId];
+                if (connectedLocation && connectedLocation.mapPosition) {
+                    const connectionKey = [location.id, connectionId].sort().join('-');
+
+                    // Only draw each connection once
+                    if (!drawn.has(connectionKey)) {
+                        drawn.add(connectionKey);
+
+                        const x2 = connectedLocation.mapPosition.x;
+                        const y2 = connectedLocation.mapPosition.y;
+
+                        // Draw road/path
+                        ctx.strokeStyle = GameWorld.visitedLocations.includes(connectionId) && GameWorld.visitedLocations.includes(location.id)
+                            ? 'rgba(255, 215, 0, 0.5)' // Gold for explored paths
+                            : 'rgba(255, 255, 255, 0.2)'; // Faint white for unexplored
+
+                        ctx.lineWidth = 3;
+                        ctx.lineCap = 'round';
+
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.stroke();
+
+                        // Draw dashed overlay for style
+                        ctx.setLineDash([5, 5]);
+                        ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                }
+            });
+        }
+    });
+};
+
+// Draw player position
+game.drawPlayerPosition = function(ctx) {
+    if (!game.currentLocation) return;
+
+    const location = GameWorld.locations[game.currentLocation.id];
+    if (!location || !location.mapPosition) return;
+
+    const x = location.mapPosition.x;
+    const y = location.mapPosition.y;
+
+    // Draw pulsing circle effect
+    const time = Date.now() / 500;
+    const pulse = Math.sin(time) * 2 + 8;
+
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+    ctx.beginPath();
+    ctx.arc(x, y, pulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw player marker
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw player icon
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🧑', x, y);
+};
+
+// Show overlay
+game.showOverlay = function(overlayId) {
+    const overlay = document.getElementById(overlayId);
+    if (overlay) {
+        overlay.classList.remove('hidden');
+        overlay.classList.add('active');
+        
+        // Special handling for world map overlay
+        if (overlayId === 'world-map-overlay') {
+            // Initialize TravelSystem if it exists and hasn't been initialized
+            if (typeof TravelSystem !== 'undefined' && !TravelSystem.canvas) {
+                const canvas = document.getElementById('world-map-overlay-canvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    TravelSystem.setupCanvas();
+                    TravelSystem.canvas = canvas;
+                    TravelSystem.ctx = ctx;
+                    TravelSystem.generateWorldMap();
+                    TravelSystem.setupEventListeners();
+                    TravelSystem.updatePlayerPosition();
+                    TravelSystem.render();
+                    console.log('TravelSystem initialized on world map overlay show');
+                }
+            } else if (typeof TravelSystem !== 'undefined' && TravelSystem.render) {
+                // Just update and render if already initialized
+                TravelSystem.updatePlayerPosition();
+                TravelSystem.render();
+            }
+            
+            this.centerMapOnPlayer();
+            this.renderWorldMap();
+        }
+    }
+};
+
+// Hide overlay
+game.hideOverlay = function(overlayId) {
+    const overlay = document.getElementById(overlayId);
+    if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('active');
+    }
+};
+
+// Hide all overlays
+game.hideAllOverlays = function() {
+    const overlays = document.querySelectorAll('#overlay-container > .overlay');
+    overlays.forEach(overlay => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('active');
+    });
+};
+
+// Toggle overlay
+game.toggleOverlay = function(overlayId) {
+    const overlay = document.getElementById(overlayId);
+    if (overlay) {
+        if (overlay.classList.contains('hidden')) {
+            this.showOverlay(overlayId);
+        } else {
+            this.hideOverlay(overlayId);
+        }
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 🚗 TRANSPORTATION SYSTEM NOTES - why we did it this way
+// ═══════════════════════════════════════════════════════════════
+// (yes i know medieval people didn't have cars, it's a metaphor)
+// - Each transportation option has realistic carry weights in pounds
+// - Speed modifiers affect travel time between locations
+// - Some transportation requires animals (wagons need horses, donkeys, or oxen)
+// - Players can own multiple transportation options and switch between them
+// - Current load is calculated based on item weights in inventory

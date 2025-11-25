@@ -1,0 +1,702 @@
+// ═══════════════════════════════════════════════════════════════
+// 🎮 DEBUG COMMAND SYSTEM - Cheat codes and developer tools
+// ═══════════════════════════════════════════════════════════════
+// Press ` (backtick) when debug console is open to focus command input
+// Type commands and press Enter to execute
+// ═══════════════════════════════════════════════════════════════
+
+console.log('🎮 Debug Command System loading...');
+
+const DebugCommandSystem = {
+    // Is the command input currently focused?
+    isInputFocused: false,
+
+    // Command history for up/down arrow navigation
+    commandHistory: [],
+    historyIndex: -1,
+
+    // Available commands
+    commands: {},
+
+    // Initialize the system
+    init() {
+        console.log('🎮 Debug Command System initializing...');
+
+        // Wire up the command input UI (already in HTML)
+        this.wireUpCommandInput();
+
+        // Setup keyboard listener for ` key
+        this.setupKeyboardListener();
+
+        // Register built-in commands
+        this.registerBuiltInCommands();
+
+        console.log('🎮 Debug Command System ready! Press ` to focus command input.');
+    },
+
+    // Wire up event listeners for command input (elements are in HTML)
+    wireUpCommandInput() {
+        const input = document.getElementById('debug-command-input');
+        const executeBtn = document.getElementById('debug-command-execute');
+        const helpBtn = document.getElementById('debug-command-help');
+
+        if (!input) {
+            console.warn('🎮 Command input not found, will retry...');
+            setTimeout(() => this.wireUpCommandInput(), 500);
+            return;
+        }
+
+        // Remove any existing listeners by cloning
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+
+        // Add event listeners to the fresh input
+        newInput.addEventListener('keydown', (e) => this.handleInputKeydown(e));
+        newInput.addEventListener('focus', () => { this.isInputFocused = true; });
+        newInput.addEventListener('blur', () => { this.isInputFocused = false; });
+
+        if (executeBtn) {
+            executeBtn.addEventListener('click', () => this.executeCurrentCommand());
+        }
+
+        if (helpBtn) {
+            helpBtn.addEventListener('click', () => this.showHelp());
+        }
+
+        console.log('🎮 Command input wired up and ready!');
+    },
+
+    // Setup keyboard listener for backtick key
+    setupKeyboardListener() {
+        document.addEventListener('keydown', (e) => {
+            // ` (backtick) key to focus command input
+            if (e.key === '`' || e.code === 'Backquote') {
+                const debugConsole = document.getElementById('debug-console');
+                const input = document.getElementById('debug-command-input');
+
+                // Only if debug console is visible
+                if (debugConsole && debugConsole.style.display !== 'none') {
+                    e.preventDefault();
+                    if (input) {
+                        input.focus();
+                        console.log('🎮 Command input focused');
+                    }
+                }
+            }
+        });
+    },
+
+    // Handle input keydown events
+    handleInputKeydown(e) {
+        const input = e.target;
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.executeCurrentCommand();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.navigateHistory(-1);
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.navigateHistory(1);
+        } else if (e.key === 'Escape') {
+            input.blur();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            this.autocomplete();
+        }
+    },
+
+    // Navigate command history
+    navigateHistory(direction) {
+        const input = document.getElementById('debug-command-input');
+        if (!input || this.commandHistory.length === 0) return;
+
+        this.historyIndex += direction;
+
+        if (this.historyIndex < 0) {
+            this.historyIndex = -1;
+            input.value = '';
+        } else if (this.historyIndex >= this.commandHistory.length) {
+            this.historyIndex = this.commandHistory.length - 1;
+        }
+
+        if (this.historyIndex >= 0) {
+            input.value = this.commandHistory[this.historyIndex];
+        }
+    },
+
+    // Autocomplete command names
+    autocomplete() {
+        const input = document.getElementById('debug-command-input');
+        if (!input) return;
+
+        const partial = input.value.toLowerCase().trim();
+        if (!partial) return;
+
+        const matches = Object.keys(this.commands).filter(cmd =>
+            cmd.toLowerCase().startsWith(partial)
+        );
+
+        if (matches.length === 1) {
+            input.value = matches[0];
+        } else if (matches.length > 1) {
+            console.log('🎮 Matching commands:', matches.join(', '));
+        }
+    },
+
+    // Execute the current command in the input
+    executeCurrentCommand() {
+        const input = document.getElementById('debug-command-input');
+        if (!input) return;
+
+        const commandText = input.value.trim();
+        if (!commandText) return;
+
+        // Add to history
+        this.commandHistory.unshift(commandText);
+        if (this.commandHistory.length > 50) {
+            this.commandHistory.pop();
+        }
+        this.historyIndex = -1;
+
+        // Clear input
+        input.value = '';
+
+        // Execute
+        this.execute(commandText);
+    },
+
+    // Execute a command string
+    execute(commandText) {
+        console.log(`🎮 > ${commandText}`);
+
+        // Parse command and arguments
+        const parts = commandText.trim().split(/\s+/);
+        const commandName = parts[0].toLowerCase();
+        const args = parts.slice(1);
+
+        // Find and execute command
+        const command = this.commands[commandName];
+        if (command) {
+            try {
+                const result = command.handler(args);
+                if (result !== undefined) {
+                    console.log(`🎮 Result: ${result}`);
+                }
+            } catch (error) {
+                console.error(`🎮 Command error: ${error.message}`);
+            }
+        } else {
+            console.warn(`🎮 Unknown command: ${commandName}. Type 'help' for available commands.`);
+        }
+    },
+
+    // Register a command
+    registerCommand(name, description, handler) {
+        this.commands[name.toLowerCase()] = {
+            name,
+            description,
+            handler
+        };
+        console.log(`🎮 Registered command: ${name}`);
+    },
+
+    // Show help
+    showHelp() {
+        console.log('═══════════════════════════════════════════════════');
+        console.log('🎮 DEBUG COMMAND SYSTEM - Available Commands:');
+        console.log('═══════════════════════════════════════════════════');
+
+        for (const [name, cmd] of Object.entries(this.commands)) {
+            console.log(`  ${name} - ${cmd.description}`);
+        }
+
+        console.log('═══════════════════════════════════════════════════');
+        console.log('💡 Tips:');
+        console.log('  - Press ` (backtick) to focus command input');
+        console.log('  - Press Enter to execute command');
+        console.log('  - Press Up/Down to navigate history');
+        console.log('  - Press Tab to autocomplete');
+        console.log('═══════════════════════════════════════════════════');
+    },
+
+    // Register built-in commands
+    registerBuiltInCommands() {
+        // Help command
+        this.registerCommand('help', 'Show all available commands', () => {
+            this.showHelp();
+        });
+
+        // Clear console
+        this.registerCommand('clear', 'Clear the debug console', () => {
+            const content = document.getElementById('debug-console-content');
+            if (content) content.innerHTML = '';
+            console.log('🎮 Console cleared');
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // 💰 GOLD/MONEY CHEATS
+        // ═══════════════════════════════════════════════════════════════
+
+        // geecashnow - Classic cheat code for 1000 gold
+        this.registerCommand('geecashnow', 'Add 1000 gold (respects carry weight)', () => {
+            return this.addGoldCheat(1000);
+        });
+
+        // givegold <amount> - Add specific amount of gold
+        this.registerCommand('givegold', 'Add gold: givegold <amount>', (args) => {
+            const amount = parseInt(args[0]) || 100;
+            return this.addGoldCheat(amount);
+        });
+
+        // setgold <amount> - Set gold to specific amount
+        this.registerCommand('setgold', 'Set gold to amount: setgold <amount>', (args) => {
+            const amount = parseInt(args[0]) || 1000;
+            if (typeof UniversalGoldManager !== 'undefined') {
+                UniversalGoldManager.setPersonalGold(amount, 'cheat');
+            } else if (typeof GoldManager !== 'undefined') {
+                GoldManager.setGold(amount, 'cheat');
+            }
+            if (typeof game !== 'undefined' && game.player) {
+                game.player.gold = amount;
+            }
+            console.log(`💰 Gold set to ${amount}`);
+            return amount;
+        });
+
+        // showgold - Show all gold across all sources
+        this.registerCommand('showgold', 'Show gold from all sources', () => {
+            if (typeof UniversalGoldManager !== 'undefined') {
+                return UniversalGoldManager.showAllGold();
+            } else {
+                const gold = typeof GoldManager !== 'undefined' ? GoldManager.getGold() :
+                            (game?.player?.gold || 0);
+                console.log(`💰 Personal Gold: ${gold}`);
+                return gold;
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🎒 INVENTORY CHEATS
+        // ═══════════════════════════════════════════════════════════════
+
+        // giveitem <itemId> <quantity> - Add item to inventory
+        this.registerCommand('giveitem', 'Add item: giveitem <itemId> [quantity]', (args) => {
+            const itemId = args[0];
+            const quantity = parseInt(args[1]) || 1;
+
+            if (!itemId) {
+                console.warn('🎮 Usage: giveitem <itemId> [quantity]');
+                return;
+            }
+
+            if (typeof InventorySystem !== 'undefined') {
+                InventorySystem.addItem(itemId, quantity);
+                console.log(`🎒 Added ${quantity}x ${itemId}`);
+            } else if (typeof game !== 'undefined' && game.player) {
+                game.player.inventory[itemId] = (game.player.inventory[itemId] || 0) + quantity;
+                console.log(`🎒 Added ${quantity}x ${itemId}`);
+            }
+            return `${quantity}x ${itemId}`;
+        });
+
+        // listitems - List all available item IDs
+        this.registerCommand('listitems', 'List all item IDs', () => {
+            if (typeof ItemDatabase !== 'undefined' && ItemDatabase.items) {
+                const items = Object.keys(ItemDatabase.items);
+                console.log('📦 Available items:', items.join(', '));
+                return `${items.length} items`;
+            }
+            return 'ItemDatabase not found';
+        });
+
+        // clearinventory - Clear player inventory
+        this.registerCommand('clearinventory', 'Clear player inventory', () => {
+            if (typeof game !== 'undefined' && game.player) {
+                game.player.inventory = { gold: game.player.gold || 0 };
+                console.log('🎒 Inventory cleared');
+                if (typeof updateInventoryDisplay === 'function') {
+                    updateInventoryDisplay();
+                }
+            }
+            return 'Inventory cleared';
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // 👤 PLAYER CHEATS
+        // ═══════════════════════════════════════════════════════════════
+
+        // heal - Full heal player
+        this.registerCommand('heal', 'Fully heal player', () => {
+            if (typeof game !== 'undefined' && game.player) {
+                game.player.health = game.player.maxHealth || 100;
+                game.player.hunger = 100;
+                game.player.thirst = 100;
+                game.player.fatigue = 0;
+                game.player.happiness = 100;
+                console.log('❤️ Player fully healed!');
+                if (typeof updatePlayerInfo === 'function') updatePlayerInfo();
+            }
+            return 'Healed!';
+        });
+
+        // setstat <stat> <value> - Set player stat
+        this.registerCommand('setstat', 'Set stat: setstat <stat> <value>', (args) => {
+            const stat = args[0];
+            const value = parseInt(args[1]);
+
+            if (!stat || isNaN(value)) {
+                console.warn('🎮 Usage: setstat <stat> <value>');
+                console.log('  Stats: health, hunger, thirst, fatigue, happiness, strength, charisma, intelligence, luck, endurance');
+                return;
+            }
+
+            if (typeof game !== 'undefined' && game.player) {
+                game.player[stat] = value;
+                console.log(`📊 Set ${stat} to ${value}`);
+                if (typeof updatePlayerInfo === 'function') updatePlayerInfo();
+            }
+            return `${stat} = ${value}`;
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🗺️ WORLD/TRAVEL CHEATS
+        // ═══════════════════════════════════════════════════════════════
+
+        // teleport <locationId> - Teleport to location
+        this.registerCommand('teleport', 'Teleport to location: teleport <locationId>', (args) => {
+            const locationId = args[0];
+            if (!locationId) {
+                console.warn('🎮 Usage: teleport <locationId>');
+                if (typeof TravelSystem !== 'undefined' && TravelSystem.locations) {
+                    console.log('Available locations:', Object.keys(TravelSystem.locations).join(', '));
+                }
+                return;
+            }
+
+            if (typeof TravelSystem !== 'undefined' && TravelSystem.setPlayerLocation) {
+                TravelSystem.setPlayerLocation(locationId);
+                console.log(`🗺️ Teleported to ${locationId}`);
+            } else if (typeof game !== 'undefined') {
+                game.currentLocation = locationId;
+                console.log(`🗺️ Location set to ${locationId}`);
+            }
+            return locationId;
+        });
+
+        // listlocations - Show all locations
+        this.registerCommand('listlocations', 'List all locations', () => {
+            if (typeof TravelSystem !== 'undefined' && TravelSystem.locations) {
+                const locs = Object.keys(TravelSystem.locations);
+                console.log('🗺️ Available locations:', locs.join(', '));
+                return `${locs.length} locations`;
+            }
+            return 'TravelSystem not found';
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // ⏰ TIME CHEATS
+        // ═══════════════════════════════════════════════════════════════
+
+        // advancetime <hours> - Advance game time
+        this.registerCommand('advancetime', 'Advance time: advancetime <hours>', (args) => {
+            const hours = parseInt(args[0]) || 1;
+            if (typeof game !== 'undefined') {
+                game.hour = (game.hour || 0) + hours;
+                while (game.hour >= 24) {
+                    game.hour -= 24;
+                    game.day = (game.day || 1) + 1;
+                }
+                console.log(`⏰ Time: Day ${game.day}, Hour ${game.hour}`);
+                if (typeof updateTimeDisplay === 'function') updateTimeDisplay();
+            }
+            return `+${hours} hours`;
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🏠 PROPERTY CHEATS
+        // ═══════════════════════════════════════════════════════════════
+
+        // giveproperty <type> - Give a property
+        this.registerCommand('giveproperty', 'Give property: giveproperty <type>', (args) => {
+            const type = args[0] || 'house';
+            if (typeof PropertySystem !== 'undefined' && PropertySystem.purchaseProperty) {
+                const location = game?.currentLocation || 'haven';
+                // Try to add property for free
+                if (PropertySystem.properties) {
+                    const prop = {
+                        id: `cheat_${Date.now()}`,
+                        type: type,
+                        location: location,
+                        level: 1,
+                        condition: 100,
+                        upgrades: [],
+                        employees: [],
+                        storage: {},
+                        storageUsed: 0
+                    };
+                    PropertySystem.properties.push(prop);
+                    console.log(`🏠 Gave property: ${type} at ${location}`);
+                    return prop.id;
+                }
+            }
+            return 'PropertySystem not found';
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🔧 DEBUG UTILITIES
+        // ═══════════════════════════════════════════════════════════════
+
+        // gamestate - Show current game state
+        this.registerCommand('gamestate', 'Show current game state', () => {
+            if (typeof game !== 'undefined') {
+                console.log('🎮 Game State:', JSON.stringify({
+                    location: game.currentLocation,
+                    day: game.day,
+                    hour: game.hour,
+                    player: game.player ? {
+                        name: game.player.name,
+                        gold: game.player.gold,
+                        health: game.player.health
+                    } : null
+                }, null, 2));
+            }
+            return 'See console';
+        });
+
+        // reload - Reload the page
+        this.registerCommand('reload', 'Reload the game', () => {
+            location.reload();
+        });
+
+        // verifyeconomy - Verify circular economy chains
+        this.registerCommand('verifyeconomy', 'Verify circular economy chains', () => {
+            if (typeof UnifiedItemSystem !== 'undefined') {
+                return UnifiedItemSystem.verifyAllChains();
+            }
+            return 'UnifiedItemSystem not found';
+        });
+
+        console.log(`🎮 Registered ${Object.keys(this.commands).length} commands`);
+    },
+
+    // Helper: Add gold to personal inventory only
+    addGoldCheat(amount) {
+        // Use GoldManager as the single source of truth
+        // GoldManager.addGold will update game.player.gold automatically
+
+        if (typeof GoldManager !== 'undefined') {
+            GoldManager.addGold(amount, 'cheat');
+        } else if (typeof game !== 'undefined' && game.player) {
+            // Fallback if GoldManager not available
+            game.player.gold = (game.player.gold || 0) + amount;
+        }
+
+        // Sync game.player.gold with GoldManager (in case they're out of sync)
+        if (typeof game !== 'undefined' && game.player && typeof GoldManager !== 'undefined') {
+            game.player.gold = GoldManager.getGold();
+
+            // Update inventory gold reference too
+            if (game.player.inventory) {
+                game.player.inventory.gold = game.player.gold;
+            }
+        }
+
+        // Update displays
+        if (typeof updatePlayerInfo === 'function') updatePlayerInfo();
+        if (typeof updateInventoryDisplay === 'function') updateInventoryDisplay();
+
+        const totalGold = typeof GoldManager !== 'undefined' ? GoldManager.getGold() : (game?.player?.gold || 0);
+        console.log(`💰 Added ${amount} gold! Total: ${totalGold}`);
+        return totalGold;
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 🌐 UNIVERSAL GOLD MANAGER - Track gold across all sources
+// ═══════════════════════════════════════════════════════════════
+
+const UniversalGoldManager = {
+    // Get gold from personal inventory
+    getPersonalGold() {
+        if (typeof GoldManager !== 'undefined') {
+            return GoldManager.getGold();
+        }
+        return game?.player?.gold || 0;
+    },
+
+    // Get gold from all property storage
+    getStorageGold() {
+        let storageGold = 0;
+
+        if (typeof PropertySystem !== 'undefined' && PropertySystem.properties) {
+            for (const property of PropertySystem.properties) {
+                if (property.storage && property.storage.gold) {
+                    storageGold += property.storage.gold;
+                }
+            }
+        }
+
+        return storageGold;
+    },
+
+    // Get gold from employee inventories
+    getEmployeeGold() {
+        let employeeGold = 0;
+
+        if (typeof EmployeeSystem !== 'undefined' && EmployeeSystem.employees) {
+            for (const employee of EmployeeSystem.employees) {
+                if (employee.inventory && employee.inventory.gold) {
+                    employeeGold += employee.inventory.gold;
+                }
+            }
+        }
+
+        return employeeGold;
+    },
+
+    // Get TOTAL gold from all sources
+    getTotalGold() {
+        return this.getPersonalGold() + this.getStorageGold() + this.getEmployeeGold();
+    },
+
+    // Show gold breakdown
+    showAllGold() {
+        const personal = this.getPersonalGold();
+        const storage = this.getStorageGold();
+        const employee = this.getEmployeeGold();
+        const total = personal + storage + employee;
+
+        console.log('═══════════════════════════════════════════════════');
+        console.log('💰 UNIVERSAL GOLD REPORT');
+        console.log('═══════════════════════════════════════════════════');
+        console.log(`  💼 Personal Inventory: ${personal.toLocaleString()} gold`);
+        console.log(`  🏠 Property Storage:   ${storage.toLocaleString()} gold`);
+        console.log(`  👥 Employee Holdings:  ${employee.toLocaleString()} gold`);
+        console.log('───────────────────────────────────────────────────');
+        console.log(`  💎 TOTAL WEALTH:       ${total.toLocaleString()} gold`);
+        console.log('═══════════════════════════════════════════════════');
+
+        return total;
+    },
+
+    // Set personal gold
+    setPersonalGold(amount, reason = '') {
+        if (typeof GoldManager !== 'undefined') {
+            GoldManager.setGold(amount, reason);
+        }
+        if (typeof game !== 'undefined' && game.player) {
+            game.player.gold = amount;
+            if (game.player.inventory) {
+                game.player.inventory.gold = amount;
+            }
+        }
+        return amount;
+    },
+
+    // Add gold to personal inventory
+    addPersonalGold(amount, reason = '') {
+        const current = this.getPersonalGold();
+        return this.setPersonalGold(current + amount, reason);
+    },
+
+    // Remove gold - tries personal first, then storage
+    removeGold(amount, reason = '') {
+        let remaining = amount;
+
+        // First, try to take from personal inventory
+        const personal = this.getPersonalGold();
+        if (personal >= remaining) {
+            this.setPersonalGold(personal - remaining, reason);
+            console.log(`💸 Removed ${amount} gold from personal inventory`);
+            return true;
+        } else if (personal > 0) {
+            remaining -= personal;
+            this.setPersonalGold(0, reason);
+            console.log(`💸 Removed ${personal} gold from personal inventory`);
+        }
+
+        // Then, try to take from property storage
+        if (typeof PropertySystem !== 'undefined' && PropertySystem.properties) {
+            for (const property of PropertySystem.properties) {
+                if (remaining <= 0) break;
+
+                if (property.storage && property.storage.gold > 0) {
+                    const storageGold = property.storage.gold;
+                    if (storageGold >= remaining) {
+                        property.storage.gold -= remaining;
+                        console.log(`💸 Removed ${remaining} gold from ${property.type} storage`);
+                        remaining = 0;
+                    } else {
+                        remaining -= storageGold;
+                        property.storage.gold = 0;
+                        console.log(`💸 Removed ${storageGold} gold from ${property.type} storage`);
+                    }
+                }
+            }
+        }
+
+        if (remaining > 0) {
+            console.warn(`💸 Could not remove all gold! Still need ${remaining}`);
+            return false;
+        }
+
+        return true;
+    },
+
+    // Can afford check using all sources
+    canAfford(amount) {
+        return this.getTotalGold() >= amount;
+    },
+
+    // Deposit gold to property storage
+    depositToStorage(propertyId, amount) {
+        const personal = this.getPersonalGold();
+        if (personal < amount) {
+            console.warn('💰 Not enough personal gold to deposit');
+            return false;
+        }
+
+        if (typeof PropertySystem !== 'undefined') {
+            const property = PropertySystem.properties?.find(p => p.id === propertyId);
+            if (property) {
+                if (!property.storage) property.storage = {};
+                property.storage.gold = (property.storage.gold || 0) + amount;
+                this.setPersonalGold(personal - amount, 'deposit to storage');
+                console.log(`💰 Deposited ${amount} gold to ${property.type}`);
+                return true;
+            }
+        }
+        return false;
+    },
+
+    // Withdraw gold from property storage
+    withdrawFromStorage(propertyId, amount) {
+        if (typeof PropertySystem !== 'undefined') {
+            const property = PropertySystem.properties?.find(p => p.id === propertyId);
+            if (property && property.storage && property.storage.gold >= amount) {
+                property.storage.gold -= amount;
+                this.addPersonalGold(amount, 'withdraw from storage');
+                console.log(`💰 Withdrew ${amount} gold from ${property.type}`);
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+// Expose globally
+window.DebugCommandSystem = DebugCommandSystem;
+window.UniversalGoldManager = UniversalGoldManager;
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => DebugCommandSystem.init(), 500);
+    });
+} else {
+    setTimeout(() => DebugCommandSystem.init(), 500);
+}
+
+console.log('🎮 Debug Command System loaded!');
