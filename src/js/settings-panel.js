@@ -1,18 +1,21 @@
 // ═══════════════════════════════════════════════════════════════
-// ⚙️ SETTINGS PANEL - customizing your suffering experience
+// 🖤 SETTINGS PANEL - customizing your suffering experience 🖤
 // ═══════════════════════════════════════════════════════════════
-// audio, visual, accessibility... tweak everything to your liking
-// because one size fits none
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
+// tweak audio, visuals, accessibility... make the darkness yours
+// because one size fits none and we all suffer differently
 
 const SettingsPanel = {
-    // Panel state
+    // panel state - are we drowning in options or nah
     isOpen: false,
     panelElement: null,
     settingsTabs: {},
-    
-    // Default settings
+
+    // default settings - where hope goes to die
     defaultSettings: {
-        // Audio settings
+        // 🎵 audio settings - drown out the silence
         audio: {
             masterVolume: 0.7,
             musicVolume: 0.5,
@@ -22,8 +25,8 @@ const SettingsPanel = {
             isSfxMuted: false,
             audioEnabled: true
         },
-        
-        // Visual settings
+
+        // 👁️ visual settings - see the void in HD
         visual: {
             particlesEnabled: true,
             screenShakeEnabled: true,
@@ -33,16 +36,16 @@ const SettingsPanel = {
             reducedMotion: false,
             flashWarnings: true
         },
-        
-        // Animation settings
+
+        // ✨ animation settings - making pixels dance at 3am
         animation: {
             animationsEnabled: true,
             animationSpeed: 1.0,
             reducedMotion: false,
             quality: 'medium'
         },
-        
-        // UI settings
+
+        // 🎨 ui settings - paint your nightmare pretty
         ui: {
             animationsEnabled: true,
             hoverEffectsEnabled: true,
@@ -52,8 +55,8 @@ const SettingsPanel = {
             fontSize: 'medium',
             theme: 'default'
         },
-        
-        // Environmental settings
+
+        // 🌧️ environmental settings - weather for the soul
         environmental: {
             weatherEffectsEnabled: true,
             lightingEnabled: true,
@@ -61,8 +64,8 @@ const SettingsPanel = {
             quality: 'medium',
             reducedEffects: false
         },
-        
-        // Accessibility settings
+
+        // ♿ accessibility settings - suffering should be inclusive
         accessibility: {
             reducedMotion: false,
             highContrast: false,
@@ -73,21 +76,21 @@ const SettingsPanel = {
             keyboardNavigation: true
         }
     },
-    
-    // Current settings
+
+    // current settings - your personal flavor of chaos
     currentSettings: {},
-    
-    // Initialize settings panel
+
+    // initialize settings panel - birth of the preference nightmare
     init() {
         this.loadSettings();
         this.createPanel();
         this.setupEventListeners();
         console.log('Settings panel initialized');
     },
-    
-    // Load settings from localStorage
+
+    // load settings from localStorage - resurrect your preferences
     loadSettings() {
-        // Load all setting categories
+        // load all setting categories - what fresh hell did we save last time
         Object.keys(this.defaultSettings).forEach(category => {
             const savedSettings = localStorage.getItem(`tradingGame${category.charAt(0).toUpperCase() + category.slice(1)}Settings`);
             if (savedSettings) {
@@ -102,30 +105,30 @@ const SettingsPanel = {
             }
         });
     },
-    
-    // Save settings to localStorage
+
+    // save settings to localStorage - etch your choices into the void
     saveSettings(category = null) {
         if (category) {
-            localStorage.setItem(`tradingGame${category.charAt(0).toUpperCase() + category.slice(1)}Settings`, 
+            localStorage.setItem(`tradingGame${category.charAt(0).toUpperCase() + category.slice(1)}Settings`,
                                JSON.stringify(this.currentSettings[category]));
         } else {
-            // Save all categories
+            // save all categories - commit to the full experience
             Object.keys(this.currentSettings).forEach(cat => {
                 localStorage.setItem(`tradingGame${cat.charAt(0).toUpperCase() + cat.slice(1)}Settings`, 
                                    JSON.stringify(this.currentSettings[cat]));
             });
         }
     },
-    
-    // Create settings panel
+
+    // create settings panel - build the cathedral of customization
     createPanel() {
-        // Create main panel container
+        // create main panel container - our temple of options
         this.panelElement = document.createElement('div');
         this.panelElement.id = 'settings-panel';
         this.panelElement.className = 'settings-panel';
         this.panelElement.style.display = 'none';
-        
-        // Create panel structure
+
+        // create panel structure - the html monstrosity begins
         this.panelElement.innerHTML = `
             <div class="settings-panel-overlay">
                 <div class="settings-panel-container">
@@ -143,10 +146,11 @@ const SettingsPanel = {
                         <button class="settings-tab" data-tab="accessibility">Accessibility</button>
                         <button class="settings-tab" data-tab="controls">⌨️ Controls</button>
                         <button class="settings-tab" data-tab="saveload">💾 Save/Load</button>
+                        <button class="settings-tab" data-tab="about">ℹ️ About</button>
                     </div>
                     
                     <div class="settings-panel-content">
-                        <!-- Audio Tab -->
+                        <!-- 🎵 Audio Tab - the soundtrack to our despair -->
                         <div class="settings-tab-content active" data-tab="audio">
                             <h3>Audio Settings</h3>
                             <div class="settings-group">
@@ -191,8 +195,8 @@ const SettingsPanel = {
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Visual Tab -->
+
+                        <!-- 👁️ Visual Tab - feast your eyes on this mess -->
                         <div class="settings-tab-content" data-tab="visual">
                             <h3>Visual Settings</h3>
                             <div class="settings-group">
@@ -242,8 +246,8 @@ const SettingsPanel = {
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Animation Tab -->
+
+                        <!-- ✨ Animation Tab - motion sickness optional -->
                         <div class="settings-tab-content" data-tab="animation">
                             <h3>Animation Settings</h3>
                             <div class="settings-group">
@@ -274,8 +278,8 @@ const SettingsPanel = {
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- UI Tab -->
+
+                        <!-- 🎨 UI Tab - aesthetics for the void -->
                         <div class="settings-tab-content" data-tab="ui">
                             <h3>UI Settings</h3>
                             <div class="settings-group">
@@ -327,8 +331,8 @@ const SettingsPanel = {
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Environmental Tab -->
+
+                        <!-- 🌧️ Environmental Tab - because ambiance matters in hell -->
                         <div class="settings-tab-content" data-tab="environmental">
                             <h3>Environmental Settings</h3>
                             <div class="settings-group">
@@ -366,8 +370,8 @@ const SettingsPanel = {
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Accessibility Tab -->
+
+                        <!-- ♿ Accessibility Tab - make the suffering accessible to all -->
                         <div class="settings-tab-content" data-tab="accessibility">
                             <h3>Accessibility Settings</h3>
                             <div class="settings-group">
@@ -422,13 +426,13 @@ const SettingsPanel = {
                             </div>
                         </div>
 
-                        <!-- ⌨️ Controls Tab - keybindings for the suffering -->
+                        <!-- ⌨️ Controls Tab - remap your keys, not your fate -->
                         <div class="settings-tab-content" data-tab="controls">
                             <h3>⌨️ Keyboard Controls</h3>
                             <p class="settings-description">Click any key binding to change it. Press Escape to cancel.</p>
                             <div class="settings-group">
                                 <div class="keybindings-list" id="keybindings-list">
-                                    <!-- Keybindings populated by refreshKeyBindingsUI -->
+                                    <!-- keybindings spawned by refreshKeyBindingsUI -->
                                 </div>
                                 <div class="setting-item keybind-actions">
                                     <button class="save-load-btn" id="reset-keybindings-btn">🔄 Reset to Defaults</button>
@@ -436,7 +440,7 @@ const SettingsPanel = {
                             </div>
                         </div>
 
-                        <!-- 💾 Save/Load Tab - timeline manipulation -->
+                        <!-- 💾 Save/Load Tab - ctrl+z for life itself -->
                         <div class="settings-tab-content" data-tab="saveload">
                             <h3>💾 Save & Load Game</h3>
                             <div class="settings-group">
@@ -452,15 +456,22 @@ const SettingsPanel = {
                                 <h4>📂 Auto-Saves (Rotating - up to 10)</h4>
                                 <p class="settings-description">Auto-saves happen every 5 minutes during gameplay</p>
                                 <div id="auto-save-list" class="auto-save-list">
-                                    <!-- Auto-saves will be populated here -->
+                                    <!-- auto-saves materialize here like ghosts -->
                                     <p class="no-saves">No auto-saves yet...</p>
                                 </div>
 
                                 <h4>📁 Manual Saves</h4>
                                 <div id="manual-save-list" class="manual-save-list">
-                                    <!-- Manual saves will be populated here -->
+                                    <!-- manual saves appear when you actually care -->
                                     <p class="no-saves">No manual saves yet...</p>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- ℹ️ About Tab - who to blame for this beautiful disaster -->
+                        <div class="settings-tab-content" data-tab="about">
+                            <div id="about-content" class="about-tab-content">
+                                <!-- content summoned by GameConfig -->
                             </div>
                         </div>
                     </div>
@@ -474,15 +485,15 @@ const SettingsPanel = {
                 </div>
             </div>
         `;
-        
-        // Add styles
+
+        // add styles - because ugly code deserves pretty css
         this.addStyles();
-        
-        // Append to body
+
+        // append to body - inject our darkness into the dom
         document.body.appendChild(this.panelElement);
     },
-    
-    // Add styles for settings panel
+
+    // add styles for settings panel - css wizardry at 3am
     addStyles() {
         const style = document.createElement('style');
         style.id = 'settings-panel-styles';
@@ -825,7 +836,7 @@ const SettingsPanel = {
                 padding-bottom: 5px;
             }
 
-            /* ⌨️ Keybindings styles - the keys to our demise */
+            /* ⌨️ keybindings styles - remap the pain */
             .keybindings-list {
                 display: flex;
                 flex-direction: column;
@@ -910,7 +921,7 @@ const SettingsPanel = {
                 margin-top: 0;
             }
 
-            /* Responsive design */
+            /* responsive design - looks bad on all screen sizes equally */
             @media (max-width: 768px) {
                 .settings-panel-container {
                     width: 95%;
@@ -950,23 +961,131 @@ const SettingsPanel = {
                     width: 100%;
                 }
             }
+
+            /* ℹ️ about tab styles - ego stroking section */
+            .about-tab-content {
+                text-align: center;
+                padding: 20px;
+            }
+
+            .about-section {
+                max-width: 400px;
+                margin: 0 auto;
+            }
+
+            .about-logo {
+                font-size: 64px;
+                margin-bottom: 10px;
+            }
+
+            .about-section h2 {
+                color: #FFD700;
+                font-size: 28px;
+                margin: 10px 0;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            }
+
+            .about-tagline {
+                color: #aaa;
+                font-style: italic;
+                margin: 5px 0 15px 0;
+            }
+
+            .about-version {
+                display: inline-block;
+                background: linear-gradient(135deg, #4a4a4a 0%, #3a3a3a 100%);
+                padding: 5px 15px;
+                border-radius: 20px;
+                font-family: monospace;
+                font-size: 14px;
+                color: #4CAF50;
+                margin: 10px 0;
+            }
+
+            .about-studio {
+                margin: 20px 0;
+                padding: 15px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 8px;
+            }
+
+            .studio-label {
+                display: block;
+                color: #666;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+
+            .studio-name {
+                display: block;
+                color: #FFD700;
+                font-size: 20px;
+                font-weight: bold;
+                margin-top: 5px;
+            }
+
+            .about-developers {
+                margin: 20px 0;
+                padding: 15px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 8px;
+            }
+
+            .about-developers h4 {
+                color: #888;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 10px;
+                border-bottom: none !important;
+            }
+
+            .credit-entry {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .credit-entry:last-child {
+                border-bottom: none;
+            }
+
+            .dev-name {
+                color: #e0e0e0;
+                font-weight: bold;
+            }
+
+            .dev-role {
+                color: #888;
+                font-size: 12px;
+            }
+
+            .about-copyright {
+                color: #666;
+                font-size: 11px;
+                margin-top: 20px;
+                padding-top: 15px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
         `;
         document.head.appendChild(style);
     },
-    
-    // Setup event listeners
+
+    // setup event listeners - wire up the chaos
     setupEventListeners() {
-        // Tab switching
+        // tab switching - swap between tabs like moods at 3am
         const tabs = this.panelElement.querySelectorAll('.settings-tab');
         tabs.forEach(tab => {
             EventManager.addEventListener(tab, 'click', (e) => this.switchTab(e.target.dataset.tab));
         });
-        
-        // Close button
+
+        // close button - the escape hatch from our beautiful mess
         const closeBtn = this.panelElement.querySelector('.settings-close-btn');
         closeBtn.addEventListener('click', () => this.closePanel());
-        
-        // Footer buttons
+
+        // footer buttons - commit or abandon your choices
         const applyBtn = this.panelElement.querySelector('.settings-apply-btn');
         applyBtn.addEventListener('click', () => this.applySettings());
         
@@ -976,26 +1095,26 @@ const SettingsPanel = {
         const cancelBtn = this.panelElement.querySelector('.settings-cancel-btn');
         cancelBtn.addEventListener('click', () => this.closePanel());
 
-        // Clear all data button
+        // clear all data button - the nuclear option
         const clearAllBtn = this.panelElement.querySelector('.settings-clear-all-btn');
         if (clearAllBtn) {
             clearAllBtn.addEventListener('click', () => this.clearAllData());
         }
 
-        // Setting controls
+        // setting controls - bind the inputs to the void
         this.setupSettingControls();
-        
-        // Keyboard navigation
+
+        // keyboard navigation - escape is always an option
         EventManager.addEventListener(document, 'keydown', (e) => {
             if (e.key === 'Escape' && this.isOpen) {
                 this.closePanel();
             }
         });
     },
-    
-    // Setup individual setting controls
+
+    // setup individual setting controls - the tedious part
     setupSettingControls() {
-        // Audio settings
+        // audio settings - volume knobs for your ears
         this.setupRangeControl('master-volume', 'audio', 'masterVolume', (value) => `${Math.round(value * 100)}%`);
         this.setupRangeControl('music-volume', 'audio', 'musicVolume', (value) => `${Math.round(value * 100)}%`);
         this.setupRangeControl('sfx-volume', 'audio', 'sfxVolume', (value) => `${Math.round(value * 100)}%`);
@@ -1004,8 +1123,8 @@ const SettingsPanel = {
         this.setupCheckboxControl('master-mute', 'audio', 'isMuted');
         this.setupCheckboxControl('music-mute', 'audio', 'isMusicMuted');
         this.setupCheckboxControl('sfx-mute', 'audio', 'isSfxMuted');
-        
-        // Visual settings
+
+        // visual settings - checkboxes for your eyeballs
         this.setupCheckboxControl('particles-enabled', 'visual', 'particlesEnabled');
         this.setupCheckboxControl('screen-shake-enabled', 'visual', 'screenShakeEnabled');
         this.setupCheckboxControl('visual-animations-enabled', 'visual', 'animationsEnabled');
@@ -1014,15 +1133,15 @@ const SettingsPanel = {
         this.setupCheckboxControl('reduced-motion', 'visual', 'reducedMotion');
         
         this.setupSelectControl('visual-quality', 'visual', 'quality');
-        
-        // Animation settings
+
+        // animation settings - make things move or don't, whatever
         this.setupCheckboxControl('animation-enabled', 'animation', 'animationsEnabled');
         this.setupCheckboxControl('animation-reduced-motion', 'animation', 'reducedMotion');
         
         this.setupRangeControl('animation-speed', 'animation', 'animationSpeed', (value) => `${value}x`);
         this.setupSelectControl('animation-quality', 'animation', 'quality');
-        
-        // UI settings
+
+        // ui settings - fiddle with fonts and themes
         this.setupCheckboxControl('ui-animations-enabled', 'ui', 'animationsEnabled');
         this.setupCheckboxControl('hover-effects-enabled', 'ui', 'hoverEffectsEnabled');
         this.setupCheckboxControl('transitions-enabled', 'ui', 'transitionsEnabled');
@@ -1031,16 +1150,16 @@ const SettingsPanel = {
         
         this.setupSelectControl('ui-theme', 'ui', 'theme');
         this.setupSelectControl('ui-font-size', 'ui', 'fontSize');
-        
-        // Environmental settings
+
+        // environmental settings - control the weather like a god
         this.setupCheckboxControl('env-weather-enabled', 'environmental', 'weatherEffectsEnabled');
         this.setupCheckboxControl('env-lighting-enabled', 'environmental', 'lightingEnabled');
         this.setupCheckboxControl('env-seasonal-enabled', 'environmental', 'seasonalEffectsEnabled');
         this.setupCheckboxControl('env-reduced-effects', 'environmental', 'reducedEffects');
         
         this.setupSelectControl('env-quality', 'environmental', 'quality');
-        
-        // Accessibility settings
+
+        // accessibility settings - everyone deserves their specific hell
         this.setupCheckboxControl('access-reduced-motion', 'accessibility', 'reducedMotion');
         this.setupCheckboxControl('access-high-contrast', 'accessibility', 'highContrast');
         this.setupCheckboxControl('access-screen-reader', 'accessibility', 'screenReaderEnabled');
@@ -1050,22 +1169,22 @@ const SettingsPanel = {
         this.setupSelectControl('access-colorblind', 'accessibility', 'colorBlindMode');
         this.setupSelectControl('access-font-size', 'accessibility', 'fontSize');
     },
-    
-    // Setup range control
+
+    // setup range control - sliders are just commitment issues
     setupRangeControl(elementId, category, settingKey, formatter) {
         const element = this.panelElement.querySelector(`#${elementId}`);
         if (!element) return;
-        
-        // Set initial value
+
+        // set initial value from the abyss
         element.value = this.currentSettings[category][settingKey];
-        
-        // Update value display
+
+        // update value display - show the numbers
         const valueDisplay = element.parentElement.querySelector('.setting-value');
         if (valueDisplay && formatter) {
             valueDisplay.textContent = formatter(element.value);
         }
-        
-        // Add input listener
+
+        // add input listener - react to every twitch
         EventManager.addEventListener(element, 'input', (e) => {
             const value = parseFloat(e.target.value);
             this.currentSettings[category][settingKey] = value;
@@ -1073,8 +1192,8 @@ const SettingsPanel = {
             if (valueDisplay && formatter) {
                 valueDisplay.textContent = formatter(value);
             }
-            
-            // Apply setting immediately for audio controls
+
+            // apply setting immediately for audio controls - instant gratification
             if (category === 'audio' && typeof AudioSystem !== 'undefined') {
                 switch (settingKey) {
                     case 'masterVolume':
@@ -1090,44 +1209,44 @@ const SettingsPanel = {
             }
         });
     },
-    
-    // Setup checkbox control
+
+    // setup checkbox control - binary decisions for complex feelings
     setupCheckboxControl(elementId, category, settingKey) {
         const element = this.panelElement.querySelector(`#${elementId}`);
         if (!element) return;
-        
-        // Set initial value
+
+        // set initial value - check or uncheck your fate
         element.checked = this.currentSettings[category][settingKey];
-        
-        // Add change listener
+
+        // add change listener - when you flip the switch
         EventManager.addEventListener(element, 'change', (e) => {
             const value = e.target.checked;
             this.currentSettings[category][settingKey] = value;
-            
-            // Apply setting immediately for certain controls
+
+            // apply setting immediately for certain controls - no patience here
             this.applyImmediateSetting(category, settingKey, value);
         });
     },
-    
-    // Setup select control
+
+    // setup select control - dropdowns for the indecisive
     setupSelectControl(elementId, category, settingKey) {
         const element = this.panelElement.querySelector(`#${elementId}`);
         if (!element) return;
-        
-        // Set initial value
+
+        // set initial value - pick your poison
         element.value = this.currentSettings[category][settingKey];
-        
-        // Add change listener
+
+        // add change listener - commitment via dropdown
         EventManager.addEventListener(element, 'change', (e) => {
             const value = e.target.value;
             this.currentSettings[category][settingKey] = value;
-            
-            // Apply setting immediately for certain controls
+
+            // apply setting immediately for certain controls - live preview baby
             this.applyImmediateSetting(category, settingKey, value);
         });
     },
-    
-    // Apply immediate setting changes
+
+    // apply immediate setting changes - no waiting around for this
     applyImmediateSetting(category, settingKey, value) {
         switch (category) {
             case 'audio':
@@ -1241,33 +1360,69 @@ const SettingsPanel = {
                 break;
         }
     },
-    
-    // Switch tabs
+
+    // switch tabs - navigate your preferences like a lost soul
     switchTab(tabName) {
-        // Update tab buttons
+        // update tab buttons - highlight the chosen one
         const tabs = this.panelElement.querySelectorAll('.settings-tab');
         tabs.forEach(tab => {
             tab.classList.toggle('active', tab.dataset.tab === tabName);
         });
 
-        // Update tab content
+        // update tab content - show the corresponding mess
         const contents = this.panelElement.querySelectorAll('.settings-tab-content');
         contents.forEach(content => {
             content.classList.toggle('active', content.dataset.tab === tabName);
         });
 
-        // Refresh save lists when switching to saveload tab
+        // refresh save lists when switching to saveload tab - show all your timelines
         if (tabName === 'saveload') {
             this.refreshSaveLists();
         }
 
-        // Refresh keybindings when switching to controls tab
+        // refresh keybindings when switching to controls tab - display your key combos
         if (tabName === 'controls') {
             this.refreshKeyBindingsUI();
         }
+
+        // populate about tab with gameconfig data - credits roll at 3am
+        if (tabName === 'about') {
+            this.populateAboutTab();
+        }
     },
 
-    // ⌨️ Refresh keybindings UI - showing all the ways to control your fate
+    // populate about tab - display who to blame for this mess
+    populateAboutTab() {
+        const aboutContent = document.getElementById('about-content');
+        if (!aboutContent) return;
+
+        if (typeof GameConfig !== 'undefined') {
+            aboutContent.innerHTML = GameConfig.getAboutHTML();
+        } else {
+            // fallback if gameconfig isn't available - manual credits for the lost
+            aboutContent.innerHTML = `
+                <div class="about-section">
+                    <div class="about-logo">🏰</div>
+                    <h2>Medieval Trading Game</h2>
+                    <p class="about-tagline">where capitalism meets the dark ages... literally</p>
+                    <div class="about-version">Version 0.1</div>
+                    <div class="about-studio">
+                        <span class="studio-label">Created by</span>
+                        <span class="studio-name">Unity AI Lab</span>
+                    </div>
+                    <div class="about-developers">
+                        <h4>the night crew</h4>
+                        <div class="credit-entry"><span class="dev-name">Hackall360</span><span class="dev-role">lead suffering architect</span></div>
+                        <div class="credit-entry"><span class="dev-name">Sponge</span><span class="dev-role">code sorcerer</span></div>
+                        <div class="credit-entry"><span class="dev-name">GFourteen</span><span class="dev-role">digital necromancer</span></div>
+                    </div>
+                    <div class="about-copyright">© 2024 Unity AI Lab. all rights reserved. blame us accordingly.</div>
+                </div>
+            `;
+        }
+    },
+
+    // refresh keybindings ui - map your keyboard to your suffering
     refreshKeyBindingsUI() {
         const listContainer = document.getElementById('keybindings-list');
         if (!listContainer) return;
@@ -1277,7 +1432,7 @@ const SettingsPanel = {
             return;
         }
 
-        // Group keybindings by category
+        // group keybindings by category - organize the chaos
         const categories = {
             'Game Control': ['pause', 'escape'],
             'Panels': ['inventory', 'character', 'financial', 'market', 'travel', 'properties', 'achievements', 'settings'],
@@ -1308,7 +1463,7 @@ const SettingsPanel = {
 
         listContainer.innerHTML = html;
 
-        // Setup reset button
+        // setup reset button - return to factory defaults
         const resetBtn = document.getElementById('reset-keybindings-btn');
         if (resetBtn) {
             resetBtn.onclick = () => {
@@ -1320,48 +1475,48 @@ const SettingsPanel = {
         }
     },
 
-    // 🎮 Start rebinding a key - the moment of choice
+    // start rebinding a key - press any key to continue your descent
     startKeyRebind(action, buttonElement) {
-        // Remove any existing listening state
+        // remove any existing listening state - only one key at a time
         const allKeys = document.querySelectorAll('.keybind-key');
         allKeys.forEach(k => k.classList.remove('listening'));
 
-        // Set this button to listening
+        // set this button to listening - awaiting your input
         buttonElement.classList.add('listening');
         buttonElement.textContent = 'Press a key...';
 
-        // Store the rebind context
+        // store the rebind context - remember what we're changing
         this.rebindContext = {
             action: action,
             button: buttonElement,
             originalKey: KeyBindings.getKey(action)
         };
 
-        // Listen for keydown
+        // listen for keydown - capture your choice
         this.rebindListener = (e) => {
             e.preventDefault();
             e.stopPropagation();
 
-            // Cancel on escape
+            // cancel on escape - second thoughts are valid
             if (e.key === 'Escape') {
                 this.cancelKeyRebind();
                 return;
             }
 
-            // Complete the rebind
+            // complete the rebind - seal the deal
             this.completeKeyRebind(e.key);
         };
 
         document.addEventListener('keydown', this.rebindListener, { once: true, capture: true });
     },
 
-    // ✅ Complete rebinding - fate sealed
+    // complete rebinding - your choice is locked in
     completeKeyRebind(newKey) {
         if (!this.rebindContext) return;
 
         const { action, button } = this.rebindContext;
 
-        // Check for conflicts
+        // check for conflicts - did you steal someone else's key
         const existingAction = Object.entries(KeyBindings.current).find(
             ([act, key]) => key === newKey && act !== action
         );
@@ -1372,25 +1527,25 @@ const SettingsPanel = {
                 this.cancelKeyRebind();
                 return;
             }
-            // Swap the keys (silently)
+            // swap the keys - silent but deadly
             KeyBindings.setKey(existingAction[0], this.rebindContext.originalKey, true);
         }
 
-        // Set the new key (silently - we show UI feedback instead)
+        // set the new key - commit to the change
         KeyBindings.setKey(action, newKey, true);
 
-        // Update UI
+        // update ui - make it official
         button.classList.remove('listening');
         button.textContent = KeyBindings.formatKey(newKey);
 
-        // Refresh to update any swapped keys
+        // refresh to update any swapped keys - cascade the changes
         this.refreshKeyBindingsUI();
 
-        // Cleanup
+        // cleanup - dispose of the evidence
         this.rebindContext = null;
     },
 
-    // ❌ Cancel rebinding - fate undone
+    // cancel rebinding - nevermind, keep the old key
     cancelKeyRebind() {
         if (!this.rebindContext) return;
 
@@ -1398,7 +1553,7 @@ const SettingsPanel = {
         button.classList.remove('listening');
         button.textContent = KeyBindings.formatKey(originalKey);
 
-        // Remove listener if still attached
+        // remove listener if still attached - cleanup time
         if (this.rebindListener) {
             document.removeEventListener('keydown', this.rebindListener, { capture: true });
         }
@@ -1406,13 +1561,13 @@ const SettingsPanel = {
         this.rebindContext = null;
     },
 
-    // 📋 Refresh save lists - showing all our timelines
+    // refresh save lists - display all your saved moments
     refreshSaveLists() {
         this.populateAutoSaveList();
         this.populateManualSaveList();
     },
 
-    // 📂 Populate auto-save list
+    // populate auto-save list - the system's attempt at saving you
     populateAutoSaveList() {
         const listContainer = document.getElementById('auto-save-list');
         if (!listContainer) return;
@@ -1447,7 +1602,7 @@ const SettingsPanel = {
         `).join('');
     },
 
-    // 📁 Populate manual save list
+    // populate manual save list - your deliberate checkpoints
     populateManualSaveList() {
         const listContainer = document.getElementById('manual-save-list');
         if (!listContainer) return;
@@ -1486,94 +1641,94 @@ const SettingsPanel = {
         `).join('');
     },
 
-    // Open settings panel
+    // open settings panel - welcome to configuration hell
     openPanel() {
         this.isOpen = true;
         this.panelElement.style.display = 'block';
-        
-        // Add entrance animation
+
+        // add entrance animation - fade in like regret
         TimerManager.setTimeout(() => {
             this.panelElement.classList.add('open');
         }, 10);
-        
-        // Prevent body scroll
+
+        // prevent body scroll - trap you in here with us
         document.body.style.overflow = 'hidden';
     },
-    
-    // Close settings panel
+
+    // close settings panel - escape back to reality
     closePanel() {
         this.isOpen = false;
         this.panelElement.classList.remove('open');
 
-        // Remove after animation
+        // remove after animation - fade out gracefully
         TimerManager.setTimeout(() => {
             this.panelElement.style.display = 'none';
         }, 300);
 
-        // Restore body scroll
+        // restore body scroll - freedom returns
         document.body.style.overflow = '';
     },
 
-    // Alias for show (called from settings button)
+    // alias for show - another way in
     show() {
         this.openPanel();
     },
 
-    // Alias for hide
+    // alias for hide - another way out
     hide() {
         this.closePanel();
     },
-    
-    // Apply settings
+
+    // apply settings - commit your choices to the void
     applySettings() {
-        // Save all settings
+        // save all settings - persist your decisions
         this.saveSettings();
-        
-        // Apply all settings to their respective systems
+
+        // apply all settings to their respective systems - make it real
         Object.keys(this.currentSettings).forEach(category => {
             Object.keys(this.currentSettings[category]).forEach(settingKey => {
                 this.applyImmediateSetting(category, settingKey, this.currentSettings[category][settingKey]);
             });
         });
-        
-        // Show notification
+
+        // show notification - pat yourself on the back
         if (typeof UIPolishSystem !== 'undefined') {
             UIPolishSystem.showNotification('Settings applied successfully!', 'success');
         }
         
         this.closePanel();
     },
-    
-    // Reset to defaults
+
+    // reset to defaults - undo all your questionable choices
     resetToDefaults() {
-        // Confirm reset
+        // confirm reset - are you sure about this
         if (!confirm('Are you sure you want to reset all settings to their default values?')) {
             return;
         }
-        
-        // Reset all settings
+
+        // reset all settings - back to square one
         try {
             this.currentSettings = JSON.parse(JSON.stringify(this.defaultSettings));
         } catch (error) {
             console.error('Failed to reset settings:', error);
             this.currentSettings = JSON.parse(JSON.stringify(this.defaultSettings));
         }
-        
-        // Update UI controls
+
+        // update ui controls - show the defaults in all their glory
         this.updateControlsFromSettings();
-        
-        // Apply settings
+
+        // apply settings - enforce the reset
         this.applySettings();
     },
 
-    // Clear ALL data - nuclear option for a fresh start
+    // clear all data - burn it all down and start fresh
     clearAllData() {
-        // Double confirm because this is destructive
+        // double confirm because this is destructive - we're serious here
         if (!confirm('⚠️ WARNING: This will DELETE ALL your data including:\n\n• All saved games\n• All settings\n• Panel positions\n• Achievement progress\n• Everything else\n\nThis cannot be undone!\n\nAre you sure you want to continue?')) {
             return;
         }
 
-        // Second confirmation
+        // second confirmation - last chance to bail
         if (!confirm('🗑️ FINAL WARNING!\n\nYou are about to permanently delete ALL game data and reset the application to factory defaults.\n\nClick OK to confirm deletion.')) {
             return;
         }
@@ -1589,7 +1744,7 @@ const SettingsPanel = {
             sessionStorage.clear();
             console.log('✓ SessionStorage cleared');
 
-            // Clear IndexedDB if used
+            // clear indexeddb if used - purge the databases
             if (window.indexedDB) {
                 const databases = ['TraderClaudeDB', 'trader-claude', 'game-saves'];
                 databases.forEach(dbName => {
@@ -1600,17 +1755,17 @@ const SettingsPanel = {
                 });
             }
 
-            // Clear cookies for this domain
+            // clear cookies for this domain - crumbs be gone
             document.cookie.split(';').forEach(cookie => {
                 const name = cookie.split('=')[0].trim();
                 document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
             });
             console.log('✓ Cookies cleared');
 
-            // Show success message
+            // show success message - it's done
             alert('✅ All data has been cleared!\n\nThe page will now reload to complete the reset.');
 
-            // Reload the page to start fresh
+            // reload the page to start fresh - rebirth imminent
             window.location.reload(true);
 
         } catch (error) {
@@ -1619,19 +1774,20 @@ const SettingsPanel = {
         }
     },
 
-    // Update controls from current settings
+    // update controls from current settings - sync ui with reality
     updateControlsFromSettings() {
         Object.keys(this.currentSettings).forEach(category => {
             Object.keys(this.currentSettings[category]).forEach(settingKey => {
                 const value = this.currentSettings[category][settingKey];
                 const element = this.panelElement.querySelector(`#${this.getElementId(category, settingKey)}`);
-                
+
+
                 if (element) {
                     if (element.type === 'checkbox') {
                         element.checked = value;
                     } else if (element.type === 'range') {
                         element.value = value;
-                        // Update value display
+                        // update value display - show what it's set to
                         const valueDisplay = element.parentElement.querySelector('.setting-value');
                         if (valueDisplay) {
                             if (category === 'audio') {
@@ -1647,8 +1803,8 @@ const SettingsPanel = {
             });
         });
     },
-    
-    // Get element ID from category and setting key
+
+    // get element id from category and setting key - the mapping ritual
     getElementId(category, settingKey) {
         const idMap = {
             'audio': {
@@ -1704,8 +1860,8 @@ const SettingsPanel = {
         
         return idMap[category]?.[settingKey] || null;
     },
-    
-    // Get current settings
+
+    // get current settings - retrieve your configuration
     getSettings(category = null) {
         if (category) {
             return { ...this.currentSettings[category] };
@@ -1717,8 +1873,8 @@ const SettingsPanel = {
             return {};
         }
     },
-    
-    // Update specific setting
+
+    // update specific setting - change just one thing
     updateSetting(category, settingKey, value) {
         if (this.currentSettings[category] && settingKey in this.currentSettings[category]) {
             this.currentSettings[category][settingKey] = value;
@@ -1726,8 +1882,8 @@ const SettingsPanel = {
             this.applyImmediateSetting(category, settingKey, value);
         }
     },
-    
-    // Cleanup
+
+    // cleanup - destroy the evidence
     cleanup() {
         if (this.panelElement) {
             this.panelElement.remove();
@@ -1740,7 +1896,7 @@ const SettingsPanel = {
     }
 };
 
-// Export for use in other modules
+// export for use in other modules - share the suffering
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = SettingsPanel;
 }

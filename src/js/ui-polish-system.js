@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // 💅 UI POLISH SYSTEM - making buttons sparkle and transitions smooth
 // ═══════════════════════════════════════════════════════════════
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
 // smooth transitions, hover effects, animations... the aesthetic details
 // because even capitalism should be pretty
 

@@ -1,8 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// ⛏️ RESOURCE GATHERING SYSTEM
+// ⛏️ RESOURCE GATHERING SYSTEM - digging for your sins
 // ═══════════════════════════════════════════════════════════════
-// Handles time-based resource gathering at mines, forests, etc.
-// Requires appropriate tools for gathering
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
+// handles time-based resource gathering at mines, forests, etc
+// requires appropriate tools because hands only get you so far
 
 const ResourceGatheringSystem = {
     // Currently active gathering session

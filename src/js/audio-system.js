@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // 🔊 AUDIO SYSTEM - sounds for the soul (or what's left of it)
 // ═══════════════════════════════════════════════════════════════
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
 // programmatic sounds using Web Audio API because we're fancy
 // music, ambience, and the sweet sound of coins clinking
 

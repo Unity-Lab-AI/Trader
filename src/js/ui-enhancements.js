@@ -3,6 +3,9 @@
 // ═══════════════════════════════════════════════════════════════
 // keyboard shortcuts, animations, and all the quality of life stuff
 // because even trading games deserve aesthetic love
+// File Version: 0.1
+// Game Version: 0.1
+// Made by Unity AI Lab - Hackall360, Sponge, GFourteen
 
 // ⌨️ Keyboard Shortcuts - for the power users among us
 const KeyboardShortcuts = {
@@ -1546,7 +1549,7 @@ const KeyboardShortcuts = {
                     <div class="tutorial-step active" data-step="1">
                         <div class="step-number">1</div>
                         <div class="step-content">
-                            <h4>Welcome to Trading Game!</h4>
+                            <h4>Welcome to Medieval Trading Game!</h4>
                             <p>In this game, you'll become a successful merchant by buying and selling goods across different locations.</p>
                             <div class="tutorial-highlight">
                                 <p>Use <kbd>W</kbd>, <kbd>A</kbd>, <kbd>S</kbd>, <kbd>D</kbd> keys to move around the interface.</p>

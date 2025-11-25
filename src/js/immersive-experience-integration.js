@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // 🎭 IMMERSIVE EXPERIENCE INTEGRATION - connecting the vibes
 // ═══════════════════════════════════════════════════════════════
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
 // glues all the audio/visual systems together
 // the conductor of this aesthetic orchestra
 
@@ -383,9 +386,9 @@ const ImmersiveExperienceIntegration = {
     
     // Setup settings integration
     setupSettingsIntegration() {
-        // Add settings button to UI if it doesn't exist
-        this.addSettingsButton();
-        
+        // settings button removed - we already have settings in the side panel and main menu
+        // no need for a floating button cluttering up the screen
+
         // Setup keyboard shortcut for settings
         EventManager.addEventListener(document, 'keydown', (e) => {
             if (e.key === 'Escape' && e.ctrlKey) {
@@ -393,67 +396,6 @@ const ImmersiveExperienceIntegration = {
                 SettingsPanel.openPanel();
             }
         });
-    },
-    
-    // Add settings button to the UI
-    addSettingsButton() {
-        // Check if settings button already exists
-        if (document.getElementById('immersive-settings-btn')) {
-            return;
-        }
-        
-        // Create settings button
-        const settingsBtn = document.createElement('button');
-        settingsBtn.id = 'immersive-settings-btn';
-        settingsBtn.className = 'settings-btn immersive-settings-btn';
-        settingsBtn.innerHTML = '⚙️';
-        settingsBtn.setAttribute('data-tooltip', 'Immersive Experience Settings');
-        settingsBtn.setAttribute('aria-label', 'Open immersive experience settings');
-        
-        // Add click handler
-        EventManager.addEventListener(settingsBtn, 'click', () => {
-            SettingsPanel.openPanel();
-        });
-        
-        // Find a good place to add the button
-        const header = document.querySelector('.game-header') || 
-                     document.querySelector('#player-info') ||
-                     document.querySelector('.panel-header');
-        
-        if (header) {
-            header.appendChild(settingsBtn);
-        } else {
-            // Fallback: add to body
-            document.body.appendChild(settingsBtn);
-            
-            // Position it fixed
-            settingsBtn.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 10000;
-                background: rgba(0, 0, 0, 0.8);
-                color: white;
-                border: none;
-                border-radius: 50%;
-                width: 40px;
-                height: 40px;
-                font-size: 18px;
-                cursor: pointer;
-                transition: all 0.2s ease-in-out;
-            `;
-            
-            // Add hover effect
-            EventManager.addEventListener(settingsBtn, 'mouseenter', () => {
-                settingsBtn.style.transform = 'scale(1.1)';
-                settingsBtn.style.backgroundColor = 'rgba(76, 175, 80, 0.8)';
-            });
-            
-            EventManager.addEventListener(settingsBtn, 'mouseleave', () => {
-                settingsBtn.style.transform = 'scale(1)';
-                settingsBtn.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-            });
-        }
     },
     
     // Hook into existing game functions to add immersive effects

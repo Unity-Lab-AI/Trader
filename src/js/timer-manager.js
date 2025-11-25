@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // ⏰ TIMER MANAGER - time waits for no one (but we track it anyway)
 // ═══════════════════════════════════════════════════════════════
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
 // centralized timer management because memory leaks are scarier than ghosts
 // tick tock goes the existential clock
 

@@ -3,6 +3,9 @@
 // ═══════════════════════════════════════════════════════════════
 // buy property, collect rent, become the landlord of your dreams
 // (or nightmares, maintenance costs are real)
+// File Version: 0.1
+// Game Version: 0.1
+// Made by Unity AI Lab - Hackall360, Sponge, GFourteen
 
 const PropertySystem = {
     // 🏘️ Property types - various flavors of ownership

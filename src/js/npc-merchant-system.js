@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // 🧙 NPC MERCHANT SYSTEM - shopkeepers with actual personalities
 // ═══════════════════════════════════════════════════════════════
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
 // every merchant has their own quirks, trauma, and pricing strategies
 // just like real life, but pixelated
 

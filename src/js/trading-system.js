@@ -2,6 +2,9 @@
 // 💰 TRADING SYSTEM - capitalism simulator for the medieval masochist
 // ═══════════════════════════════════════════════════════════════
 // buy low, sell high, cry always... the trader's way
+// File Version: 0.1
+// Game Version: 0.1
+// Made by Unity AI Lab - Hackall360, Sponge, GFourteen
 
 const TradingSystem = {
     // ⚙️ Config - how we're gonna hustle today

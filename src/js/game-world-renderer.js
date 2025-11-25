@@ -1,16 +1,20 @@
 // ═══════════════════════════════════════════════════════════════
-// 🗺️ GAME WORLD RENDERER v2 - HTML/CSS based for reliable interactions
+// 🗺️ GAME WORLD RENDERER v2 - painting the void so you know where you're lost
 // ═══════════════════════════════════════════════════════════════
-// Rebuilt from scratch because canvas was being a drama queen
-// Now using good old HTML elements that actually respond to clicks
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
+// rebuilt from scratch cuz canvas was being a drama queen
+// now using good old HTML elements that actually respond to clicks
+// because apparently nothing works as intended at 3am
 
 const GameWorldRenderer = {
-    // 📦 DOM elements
+    // 📦 dom elements - the building blocks of our misery
     container: null,
     mapElement: null,
     tooltipElement: null,
 
-    // 📍 Map state
+    // 📍 map state - where we are in this digital purgatory
     mapState: {
         zoom: 3,             // Start at max zoom (zoomed in to fill screen)
         offsetX: 0,
@@ -25,12 +29,12 @@ const GameWorldRenderer = {
         lastOffsetY: 0
     },
 
-    // 📜 Location visit history - tracks each visit with details
+    // 📜 location visit history - breadcrumbs of everywhere you've been and regretted
     locationHistory: [],
     currentDestination: null,
     HISTORY_STORAGE_KEY: 'trader-claude-location-history',
 
-    // 🎨 Location styles
+    // 🎨 location styles - making pixels look like places you'll never escape
     locationStyles: {
         capital: { color: '#FFD700', icon: '👑', size: 48 },
         city: { color: '#FF6B6B', icon: '🏰', size: 40 },
@@ -47,9 +51,9 @@ const GameWorldRenderer = {
         outpost: { color: '#CD853F', icon: '🛡️', size: 28 }
     },
 
-    // 🚀 Initialize the renderer
+    // 🚀 summon the renderer from the digital abyss
     init() {
-        console.log('🗺️ GameWorldRenderer v2: Initializing HTML-based map...');
+        console.log('🗺️ GameWorldRenderer rising from its slumber... time to paint some suffering');
 
         this.container = document.getElementById('map-container');
         if (!this.container) {
@@ -88,11 +92,11 @@ const GameWorldRenderer = {
             }
         }, 1000);
 
-        console.log('🗺️ GameWorldRenderer v2: Ready to rock!');
+        console.log('🗺️ GameWorldRenderer v2: ready to visualize your despair');
         return true;
     },
 
-    // 📦 Create the map container element
+    // 📦 conjure the map container from the html void
     createMapElement() {
         // Remove old canvas if exists
         const oldCanvas = document.getElementById('world-map-canvas');
@@ -124,7 +128,7 @@ const GameWorldRenderer = {
         `;
     },
 
-    // 💬 Create tooltip element
+    // 💬 create tooltip - hover over things to learn about your mistakes
     createTooltip() {
         this.tooltipElement = document.getElementById('map-tooltip');
         if (!this.tooltipElement) {
@@ -150,7 +154,7 @@ const GameWorldRenderer = {
         `;
     },
 
-    // 👂 Setup event listeners
+    // 👂 hook up the event listeners so humans can interact with our creation
     setupEventListeners() {
         // Map dragging
         this.mapElement.addEventListener('mousedown', (e) => this.onMouseDown(e));
@@ -168,7 +172,7 @@ const GameWorldRenderer = {
         console.log('🗺️ Event listeners attached');
     },
 
-    // 🎨 Render the map
+    // 🎨 paint the world - pixels arranged to simulate meaning
     render() {
         if (!this.mapElement || typeof GameWorld === 'undefined') {
             console.warn('🗺️ Cannot render - map element or GameWorld not ready');
@@ -210,8 +214,8 @@ const GameWorldRenderer = {
         this.highlightCurrentLocation();
     },
 
-    // 🔍 Calculate visibility for all locations
-    // Returns: 'visible' (explored), 'discovered' (adjacent to explored, greyed out), 'hidden' (not visible)
+    // 🔍 calculate what you can see vs what lurks in the shadows
+    // visible = been there, discovered = spooky fog of war, hidden = pure darkness
     calculateLocationVisibility() {
         const visibility = {};
         const locations = (typeof GameWorld !== 'undefined' && GameWorld.locations) ? GameWorld.locations : {};
@@ -278,7 +282,7 @@ const GameWorldRenderer = {
         return visibility;
     },
 
-    // 🚧 Check if a location is behind a locked gatehouse
+    // 🚧 check if some gatekeeping mechanism blocks your path (capitalism simulator moment)
     isLocationBehindLockedGate(locationId) {
         // If GatehouseSystem doesn't exist or isn't initialized, don't block anything
         if (typeof GatehouseSystem === 'undefined' || !GatehouseSystem.canAccessLocation) {
@@ -302,7 +306,7 @@ const GameWorldRenderer = {
         }
     },
 
-    // 🔗 Draw connection lines between locations
+    // 🔗 draw the threads of fate connecting your doom to various destinations
     drawConnections(visibilityMap = {}) {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('width', '800');
@@ -372,8 +376,8 @@ const GameWorldRenderer = {
         this.mapElement.appendChild(svg);
     },
 
-    // 📍 Create a location element
-    // visibility: 'visible' (explored), 'discovered' (greyed out), 'hidden' (not rendered)
+    // 📍 birth a location into existence on the map
+    // visible = you've been there, discovered = mysterious fog vibes, hidden = doesn't exist yet
     createLocationElement(location, labelOffset = 0, visibility = 'visible') {
         if (!location.mapPosition) return;
         if (visibility === 'hidden') return;
@@ -445,7 +449,7 @@ const GameWorldRenderer = {
         this.mapElement.appendChild(label);
     },
 
-    // 🔍 Calculate label offsets to prevent overlapping
+    // 🔍 calculate label offsets so text doesn't overlap like my unresolved issues
     calculateLabelOffsets(locations) {
         const offsets = {};
         const locArray = Object.values(locations).filter(l => l.mapPosition);
@@ -501,7 +505,7 @@ const GameWorldRenderer = {
         return offsets;
     },
 
-    // 🎯 Highlight current player location and show player marker
+    // 🎯 highlight where you currently exist in this cruel world
     highlightCurrentLocation() {
         if (!game || !game.currentLocation) return;
 
@@ -516,11 +520,11 @@ const GameWorldRenderer = {
         this.updatePlayerMarker();
     },
 
-    // 📍 Player marker element reference
+    // 📍 player marker element reference - proof you exist somewhere
     playerMarker: null,
     travelAnimation: null,
 
-    // 📍 Create/update the player marker (red pin tack)
+    // 📍 create/update the player marker - that little red pin screaming "here i am"
     updatePlayerMarker(x = null, y = null) {
         // Get position from current location if not provided
         if (x === null || y === null) {
@@ -623,8 +627,8 @@ const GameWorldRenderer = {
         this.playerMarker.style.top = y + 'px';
     },
 
-    // 🚶 Animate player marker along a path from current location to destination
-    // travelTimeMinutes: game time in minutes for this journey
+    // 🚶 animate your little marker wandering across the map like it has purpose
+    // travelTimeMinutes: how long you'll suffer on this journey
     animateTravel(fromLocationId, toLocationId, travelTimeMinutes) {
         const locations = typeof GameWorld !== 'undefined' ? GameWorld.locations : {};
         const fromLoc = locations[fromLocationId];
@@ -671,7 +675,7 @@ const GameWorldRenderer = {
         this.runTravelAnimation();
     },
 
-    // 🔄 Run travel animation synced to game time
+    // 🔄 keep the travel animation going - time waits for no one
     runTravelAnimation() {
         if (!this.currentTravel) return;
 
@@ -709,36 +713,88 @@ const GameWorldRenderer = {
         }
     },
 
-    // ✅ Complete the travel animation
+    // ✅ the journey is over... for now
     completeTravelAnimation() {
         this.travelAnimation = null;
         this.currentTravel = null;
 
         if (this.playerMarker) {
             this.playerMarker.classList.remove('traveling');
+            this.playerMarker.classList.add('arrived');
+
             const pin = this.playerMarker.querySelector('.marker-pin');
             if (pin) {
-                pin.style.animation = 'marker-bounce 2s ease-in-out infinite';
+                // Play arrival animation then settle into hover bounce
+                pin.style.animation = 'marker-arrive 0.6s ease-out forwards';
+                setTimeout(() => {
+                    pin.style.animation = 'marker-hover 3s ease-in-out infinite';
+                }, 600);
             }
-            // Reset label
+
+            // Add pulse effect on arrival
+            const pulse = this.playerMarker.querySelector('.marker-pulse');
+            if (pulse) {
+                pulse.style.animation = 'marker-arrival-pulse 0.8s ease-out';
+                setTimeout(() => {
+                    pulse.style.animation = 'marker-pulse 2s ease-out infinite';
+                }, 800);
+            }
+
+            // Reset label with arrival message
             const label = this.playerMarker.querySelector('.marker-label');
             if (label) {
-                label.textContent = 'YOU ARE HERE';
-                label.style.background = 'linear-gradient(180deg, #ff4444 0%, #cc0000 100%)';
+                label.textContent = 'ARRIVED!';
+                label.style.background = 'linear-gradient(180deg, #44ff44 0%, #00cc00 100%)';
+                // After 2 seconds, show normal "YOU ARE HERE"
+                setTimeout(() => {
+                    label.textContent = 'YOU ARE HERE';
+                    label.style.background = 'linear-gradient(180deg, #ff4444 0%, #cc0000 100%)';
+                    this.playerMarker.classList.remove('arrived');
+                }, 2000);
             }
         }
+
+        // Add arrival animation styles if not already present
+        this.addArrivalStyles();
 
         // Re-render to update exploration state
         this.render();
     },
 
-    // 🗺️ Called when travel starts - hook into TravelSystem
+    // 🎨 css magic for when you finally arrive somewhere (celebrate the small victories)
+    addArrivalStyles() {
+        if (document.getElementById('player-marker-arrival-styles')) return;
+
+        const styleSheet = document.createElement('style');
+        styleSheet.id = 'player-marker-arrival-styles';
+        styleSheet.textContent = `
+            @keyframes marker-arrive {
+                0% { transform: translateY(-20px) scale(1.5); opacity: 0.5; }
+                60% { transform: translateY(5px) scale(0.9); }
+                100% { transform: translateY(0) scale(1); opacity: 1; }
+            }
+            @keyframes marker-hover {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-12px); }
+            }
+            @keyframes marker-arrival-pulse {
+                0% { transform: scale(1); opacity: 1; background: rgba(0, 255, 0, 0.8); }
+                100% { transform: scale(4); opacity: 0; background: rgba(0, 255, 0, 0); }
+            }
+            .player-marker.arrived .marker-pin {
+                filter: drop-shadow(0 4px 8px rgba(0, 255, 0, 0.6));
+            }
+        `;
+        document.head.appendChild(styleSheet);
+    },
+
+    // 🗺️ called when you decide to leave your current misery for different misery
     onTravelStart(fromId, toId, travelTimeMinutes) {
         console.log(`🗺️ Travel animation: ${fromId} -> ${toId}, duration: ${travelTimeMinutes} game minutes`);
         this.animateTravel(fromId, toId, travelTimeMinutes);
     },
 
-    // 🛑 Called when travel is cancelled or interrupted
+    // 🛑 when you chicken out or the universe intervenes
     onTravelCancel() {
         if (this.travelAnimation) {
             cancelAnimationFrame(this.travelAnimation);
@@ -748,7 +804,7 @@ const GameWorldRenderer = {
         this.completeTravelAnimation();
     },
 
-    // 🔄 Update map transform
+    // 🔄 apply css transforms - math that makes things move
     updateTransform() {
         if (!this.mapElement) return;
 
@@ -759,7 +815,7 @@ const GameWorldRenderer = {
         this.mapElement.style.transform = transform;
     },
 
-    // 🚧 Constrain map position to keep it within viewable area
+    // 🚧 don't let the map escape the container (we've all wanted to escape)
     constrainToBounds() {
         if (!this.container) return;
 
@@ -791,7 +847,7 @@ const GameWorldRenderer = {
         }
     },
 
-    // 🖱️ Mouse event handlers
+    // 🖱️ mouse events - translating human frustration into map movement
     onMouseDown(e) {
         if (e.target.classList.contains('map-location')) return; // Don't drag when clicking locations
 
@@ -823,7 +879,7 @@ const GameWorldRenderer = {
         }
     },
 
-    // 🔍 Zoom handlers
+    // 🔍 zoom handlers - for when you need to see your problems closer or further away
     onWheel(e) {
         e.preventDefault();
 
@@ -852,7 +908,7 @@ const GameWorldRenderer = {
         this.centerOnPlayer();
     },
 
-    // 📍 Center on player location
+    // 📍 center on player - the universe revolves around you (at least here)
     centerOnPlayer() {
         if (!this.container) return;
 
@@ -899,7 +955,7 @@ const GameWorldRenderer = {
         console.log('🗺️ Centered on location at', pos, 'offset:', this.mapState.offsetX, this.mapState.offsetY);
     },
 
-    // 📱 Touch handlers
+    // 📱 touch handlers - for those brave souls on mobile
     onTouchStart(e) {
         if (e.touches.length === 1) {
             const touch = e.touches[0];
@@ -929,7 +985,7 @@ const GameWorldRenderer = {
         this.mapState.isDragging = false;
     },
 
-    // 💬 Tooltip handlers
+    // 💬 tooltip handlers - whispers of information when you hover over things
     onLocationHover(e, location, isDiscovered = false) {
         const style = this.locationStyles[location.type] || this.locationStyles.town;
 

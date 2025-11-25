@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // 👂 EVENT MANAGER - listening to everything like a paranoid goth
 // ═══════════════════════════════════════════════════════════════
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
 // centralized listener management so we dont leak memory
 // because even code needs therapy for attachment issues
 
@@ -10,9 +13,10 @@ const EventManager = {
     
     // Add event listener with tracking - prevents duplicates for same element+event combo
     addListener(element, eventType, handler, options = {}) {
+        // silently skip if element doesn't exist - this is expected during initialization
+        // when some elements aren't in the DOM yet
         if (!element || !eventType || !handler) {
-            console.warn('EventManager: Invalid parameters for addListener');
-            return;
+            return null;
         }
 
         // Check if this element already has a listener for this event type

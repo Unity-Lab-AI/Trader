@@ -3,10 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Game</title>
-    <link rel="stylesheet" href="src/css/styles.css?v=42">
-    <link rel="stylesheet" href="src/css/ui-enhancements.css">
-    <link rel="stylesheet" href="src/css/save-load-ui.css">
+    <title>Medieval Trading Game</title>
+    <link rel="stylesheet" href="src/css/styles.css?v=0.1">
+    <link rel="stylesheet" href="src/css/ui-enhancements.css?v=0.1">
+    <link rel="stylesheet" href="src/css/save-load-ui.css?v=0.1">
+    <!-- ⚙️ CONFIG MUST LOAD FIRST - All other scripts depend on it -->
+    <script src="config.js?v=0.1"></script>
+    <script>
+        // Update document title from config immediately
+        if (typeof GameConfig !== 'undefined') {
+            document.title = GameConfig.game.name;
+        }
+    </script>
 </head>
 <body>
     <!-- Overlay Container for all modals and overlays -->
@@ -179,7 +187,7 @@
                 <button id="fast-speed-btn" class="time-btn" title="Fast">⏩</button>
                 <button id="very-fast-speed-btn" class="time-btn" title="Very Fast">⏭️</button>
             </div>
-            <div class="top-bar-title">Trading Game</div>
+            <div class="top-bar-title" id="top-bar-title">Medieval Trading Game</div>
             <div class="top-bar-spacer"></div>
         </div>
 
@@ -1053,7 +1061,7 @@
                 <section id="message-log">
                     <h3>Messages</h3>
                     <div id="messages">
-                        <p class="message">Welcome to the Trading Game!</p>
+                        <p class="message" id="welcome-message">Welcome to Medieval Trading Game!</p>
                     </div>
                 </section>
             </div>
@@ -1068,15 +1076,15 @@
             <button id="bottom-character-btn" class="action-btn-bottom" title="Character [C]" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openCharacterSheet();">👤</button>
             <button id="bottom-financial-btn" class="action-btn-bottom" title="Finances [F]" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openFinancialSheet();">💰</button>
             <button id="bottom-achievements-btn" class="action-btn-bottom" title="Achievements" onclick="if(typeof openAchievementPanel === 'function') openAchievementPanel();">🏆</button>
-            <button id="bottom-save-btn" class="action-btn-bottom" title="Save Game [F5]" onclick="if(typeof SaveLoadUI !== 'undefined') SaveLoadUI.show('saves');">💾</button>
-            <button id="bottom-load-btn" class="action-btn-bottom" title="Load Game [F9]" onclick="if(typeof SaveLoadUI !== 'undefined') SaveLoadUI.show('load');">📂</button>
+            <button id="bottom-save-btn" class="action-btn-bottom" title="Save Game [F5]" onclick="if(typeof SaveUISystem !== 'undefined') SaveUISystem.openSaveAsDialog(); else if(typeof SaveLoadUI !== 'undefined') SaveLoadUI.show('saves');">💾</button>
+            <button id="bottom-load-btn" class="action-btn-bottom" title="Load Game [F9]" onclick="if(typeof SaveUISystem !== 'undefined') SaveUISystem.openLoadGameDialog(); else if(typeof SaveLoadUI !== 'undefined') SaveLoadUI.show('load');">📂</button>
         </footer>
     </div>
 
     <!-- ⏳ Loading Screen - please wait while we summon the medieval times -->
     <div id="loading-screen" class="screen hidden">
         <div class="loading-content">
-            <h2>Loading Trading Game...</h2>
+            <h2 id="loading-title">Loading Medieval Trading Game...</h2>
             <div class="progress-bar">
                 <div class="progress-fill"></div>
             </div>
@@ -1086,7 +1094,8 @@
     <!-- 🏠 Main Menu - where it all begins (again) -->
     <div id="main-menu" class="screen">
         <div class="menu-content">
-            <h1>Trading Game</h1>
+            <h1 id="main-menu-title">Medieval Trading Game</h1>
+            <p id="main-menu-version" class="version-text"></p>
             <div class="menu-buttons">
                 <button id="new-game-btn">New Game</button>
                 <button id="load-game-btn" disabled>Load Game</button>
@@ -1126,85 +1135,114 @@
          ⚡⚡⚡ CRITICAL: CORE DEPENDENCIES - MUST LOAD FIRST ⚡⚡⚡
          EventManager and TimerManager are used by ALL other systems
          ═══════════════════════════════════════════════════════ -->
-    <script src="src/js/event-manager.js?v=42"></script>
-    <script src="src/js/timer-manager.js?v=42"></script>
+    <script src="src/js/event-manager.js?v=0.1"></script>
+    <script src="src/js/timer-manager.js?v=0.1"></script>
 
     <!-- 🛠️ Browser Utilities (depend on EventManager) -->
-    <script src="src/js/browser-compatibility.js?v=42"></script>
-    <script src="src/js/modal-system.js?v=42"></script>
+    <script src="src/js/browser-compatibility.js?v=0.1"></script>
+    <script src="src/js/modal-system.js?v=0.1"></script>
 
     <!-- 📊 Data Systems (depend on EventManager + TimerManager) -->
-    <script src="src/js/item-database.js?v=42"></script>
-    <script src="src/js/unified-item-system.js?v=43"></script>
-    <script src="src/js/crafting-economy-system.js?v=43"></script>
-    <script src="src/js/market-price-history.js?v=42"></script>
-    <script src="src/js/dynamic-market-system.js?v=42"></script>
+    <script src="src/js/item-database.js?v=0.1"></script>
+    <script src="src/js/unified-item-system.js?v=0.1"></script>
+    <script src="src/js/crafting-economy-system.js?v=0.1"></script>
+    <script src="src/js/market-price-history.js?v=0.1"></script>
+    <script src="src/js/dynamic-market-system.js?v=0.1"></script>
 
     <!-- 🏛️ City Systems -->
-    <script src="src/js/city-reputation-system.js?v=42"></script>
-    <script src="src/js/city-event-system.js?v=42"></script>
+    <script src="src/js/city-reputation-system.js?v=0.1"></script>
+    <script src="src/js/city-event-system.js?v=0.1"></script>
 
     <!-- 💼 Business Systems -->
-    <script src="src/js/trading-system.js?v=42"></script>
-    <script src="src/js/inventory-system.js?v=42"></script>
-    <script src="src/js/npc-merchant-system.js?v=42"></script>
+    <script src="src/js/trading-system.js?v=0.1"></script>
+    <script src="src/js/inventory-system.js?v=0.1"></script>
+    <script src="src/js/npc-merchant-system.js?v=0.1"></script>
 
     <!-- 🏗️ Property & Employee Systems -->
-    <script src="src/js/property-system.js?v=42"></script>
-    <script src="src/js/employee-system.js?v=42"></script>
-    <script src="src/js/property-employee-bridge.js?v=42"></script>
-    <script src="src/js/property-employee-ui.js?v=42"></script>
+    <script src="src/js/property-system.js?v=0.1"></script>
+    <script src="src/js/employee-system.js?v=0.1"></script>
+    <script src="src/js/property-employee-bridge.js?v=0.1"></script>
+    <script src="src/js/property-employee-ui.js?v=0.1"></script>
 
     <!-- 🗺️ Travel & Routes -->
-    <script src="src/js/travel-system.js?v=43"></script>
-    <script src="src/js/trade-route-system.js?v=43"></script>
+    <script src="src/js/travel-system.js?v=0.1"></script>
+    <script src="src/js/trade-route-system.js?v=0.1"></script>
 
     <!-- 🏰 Gatehouse & Resource Gathering Systems -->
-    <script src="src/js/gatehouse-system.js?v=43"></script>
-    <script src="src/js/resource-gathering-system.js?v=43"></script>
+    <script src="src/js/gatehouse-system.js?v=0.1"></script>
+    <script src="src/js/resource-gathering-system.js?v=0.1"></script>
 
     <!-- 🖤 Game World Renderer - where the map magic happens -->
-    <script src="src/js/game-world-renderer.js?v=42"></script>
-    <script src="src/js/travel-panel-map.js?v=43"></script>
+    <script src="src/js/game-world-renderer.js?v=0.1"></script>
+    <script src="src/js/travel-panel-map.js?v=0.1"></script>
 
     <!-- 🎯 Achievement System -->
-    <script src="src/js/achievement-system.js?v=42"></script>
+    <script src="src/js/achievement-system.js?v=0.1"></script>
 
     <!-- 🎨 UI & Polish Systems -->
-    <script src="src/js/ui-enhancements.js?v=42"></script>
-    <script src="src/js/ui-polish-system.js?v=42"></script>
-    <script src="src/js/button-fix.js?v=42"></script>
-    <script src="src/js/settings-panel.js?v=42"></script>
-    <script src="src/js/draggable-panels.js?v=42"></script>
-    <script src="src/js/panel-manager.js?v=43"></script>
+    <script src="src/js/ui-enhancements.js?v=0.1"></script>
+    <script src="src/js/ui-polish-system.js?v=0.1"></script>
+    <script src="src/js/button-fix.js?v=0.1"></script>
+    <script src="src/js/settings-panel.js?v=0.1"></script>
+    <script src="src/js/draggable-panels.js?v=0.1"></script>
+    <script src="src/js/panel-manager.js?v=0.1"></script>
 
     <!-- 💾 Save/Load Systems -->
-    <script src="src/js/save-load-system.js?v=42"></script>
-    <script src="src/js/save-load-ui.js?v=42"></script>
+    <script src="src/js/save-load-system.js?v=0.1"></script>
+    <script src="src/js/save-ui-system.js?v=0.1"></script>
+    <script src="src/js/save-load-ui.js?v=0.1"></script>
 
     <!-- 🎬 Immersive Experience Systems -->
-    <script src="src/js/visual-effects-system.js?v=42"></script>
-    <script src="src/js/audio-system.js?v=42"></script>
-    <script src="src/js/animation-system.js?v=42"></script>
-    <script src="src/js/environmental-effects-system.js?v=42"></script>
-    <script src="src/js/immersive-experience-integration.js?v=42"></script>
+    <script src="src/js/visual-effects-system.js?v=0.1"></script>
+    <script src="src/js/audio-system.js?v=0.1"></script>
+    <script src="src/js/animation-system.js?v=0.1"></script>
+    <script src="src/js/environmental-effects-system.js?v=0.1"></script>
+    <script src="src/js/immersive-experience-integration.js?v=0.1"></script>
 
     <!-- ⚡ Performance Optimizer -->
-    <script src="src/js/performance-optimizer.js?v=42"></script>
+    <script src="src/js/performance-optimizer.js?v=0.1"></script>
 
     <!-- 🎮 CORE GAME - Must load LAST (depends on all systems above) -->
-    <script src="src/js/game.js?v=43"></script>
+    <script src="src/js/game.js?v=0.1"></script>
 
     <!-- 🎮 GAME ENGINE - Orchestrates time, travel, and game loop -->
-    <script src="src/js/game-engine.js?v=42"></script>
+    <script src="src/js/game-engine.js?v=0.1"></script>
 
     <!-- 🎮 DEBUG COMMAND SYSTEM - Cheat codes and developer tools -->
-    <script src="src/js/debug-command-system.js?v=43"></script>
+    <script src="src/js/debug-command-system.js?v=0.1"></script>
 
     <script>
         // Initialize the property-employee bridge after all systems are loaded
         if (typeof PropertyEmployeeBridge !== 'undefined') {
             PropertyEmployeeBridge.init();
+        }
+
+        // Apply GameConfig values to UI elements
+        if (typeof GameConfig !== 'undefined') {
+            // Update document title
+            document.title = GameConfig.game.name;
+
+            // Update main menu title and version
+            const mainMenuTitle = document.getElementById('main-menu-title');
+            if (mainMenuTitle) mainMenuTitle.textContent = GameConfig.game.name;
+
+            const versionText = document.getElementById('main-menu-version');
+            if (versionText) versionText.textContent = GameConfig.getVersionString();
+
+            // Update top bar title
+            const topBarTitle = document.getElementById('top-bar-title');
+            if (topBarTitle) topBarTitle.textContent = GameConfig.ui.topBarTitle;
+
+            // Update loading title
+            const loadingTitle = document.getElementById('loading-title');
+            if (loadingTitle) loadingTitle.textContent = GameConfig.ui.loadingMessage;
+
+            // Update welcome message
+            const welcomeMsg = document.getElementById('welcome-message');
+            if (welcomeMsg) welcomeMsg.textContent = GameConfig.ui.welcomeMessage;
+
+            console.log(`🎮 ${GameConfig.game.name} v${GameConfig.version.game} initialized`);
+            console.log(`🏢 Made by ${GameConfig.credits.studio}`);
         }
     </script>
 </body>

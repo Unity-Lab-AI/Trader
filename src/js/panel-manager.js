@@ -1,7 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🪟 PANEL MANAGER - Track and manage all floating panels
+// 🪟 PANEL MANAGER - herding cats but the cats are floating windows
 // ═══════════════════════════════════════════════════════════════
-// Handles panel open/close order, ESC key navigation, and reopen buttons
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
+// handles panel open/close order, ESC key navigation, and reopen buttons
+// keeping track of all the chaos you've opened
 
 const PanelManager = {
     // Stack of currently open panels (most recent last)
@@ -71,6 +75,7 @@ const PanelManager = {
             min-width: 50px;
             backdrop-filter: blur(10px);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            display: none;
         `;
 
         document.body.appendChild(toolbar);
@@ -402,6 +407,24 @@ const PanelManager = {
         });
 
         this.openPanels = actuallyOpen;
+    },
+
+    // Show the panel toolbar (call when game starts)
+    showToolbar() {
+        const toolbar = document.getElementById('panel-toolbar');
+        if (toolbar) {
+            toolbar.style.display = 'block';
+            console.log('🪟 PanelManager: Toolbar shown');
+        }
+    },
+
+    // Hide the panel toolbar (call on start screen / game setup)
+    hideToolbar() {
+        const toolbar = document.getElementById('panel-toolbar');
+        if (toolbar) {
+            toolbar.style.display = 'none';
+            console.log('🪟 PanelManager: Toolbar hidden');
+        }
     },
 
     // Patch existing showPanel/hidePanel functions to work with manager

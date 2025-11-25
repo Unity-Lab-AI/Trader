@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // 🌉 PROPERTY-EMPLOYEE BRIDGE - relationship counselor for systems
 // ═══════════════════════════════════════════════════════════════
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
 // resolving circular dependencies because even code has commitment issues
 // the mediator between property and employee drama
 

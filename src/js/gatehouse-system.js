@@ -1,8 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏰 GATEHOUSE & TRAVEL ZONE SYSTEM
+// 🏰 GATEHOUSE & TRAVEL ZONE SYSTEM - capitalism's toll booths
 // ═══════════════════════════════════════════════════════════════
-// Controls access to different regions via gatehouses/outposts
-// Player must pay passage fees to unlock new areas
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
+// controls access to different regions via gatehouses/outposts
+// pay the toll or stay stuck forever, your choice
 
 const GatehouseSystem = {
     // Track which gatehouses have been paid for (unlocked)

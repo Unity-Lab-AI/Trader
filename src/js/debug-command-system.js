@@ -1,9 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎮 DEBUG COMMAND SYSTEM - Cheat codes and developer tools
+// 🎮 DEBUG COMMAND SYSTEM - cheat codes for the morally flexible
 // ═══════════════════════════════════════════════════════════════
-// Press ` (backtick) when debug console is open to focus command input
-// Type commands and press Enter to execute
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
+// press ` (backtick) when debug console is open to focus command input
+// type commands and press enter to bend reality
 
 console.log('🎮 Debug Command System loading...');
 
@@ -476,6 +478,96 @@ const DebugCommandSystem = {
                 return UnifiedItemSystem.verifyAllChains();
             }
             return 'UnifiedItemSystem not found';
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🏆 ACHIEVEMENT CHEATS
+        // ═══════════════════════════════════════════════════════════════
+
+        // unlockachievement <id> - Unlock specific achievement
+        this.registerCommand('unlockachievement', 'Unlock achievement: unlockachievement <id>', (args) => {
+            const achievementId = args[0];
+            if (!achievementId) {
+                console.warn('🎮 Usage: unlockachievement <achievementId>');
+                if (typeof AchievementSystem !== 'undefined') {
+                    const locked = Object.keys(AchievementSystem.achievements).filter(id => !AchievementSystem.achievements[id].unlocked);
+                    console.log('Locked achievements:', locked.join(', '));
+                }
+                return;
+            }
+
+            if (typeof AchievementSystem !== 'undefined') {
+                const achievement = AchievementSystem.achievements[achievementId];
+                if (achievement) {
+                    if (achievement.unlocked) {
+                        console.log(`🏆 Achievement "${achievement.name}" already unlocked`);
+                        return 'Already unlocked';
+                    }
+                    AchievementSystem.unlockAchievement(achievementId);
+                    return achievement.name;
+                } else {
+                    console.warn(`🏆 Achievement not found: ${achievementId}`);
+                }
+            }
+            return 'AchievementSystem not found';
+        });
+
+        // testachievement - Test achievement popup with multiple achievements
+        this.registerCommand('testachievement', 'Test achievement popup (unlocks 3 random locked achievements)', () => {
+            if (typeof AchievementSystem === 'undefined') {
+                console.warn('🎮 AchievementSystem not found');
+                return;
+            }
+
+            // Find 3 locked achievements
+            const locked = Object.values(AchievementSystem.achievements).filter(a => !a.unlocked);
+            if (locked.length === 0) {
+                console.log('🏆 All achievements already unlocked!');
+                return 'All unlocked';
+            }
+
+            // Pick up to 3 random locked achievements
+            const toUnlock = [];
+            const shuffled = [...locked].sort(() => Math.random() - 0.5);
+            for (let i = 0; i < Math.min(3, shuffled.length); i++) {
+                toUnlock.push(shuffled[i]);
+            }
+
+            // Mark them as unlocked and queue for popup
+            toUnlock.forEach(a => {
+                a.unlocked = true;
+                a.unlockedAt = Date.now();
+            });
+
+            AchievementSystem.saveProgress();
+            AchievementSystem.queueAchievementPopups(toUnlock);
+
+            console.log(`🏆 Testing popup with ${toUnlock.length} achievements: ${toUnlock.map(a => a.name).join(', ')}`);
+            return `${toUnlock.length} achievements`;
+        });
+
+        // listachievements - List all achievements
+        this.registerCommand('listachievements', 'List all achievements', () => {
+            if (typeof AchievementSystem !== 'undefined') {
+                const all = Object.values(AchievementSystem.achievements);
+                const unlocked = all.filter(a => a.unlocked);
+                const locked = all.filter(a => !a.unlocked);
+                console.log(`🏆 Achievements: ${unlocked.length}/${all.length} unlocked`);
+                console.log('Unlocked:', unlocked.map(a => a.name).join(', ') || 'None');
+                console.log('Locked:', locked.map(a => a.id).join(', ') || 'None');
+                return `${unlocked.length}/${all.length}`;
+            }
+            return 'AchievementSystem not found';
+        });
+
+        // resetachievements - Reset all achievements
+        this.registerCommand('resetachievements', 'Reset all achievements', () => {
+            if (typeof AchievementSystem !== 'undefined') {
+                AchievementSystem.reset();
+                console.log('🏆 All achievements reset!');
+                return 'Reset complete';
+            }
+            return 'AchievementSystem not found';
         });
 
         console.log(`🎮 Registered ${Object.keys(this.commands).length} commands`);

@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // ✨ VISUAL EFFECTS SYSTEM - eye candy for the soul
 // ═══════════════════════════════════════════════════════════════
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
 // particles, screen shake, transitions... the dramatic flair
 // because even buying wheat deserves sparkles
 

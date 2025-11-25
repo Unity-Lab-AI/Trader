@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // 🌐 BROWSER COMPATIBILITY - making this work on everything
 // ═══════════════════════════════════════════════════════════════
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
 // cross-browser fixes because browsers cant agree on anything
 // safari, firefox, chrome... all have their own drama
 

@@ -1,10 +1,14 @@
 // ═══════════════════════════════════════════════════════════════
-// 🗺️ TRAVEL SYSTEM - wandering through the void like my thoughts at 3am
+// 🖤 TRAVEL SYSTEM - wandering through the void, one step at a time 🖤
 // ═══════════════════════════════════════════════════════════════
-// because sometimes you gotta run away from your problems... literally
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
+// maps, paths, and the eternal journey to somewhere else
+// because staying in one place is too emotionally stable
 
 const TravelSystem = {
-    // 🌍 World map configuration - the universe is vast and uncaring
+    // world map config - the universe is vast, uncaring, and probably laughing at us
     worldMap: {
         width: 4000,
         height: 3000,
@@ -16,7 +20,7 @@ const TravelSystem = {
         maxZoom: 4
     },
 
-    // 🚶 Player position - where even am i? existentially speaking...
+    // player position - lost in space, lost in time, lost in general
     playerPosition: {
         x: 1000,
         y: 750,
@@ -30,7 +34,7 @@ const TravelSystem = {
         currentPathIndex: 0
     },
 
-    // 🎨 Map layers - reality has layers, like my trauma
+    // map layers - reality has layers, just like my unresolved issues
     layers: {
         terrain: null,
         locations: null,
@@ -39,19 +43,19 @@ const TravelSystem = {
         player: null
     },
 
-    // 💎 Resource nodes - shiny things to distract from the emptiness
+    // resource nodes - shiny distractions from the existential dread
     resourceNodes: [],
 
-    // 📍 Points of interest - places that might matter (but probably don't)
+    // points of interest - allegedly interesting, probably disappointing
     pointsOfInterest: [],
 
-    // 📜 Travel history - a record of all the places i've fled from
+    // travel history - everywhere we've been, nowhere we belong
     travelHistory: [],
 
-    // ❤️ Favorite routes - escape plans i keep coming back to
+    // favorite routes - the paths i take when running from feelings
     favoriteRoutes: [],
 
-    // 🖱️ Map interaction - how the user pokes at my creation
+    // map interaction - watch them click and drag like it matters
     mapInteraction: {
         isDragging: false,
         dragStart: { x: 0, y: 0 },
@@ -60,23 +64,39 @@ const TravelSystem = {
         tooltip: { visible: false, x: 0, y: 0, content: '' }
     },
 
-    // 🌙 Initialize - awakening from the digital slumber
+    // boot up this nightmare
     init() {
         this.setupCanvas();
         this.generateWorldMap();
         this.setupEventListeners();
         this.updatePlayerPosition();
-        // center the map before player pos is known (just like my life - no direction)
+        // center the map before we know where tf we are (relatable)
         this.centerMapOnWorld();
         this.render();
         console.log('🗺️ TravelSystem risen from the void with', Object.keys(this.locations).length, 'places to haunt');
     },
 
-    // 🎯 Center map on the world - finding my place in this cruel universe
+    // tick tock, another moment closer to oblivion
+    update() {
+        // only run if we're actually going somewhere (rare)
+        if (!this.playerPosition.isTraveling) return;
+
+        // drag our sorry ass a little further
+        this.updateTravelProgress();
+
+        // wake up the renderer if it's still breathing
+        if (typeof GameWorldRenderer !== 'undefined' && GameWorldRenderer.currentTravel) {
+            // let the renderer do its thing while we contemplate the journey
+            // (sync the animation so we're all suffering together)
+            GameWorldRenderer.runTravelAnimation();
+        }
+    },
+
+    // center the damn map on something that matters (spoiler: nothing does)
     centerMapOnWorld() {
         if (!this.canvas || Object.keys(this.locations).length === 0) return;
 
-        // find the edges of existence (dramatic, i know)
+        // calculate the boundaries of this miserable world
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         Object.values(this.locations).forEach(loc => {
             minX = Math.min(minX, loc.x);
@@ -85,21 +105,21 @@ const TravelSystem = {
             maxY = Math.max(maxY, loc.y);
         });
 
-        // Add padding
+        // give it some breathing room (we all need space)
         const padding = 500;
         minX -= padding;
         minY -= padding;
         maxX += padding;
         maxY += padding;
 
-        // Calculate zoom to fit all locations
+        // math out the zoom to contain all this sadness
         const worldWidth = maxX - minX;
         const worldHeight = maxY - minY;
         const zoomX = this.canvas.width / worldWidth;
         const zoomY = this.canvas.height / worldHeight;
-        this.worldMap.zoom = Math.min(zoomX, zoomY, 1); // Cap at 1x zoom
+        this.worldMap.zoom = Math.min(zoomX, zoomY, 1); // don't zoom too close, it hurts
 
-        // Calculate offset to center the world
+        // shift reality to center this whole mess
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
         this.worldMap.offsetX = this.canvas.width / 2 - centerX * this.worldMap.zoom;
@@ -108,17 +128,17 @@ const TravelSystem = {
         console.log(`🎯 Map centered on the void: zoom=${this.worldMap.zoom.toFixed(3)}, reality shifted by (${this.worldMap.offsetX.toFixed(0)}, ${this.worldMap.offsetY.toFixed(0)})`);
     },
 
-    // 🖼️ Setup canvas - preparing my digital canvas of despair
+    // conjure a canvas from the digital abyss
     setupCanvas() {
-        // grab the main canvas first (priorities, unlike my life choices)
+        // try to find the main canvas (if it even exists)
         let canvas = document.getElementById('world-map-canvas');
 
-        // fallback to overlay canvas... always have a backup plan
+        // no luck? grab the overlay canvas (plan b, as always)
         if (!canvas) {
             canvas = document.getElementById('world-map-overlay-canvas');
         }
 
-        // create one from nothing, just like my coping mechanisms
+        // still nothing? manifest one from pure desperation
         if (!canvas) {
             const mapContainer = document.getElementById('map-container');
             if (mapContainer) {
@@ -140,9 +160,9 @@ const TravelSystem = {
         }
     },
 
-    // 🌍 Generate world map - creating a universe from nothing (god complex? maybe)
+    // birth a world from the void (playing god at 3am hits different)
     generateWorldMap() {
-        // steal from GameWorld if it exists, otherwise improvise
+        // borrow from GameWorld if it's there, otherwise we improvise like usual
         if (typeof GameWorld !== 'undefined' && GameWorld.locations) {
             this.syncWithGameWorld();
             this.generateResourceNodes();
@@ -151,7 +171,7 @@ const TravelSystem = {
             return;
         }
 
-        // Fallback: Enhanced location data with coordinates and detailed information
+        // fallback: hardcoded locations because sometimes you gotta do it yourself
         this.locations = {
             // Major cities
             kings_landing: {
@@ -446,32 +466,32 @@ const TravelSystem = {
             }
         };
 
-        // Generate resource nodes (forests, mines, etc.)
+        // scatter some resources around (gotta give them something to do)
         this.generateResourceNodes();
 
-        // Generate points of interest
+        // add some "interesting" places (allegedly)
         this.generatePointsOfInterest();
 
-        // Generate paths between locations
+        // connect the dots between despair and disappointment
         this.generatePaths();
     },
 
-    // Sync locations from GameWorld for consistent map display
+    // steal location data from GameWorld (why reinvent the misery)
     syncWithGameWorld() {
         this.locations = {};
 
-        // Scale factor to convert GameWorld mapPosition (0-800) to TravelSystem coordinates
-        const scaleX = 10; // Convert to 0-8000 range for more detail
+        // blow up the coordinates so we have room to breathe
+        const scaleX = 10; // 0-800 becomes 0-8000 (because bigger is... something)
         const scaleY = 10;
 
-        // Map GameWorld location types to sizes
+        // translate their types into our types (it's all arbitrary anyway)
         const typeSizeMap = {
             'village': 'small',
             'town': 'medium',
             'city': 'large'
         };
 
-        // Convert each GameWorld location to TravelSystem format
+        // transform their locations into ours (same pain, different format)
         Object.entries(GameWorld.locations).forEach(([id, loc]) => {
             const mapPos = loc.mapPosition || { x: 400, y: 300 };
 
@@ -504,19 +524,19 @@ const TravelSystem = {
             };
         });
 
-        // Update world map dimensions to fit the scaled coordinates
+        // expand the map to fit all this existential real estate
         this.worldMap.width = 8000;
         this.worldMap.height = 6000;
 
-        // Set initial zoom to show the whole map better
+        // zoom out so we can see the full scope of our loneliness
         this.worldMap.zoom = 0.15;
 
         console.log(`🔮 Absorbed ${Object.keys(this.locations).length} locations from GameWorld into my dark consciousness`);
     },
 
-    // Generate resource gathering nodes
+    // scatter resources across the wasteland
     generateResourceNodes() {
-        // Scale factor - if using GameWorld, coordinates are already scaled
+        // scale depends on whether we stole from GameWorld or not
         const scale = (typeof GameWorld !== 'undefined' && GameWorld.locations) ? 10 : 1;
 
         this.resourceNodes = [
@@ -633,9 +653,9 @@ const TravelSystem = {
         ];
     },
 
-    // Generate points of interest
+    // drop some allegedly interesting spots on the map
     generatePointsOfInterest() {
-        // Scale factor - if using GameWorld, coordinates are already scaled
+        // same scaling drama as before
         const scale = (typeof GameWorld !== 'undefined' && GameWorld.locations) ? 10 : 1;
 
         this.pointsOfInterest = [
@@ -765,93 +785,93 @@ const TravelSystem = {
         ];
     },
 
-    // Path type definitions - determines travel speed and stamina drain
+    // path types - because not all roads lead to the same level of suffering
     PATH_TYPES: {
         city_street: {
             name: 'City Street',
-            speedMultiplier: 1.5,    // Fastest - paved, well-maintained
-            staminaDrain: 0.3,       // Easy walking
+            speedMultiplier: 1.5,    // fast because civilization pretends to care
+            staminaDrain: 0.3,       // barely draining, like small talk
             safety: 0.9,
-            description: 'Well-paved city streets'
+            description: 'well-paved city streets where dreams go to die'
         },
         main_road: {
             name: 'Main Road',
-            speedMultiplier: 1.3,    // Good roads between major cities
+            speedMultiplier: 1.3,    // decent roads for those who still have hope
             staminaDrain: 0.5,
             safety: 0.7,
-            description: 'Major trade road connecting cities'
+            description: 'major trade roads connecting pockets of despair'
         },
         road: {
             name: 'Road',
-            speedMultiplier: 1.0,    // Standard roads between towns
+            speedMultiplier: 1.0,    // standard mediocrity
             staminaDrain: 0.7,
             safety: 0.6,
-            description: 'Maintained road between settlements'
+            description: 'maintained road between settlements (barely)'
         },
         path: {
             name: 'Path',
-            speedMultiplier: 0.8,    // Smaller paths
+            speedMultiplier: 0.8,    // slower because nature fights back
             staminaDrain: 0.9,
             safety: 0.5,
-            description: 'Worn path through the countryside'
+            description: 'worn path through nowhere special'
         },
         trail: {
             name: 'Trail',
-            speedMultiplier: 0.6,    // Rural trails
+            speedMultiplier: 0.6,    // dragging through the wilderness
             staminaDrain: 1.2,
             safety: 0.4,
-            description: 'Rough trail through wilderness'
+            description: 'rough trail where civilization gave up'
         },
         wilderness: {
             name: 'Wilderness',
-            speedMultiplier: 0.4,    // No path - cross country
+            speedMultiplier: 0.4,    // no path, just vibes and regret
             staminaDrain: 1.5,
             safety: 0.3,
-            description: 'Untamed wilderness with no clear path'
+            description: 'untamed wilderness where you question your choices'
         }
     },
 
-    // Determine path type based on location types
+    // figure out what kind of path connects these sad little dots
     determinePathType(fromLocation, toLocation) {
         const fromType = fromLocation?.type || 'unknown';
         const toType = toLocation?.type || 'unknown';
         const fromSize = fromLocation?.size || 'small';
         const toSize = toLocation?.size || 'small';
 
-        // City to city - main roads
+        // big city to big city - fancy main roads
         if ((fromType === 'city' || fromSize === 'large') &&
             (toType === 'city' || toSize === 'large')) {
             return 'main_road';
         }
 
-        // City to town or town to town - roads
+        // city to town vibes - decent roads
         if ((fromType === 'city' || fromType === 'town') &&
             (toType === 'city' || toType === 'town')) {
             return 'road';
         }
 
-        // Town to village - paths
+        // town to village - getting sketchier
         if ((fromType === 'town' || fromType === 'village') &&
             (toType === 'town' || toType === 'village')) {
             return 'path';
         }
 
-        // Village to village or resource nodes - trails
+        // village to village or resource gathering - rough trails
         if (fromType === 'village' || toType === 'village' ||
             fromType === 'resource' || toType === 'resource') {
             return 'trail';
         }
 
-        // Anything else - wilderness
+        // everything else - raw wilderness, good luck
         return 'wilderness';
     },
 
-    // Generate paths between locations based on connections
+    // weave paths between locations like threads of fate
     generatePaths() {
         this.paths = [];
         const processedPairs = new Set();
 
-        // Generate paths from location connections
+        // carve paths from the connections (if they even exist)
         Object.values(this.locations).forEach(location => {
             if (!location.connections) return;
 
@@ -859,21 +879,21 @@ const TravelSystem = {
                 const targetLocation = this.locations[connectionId];
                 if (!targetLocation) return;
 
-                // Create a unique pair ID to avoid duplicate paths
+                // avoid duplicate paths (one existential crisis per pair is enough)
                 const pairId = [location.id, connectionId].sort().join('_');
                 if (processedPairs.has(pairId)) return;
                 processedPairs.add(pairId);
 
-                // Determine path type based on location types
+                // figure out what kind of road this cursed journey needs
                 const pathType = this.determinePathType(location, targetLocation);
                 const pathInfo = this.PATH_TYPES[pathType] || this.PATH_TYPES.trail;
 
-                // Calculate distance
+                // math out how far we need to suffer
                 const dx = targetLocation.x - location.x;
                 const dy = targetLocation.y - location.y;
-                const distance = Math.sqrt(dx * dx + dy * dy) / 10; // Convert to miles
+                const distance = Math.sqrt(dx * dx + dy * dy) / 10; // pixels to miles (arbitrary units of pain)
 
-                // Generate the path
+                // manifest the path into reality
                 const path = {
                     id: `${location.id}_to_${connectionId}`,
                     name: `${location.name} to ${targetLocation.name}`,
@@ -902,24 +922,24 @@ const TravelSystem = {
         console.log(`🛤️ Carved ${this.paths.length} paths through the wilderness... each one a potential escape route`);
     },
 
-    // Setup event listeners for map interaction
+    // hook up the event listeners so they can interact with my creation
     setupEventListeners() {
         if (!this.canvas) return;
 
-        // Mouse events
+        // mouse events for the desktop dwellers
         EventManager.addEventListener(this.canvas, 'mousedown', (e) => this.handleMouseDown(e));
         EventManager.addEventListener(this.canvas, 'mousemove', (e) => this.handleMouseMove(e));
         EventManager.addEventListener(this.canvas, 'mouseup', (e) => this.handleMouseUp(e));
         EventManager.addEventListener(this.canvas, 'wheel', (e) => this.handleWheel(e));
         EventManager.addEventListener(this.canvas, 'click', (e) => this.handleClick(e));
 
-        // Touch events for mobile
+        // touch events for the phone addicts
         EventManager.addEventListener(this.canvas, 'touchstart', (e) => this.handleTouchStart(e));
         EventManager.addEventListener(this.canvas, 'touchmove', (e) => this.handleTouchMove(e));
         EventManager.addEventListener(this.canvas, 'touchend', (e) => this.handleTouchEnd(e));
     },
 
-    // Handle mouse down event
+    // they clicked, now we care
     handleMouseDown(e) {
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -929,7 +949,7 @@ const TravelSystem = {
         this.mapInteraction.dragStart = { x: x - this.worldMap.offsetX, y: y - this.worldMap.offsetY };
     },
 
-    // Handle mouse move event
+    // they're moving the mouse, riveting
     handleMouseMove(e) {
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -940,7 +960,7 @@ const TravelSystem = {
             this.worldMap.offsetY = y - this.mapInteraction.dragStart.y;
             this.render();
         } else {
-            // Check for hover over locations
+            // check if they're hovering over something that matters
             const worldPos = this.screenToWorld(x, y);
             const hoveredLocation = this.getLocationAt(worldPos.x, worldPos.y);
             
@@ -952,27 +972,27 @@ const TravelSystem = {
         }
     },
 
-    // Handle mouse up event
+    // they let go, time to stop caring
     handleMouseUp(e) {
         this.mapInteraction.isDragging = false;
     },
 
-    // Handle wheel event for zooming
+    // they're scrolling, adjust the zoom accordingly
     handleWheel(e) {
         e.preventDefault();
-        
+
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        
+
         const worldPos = this.screenToWorld(x, y);
-        
+
         const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
         const newZoom = Math.max(this.worldMap.minZoom, Math.min(this.worldMap.maxZoom, this.worldMap.zoom * zoomDelta));
-        
+
         this.worldMap.zoom = newZoom;
-        
-        // Adjust offset to zoom towards mouse position
+
+        // zoom toward their cursor like we actually care where they're looking
         const newWorldPos = this.screenToWorld(x, y);
         this.worldMap.offsetX += (newWorldPos.x - worldPos.x) * this.worldMap.zoom;
         this.worldMap.offsetY += (newWorldPos.y - worldPos.y) * this.worldMap.zoom;
@@ -980,7 +1000,7 @@ const TravelSystem = {
         this.render();
     },
 
-    // Handle click event
+    // they clicked something, let's see what they want now
     handleClick(e) {
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -994,7 +1014,7 @@ const TravelSystem = {
         }
     },
 
-    // Touch event handlers
+    // touch handlers for the mobile generation
     handleTouchStart(e) {
         if (e.touches.length === 1) {
             const touch = e.touches[0];
@@ -1025,7 +1045,7 @@ const TravelSystem = {
         this.mapInteraction.isDragging = false;
     },
 
-    // Convert screen coordinates to world coordinates
+    // translate screen pixels to world coordinates (because nothing is what it seems)
     screenToWorld(screenX, screenY) {
         return {
             x: (screenX - this.worldMap.offsetX) / this.worldMap.zoom,
@@ -1033,7 +1053,7 @@ const TravelSystem = {
         };
     },
 
-    // Convert world coordinates to screen coordinates
+    // convert world coordinates back to screen pixels (reality reversal)
     worldToScreen(worldX, worldY) {
         return {
             x: worldX * this.worldMap.zoom + this.worldMap.offsetX,
@@ -1041,9 +1061,9 @@ const TravelSystem = {
         };
     },
 
-    // Get location at world coordinates
+    // find what location exists at these coordinates (if anything even matters)
     getLocationAt(x, y) {
-        // Check cities and towns
+        // check the settlements first
         for (const [id, location] of Object.entries(this.locations)) {
             const distance = Math.sqrt(Math.pow(x - location.x, 2) + Math.pow(y - location.y, 2));
             if (distance < 30) {
@@ -1051,15 +1071,15 @@ const TravelSystem = {
             }
         }
         
-        // Check resource nodes
+        // check resource nodes (shiny distractions)
         for (const node of this.resourceNodes) {
             const distance = Math.sqrt(Math.pow(x - node.x, 2) + Math.pow(y - node.y, 2));
             if (distance < node.radius) {
                 return node;
             }
         }
-        
-        // Check points of interest
+
+        // check points of interest (if they're worth the name)
         for (const poi of this.pointsOfInterest) {
             const distance = Math.sqrt(Math.pow(x - poi.x, 2) + Math.pow(y - poi.y, 2));
             if (distance < 20) {
@@ -1070,7 +1090,7 @@ const TravelSystem = {
         return null;
     },
 
-    // Update tooltip display
+    // refresh the tooltip with whatever they're hovering over
     updateTooltip(location, screenX, screenY) {
         if (location) {
             const tooltipContent = this.generateTooltipContent(location);
@@ -1085,7 +1105,7 @@ const TravelSystem = {
         }
     },
 
-    // Generate tooltip content for location
+    // craft tooltip content that pretends to be helpful
     generateTooltipContent(location) {
         let content = `<div class="map-tooltip">`;
         content += `<h3>${location.name}</h3>`;
@@ -1095,7 +1115,7 @@ const TravelSystem = {
             content += `<p class="description">${location.description}</p>`;
         }
         
-        // Location-specific information
+        // dump location-specific details (if anyone cares)
         if (location.type === 'city' || location.type === 'town' || location.type === 'village') {
             content += `<div class="location-info">`;
             content += `<p><strong>Population:</strong> ${location.population?.toLocaleString() || 'Unknown'}</p>`;
@@ -1115,7 +1135,7 @@ const TravelSystem = {
             content += `</div>`;
         }
         
-        // Resource node information
+        // resource node data (for the gatherers and grinders)
         if (location.type === 'forest' || location.type === 'mine' || location.type === 'herb') {
             content += `<div class="resource-info">`;
             content += `<p><strong>Resources:</strong></p><ul>`;
@@ -1127,7 +1147,7 @@ const TravelSystem = {
             content += `</div>`;
         }
         
-        // Point of interest information
+        // poi service info (if it's actually useful)
         if (location.services) {
             content += `<div class="services-info">`;
             content += `<p><strong>Services:</strong> ${location.services.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}</p>`;
@@ -1141,7 +1161,7 @@ const TravelSystem = {
         return content;
     },
 
-    // Get item display name
+    // translate item ids into readable names (because humans need labels)
     getItemName(itemId) {
         const itemNames = {
             food: 'Food',
@@ -1179,16 +1199,16 @@ const TravelSystem = {
         return itemNames[itemId] || itemId;
     },
 
-    // Select location for travel
+    // they selected a location, guess we're going somewhere
     selectLocation(location) {
         this.mapInteraction.selectedLocation = location;
         this.showLocationDetails(location);
         this.render();
     },
 
-    // Show detailed location information
+    // dump all the location details into the panel
     showLocationDetails(location) {
-        // Update the travel panel with location details
+        // shove location info into the travel panel
         const detailsPanel = document.getElementById('location-details');
         if (detailsPanel) {
             let html = `<div class="location-details-content">`;
@@ -1196,7 +1216,7 @@ const TravelSystem = {
             html += `<p class="location-type">${location.type.charAt(0).toUpperCase() + location.type.slice(1)}</p>`;
             html += `<p class="description">${location.description || 'No description available.'}</p>`;
 
-            // Add travel button if not current location
+            // add travel button if we're not already stuck here
             if (location.id !== this.playerPosition.currentLocation) {
                 const travelInfo = this.calculateTravelInfo(location);
                 html += `<div class="travel-info">`;
@@ -1218,7 +1238,7 @@ const TravelSystem = {
         }
     },
 
-    // Calculate travel information - path-based with max 2 hour cap per segment
+    // calculate how long this journey of suffering will take
     calculateTravelInfo(destination) {
         const currentLoc = this.getCurrentLocation();
         if (!currentLoc) {
@@ -1357,6 +1377,12 @@ const TravelSystem = {
         this.playerPosition.path = this.findPath(currentLoc, destination);
         
         addMessage(`Starting travel to ${destination.name}... Estimated time: ${travelInfo.timeDisplay}`);
+
+        // Auto-unpause time when starting travel (so the journey actually progresses)
+        if (typeof TimeSystem !== 'undefined' && (TimeSystem.isPaused || TimeSystem.currentSpeed === 'PAUSED')) {
+            TimeSystem.setSpeed('NORMAL');
+            addMessage('⏱️ Time has started - your journey begins!');
+        }
 
         // Hide location details panel
         const detailsPanel = document.getElementById('location-details');
@@ -1517,13 +1543,19 @@ const TravelSystem = {
 
         addMessage(`Arrived at ${destination.name}!`);
 
+        // Update player position to destination coordinates
+        if (destination.x !== undefined && destination.y !== undefined) {
+            this.playerPosition.x = destination.x;
+            this.playerPosition.y = destination.y;
+        }
+
         // Track achievement progress
         if (typeof AchievementSystem !== 'undefined') {
             AchievementSystem.trackLocationVisit(destination.id);
             AchievementSystem.trackJourney(distance);
         }
 
-        // Record arrival in location history
+        // Record arrival in location history and update player marker
         if (typeof GameWorldRenderer !== 'undefined') {
             const isFirstVisit = typeof GameWorld !== 'undefined' &&
                 !GameWorld.visitedLocations?.includes(destination.id);
@@ -1532,6 +1564,11 @@ const TravelSystem = {
             });
             GameWorldRenderer.clearDestination();
             GameWorldRenderer.updateHistoryPanel();
+
+            // Ensure the player marker is positioned exactly at the destination
+            // and showing the "arrived" state (hovering above the location)
+            GameWorldRenderer.completeTravelAnimation();
+            GameWorldRenderer.updatePlayerMarker();
         }
 
         // Trigger location-specific events
@@ -2901,18 +2938,5 @@ TravelSystem.resetView = function() {
     console.log('🎯 Reality snapped back to focus on you... you\'re welcome');
 };
 
-// Update travel progress in game loop - only when player is traveling
-const originalUpdate = game?.update;
-if (originalUpdate) {
-    game.update = function(deltaTime) {
-        const result = originalUpdate.call(this, deltaTime);
-        // Only update travel progress if player is actually traveling and game is in PLAYING state
-        if (TravelSystem.playerPosition.isTraveling &&
-            typeof game !== 'undefined' &&
-            game.state &&
-            game.state === GameState.PLAYING) {
-            TravelSystem.updateTravelProgress();
-        }
-        return result;
-    };
-}
+// Note: TravelSystem.update() is now called directly from game.js update loop
+// No need for the old game.update patch - the proper update method handles everything

@@ -15,20 +15,49 @@
 
 ## 📖 TABLE OF CONTENTS
 
-1. [What Even Is This Game](#-what-even-is-this-game)
-2. [Getting Started (Your Descent Begins)](#-getting-started)
-3. [Character Creation](#-character-creation)
-4. [The World Map](#️-the-world-map)
-5. [Trading System](#-trading-system)
-6. [Items Encyclopedia](#-items-encyclopedia)
-7. [Properties & Empire Building](#-properties--empire-building)
-8. [Crafting System](#-crafting-system)
-9. [Time & Survival](#-time--survival)
-10. [Keyboard Shortcuts](#️-keyboard-shortcuts)
-11. [Achievements](#-achievements)
-12. [Tips from the Void](#-tips-from-the-void)
-13. [File Structure](#-file-structure)
-14. [Secret Debug Console & Cheat Codes](#-secret-debug-console--cheat-codes) *(scroll to the end...)*
+### Getting Started
+- [What Even Is This Game](#-what-even-is-this-game)
+- [Getting Started (Your Descent Begins)](#-getting-started)
+- [Character Creation](#-character-creation)
+
+### World & Trading
+- [The World Map](#️-the-world-map)
+- [Trading System](#-trading-system)
+- [Items Encyclopedia](#-items-encyclopedia)
+- [Transportation Options](#️-transportation-options)
+
+### Empire Building
+- [Properties & Empire Building](#-properties--empire-building)
+- [Crafting System](#-crafting-system)
+
+### Gameplay
+- [Time & Survival](#-time--survival)
+- [Keyboard Shortcuts](#️-keyboard-shortcuts)
+
+### Achievements (57 Total!)
+- [Achievements Overview](#-achievements)
+  - [Wealth Achievements](#wealth-achievements-4)
+  - [Trading Achievements](#trading-achievements-4)
+  - [Travel Achievements](#travel-achievements-4)
+  - [Survival Achievements](#survival-achievements-3)
+  - [Collection Achievements](#collection-achievements-3)
+  - [Time Achievements](#time-achievements-2)
+  - [Special Achievements](#special-achievements-4)
+  - [Luxury Achievements](#luxury-achievements-7)
+  - [Equipment Achievements](#equipment-achievements-6)
+  - [Crafting Achievements](#crafting-achievements-10)
+  - [Property Achievements](#property-achievements-8)
+  - [Hidden Achievements](#-hidden-achievements-10)
+
+### Reference
+- [Tips from the Void](#-tips-from-the-void)
+- [File Structure](#-file-structure)
+- [Known Issues & TODO](#-known-issues--todo)
+- [Credits](#-credits)
+- [Version History](#-version-history)
+
+### Secrets
+- [Secret Debug Console & Cheat Codes](#-secret-debug-console--cheat-codes)
 
 ---
 
@@ -48,7 +77,7 @@ Medieval Trading Game is a browser-based economic simulation where you play as a
 - 🏠 **Property System** - Buy houses, shops, farms, mines, and taverns
 - 👥 **Employee System** - Hire workers to generate passive income
 - 🔨 **Crafting** - Turn raw materials into valuable goods
-- 🏆 **Achievements** - Validation through virtual trophies
+- 🏆 **57 Achievements** - Including 10 hidden ones for the dedicated
 - 💀 **Survival Mechanics** - Health, hunger, thirst, and the ever-present specter of death
 
 ---
@@ -518,53 +547,188 @@ When health hits 0, you die. Your high score is recorded based on:
 
 ---
 
+## 🗂️ TRANSPORTATION OPTIONS
+
+Get around the kingdom with style (or at least survive the journey):
+
+| Transport | Price | Capacity | Speed | Notes |
+|-----------|-------|----------|-------|-------|
+| **Leather Satchel** | Free | 40 lbs | 1.0x | Starting option |
+| **Hand Cart** | 30g | 180 lbs | 0.8x | Slow but cheap |
+| **Mule** | 85g | 160 lbs | 0.9x | Good for terrain |
+| **Warhorse** | 180g | 120 lbs | 1.5x | Fast, light cargo |
+| **Merchant Cart** | 220g | 450 lbs | 0.7x | Heavy hauling |
+| **Horse & Cart** | 380g | 550 lbs | 1.2x | Best balance |
+| **Oxen** | 120g | 220 lbs | 0.6x | Slow and steady |
+| **Oxen & Cart** | 320g | 750 lbs | 0.5x | Maximum capacity |
+
+---
+
 ## 🏆 ACHIEVEMENTS
 
-### Wealth Achievements
-| Achievement | Requirement | Rarity |
-|-------------|-------------|--------|
-| First Coin | Earn 1 gold | Common |
-| Merchant Apprentice | Accumulate 1,000 gold | Common |
-| Merchant Master | Accumulate 10,000 gold | Uncommon |
-| Trade Tycoon | Accumulate 50,000 gold | Rare |
+The game features **57 achievements** across 12 categories, including 10 hidden achievements for the dedicated explorer. Achievements unlock with a dramatic popup that pauses the game - if multiple achievements unlock at once, you'll see them in sequence!
 
-### Trading Achievements
-| Achievement | Requirement | Rarity |
-|-------------|-------------|--------|
-| First Deal | Complete 1 trade | Common |
-| Savvy Trader | Complete 50 trades | Uncommon |
-| Trading Legend | Complete 200 trades | Rare |
-| Profit Margin | 500g profit in single trade | Uncommon |
+---
 
-### Travel Achievements
-| Achievement | Requirement | Rarity |
-|-------------|-------------|--------|
-| First Journey | Visit 2 locations | Common |
-| World Explorer | Visit all 13 main locations | Rare |
-| Road Warrior | Travel 1,000 miles | Uncommon |
-| Frequent Traveler | Complete 100 journeys | Rare |
+### Wealth Achievements (4)
 
-### Survival Achievements
-| Achievement | Requirement | Rarity |
-|-------------|-------------|--------|
-| Survivor | Survive 10 encounters | Uncommon |
-| Bandit Hunter | Defeat 20 bandits | Rare |
-| Lucky Escape | Escape with <10 gold | Uncommon |
+| Icon | Achievement | Description | Rarity |
+|------|-------------|-------------|--------|
+| 💰 | **First Coin** | Earn your first gold coin | Common |
+| 💰 | **Merchant Apprentice** | Accumulate 1,000 gold | Common |
+| 💎 | **Merchant Master** | Accumulate 10,000 gold | Uncommon |
+| 👑 | **Trade Tycoon** | Accumulate 50,000 gold | Rare |
 
-### Time Achievements
-| Achievement | Requirement | Rarity |
-|-------------|-------------|--------|
-| Veteran Trader | Play 10 in-game days | Uncommon |
-| Year of Trading | Play 365 in-game days | Legendary |
+---
 
-### Special Achievements
-| Achievement | Requirement | Rarity |
-|-------------|-------------|--------|
-| Lucky Strike | Find hidden treasure | Rare |
-| Rags to Riches | Go from <10g to >5,000g | Rare |
-| Perfect Haggle | Buy at 50% below market | Uncommon |
-| Hoarder | Own 1,000+ items | Rare |
-| Rare Collector | Own 10 rare/legendary items | Rare |
+### Trading Achievements (4)
+
+| Icon | Achievement | Description | Rarity |
+|------|-------------|-------------|--------|
+| 🤝 | **First Deal** | Complete your first trade | Common |
+| 📊 | **Savvy Trader** | Complete 50 trades | Uncommon |
+| ⭐ | **Trading Legend** | Complete 200 trades | Rare |
+| 📈 | **Profit Margin** | Make 500 gold profit in a single trade | Uncommon |
+
+---
+
+### Travel Achievements (4)
+
+| Icon | Achievement | Description | Rarity |
+|------|-------------|-------------|--------|
+| 🗺️ | **First Journey** | Travel to another location | Common |
+| 🌍 | **World Explorer** | Visit all locations in the realm | Rare |
+| 🏃 | **Road Warrior** | Travel 1,000 miles | Uncommon |
+| 🚶 | **Frequent Traveler** | Complete 100 journeys | Rare |
+
+---
+
+### Survival Achievements (3)
+
+| Icon | Achievement | Description | Rarity |
+|------|-------------|-------------|--------|
+| 🛡️ | **Survivor** | Survive 10 hostile encounters | Uncommon |
+| ⚔️ | **Bandit Hunter** | Defeat 20 bandit encounters | Rare |
+| 🍀 | **Lucky Escape** | Escape from danger with less than 10 gold remaining | Uncommon |
+
+---
+
+### Collection Achievements (3)
+
+| Icon | Achievement | Description | Rarity |
+|------|-------------|-------------|--------|
+| 🎒 | **Pack Rat** | Carry 50 different items in your inventory | Uncommon |
+| 💎 | **Rare Collector** | Own 10 rare or legendary items | Rare |
+| 📦 | **Hoarder** | Have 1,000 total items in inventory | Rare |
+
+---
+
+### Time Achievements (2)
+
+| Icon | Achievement | Description | Rarity |
+|------|-------------|-------------|--------|
+| 📅 | **Veteran Trader** | Play for 10 in-game days | Uncommon |
+| 🎂 | **Year of Trading** | Play for 1 in-game year (365 days) | Legendary |
+
+---
+
+### Special Achievements (4)
+
+| Icon | Achievement | Description | Rarity |
+|------|-------------|-------------|--------|
+| ✨ | **Lucky Strike** | Find hidden treasure during travel | Rare |
+| 📊 | **Rags to Riches** | Go from less than 10 gold to over 5,000 gold | Rare |
+| 🎯 | **Perfect Haggle** | Buy an item at 50% below market price | Uncommon |
+| ❤️ | **Generous Soul** | Give away 1,000 gold worth of items or money | Uncommon |
+
+---
+
+### Luxury Achievements (7)
+
+| Icon | Achievement | Description | Rarity |
+|------|-------------|-------------|--------|
+| 💎 | **Taste of Luxury** | Acquire your first luxury item | Common |
+| 👑 | **Luxury Collector** | Own 10 different luxury items | Uncommon |
+| 🧵 | **Silk Merchant** | Trade 100 silk items | Uncommon |
+| 💍 | **Jewel Connoisseur** | Own gems or jewelry worth 5,000 gold | Rare |
+| 🍷 | **Wine Aficionado** | Collect 50 bottles of fine wine | Uncommon |
+| 🌶️ | **Spice Baron** | Trade 500 units of exotic spices | Rare |
+| 🏰 | **Living in Luxury** | Have 50,000 gold worth of luxury items at once | Legendary |
+
+---
+
+### Equipment Achievements (6)
+
+| Icon | Achievement | Description | Rarity |
+|------|-------------|-------------|--------|
+| ⚔️ | **Armed and Ready** | Acquire your first weapon | Common |
+| 🛡️ | **Protected** | Acquire your first piece of armor | Common |
+| 🎖️ | **Fully Equipped** | Have a weapon, armor, and accessory equipped | Uncommon |
+| ⚒️ | **Master Armorer** | Own 20 different pieces of equipment | Rare |
+| ✨ | **Legendary Gear** | Acquire a legendary quality item | Legendary |
+| 🗡️ | **Walking Arsenal** | Own 10 different weapons | Uncommon |
+
+---
+
+### Crafting Achievements (10)
+
+| Icon | Achievement | Description | Rarity |
+|------|-------------|-------------|--------|
+| 🔨 | **Apprentice Crafter** | Craft your first item | Common |
+| 🛠️ | **Journeyman Crafter** | Craft 25 items | Common |
+| ⚙️ | **Master Crafter** | Craft 100 items | Uncommon |
+| 🏆 | **Legendary Craftsman** | Craft 500 items | Rare |
+| 🔷 | **Quality Craftsman** | Craft 10 tier 2 (uncommon) items | Uncommon |
+| 🔶 | **Expert Craftsman** | Craft 10 tier 3 (rare) items | Rare |
+| ⭐ | **Legendary Creator** | Craft a legendary quality item | Legendary |
+| 🔥 | **Blacksmith** | Craft 20 metal items (weapons, armor, tools) | Uncommon |
+| ⚗️ | **Alchemist** | Craft 20 potions or medicines | Uncommon |
+| 🧥 | **Tailor** | Craft 20 cloth or leather items | Uncommon |
+
+---
+
+### Property Achievements (8)
+
+| Icon | Achievement | Description | Rarity |
+|------|-------------|-------------|--------|
+| 🏠 | **Property Owner** | Purchase your first property | Common |
+| 🏘️ | **Landlord** | Own 3 properties | Uncommon |
+| 🏰 | **Real Estate Mogul** | Own 10 properties | Rare |
+| 👤 | **First Hire** | Hire your first employee | Common |
+| 👥 | **Employer** | Have 5 employees working for you | Uncommon |
+| 🏢 | **Business Empire** | Have 20 employees across all properties | Rare |
+| 📈 | **Property Upgrader** | Upgrade a property to level 3 | Uncommon |
+| 📦 | **Warehouse King** | Have 10,000 storage capacity across all properties | Rare |
+
+---
+
+### 🔮 HIDDEN ACHIEVEMENTS (10)
+
+*These achievements are secret - you'll discover them through unique gameplay patterns. All are achievable through normal play!*
+
+| Icon | Achievement | Description | Rarity |
+|------|-------------|-------------|--------|
+| 💀 | **Dungeon Crawler** | Visit dungeons 50 times within 5 in-game years | Legendary |
+| 🦉 | **Night Owl** | Complete 100 trades between midnight and 5am | Rare |
+| ☕ | **Marathon Trader** | Play for 24 in-game hours without resting | Rare |
+| 🪙 | **Penny Pincher** | Accumulate 10,000 gold without ever spending more than 100 gold at once | Legendary |
+| 👻 | **Ghost Trader** | Visit every location without being spotted by bandits | Legendary |
+| 🌅 | **Sunrise to Sunset** | Complete a trade at exactly sunrise and sunset on the same day | Rare |
+| 🌕 | **Full Moon Fortune** | Earn 1,000 gold profit during a full moon night | Rare |
+| 🔄 | **Returning Customer** | Trade with the same merchant 50 times | Uncommon |
+| ⚡ | **Speed Runner** | Reach 10,000 gold within the first 30 in-game days | Legendary |
+| 🎯 | **Completionist** | Unlock all non-hidden achievements | Legendary |
+
+---
+
+### Achievement Rarity Guide
+
+| Rarity | Color | Description |
+|--------|-------|-------------|
+| **Common** | ⬜ Gray | Easy to unlock through normal play |
+| **Uncommon** | 🟢 Green | Requires some dedication |
+| **Rare** | 🔵 Blue | Significant accomplishment |
+| **Legendary** | 🟠 Gold | The ultimate bragging rights |
 
 ---
 
@@ -603,23 +767,6 @@ When health hits 0, you die. Your high score is recorded based on:
 - ❌ Overinvesting in one location
 - ❌ Not saving before dangerous journeys
 - ❌ Forgetting to check employee wages
-
----
-
-## 🗂️ TRANSPORTATION OPTIONS
-
-Get around the kingdom with style (or at least survive the journey):
-
-| Transport | Price | Capacity | Speed | Notes |
-|-----------|-------|----------|-------|-------|
-| **Leather Satchel** | Free | 40 lbs | 1.0x | Starting option |
-| **Hand Cart** | 30g | 180 lbs | 0.8x | Slow but cheap |
-| **Mule** | 85g | 160 lbs | 0.9x | Good for terrain |
-| **Warhorse** | 180g | 120 lbs | 1.5x | Fast, light cargo |
-| **Merchant Cart** | 220g | 450 lbs | 0.7x | Heavy hauling |
-| **Horse & Cart** | 380g | 550 lbs | 1.2x | Best balance |
-| **Oxen** | 120g | 220 lbs | 0.6x | Slow and steady |
-| **Oxen & Cart** | 320g | 750 lbs | 0.5x | Maximum capacity |
 
 ---
 
@@ -663,6 +810,8 @@ Get around the kingdom with style (or at least survive the journey):
 - ✅ Floating white cloud orb removed (ugly weather effects disabled)
 - ✅ Keyboard bindings system implemented
 - ✅ Character sheet and financial sheet overlays
+- ✅ Achievement popup system with game pause
+- ✅ 57 achievements including 10 hidden ones
 
 ### Currently Tracked
 - 🔄 Performance optimization ongoing
@@ -674,21 +823,28 @@ Get around the kingdom with style (or at least survive the journey):
 
 ```
 ═══════════════════════════════════════════════════════════════════════
-                    MEDIEVAL TRADING GAME
+                    🖤 MEDIEVAL TRADING GAME 🖤
+                         Version 0.1
 ═══════════════════════════════════════════════════════════════════════
 
-    Developed with existential crisis and excessive caffeine
+    Conjured by: Unity AI Lab
 
-    Code Comments by: An edgy emo goth coder who smokes 🖤
+    The Coven:
+        🦇 Hackall360    - Lead Code Necromancer
+        🕷️ Sponge        - Chaos Engineer
+        🌙 GFourteen     - Digital Alchemist
 
-    Time Invested: Too many 3am sessions to count
+    Developed at 3am with cigarettes, existential dread, and
+    an unhealthy attachment to dark color schemes.
 
-    Bugs Created: Yes
-    Bugs Fixed: Some of them
+    Time Invested: too many sleepless nights to count
+    Bugs Created: countless
+    Bugs Fixed: most of them (probably)
+    Sanity Remaining: questionable
 
-    "In the end, we're all just merchants trading our time
-     for arbitrary numerical increases."
-                                        - The Developer, probably
+    "we're all just merchants trading our time for arbitrary
+     numerical increases... might as well have fun doing it."
+                                        - the coven, 2024
 
 ═══════════════════════════════════════════════════════════════════════
 ```
@@ -697,7 +853,26 @@ Get around the kingdom with style (or at least survive the journey):
 
 ## 🔮 VERSION HISTORY
 
-- **v25** - Current version
+- **v0.1** - *the awakening* (current)
+  - 🖤 centralized config.js - one file to rule all settings
+  - 🏆 global leaderboard across all saves/deaths
+  - ⏱️ time engine fixes - travel actually works now
+  - 📍 pin animation on world map - follows paths, hovers on arrival
+  - 💾 save/load improvements with better error handling
+  - ℹ️ about section in settings with proper credits
+  - 🦇 full dark emo goth vibe throughout codebase
+  - Unity AI Lab credit + dev team coven
+
+- **v26** - *the achievement era*
+  - **57 Achievements** including 10 hidden achievements
+  - Achievement popup system with game pause
+  - Multiple simultaneous achievement unlocks supported
+  - Luxury, Equipment, Crafting, and Property achievement categories
+  - Interactive travel panel mini-map
+  - Destination setting with travel actions
+  - Panel toolbar visibility fixes
+
+- **v25** - *the great restructuring*
   - World map interactivity fixes
   - Keyboard bindings system with customization
   - Character sheet & financial sheet overlays
@@ -762,6 +937,15 @@ Get around the kingdom with style (or at least survive the journey):
 | Command | Description |
 |---------|-------------|
 | `giveproperty <type>` | Give free property (house, shop, warehouse, etc.) |
+
+### 🏆 Achievement Commands
+
+| Command | Description |
+|---------|-------------|
+| `testachievement` | **Test the popup!** Unlocks 3 random locked achievements |
+| `unlockachievement <id>` | Unlock a specific achievement by ID |
+| `listachievements` | Show all achievements and their unlock status |
+| `resetachievements` | Reset all achievements (for testing) |
 
 ### 🔧 Debug Utilities
 

@@ -1,8 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🗺️ TRAVEL PANEL MAP - Interactive mini-map for the travel panel
+// 🗺️ TRAVEL PANEL MAP - your portable window to the void
 // ═══════════════════════════════════════════════════════════════
-// Mirrors GameWorldRenderer functionality for the travel panel
-// Supports clicking to set destinations and viewing the world map
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
+// mirrors GameWorldRenderer for the travel panel
+// click where you want to suffer next
 
 const TravelPanelMap = {
     // 📦 DOM elements

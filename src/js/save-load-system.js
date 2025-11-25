@@ -1,30 +1,33 @@
 // ═══════════════════════════════════════════════════════════════
-// 💾 SAVE/LOAD SYSTEM - preserving your progress (and mistakes)
+// 🖤 SAVE/LOAD SYSTEM - preserving your mistakes for eternity 🖤
 // ═══════════════════════════════════════════════════════════════
-// because even in games we fear losing everything
-// auto-saves are basically anxiety medication
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
+// ctrl+s is the only thing standing between you and oblivion
+// auto-saves are basically anxiety medication in code form
 
 const SaveLoadSystem = {
-    // ⚙️ Save slots configuration - multiple timelines of regret
+    // ⚙️ save slots config - ten different flavors of regret
     maxSaveSlots: 10,
-    maxAutoSaveSlots: 10, // rotating auto-saves because we're paranoid
-    autoSaveInterval: 300000, // 5 minutes in milliseconds
+    maxAutoSaveSlots: 10, // rotating auto-saves because paranoia never sleeps
+    autoSaveInterval: 300000, // 5 minutes - the average time between existential crises
     compressionEnabled: true,
 
-    // Save slot metadata
+    // tombstones of past decisions
     saveSlots: {},
-    autoSaveSlots: [], // array of auto-save slot numbers (rotating)
-    currentAutoSaveIndex: 0, // which auto-save slot to use next
+    autoSaveSlots: [], // circular buffer of desperate attempts
+    currentAutoSaveIndex: 0, // which timeline gets overwritten next
 
-    // Current save state
+    // current state of denial
     currentSaveSlot: null,
     lastAutoSave: 0,
     isAutoSaving: false,
 
-    // Save data version for compatibility
+    // version number - because backwards compatibility is suffering
     saveVersion: '1.0.0',
-    
-    // Initialize save system
+
+    // wake up the persistence layer
     init() {
         this.loadSaveSlotsMetadata();
         this.setupAutoSave();
@@ -32,7 +35,7 @@ const SaveLoadSystem = {
         this.setupEventListeners();
     },
     
-    // 📂 Load save slots metadata from localStorage - digging up past timelines
+    // 📂 dig up the graveyard of saved timelines
     loadSaveSlotsMetadata() {
         const metadata = localStorage.getItem('tradingGameSaveSlots');
         if (metadata) {
@@ -43,7 +46,7 @@ const SaveLoadSystem = {
                 this.saveSlots = {};
             }
         } else {
-            // Initialize empty save slots
+            // create empty vessels for future regrets
             for (let i = 1; i <= this.maxSaveSlots; i++) {
                 this.saveSlots[i] = {
                     name: `Save Slot ${i}`,
@@ -56,7 +59,7 @@ const SaveLoadSystem = {
             this.saveSaveSlotsMetadata();
         }
 
-        // Load auto-save metadata
+        // resurrect the auto-save records
         const autoSaveData = localStorage.getItem('tradingGameAutoSaveSlots');
         if (autoSaveData) {
             try {
@@ -72,11 +75,11 @@ const SaveLoadSystem = {
         console.log(`💾 Loaded ${this.autoSaveSlots.length} auto-save slots`);
     },
     
-    // 💾 Save slots metadata to localStorage - preserving the timeline records
+    // 💾 etch the metadata into browser memory
     saveSaveSlotsMetadata() {
         try {
             localStorage.setItem('tradingGameSaveSlots', JSON.stringify(this.saveSlots));
-            // Also save auto-save metadata
+            // also persist the auto-save ledger
             localStorage.setItem('tradingGameAutoSaveSlots', JSON.stringify({
                 slots: this.autoSaveSlots,
                 currentIndex: this.currentAutoSaveIndex
@@ -86,7 +89,7 @@ const SaveLoadSystem = {
         }
     },
     
-    // Setup auto-save functionality
+    // schedule the anxiety relief intervals
     setupAutoSave() {
         TimerManager.setInterval(() => {
             if (game.state === GameState.PLAYING && game.settings.autoSave) {
@@ -95,15 +98,15 @@ const SaveLoadSystem = {
         }, this.autoSaveInterval);
     },
     
-    // Setup keyboard shortcuts
+    // bind the panic buttons
     setupKeyboardShortcuts() {
         EventManager.addEventListener(document, 'keydown', (e) => {
-            // F5 for quick save
+            // f5 - freeze your current disaster
             if (e.key === 'F5') {
                 e.preventDefault();
                 this.quickSave();
             }
-            // F9 for quick load
+            // f9 - resurrect a previous disaster
             else if (e.key === 'F9') {
                 e.preventDefault();
                 this.quickLoad();
@@ -111,38 +114,53 @@ const SaveLoadSystem = {
         });
     },
     
-    // Setup event listeners
+    // wire up the existential dread handlers
     setupEventListeners() {
-        // Listen for game state changes
+        // hijack state changes for our purposes
         const originalChangeState = window.changeState || function() {};
         window.changeState = function(newState) {
             originalChangeState(newState);
-            
-            // Trigger auto-save when entering playing state
+
+            // trigger auto-save when you start playing again
             if (newState === GameState.PLAYING && game.settings.autoSave) {
                 this.autoSaveTimer = TimerManager.setTimeout(() => SaveLoadSystem.autoSave(), 1000);
             }
         };
-        
-        // Listen for beforeunload to save current state
+
+        // catch the browser closing - last chance to preserve your soul
         EventManager.addEventListener(window, 'beforeunload', () => {
             if (game.state === GameState.PLAYING && game.settings.autoSave) {
-                this.autoSave(true); // Silent save
+                this.autoSave(true); // silent save - like it never happened
             }
         });
     },
     
-    // Get complete game state for saving
+    // capture the entire state of your questionable choices
     getCompleteGameState() {
+        // wrap functions in try-catch because nothing works at 3am
+        const safeCall = (fn, fallback = null) => {
+            try { return fn(); } catch(e) { return fallback; }
+        };
+
+        // extract map entries without dying
+        const safeMapEntries = (map) => {
+            try {
+                if (map && typeof map.entries === 'function') {
+                    return Array.from(map.entries());
+                }
+                return [];
+            } catch(e) { return []; }
+        };
+
         const gameState = {
             version: this.saveVersion,
             timestamp: Date.now(),
             gameData: {
-                // Core game state
+                // the fundamental void
                 state: game.state,
                 gameTick: game.gameTick,
-                
-                // Player data
+
+                // your digital identity's baggage
                 player: {
                     name: game.player?.name,
                     class: game.player?.class,
@@ -165,148 +183,149 @@ const SaveLoadSystem = {
                     equippedTool: game.player?.equippedTool,
                     equippedWeapon: game.player?.equippedWeapon
                 },
-                
-                // Current location
+
+                // where you're currently stuck
                 currentLocation: game.currentLocation,
-                
-                // Time system state
-                timeState: {
+
+                // the relentless march of time
+                timeState: typeof TimeSystem !== 'undefined' ? {
                     currentTime: TimeSystem.currentTime,
                     currentSpeed: TimeSystem.currentSpeed,
                     isPaused: TimeSystem.isPaused
-                },
-                
-                // Event system state
-                eventState: {
-                    activeEvents: EventSystem.getActiveEvents(),
-                    scheduledEvents: EventSystem.scheduledEvents
-                },
-                
-                // Game world state
-                worldState: {
-                    unlockedRegions: GameWorld.unlockedRegions,
-                    visitedLocations: GameWorld.visitedLocations,
-                    locations: GameWorld.locations,
-                    regions: GameWorld.regions
-                },
-                
-                // Property system state
-                propertyState: {
-                    properties: PropertySystem.getPlayerProperties(),
+                } : null,
+
+                // random chaos waiting to happen
+                eventState: typeof EventSystem !== 'undefined' ? {
+                    activeEvents: safeCall(() => EventSystem.getActiveEvents(), []),
+                    scheduledEvents: EventSystem.scheduledEvents || []
+                } : null,
+
+                // the map of your personal hell
+                worldState: typeof GameWorld !== 'undefined' ? {
+                    unlockedRegions: GameWorld.unlockedRegions || ['starter'],
+                    visitedLocations: GameWorld.visitedLocations || [],
+                    locations: GameWorld.locations || {},
+                    regions: GameWorld.regions || {}
+                } : null,
+
+                // real estate you probably can't afford
+                propertyState: typeof PropertySystem !== 'undefined' ? {
+                    properties: safeCall(() => PropertySystem.getPlayerProperties(), []),
                     propertyIncome: game.player?.propertyIncome,
                     propertyExpenses: game.player?.propertyExpenses
-                },
-                
-                // Employee system state
-                employeeState: {
-                    employees: EmployeeSystem.getPlayerEmployees(),
+                } : null,
+
+                // the workers you exploit
+                employeeState: typeof EmployeeSystem !== 'undefined' ? {
+                    employees: safeCall(() => EmployeeSystem.getPlayerEmployees(), []),
                     employeeExpenses: game.player?.employeeExpenses
-                },
-                
-                // Trade route system state
-                tradeRouteState: {
-                    routes: TradeRouteSystem.getTradeRoutes()
-                },
-                
-                // Travel system state
-                travelState: typeof TravelSystem !== 'undefined' ? TravelSystem.getState() : null,
-                
-                // Item Database state
+                } : null,
+
+                // paths of capitalist ambition
+                tradeRouteState: typeof TradeRouteSystem !== 'undefined' ? {
+                    routes: safeCall(() => TradeRouteSystem.getTradeRoutes(), [])
+                } : null,
+
+                // wanderlust encoded
+                travelState: typeof TravelSystem !== 'undefined' && TravelSystem.getState ?
+                    safeCall(() => TravelSystem.getState(), null) : null,
+
+                // catalog of things you'll hoard
                 itemDatabaseState: typeof ItemDatabase !== 'undefined' ? {
                     items: ItemDatabase.items,
                     categories: ItemDatabase.categories,
                     rarity: ItemDatabase.rarity
                 } : null,
-                
-                // Inventory System state
+
+                // your backpack of broken dreams
                 inventoryState: typeof InventorySystem !== 'undefined' ? {
                     maxSlots: InventorySystem.maxSlots,
                     maxWeight: InventorySystem.maxWeight,
                     sortCriteria: InventorySystem.sortCriteria,
                     filterCriteria: InventorySystem.filterCriteria
                 } : null,
-                
-                // Trading System state
+
+                // the hustle never stops
                 tradingState: typeof TradingSystem !== 'undefined' ? {
                     tradeMode: TradingSystem.tradeMode,
-                    selectedTradeItems: Array.from(TradingSystem.selectedTradeItems.entries()),
-                    tradeHistory: TradingSystem.tradeHistory,
-                    priceAlerts: TradingSystem.priceAlerts
+                    selectedTradeItems: safeMapEntries(TradingSystem.selectedTradeItems),
+                    tradeHistory: TradingSystem.tradeHistory || [],
+                    priceAlerts: TradingSystem.priceAlerts || []
                 } : null,
-                
-                // City Reputation System state
-                cityReputationState: typeof CityReputationSystem !== 'undefined' ? {
-                    reputations: CityReputationSystem.getAllReputations()
+
+                // who loves you and who wants you dead
+                cityReputationState: typeof CityReputationSystem !== 'undefined' && CityReputationSystem.getAllReputations ? {
+                    reputations: safeCall(() => CityReputationSystem.getAllReputations(), {})
                 } : null,
-                
-                // City Event System state
+
+                // urban chaos log
                 cityEventState: typeof CityEventSystem !== 'undefined' ? {
-                    activeEvents: CityEventSystem.getAllActiveEvents(),
-                    eventHistory: CityEventSystem.getEventHistory()
+                    activeEvents: safeCall(() => CityEventSystem.getAllActiveEvents?.(), []),
+                    eventHistory: safeCall(() => CityEventSystem.getEventHistory?.(), [])
                 } : null,
-                
-                // Market Price History state
-                marketPriceHistoryState: typeof MarketPriceHistory !== 'undefined' ? {
-                    priceHistory: MarketPriceHistory.getAllPriceHistory()
+
+                // price fluctuations that haunt your sleep
+                marketPriceHistoryState: typeof MarketPriceHistory !== 'undefined' && MarketPriceHistory.getAllPriceHistory ? {
+                    priceHistory: safeCall(() => MarketPriceHistory.getAllPriceHistory(), {})
                 } : null,
-                
-                // Dynamic Market System state
+
+                // economic voodoo
                 dynamicMarketState: typeof DynamicMarketSystem !== 'undefined' ? {
-                    marketTrends: DynamicMarketSystem.getAllMarketTrends(),
-                    supplyDemandData: DynamicMarketSystem.getAllSupplyDemandData()
+                    marketTrends: safeCall(() => DynamicMarketSystem.getAllMarketTrends?.(), {}),
+                    supplyDemandData: safeCall(() => DynamicMarketSystem.getAllSupplyDemandData?.(), {})
                 } : null,
-                
-                // Market data
+
+                // capitalism in a nutshell
                 marketData: {
-                    marketPrices: game.marketPrices,
-                    marketPriceModifier: game.marketPriceModifier
+                    marketPrices: game.marketPrices || {},
+                    marketPriceModifier: game.marketPriceModifier || 1
                 },
-                
-                // Settings
-                settings: game.settings,
-                
-                // UI state
+
+                // your preferences (probably bad)
+                settings: game.settings || {},
+
+                // interface ephemera
                 uiState: {
                     deathTimer: game.deathTimer
                 },
-                
-                // High scores
-                highScores: HighScoreSystem.highScores
+
+                // hall of fame (or shame)
+                highScores: typeof HighScoreSystem !== 'undefined' ? HighScoreSystem.highScores : []
             }
         };
-        
+
         return gameState;
     },
     
-    // Validate save data integrity
+    // check if the save file is broken (spoiler: probably)
     validateSaveData(saveData) {
         const errors = [];
-        
-        // Check basic structure
+
+        // does this even look like a save file?
         if (!saveData || typeof saveData !== 'object') {
             errors.push('Invalid save data structure');
             return { valid: false, errors };
         }
-        
-        // Check version compatibility
+
+        // version check - forwards compatibility is a myth
         if (!saveData.version) {
             errors.push('Missing save version information');
         }
-        
-        // Check required game data sections
+
+        // verify the bare minimum exists
         const requiredSections = ['gameData', 'timestamp', 'version'];
         for (const section of requiredSections) {
             if (!saveData[section]) {
                 errors.push(`Missing required section: ${section}`);
             }
         }
-        
-        // Check player data
+
+        // no player = no game
         if (saveData.gameData && !saveData.gameData.player) {
             errors.push('Missing player data');
         }
-        
-        // Check for corrupted data (circular references, etc.)
+
+        // can we even serialize this mess?
         try {
             JSON.stringify(saveData);
         } catch (e) {
@@ -319,15 +338,15 @@ const SaveLoadSystem = {
         };
     },
     
-    // Compress save data
+    // squeeze the pain into smaller bytes
     compressSaveData(saveData) {
         if (!this.compressionEnabled) {
             return JSON.stringify(saveData);
         }
-        
+
         try {
-            // Simple compression using JSON string manipulation
-            // In a real implementation, you might use a proper compression library
+            // "compression" - it's just base64 but sounds better
+            // real devs use gzip, we use denial
             const jsonString = JSON.stringify(saveData);
             return this.simpleCompress(jsonString);
         } catch (e) {
@@ -335,14 +354,13 @@ const SaveLoadSystem = {
             return JSON.stringify(saveData);
         }
     },
-    
-    // Decompress save data
+
+    // expand the compressed regrets
     decompressSaveData(compressedData) {
         if (!this.compressionEnabled) {
             return JSON.parse(compressedData);
         }
-        // Try to decompress using the simple decompression first,
-        // fall back to direct JSON.parse if that fails.
+        // try decompressing, fail gracefully, cry internally
         try {
             const decompressed = this.simpleDecompress(compressedData);
             return JSON.parse(decompressed);
@@ -356,46 +374,46 @@ const SaveLoadSystem = {
             }
         }
     },
-    
-    // Simple compression algorithm
+
+    // "compression" algorithm (it's just base64, don't judge)
     simpleCompress(data) {
-        // This is a very simple compression for demonstration
-        // In production, use a proper compression library
+        // this is embarrassingly simple
+        // but hey, it works at 3am
         return btoa(data);
     },
-    
-    // Simple decompression algorithm
+
+    // reverse the totally-not-base64
     simpleDecompress(data) {
-        // This matches the simple compression above
+        // atob - the undo button we deserve
         return atob(data);
     },
     
-    // Save game to specific slot
+    // freeze this moment of questionable decisions
     saveToSlot(slotNumber, customName = null) {
         if (slotNumber < 1 || slotNumber > this.maxSaveSlots) {
             addMessage('Invalid save slot number!', 'error');
             return false;
         }
-        
+
         try {
-            // Get complete game state
+            // snapshot the chaos
             const gameState = this.getCompleteGameState();
-            
-            // Validate save data
+
+            // sanity check (ha, as if we have any)
             const validation = this.validateSaveData(gameState);
             if (!validation.valid) {
                 addMessage('Save data validation failed: ' + validation.errors.join(', '), 'error');
                 return false;
             }
-            
-            // Compress save data
+
+            // crush it down
             const compressedData = this.compressSaveData(gameState);
-            
-            // Save to localStorage
+
+            // shove it into localStorage and pray
             const saveKey = `tradingGameSave_${slotNumber}`;
             localStorage.setItem(saveKey, compressedData);
             
-            // Update save slot metadata
+            // update the tombstone inscription
             this.saveSlots[slotNumber] = {
                 name: customName || this.saveSlots[slotNumber].name,
                 timestamp: Date.now(),
@@ -413,57 +431,82 @@ const SaveLoadSystem = {
             
             this.saveSaveSlotsMetadata();
             this.currentSaveSlot = slotNumber;
-            
+
+            // immortalize your stats on the leaderboard
+            // (tracking mediocrity since day one)
+            if (typeof HighScoreSystem !== 'undefined') {
+                const daysSurvived = this.calculateDaysSurvived(gameState);
+                HighScoreSystem.addHighScore(
+                    gameState.gameData.player.name || 'Unknown Hero',
+                    gameState.gameData.player.gold || 0,
+                    daysSurvived,
+                    null // no death cause - you're still breathing (barely)
+                );
+
+                // refresh the scoreboard of despair
+                if (typeof SaveUISystem !== 'undefined') {
+                    SaveUISystem.updateLeaderboard();
+                }
+            }
+
             addMessage(`Game saved to ${this.saveSlots[slotNumber].name}!`, 'success');
             return true;
-            
+
         } catch (e) {
+            // error logging - because debugging is eternal
+            const errorMsg = e?.message || (typeof e === 'string' ? e : JSON.stringify(e) || 'Unknown error');
             console.error('Save failed:', e);
-            addMessage('Save failed: ' + e.message, 'error');
+            console.error('Save error details:', {
+                name: e?.name,
+                message: e?.message,
+                stack: e?.stack,
+                raw: e
+            });
+            addMessage('Save failed: ' + errorMsg, 'error');
             return false;
         }
     },
-    
-    // Load game from specific slot
+
+    // resurrect a timeline from the void
     loadFromSlot(slotNumber) {
         if (slotNumber < 1 || slotNumber > this.maxSaveSlots) {
             addMessage('Invalid save slot number!', 'error');
             return false;
         }
-        
+
         const saveSlot = this.saveSlots[slotNumber];
         if (!saveSlot.exists) {
             addMessage('No save data in this slot!', 'error');
             return false;
         }
-        
+
         try {
-            // Load compressed data from localStorage
+            // extract the compressed memories
             const saveKey = `tradingGameSave_${slotNumber}`;
             const compressedData = localStorage.getItem(saveKey);
-            
+
             if (!compressedData) {
                 addMessage('Save data not found!', 'error');
                 return false;
             }
-            
-            // Decompress and parse save data
+
+            // decompress and parse the fossilized data
             const saveData = this.decompressSaveData(compressedData);
-            
-            // Validate loaded data
+
+            // check if it's completely borked
             const validation = this.validateSaveData(saveData);
             if (!validation.valid) {
                 addMessage('Save data is corrupted: ' + validation.errors.join(', '), 'error');
                 return false;
             }
-            
-            // Check version compatibility
+
+            // version check (good luck)
             if (!this.isVersionCompatible(saveData.version)) {
                 addMessage('Save data is from an incompatible version!', 'error');
                 return false;
             }
-            
-            // Load the game state
+
+            // inject the old state into the game
             this.loadGameState(saveData.gameData);
             this.currentSaveSlot = slotNumber;
             
@@ -477,14 +520,14 @@ const SaveLoadSystem = {
         }
     },
     
-    // Load game state into the game
+    // rehydrate the game state from json purgatory
     loadGameState(gameData) {
-        // Stop current game if running
+        // kill the current timeline
         if (game.isRunning) {
             game.stop();
         }
-        
-        // Restore core game state
+
+        // restore the fundamental variables
         game.state = gameData.state;
         game.gameTick = gameData.gameTick;
         game.currentLocation = gameData.currentLocation;
@@ -492,93 +535,93 @@ const SaveLoadSystem = {
         game.marketPriceModifier = gameData.marketData?.marketPriceModifier || 1;
         game.settings = { ...game.settings, ...gameData.settings };
         game.deathTimer = gameData.uiState?.deathTimer || game.deathTimer;
-        
-        // Restore player data
+
+        // resurrect player identity
         if (gameData.player) {
             game.player = { ...game.player, ...gameData.player };
         }
-        
-        // Restore time system
+
+        // rewind the clock
         if (gameData.timeState) {
             TimeSystem.currentTime = gameData.timeState.currentTime;
             TimeSystem.setSpeed(gameData.timeState.currentSpeed);
             TimeSystem.isPaused = gameData.timeState.isPaused;
         }
-        
-        // Restore event system
+
+        // reload pending doom
         if (gameData.eventState) {
             EventSystem.events = gameData.eventState.activeEvents || [];
             EventSystem.scheduledEvents = gameData.eventState.scheduledEvents || [];
         }
-        
-        // Restore game world
+
+        // rebuild the world map
         if (gameData.worldState) {
             GameWorld.unlockedRegions = gameData.worldState.unlockedRegions || ['starter'];
             GameWorld.visitedLocations = gameData.worldState.visitedLocations || ['riverwood'];
             GameWorld.locations = gameData.worldState.locations || {};
             GameWorld.regions = gameData.worldState.regions || {};
         }
-        
-        // Restore property system
+
+        // restore your property empire
         if (gameData.propertyState && typeof PropertySystem !== 'undefined') {
             game.player.ownedProperties = gameData.propertyState.properties || [];
             game.player.propertyIncome = gameData.propertyState.propertyIncome || 0;
             PropertySystem.loadProperties(gameData.propertyState.properties);
         }
-        
-        // Restore employee system
+
+        // rehire your wage slaves
         if (gameData.employeeState && typeof EmployeeSystem !== 'undefined') {
             game.player.ownedEmployees = gameData.employeeState.employees || [];
             game.player.employeeExpenses = gameData.employeeState.employeeExpenses || 0;
             EmployeeSystem.loadEmployees(gameData.employeeState.employees);
         }
-        
-        // Restore trade routes
+
+        // restore trade routes
         if (gameData.tradeRouteState && typeof TradeRouteSystem !== 'undefined') {
             TradeRouteSystem.loadTradeRoutes(gameData.tradeRouteState.routes);
         }
-        
-        // Restore travel system
+
+        // reload travel plans
         if (gameData.travelState && typeof TravelSystem !== 'undefined') {
             TravelSystem.loadState(gameData.travelState);
         }
-        
-        // Restore high scores
+
+        // resurrect the hall of shame
         if (gameData.highScores && typeof HighScoreSystem !== 'undefined') {
             HighScoreSystem.highScores = gameData.highScores;
         }
-        
-        // Restore Item Database
+
+        // reload item catalog
         if (gameData.itemDatabaseState && typeof ItemDatabase !== 'undefined') {
             ItemDatabase.items = gameData.itemDatabaseState.items || ItemDatabase.items;
             ItemDatabase.categories = gameData.itemDatabaseState.categories || ItemDatabase.categories;
             ItemDatabase.rarity = gameData.itemDatabaseState.rarity || ItemDatabase.rarity;
         }
-        
-        // Restore Inventory System
+
+        // restore inventory limits
         if (gameData.inventoryState && typeof InventorySystem !== 'undefined') {
             InventorySystem.maxSlots = gameData.inventoryState.maxSlots || 20;
             InventorySystem.maxWeight = gameData.inventoryState.maxWeight || 100;
             InventorySystem.sortCriteria = gameData.inventoryState.sortCriteria;
             InventorySystem.filterCriteria = gameData.inventoryState.filterCriteria;
         }
-        
-        // Restore Trading System
+
+        // restore trading system
         if (gameData.tradingState && typeof TradingSystem !== 'undefined') {
             TradingSystem.tradeMode = gameData.tradingState.tradeMode || 'single';
             TradingSystem.selectedTradeItems = new Map(gameData.tradingState.selectedTradeItems || []);
             TradingSystem.tradeHistory = gameData.tradingState.tradeHistory || [];
             TradingSystem.priceAlerts = gameData.tradingState.priceAlerts || [];
         }
-        
-        // Restore City Reputation System
+
+        // reload your reputation (or lack thereof)
         if (gameData.cityReputationState && typeof CityReputationSystem !== 'undefined') {
             if (typeof CityReputationSystem.loadReputations === 'function') {
                 CityReputationSystem.loadReputations(gameData.cityReputationState.reputations || {});
             }
         }
-        
-        // Restore City Event System
+
+        // restore city chaos
         if (gameData.cityEventState && typeof CityEventSystem !== 'undefined') {
             if (typeof CityEventSystem.loadActiveEvents === 'function') {
                 CityEventSystem.loadActiveEvents(gameData.cityEventState.activeEvents || []);
@@ -587,15 +630,15 @@ const SaveLoadSystem = {
                 CityEventSystem.loadEventHistory(gameData.cityEventState.eventHistory || []);
             }
         }
-        
-        // Restore Market Price History
+
+        // restore price history charts
         if (gameData.marketPriceHistoryState && typeof MarketPriceHistory !== 'undefined') {
             if (typeof MarketPriceHistory.loadPriceHistoryFromSave === 'function') {
                 MarketPriceHistory.loadPriceHistoryFromSave(gameData.marketPriceHistoryState.priceHistory || {});
             }
         }
-        
-        // Restore Dynamic Market System
+
+        // reload market voodoo
         if (gameData.dynamicMarketState && typeof DynamicMarketSystem !== 'undefined') {
             if (typeof DynamicMarketSystem.loadMarketTrends === 'function') {
                 DynamicMarketSystem.loadMarketTrends(gameData.dynamicMarketState.marketTrends || {});
@@ -604,14 +647,14 @@ const SaveLoadSystem = {
                 DynamicMarketSystem.loadSupplyDemandData(gameData.dynamicMarketState.supplyDemandData || {});
             }
         }
-        
-        // Update UI
+
+        // refresh the UI
         updatePlayerInfo();
         updatePlayerStats();
         updateLocationInfo();
         updateLocationPanel();
         
-        // Update system displays
+        // refresh all the system displays
         if (typeof InventorySystem !== 'undefined') {
             InventorySystem.updateInventoryDisplay();
         }
@@ -623,42 +666,42 @@ const SaveLoadSystem = {
                 TradingSystem.updatePriceAlertsDisplay();
             }
         }
-        
-        // Restart game engine
+
+        // reboot the game loop
         game.start();
     },
-    
-    // Check version compatibility
+
+    // check if versions match (they probably don't)
     isVersionCompatible(saveVersion) {
-        // Simple version check - in production, you'd implement proper version compatibility
+        // naive version check - backwards compatibility is a fever dream
         return saveVersion === this.saveVersion;
     },
     
-    // 🔄 Auto-save functionality - rotating saves because paranoia is valid
+    // 🔄 periodic preservation of your suffering
     autoSave(silent = false) {
         if (this.isAutoSaving) return;
 
         this.isAutoSaving = true;
 
         try {
-            // Use rotating auto-save slots (auto_0 through auto_9)
+            // use rotating slots (your mistakes on repeat)
             const autoSaveSlotName = `auto_${this.currentAutoSaveIndex}`;
             const timestamp = new Date();
             const formattedTime = timestamp.toLocaleString();
 
-            // Create the save data
+            // capture the current disaster
             const saveData = this.getCompleteGameState();
             if (!saveData) {
                 console.error('💀 Auto-save failed: no game state to save');
                 return;
             }
 
-            // Save to localStorage with unique auto-save key
+            // shove it into localStorage (pray it fits)
             const saveKey = `tradingGameAutoSave_${this.currentAutoSaveIndex}`;
             try {
                 localStorage.setItem(saveKey, JSON.stringify(saveData));
 
-                // Update auto-save slots tracking
+                // track this auto-save in the rotation
                 const slotInfo = {
                     index: this.currentAutoSaveIndex,
                     timestamp: timestamp.getTime(),
@@ -669,7 +712,7 @@ const SaveLoadSystem = {
                     day: TimeSystem.currentTime?.day || 1
                 };
 
-                // Add or update slot in array
+                // update or insert into the rotation
                 const existingIndex = this.autoSaveSlots.findIndex(s => s.index === this.currentAutoSaveIndex);
                 if (existingIndex >= 0) {
                     this.autoSaveSlots[existingIndex] = slotInfo;
@@ -677,19 +720,19 @@ const SaveLoadSystem = {
                     this.autoSaveSlots.push(slotInfo);
                 }
 
-                // Sort by timestamp (newest first)
+                // sort by timestamp (most recent failures first)
                 this.autoSaveSlots.sort((a, b) => b.timestamp - a.timestamp);
 
-                // Keep only maxAutoSaveSlots
+                // purge the oldest if we're over limit
                 if (this.autoSaveSlots.length > this.maxAutoSaveSlots) {
                     const removed = this.autoSaveSlots.pop();
                     localStorage.removeItem(`tradingGameAutoSave_${removed.index}`);
                 }
 
-                // Move to next slot (rotating)
+                // advance to next slot in the circle
                 this.currentAutoSaveIndex = (this.currentAutoSaveIndex + 1) % this.maxAutoSaveSlots;
 
-                // Save metadata
+                // persist the metadata
                 this.saveSaveSlotsMetadata();
 
                 if (!silent) {
@@ -711,7 +754,7 @@ const SaveLoadSystem = {
         }
     },
 
-    // 📋 Get list of auto-saves for display
+    // 📋 enumerate your automated regrets
     getAutoSaveList() {
         return this.autoSaveSlots.map(slot => ({
             ...slot,
@@ -720,7 +763,7 @@ const SaveLoadSystem = {
         }));
     },
 
-    // 📂 Load from auto-save slot
+    // 📂 resurrect from auto-save graveyard
     loadAutoSave(slotIndex) {
         const saveKey = `tradingGameAutoSave_${slotIndex}`;
         const saveData = localStorage.getItem(saveKey);
@@ -743,14 +786,14 @@ const SaveLoadSystem = {
         }
     },
 
-    // 💾 Manual save (called from settings)
+    // 💾 user-initiated preservation
     manualSave() {
         if (game.state !== GameState.PLAYING) {
             addMessage('Cannot save outside of gameplay!', 'error');
             return false;
         }
 
-        // Find first empty slot or use slot 1
+        // find first empty slot or just use slot 1
         let targetSlot = 1;
         for (let i = 1; i <= this.maxSaveSlots; i++) {
             if (!this.saveSlots[i]?.exists) {
@@ -765,25 +808,25 @@ const SaveLoadSystem = {
         }
         return success;
     },
-    
-    // Quick save (F5)
+
+    // f5 - the muscle memory of paranoia
     quickSave() {
         if (game.state !== GameState.PLAYING) {
             addMessage('Cannot save outside of gameplay!', 'error');
             return;
         }
-        
-        // Use current save slot or slot 1
+
+        // use current slot or default to 1
         const slot = this.currentSaveSlot || 1;
         this.saveToSlot(slot);
     },
-    
-    // Quick load (F9)
+
+    // f9 - the undo button for bad decisions
     quickLoad() {
         if (this.currentSaveSlot) {
             this.loadFromSlot(this.currentSaveSlot);
         } else {
-            // Load most recent save
+            // load the most recent timeline
             const mostRecentSlot = this.findMostRecentSave();
             if (mostRecentSlot) {
                 this.loadFromSlot(mostRecentSlot);
@@ -792,8 +835,8 @@ const SaveLoadSystem = {
             }
         }
     },
-    
-    // Find most recent save
+
+    // find the newest save file
     findMostRecentSave() {
         let mostRecentSlot = null;
         let mostRecentTime = 0;
@@ -809,14 +852,14 @@ const SaveLoadSystem = {
         return mostRecentSlot;
     },
     
-    // Generate screenshot (simplified)
+    // generate screenshot (lol jk we don't)
     generateScreenshot() {
-        // In a real implementation, you'd capture the game canvas
-        // For now, return null
+        // in a real implementation, you'd capture the canvas
+        // for now, just return null and pretend it's intentional
         return null;
     },
-    
-    // Calculate days survived
+
+    // calculate how long you've survived
     calculateDaysSurvived(saveData) {
         if (!saveData.gameData.timeState?.currentTime) return 0;
         
@@ -824,19 +867,19 @@ const SaveLoadSystem = {
         return timeData.day + (timeData.month - 1) * 30 + (timeData.year - 1) * 360;
     },
     
-    // Delete save from slot
+    // erase a timeline permanently
     deleteSave(slotNumber) {
         if (slotNumber < 1 || slotNumber > this.maxSaveSlots) {
             addMessage('Invalid save slot number!', 'error');
             return false;
         }
-        
+
         try {
-            // Remove from localStorage
+            // purge from localStorage
             const saveKey = `tradingGameSave_${slotNumber}`;
             localStorage.removeItem(saveKey);
-            
-            // Update metadata
+
+            // reset the metadata
             this.saveSlots[slotNumber] = {
                 name: `Save Slot ${slotNumber}`,
                 timestamp: null,
@@ -844,10 +887,10 @@ const SaveLoadSystem = {
                 screenshot: null,
                 version: null
             };
-            
+
             this.saveSaveSlotsMetadata();
-            
-            // Clear current save slot if it was the deleted one
+
+            // clear current if we just deleted it
             if (this.currentSaveSlot === slotNumber) {
                 this.currentSaveSlot = null;
             }
@@ -862,29 +905,29 @@ const SaveLoadSystem = {
         }
     },
     
-    // Export save to file
+    // export save to physical file (take it with you)
     exportSave(slotNumber) {
         if (slotNumber < 1 || slotNumber > this.maxSaveSlots) {
             addMessage('Invalid save slot number!', 'error');
             return;
         }
-        
+
         const saveSlot = this.saveSlots[slotNumber];
         if (!saveSlot.exists) {
             addMessage('No save data in this slot!', 'error');
             return;
         }
-        
+
         try {
             const saveKey = `tradingGameSave_${slotNumber}`;
             const compressedData = localStorage.getItem(saveKey);
-            
+
             if (!compressedData) {
                 addMessage('Save data not found!', 'error');
                 return;
             }
-            
-            // Create download link
+
+            // generate download (browser magic)
             const blob = new Blob([compressedData], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -903,29 +946,29 @@ const SaveLoadSystem = {
         }
     },
     
-    // Import save from file
+    // import save from external file (trust no one)
     importSave(slotNumber, fileData) {
         if (slotNumber < 1 || slotNumber > this.maxSaveSlots) {
             addMessage('Invalid save slot number!', 'error');
             return false;
         }
-        
+
         try {
-            // Validate and decompress the imported data
+            // validate and decompress foreign data
             const saveData = this.decompressSaveData(fileData);
             const validation = this.validateSaveData(saveData);
-            
+
             if (!validation.valid) {
                 addMessage('Invalid save file: ' + validation.errors.join(', '), 'error');
                 return false;
             }
-            
-            // Save to specified slot
+
+            // stuff it into the specified slot
             const compressedData = this.compressSaveData(saveData);
             const saveKey = `tradingGameSave_${slotNumber}`;
             localStorage.setItem(saveKey, compressedData);
-            
-            // Update metadata
+
+            // update the records
             this.saveSlots[slotNumber] = {
                 name: `Imported Save`,
                 timestamp: Date.now(),
@@ -953,12 +996,12 @@ const SaveLoadSystem = {
         }
     },
     
-    // Get save slot info for UI display
+    // get save slot metadata for display
     getSaveSlotInfo(slotNumber) {
         if (slotNumber < 1 || slotNumber > this.maxSaveSlots) {
             return null;
         }
-        
+
         const slot = this.saveSlots[slotNumber];
         if (!slot.exists) {
             return {
@@ -968,7 +1011,7 @@ const SaveLoadSystem = {
                 isEmpty: true
             };
         }
-        
+
         return {
             slotNumber: slotNumber,
             name: slot.name,
@@ -981,8 +1024,8 @@ const SaveLoadSystem = {
             timeSinceSave: this.getTimeSinceSave(slot.timestamp)
         };
     },
-    
-    // Get time since save in human readable format
+
+    // calculate how long ago you saved (time is a flat circle)
     getTimeSinceSave(timestamp) {
         const now = Date.now();
         const diff = now - timestamp;

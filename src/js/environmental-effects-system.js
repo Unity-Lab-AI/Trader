@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // 🌧️ ENVIRONMENTAL EFFECTS - the weather matches my mood (dark & unpredictable)
 // ═══════════════════════════════════════════════════════════════
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
 // dynamic lighting, weather, atmosphere... basically setting the vibe
 // for your existential journey through this medieval capitalism simulator
 

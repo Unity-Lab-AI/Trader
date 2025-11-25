@@ -3,6 +3,9 @@
 // ═══════════════════════════════════════════════════════════════
 // because real accomplishments are overrated, here's some pixel ones
 // at least these ones give dopamine hits
+// File Version: 0.1
+// Game Version: 0.1
+// Made by Unity AI Lab - Hackall360, Sponge, GFourteen
 
 const AchievementSystem = {
     // 🎖️ Achievement data - every flex you can earn
@@ -292,50 +295,607 @@ const AchievementSystem = {
             unlocked: false,
             unlockedAt: null,
             condition: () => AchievementSystem.stats.goldGivenAway >= 1000
+        },
+
+        // --- LUXURY ACHIEVEMENTS ---
+        first_luxury: {
+            id: 'first_luxury',
+            name: 'Taste of Luxury',
+            description: 'Acquire your first luxury item',
+            icon: '💎',
+            category: 'luxury',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.luxuryItemsOwned >= 1
+        },
+        luxury_collector: {
+            id: 'luxury_collector',
+            name: 'Luxury Collector',
+            description: 'Own 10 different luxury items',
+            icon: '👑',
+            category: 'luxury',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.uniqueLuxuryItems >= 10
+        },
+        silk_merchant: {
+            id: 'silk_merchant',
+            name: 'Silk Merchant',
+            description: 'Trade 100 silk items',
+            icon: '🧵',
+            category: 'luxury',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.silkTraded >= 100
+        },
+        jewel_connoisseur: {
+            id: 'jewel_connoisseur',
+            name: 'Jewel Connoisseur',
+            description: 'Own gems or jewelry worth 5,000 gold',
+            icon: '💍',
+            category: 'luxury',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.jewelryValue >= 5000
+        },
+        wine_aficionado: {
+            id: 'wine_aficionado',
+            name: 'Wine Aficionado',
+            description: 'Collect 50 bottles of fine wine',
+            icon: '🍷',
+            category: 'luxury',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.wineCollected >= 50
+        },
+        spice_baron: {
+            id: 'spice_baron',
+            name: 'Spice Baron',
+            description: 'Trade 500 units of exotic spices',
+            icon: '🌶️',
+            category: 'luxury',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.spicesTraded >= 500
+        },
+        living_in_luxury: {
+            id: 'living_in_luxury',
+            name: 'Living in Luxury',
+            description: 'Have 50,000 gold worth of luxury items at once',
+            icon: '🏰',
+            category: 'luxury',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.totalLuxuryValue >= 50000
+        },
+
+        // --- EQUIPMENT/GEAR ACHIEVEMENTS ---
+        first_weapon: {
+            id: 'first_weapon',
+            name: 'Armed and Ready',
+            description: 'Acquire your first weapon',
+            icon: '⚔️',
+            category: 'equipment',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.weaponsOwned >= 1
+        },
+        first_armor: {
+            id: 'first_armor',
+            name: 'Protected',
+            description: 'Acquire your first piece of armor',
+            icon: '🛡️',
+            category: 'equipment',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.armorOwned >= 1
+        },
+        fully_equipped: {
+            id: 'fully_equipped',
+            name: 'Fully Equipped',
+            description: 'Have a weapon, armor, and accessory equipped',
+            icon: '🎖️',
+            category: 'equipment',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.fullyEquipped
+        },
+        master_armorer: {
+            id: 'master_armorer',
+            name: 'Master Armorer',
+            description: 'Own 20 different pieces of equipment',
+            icon: '⚒️',
+            category: 'equipment',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.uniqueEquipmentOwned >= 20
+        },
+        legendary_gear: {
+            id: 'legendary_gear',
+            name: 'Legendary Gear',
+            description: 'Acquire a legendary quality item',
+            icon: '✨',
+            category: 'equipment',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.legendaryItemsOwned >= 1
+        },
+        walking_arsenal: {
+            id: 'walking_arsenal',
+            name: 'Walking Arsenal',
+            description: 'Own 10 different weapons',
+            icon: '🗡️',
+            category: 'equipment',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.uniqueWeaponsOwned >= 10
+        },
+
+        // --- CRAFTING ACHIEVEMENTS ---
+        first_craft: {
+            id: 'first_craft',
+            name: 'Apprentice Crafter',
+            description: 'Craft your first item',
+            icon: '🔨',
+            category: 'crafting',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.itemsCrafted >= 1
+        },
+        journeyman_crafter: {
+            id: 'journeyman_crafter',
+            name: 'Journeyman Crafter',
+            description: 'Craft 25 items',
+            icon: '🛠️',
+            category: 'crafting',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.itemsCrafted >= 25
+        },
+        master_crafter: {
+            id: 'master_crafter',
+            name: 'Master Crafter',
+            description: 'Craft 100 items',
+            icon: '⚙️',
+            category: 'crafting',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.itemsCrafted >= 100
+        },
+        legendary_craftsman: {
+            id: 'legendary_craftsman',
+            name: 'Legendary Craftsman',
+            description: 'Craft 500 items',
+            icon: '🏆',
+            category: 'crafting',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.itemsCrafted >= 500
+        },
+        tier2_crafter: {
+            id: 'tier2_crafter',
+            name: 'Quality Craftsman',
+            description: 'Craft 10 tier 2 (uncommon) items',
+            icon: '🔷',
+            category: 'crafting',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.tier2ItemsCrafted >= 10
+        },
+        tier3_crafter: {
+            id: 'tier3_crafter',
+            name: 'Expert Craftsman',
+            description: 'Craft 10 tier 3 (rare) items',
+            icon: '🔶',
+            category: 'crafting',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.tier3ItemsCrafted >= 10
+        },
+        legendary_creator: {
+            id: 'legendary_creator',
+            name: 'Legendary Creator',
+            description: 'Craft a legendary quality item',
+            icon: '⭐',
+            category: 'crafting',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.legendaryItemsCrafted >= 1
+        },
+        blacksmith: {
+            id: 'blacksmith',
+            name: 'Blacksmith',
+            description: 'Craft 20 metal items (weapons, armor, tools)',
+            icon: '🔥',
+            category: 'crafting',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.metalItemsCrafted >= 20
+        },
+        alchemist: {
+            id: 'alchemist',
+            name: 'Alchemist',
+            description: 'Craft 20 potions or medicines',
+            icon: '⚗️',
+            category: 'crafting',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.potionsCrafted >= 20
+        },
+        tailor: {
+            id: 'tailor',
+            name: 'Tailor',
+            description: 'Craft 20 cloth or leather items',
+            icon: '🧥',
+            category: 'crafting',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.clothItemsCrafted >= 20
+        },
+
+        // --- PROPERTY ACHIEVEMENTS ---
+        first_property: {
+            id: 'first_property',
+            name: 'Property Owner',
+            description: 'Purchase your first property',
+            icon: '🏠',
+            category: 'property',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.propertiesOwned >= 1
+        },
+        landlord: {
+            id: 'landlord',
+            name: 'Landlord',
+            description: 'Own 3 properties',
+            icon: '🏘️',
+            category: 'property',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.propertiesOwned >= 3
+        },
+        real_estate_mogul: {
+            id: 'real_estate_mogul',
+            name: 'Real Estate Mogul',
+            description: 'Own 10 properties',
+            icon: '🏰',
+            category: 'property',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.propertiesOwned >= 10
+        },
+        first_employee: {
+            id: 'first_employee',
+            name: 'First Hire',
+            description: 'Hire your first employee',
+            icon: '👤',
+            category: 'property',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.employeesHired >= 1
+        },
+        employer: {
+            id: 'employer',
+            name: 'Employer',
+            description: 'Have 5 employees working for you',
+            icon: '👥',
+            category: 'property',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.currentEmployees >= 5
+        },
+        business_empire: {
+            id: 'business_empire',
+            name: 'Business Empire',
+            description: 'Have 20 employees across all properties',
+            icon: '🏢',
+            category: 'property',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.currentEmployees >= 20
+        },
+        property_upgrader: {
+            id: 'property_upgrader',
+            name: 'Property Upgrader',
+            description: 'Upgrade a property to level 3',
+            icon: '📈',
+            category: 'property',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.maxPropertyLevel >= 3
+        },
+        warehouse_king: {
+            id: 'warehouse_king',
+            name: 'Warehouse King',
+            description: 'Have 10,000 storage capacity across all properties',
+            icon: '📦',
+            category: 'property',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => AchievementSystem.stats.totalStorageCapacity >= 10000
+        },
+
+        // --- HIDDEN ACHIEVEMENTS ---
+        // These are secrets - players discover them through unique gameplay
+        dungeon_crawler: {
+            id: 'dungeon_crawler',
+            name: 'Dungeon Crawler',
+            description: 'Visit dungeons 50 times within 5 years',
+            icon: '💀',
+            category: 'hidden',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            hidden: true,
+            condition: () => AchievementSystem.stats.dungeonVisitsIn5Years >= 50
+        },
+        night_owl: {
+            id: 'night_owl',
+            name: 'Night Owl',
+            description: 'Complete 100 trades between midnight and 5am',
+            icon: '🦉',
+            category: 'hidden',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            hidden: true,
+            condition: () => AchievementSystem.stats.nightTrades >= 100
+        },
+        marathon_trader: {
+            id: 'marathon_trader',
+            name: 'Marathon Trader',
+            description: 'Play for 24 in-game hours without resting',
+            icon: '☕',
+            category: 'hidden',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            hidden: true,
+            condition: () => AchievementSystem.stats.longestNoRestStreak >= 1440
+        },
+        penny_pincher: {
+            id: 'penny_pincher',
+            name: 'Penny Pincher',
+            description: 'Accumulate 10,000 gold without ever spending more than 100 gold at once',
+            icon: '🪙',
+            category: 'hidden',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            hidden: true,
+            condition: () => AchievementSystem.stats.pennyPincherEligible && game.player && game.player.gold >= 10000
+        },
+        ghost_trader: {
+            id: 'ghost_trader',
+            name: 'Ghost Trader',
+            description: 'Visit every location without being spotted by bandits',
+            icon: '👻',
+            category: 'hidden',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            hidden: true,
+            condition: () => AchievementSystem.stats.stealthyExplorer
+        },
+        sunrise_sunset: {
+            id: 'sunrise_sunset',
+            name: 'Sunrise to Sunset',
+            description: 'Complete a trade at exactly sunrise and sunset on the same day',
+            icon: '🌅',
+            category: 'hidden',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            hidden: true,
+            condition: () => AchievementSystem.stats.sunriseSunsetTrade
+        },
+        full_moon_fortune: {
+            id: 'full_moon_fortune',
+            name: 'Full Moon Fortune',
+            description: 'Earn 1,000 gold profit during a full moon night',
+            icon: '🌕',
+            category: 'hidden',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            hidden: true,
+            condition: () => AchievementSystem.stats.fullMoonProfit >= 1000
+        },
+        returning_customer: {
+            id: 'returning_customer',
+            name: 'Returning Customer',
+            description: 'Trade with the same merchant 50 times',
+            icon: '🔄',
+            category: 'hidden',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            hidden: true,
+            condition: () => AchievementSystem.stats.maxMerchantTrades >= 50
+        },
+        speed_runner: {
+            id: 'speed_runner',
+            name: 'Speed Runner',
+            description: 'Reach 10,000 gold within the first 30 in-game days',
+            icon: '⚡',
+            category: 'hidden',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            hidden: true,
+            condition: () => {
+                const days = typeof TimeSystem !== 'undefined' ? TimeSystem.getTotalDays() : 999;
+                return days <= 30 && game.player && game.player.gold >= 10000;
+            }
+        },
+        completionist: {
+            id: 'completionist',
+            name: 'Completionist',
+            description: 'Unlock all non-hidden achievements',
+            icon: '🎯',
+            category: 'hidden',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            hidden: true,
+            condition: () => {
+                const nonHidden = Object.values(AchievementSystem.achievements).filter(a => !a.hidden && a.id !== 'completionist');
+                return nonHidden.every(a => a.unlocked);
+            }
         }
     },
 
-    // Statistics tracking
+    // 📊 statistics tracking - quantifying your mediocrity since day one
+    // every number here is a monument to your obsession
     stats: {
+        // trading stats - receipts of your capitalism addiction
         tradesCompleted: 0,
         highestProfit: 0,
+        nightTrades: 0,
+        maxMerchantTrades: 0,
+        merchantTradeCount: {},
+
+        // travel stats - proof you can't sit still
         locationsVisited: 0,
         uniqueLocationsVisited: new Set(),
         distanceTraveled: 0,
         journeysCompleted: 0,
+        dungeonVisits: 0,
+        dungeonVisitsIn5Years: 0,
+        dungeonVisitLog: [],
+
+        // combat/survival stats - violence isn't the answer but sometimes it's the only option
         encountersSurvived: 0,
         banditsDefeated: 0,
         narrowEscapes: 0,
+        banditEncounters: 0,
+        stealthyExplorer: true,
+
+        // collection stats - hoarding is self care actually
         rareItemsOwned: 0,
         treasuresFound: 0,
+
+        // luxury stats - pretending you have taste
+        luxuryItemsOwned: 0,
+        uniqueLuxuryItems: 0,
+        silkTraded: 0,
+        jewelryValue: 0,
+        wineCollected: 0,
+        spicesTraded: 0,
+        totalLuxuryValue: 0,
+
+        // equipment stats - dress to kill (literally)
+        weaponsOwned: 0,
+        armorOwned: 0,
+        fullyEquipped: false,
+        uniqueEquipmentOwned: 0,
+        legendaryItemsOwned: 0,
+        uniqueWeaponsOwned: 0,
+
+        // crafting stats - making things is cheaper than therapy
+        itemsCrafted: 0,
+        tier2ItemsCrafted: 0,
+        tier3ItemsCrafted: 0,
+        legendaryItemsCrafted: 0,
+        metalItemsCrafted: 0,
+        potionsCrafted: 0,
+        clothItemsCrafted: 0,
+
+        // property stats - playing landlord simulator within a trading simulator
+        propertiesOwned: 0,
+        employeesHired: 0,
+        currentEmployees: 0,
+        maxPropertyLevel: 0,
+        totalStorageCapacity: 0,
+
+        // special/hidden stats - the secrets you don't know you're keeping
         ragsToRiches: false,
         perfectHaggles: 0,
-        goldGivenAway: 0
+        goldGivenAway: 0,
+        longestNoRestStreak: 0,
+        currentNoRestStreak: 0,
+        pennyPincherEligible: true,
+        maxSinglePurchase: 0,
+        sunriseTrade: false,
+        sunsetTrade: false,
+        sunriseSunsetTrade: false,
+        lastTradeDay: -1,
+        fullMoonProfit: 0,
+        fullMoonProfitToday: 0
     },
 
-    // Initialize the achievement system
+    // 🎉 Achievement popup queue system
+    pendingAchievements: [],
+    isShowingPopup: false,
+    wasGamePaused: false,
+
+    // wake up this monument to your gaming addiction
     init() {
-        console.log('Achievement System initialized');
+        console.log('🏆 Achievement System awakened from its slumber... time to validate your existence');
         this.checkAchievements();
     },
 
-    // Check all achievements - wrapped in try-catch so errors dont freeze the UI
+    // check all achievements - wrapped in try-catch cuz errors at 3am hit different
+    // collects all newly unlocked achievements like pokemon cards of sadness
     checkAchievements() {
         if (!game.player) return;
+
+        const newlyUnlocked = [];
 
         for (const [id, achievement] of Object.entries(this.achievements)) {
             try {
                 if (!achievement.unlocked && achievement.condition()) {
-                    this.unlockAchievement(id);
+                    // Mark as unlocked but don't show popup yet
+                    achievement.unlocked = true;
+                    achievement.unlockedAt = Date.now();
+                    newlyUnlocked.push(achievement);
+                    console.log(`Achievement unlocked: ${achievement.name}`);
                 }
             } catch (err) {
                 // dont let one broken achievement check crash everything lol
                 console.warn(`Achievement check failed for ${id}:`, err.message);
             }
         }
+
+        // If any achievements were unlocked, queue them and show popup
+        if (newlyUnlocked.length > 0) {
+            this.saveProgress();
+            this.queueAchievementPopups(newlyUnlocked);
+        }
     },
 
-    // Unlock an achievement
+    // Unlock a single achievement directly (for manual unlocks)
     unlockAchievement(achievementId) {
         const achievement = this.achievements[achievementId];
         if (!achievement || achievement.unlocked) return;
@@ -343,16 +903,412 @@ const AchievementSystem = {
         achievement.unlocked = true;
         achievement.unlockedAt = Date.now();
 
-        // Show notification
-        this.showAchievementNotification(achievement);
-
         // Save progress
         this.saveProgress();
+
+        // Queue and show popup
+        this.queueAchievementPopups([achievement]);
 
         console.log(`Achievement unlocked: ${achievement.name}`);
     },
 
-    // Show achievement notification
+    // Queue achievements for popup display
+    queueAchievementPopups(achievements) {
+        // Add to pending queue
+        this.pendingAchievements.push(...achievements);
+
+        // If not already showing a popup, start showing
+        if (!this.isShowingPopup) {
+            this.showNextAchievementPopup();
+        }
+    },
+
+    // Show the next achievement popup in the queue
+    showNextAchievementPopup() {
+        if (this.pendingAchievements.length === 0) {
+            this.isShowingPopup = false;
+            // Resume game if we paused it
+            if (!this.wasGamePaused && typeof TimeSystem !== 'undefined') {
+                TimeSystem.resume();
+            }
+            return;
+        }
+
+        this.isShowingPopup = true;
+
+        // Pause the game (remember if it was already paused)
+        if (typeof TimeSystem !== 'undefined') {
+            this.wasGamePaused = TimeSystem.isPaused;
+            if (!this.wasGamePaused) {
+                TimeSystem.pause();
+            }
+        }
+
+        // Get all pending achievements to show count
+        const totalPending = this.pendingAchievements.length;
+        const achievement = this.pendingAchievements.shift();
+
+        this.showAchievementPopup(achievement, totalPending);
+    },
+
+    // Show the achievement popup overlay
+    showAchievementPopup(achievement, remainingCount) {
+        // Remove any existing popup
+        const existingPopup = document.getElementById('achievement-popup-overlay');
+        if (existingPopup) existingPopup.remove();
+
+        // Get rarity colors
+        const rarityColors = {
+            common: { bg: '#4a5568', border: '#718096', glow: 'rgba(113, 128, 150, 0.5)' },
+            uncommon: { bg: '#2f855a', border: '#48bb78', glow: 'rgba(72, 187, 120, 0.5)' },
+            rare: { bg: '#2b6cb0', border: '#4299e1', glow: 'rgba(66, 153, 225, 0.6)' },
+            legendary: { bg: '#b7791f', border: '#ecc94b', glow: 'rgba(236, 201, 75, 0.7)' }
+        };
+        const colors = rarityColors[achievement.rarity] || rarityColors.common;
+
+        // Create popup overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'achievement-popup-overlay';
+        overlay.innerHTML = `
+            <div class="achievement-popup-backdrop"></div>
+            <div class="achievement-popup-container">
+                <div class="achievement-popup-header">
+                    <div class="achievement-popup-stars">★ ★ ★</div>
+                    <h2>🏆 ACHIEVEMENT UNLOCKED!</h2>
+                    <div class="achievement-popup-stars">★ ★ ★</div>
+                </div>
+                <div class="achievement-popup-content">
+                    <div class="achievement-popup-icon-wrapper">
+                        <div class="achievement-popup-icon">${achievement.icon}</div>
+                        <div class="achievement-popup-icon-glow"></div>
+                    </div>
+                    <div class="achievement-popup-name">${achievement.name}</div>
+                    <div class="achievement-popup-description">${achievement.description}</div>
+                    <div class="achievement-popup-rarity rarity-${achievement.rarity}">
+                        ${achievement.rarity.toUpperCase()}
+                    </div>
+                    <div class="achievement-popup-category">
+                        Category: ${achievement.category.charAt(0).toUpperCase() + achievement.category.slice(1)}
+                    </div>
+                </div>
+                <div class="achievement-popup-footer">
+                    ${remainingCount > 1
+                        ? `<div class="achievement-popup-more">+${remainingCount - 1} more achievement${remainingCount > 2 ? 's' : ''} unlocked!</div>`
+                        : ''}
+                    <button id="achievement-popup-continue-btn" class="achievement-popup-btn">
+                        ${remainingCount > 1 ? '➡️ Next Achievement' : '✓ Continue'}
+                    </button>
+                    <div class="achievement-popup-hint">Press ENTER or click to continue</div>
+                </div>
+            </div>
+        `;
+
+        // Style the overlay
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: achievementFadeIn 0.3s ease-out;
+        `;
+
+        document.body.appendChild(overlay);
+
+        // Add styles if not present
+        this.addAchievementPopupStyles();
+
+        // Add click handler to continue button
+        const continueBtn = document.getElementById('achievement-popup-continue-btn');
+        if (continueBtn) {
+            continueBtn.addEventListener('click', () => this.closeAchievementPopup());
+        }
+
+        // Add keyboard handler for Enter/Escape/Space
+        this._popupKeyHandler = (e) => {
+            if (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                this.closeAchievementPopup();
+            }
+        };
+        document.addEventListener('keydown', this._popupKeyHandler, true);
+
+        // Add click on backdrop to close
+        const backdrop = overlay.querySelector('.achievement-popup-backdrop');
+        if (backdrop) {
+            backdrop.addEventListener('click', () => this.closeAchievementPopup());
+        }
+
+        // Also add message to game log
+        if (typeof addMessage === 'function') {
+            addMessage(`🏆 Achievement Unlocked: ${achievement.name}`);
+        }
+
+        // Play sound if available
+        if (typeof AudioSystem !== 'undefined' && AudioSystem.play) {
+            AudioSystem.play('achievement');
+        }
+    },
+
+    // Close the current achievement popup and show next (if any)
+    closeAchievementPopup() {
+        // Remove keyboard handler
+        if (this._popupKeyHandler) {
+            document.removeEventListener('keydown', this._popupKeyHandler, true);
+            this._popupKeyHandler = null;
+        }
+
+        // Animate out and remove
+        const overlay = document.getElementById('achievement-popup-overlay');
+        if (overlay) {
+            overlay.style.animation = 'achievementFadeOut 0.2s ease-in';
+            setTimeout(() => {
+                overlay.remove();
+                // Show next achievement or finish
+                this.showNextAchievementPopup();
+            }, 200);
+        } else {
+            this.showNextAchievementPopup();
+        }
+    },
+
+    // Add CSS styles for the achievement popup
+    addAchievementPopupStyles() {
+        if (document.getElementById('achievement-popup-styles')) return;
+
+        const styles = document.createElement('style');
+        styles.id = 'achievement-popup-styles';
+        styles.textContent = `
+            @keyframes achievementFadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+
+            @keyframes achievementFadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+
+            @keyframes achievementSlideIn {
+                from { transform: scale(0.8) translateY(-30px); opacity: 0; }
+                to { transform: scale(1) translateY(0); opacity: 1; }
+            }
+
+            @keyframes achievementIconPulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+
+            @keyframes achievementGlow {
+                0%, 100% { opacity: 0.5; transform: scale(1); }
+                50% { opacity: 1; transform: scale(1.2); }
+            }
+
+            @keyframes achievementShine {
+                0% { background-position: -200% center; }
+                100% { background-position: 200% center; }
+            }
+
+            @keyframes starTwinkle {
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.5; transform: scale(0.8); }
+            }
+
+            .achievement-popup-backdrop {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(5px);
+            }
+
+            .achievement-popup-container {
+                position: relative;
+                background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f0f1a 100%);
+                border: 3px solid #ffd700;
+                border-radius: 16px;
+                padding: 30px 40px;
+                max-width: 500px;
+                width: 90%;
+                text-align: center;
+                box-shadow:
+                    0 0 30px rgba(255, 215, 0, 0.4),
+                    0 0 60px rgba(255, 215, 0, 0.2),
+                    inset 0 0 30px rgba(255, 215, 0, 0.1);
+                animation: achievementSlideIn 0.4s ease-out;
+            }
+
+            .achievement-popup-header {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+
+            .achievement-popup-header h2 {
+                color: #ffd700;
+                font-size: 24px;
+                margin: 0;
+                text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+                background: linear-gradient(90deg, #ffd700, #fff, #ffd700);
+                background-size: 200% auto;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                animation: achievementShine 3s linear infinite;
+            }
+
+            .achievement-popup-stars {
+                color: #ffd700;
+                font-size: 14px;
+                letter-spacing: 5px;
+                animation: starTwinkle 1.5s ease-in-out infinite;
+            }
+
+            .achievement-popup-content {
+                padding: 20px 0;
+            }
+
+            .achievement-popup-icon-wrapper {
+                position: relative;
+                display: inline-block;
+                margin-bottom: 15px;
+            }
+
+            .achievement-popup-icon {
+                font-size: 72px;
+                line-height: 1;
+                position: relative;
+                z-index: 2;
+                animation: achievementIconPulse 2s ease-in-out infinite;
+                filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+            }
+
+            .achievement-popup-icon-glow {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 100px;
+                height: 100px;
+                background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, transparent 70%);
+                border-radius: 50%;
+                z-index: 1;
+                animation: achievementGlow 2s ease-in-out infinite;
+            }
+
+            .achievement-popup-name {
+                font-size: 28px;
+                font-weight: bold;
+                color: #fff;
+                margin-bottom: 10px;
+                text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            }
+
+            .achievement-popup-description {
+                font-size: 16px;
+                color: #b8c5d6;
+                margin-bottom: 15px;
+                line-height: 1.5;
+            }
+
+            .achievement-popup-rarity {
+                display: inline-block;
+                padding: 6px 20px;
+                border-radius: 20px;
+                font-size: 14px;
+                font-weight: bold;
+                letter-spacing: 2px;
+                margin-bottom: 10px;
+            }
+
+            .achievement-popup-rarity.rarity-common {
+                background: linear-gradient(180deg, #4a5568 0%, #2d3748 100%);
+                color: #e2e8f0;
+                border: 1px solid #718096;
+            }
+
+            .achievement-popup-rarity.rarity-uncommon {
+                background: linear-gradient(180deg, #2f855a 0%, #22543d 100%);
+                color: #9ae6b4;
+                border: 1px solid #48bb78;
+            }
+
+            .achievement-popup-rarity.rarity-rare {
+                background: linear-gradient(180deg, #2b6cb0 0%, #2c5282 100%);
+                color: #90cdf4;
+                border: 1px solid #4299e1;
+            }
+
+            .achievement-popup-rarity.rarity-legendary {
+                background: linear-gradient(180deg, #b7791f 0%, #975a16 100%);
+                color: #faf089;
+                border: 1px solid #ecc94b;
+                box-shadow: 0 0 15px rgba(236, 201, 75, 0.5);
+            }
+
+            .achievement-popup-category {
+                font-size: 12px;
+                color: #718096;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+
+            .achievement-popup-footer {
+                margin-top: 25px;
+                padding-top: 20px;
+                border-top: 1px solid rgba(255, 215, 0, 0.2);
+            }
+
+            .achievement-popup-more {
+                color: #ffd700;
+                font-size: 14px;
+                margin-bottom: 15px;
+                animation: starTwinkle 1s ease-in-out infinite;
+            }
+
+            .achievement-popup-btn {
+                background: linear-gradient(180deg, #ffd700 0%, #b8860b 100%);
+                color: #1a1a2e;
+                border: none;
+                padding: 12px 40px;
+                font-size: 16px;
+                font-weight: bold;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            }
+
+            .achievement-popup-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+                background: linear-gradient(180deg, #ffe44d 0%, #daa520 100%);
+            }
+
+            .achievement-popup-btn:active {
+                transform: translateY(0);
+            }
+
+            .achievement-popup-hint {
+                margin-top: 12px;
+                font-size: 11px;
+                color: #4a5568;
+            }
+        `;
+
+        document.head.appendChild(styles);
+    },
+
+    // Legacy notification (small corner popup) - kept for compatibility
     showAchievementNotification(achievement) {
         // Create notification element
         const notification = document.createElement('div');
@@ -475,7 +1431,7 @@ const AchievementSystem = {
         return Object.values(this.achievements).filter(a => !a.unlocked);
     },
 
-    // Save achievement progress
+    // engrave your accomplishments into browser memory forever
     saveProgress() {
         const saveData = {
             achievements: {},
@@ -496,7 +1452,7 @@ const AchievementSystem = {
         localStorage.setItem('achievementProgress', JSON.stringify(saveData));
     },
 
-    // Load achievement progress
+    // resurrect your past glory from the localStorage crypt
     loadProgress() {
         const saved = localStorage.getItem('achievementProgress');
         if (!saved) return;
@@ -530,7 +1486,7 @@ const AchievementSystem = {
         }
     },
 
-    // Reset all achievements (for testing)
+    // nuke everything and start fresh - like ctrl+z for your entire existence
     reset() {
         for (const achievement of Object.values(this.achievements)) {
             achievement.unlocked = false;
@@ -538,20 +1494,80 @@ const AchievementSystem = {
         }
 
         this.stats = {
+            // Trading stats
             tradesCompleted: 0,
             highestProfit: 0,
+            nightTrades: 0,
+            maxMerchantTrades: 0,
+            merchantTradeCount: {},
+
+            // Travel stats
             locationsVisited: 0,
             uniqueLocationsVisited: new Set(),
             distanceTraveled: 0,
             journeysCompleted: 0,
+            dungeonVisits: 0,
+            dungeonVisitsIn5Years: 0,
+            dungeonVisitLog: [],
+
+            // Combat/survival stats
             encountersSurvived: 0,
             banditsDefeated: 0,
             narrowEscapes: 0,
+            banditEncounters: 0,
+            stealthyExplorer: true,
+
+            // Collection stats
             rareItemsOwned: 0,
             treasuresFound: 0,
+
+            // Luxury stats
+            luxuryItemsOwned: 0,
+            uniqueLuxuryItems: 0,
+            silkTraded: 0,
+            jewelryValue: 0,
+            wineCollected: 0,
+            spicesTraded: 0,
+            totalLuxuryValue: 0,
+
+            // Equipment stats
+            weaponsOwned: 0,
+            armorOwned: 0,
+            fullyEquipped: false,
+            uniqueEquipmentOwned: 0,
+            legendaryItemsOwned: 0,
+            uniqueWeaponsOwned: 0,
+
+            // Crafting stats
+            itemsCrafted: 0,
+            tier2ItemsCrafted: 0,
+            tier3ItemsCrafted: 0,
+            legendaryItemsCrafted: 0,
+            metalItemsCrafted: 0,
+            potionsCrafted: 0,
+            clothItemsCrafted: 0,
+
+            // Property stats
+            propertiesOwned: 0,
+            employeesHired: 0,
+            currentEmployees: 0,
+            maxPropertyLevel: 0,
+            totalStorageCapacity: 0,
+
+            // Special/hidden stats
             ragsToRiches: false,
             perfectHaggles: 0,
-            goldGivenAway: 0
+            goldGivenAway: 0,
+            longestNoRestStreak: 0,
+            currentNoRestStreak: 0,
+            pennyPincherEligible: true,
+            maxSinglePurchase: 0,
+            sunriseTrade: false,
+            sunsetTrade: false,
+            sunriseSunsetTrade: false,
+            lastTradeDay: -1,
+            fullMoonProfit: 0,
+            fullMoonProfitToday: 0
         };
 
         this.saveProgress();
@@ -560,8 +1576,9 @@ const AchievementSystem = {
 };
 
 // ===== UI FUNCTIONS =====
+// where we pretend the interface doesn't cause us pain
 
-// Open achievement panel
+// summon the achievement shrine from the void
 function openAchievementPanel() {
     const overlay = document.getElementById('achievement-overlay');
     if (overlay) {
@@ -571,7 +1588,7 @@ function openAchievementPanel() {
     }
 }
 
-// Close achievement panel
+// banish the achievement panel back to the shadow realm
 function closeAchievementPanel() {
     const overlay = document.getElementById('achievement-overlay');
     if (overlay) {
@@ -579,7 +1596,7 @@ function closeAchievementPanel() {
     }
 }
 
-// Populate achievements in the panel
+// fill the panel with your digital trophies of desperation
 function populateAchievements(category = 'all') {
     const grid = document.getElementById('achievement-grid');
     if (!grid) return;

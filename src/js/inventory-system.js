@@ -2,6 +2,9 @@
 // 🎒 INVENTORY SYSTEM - hoarding simulator 3000
 // ═══════════════════════════════════════════════════════════════
 // where we store all the junk we cant let go of... i relate
+// File Version: 0.1
+// Game Version: 0.1
+// Made by Unity AI Lab - Hackall360, Sponge, GFourteen
 
 const InventorySystem = {
     // ⚙️ Config - limits on our hoarding tendencies

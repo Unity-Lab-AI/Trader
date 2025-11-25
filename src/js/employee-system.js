@@ -3,6 +3,9 @@
 // ═══════════════════════════════════════════════════════════════
 // hire people, pay them wages, watch them generate revenue
 // basically playing god with medieval HR
+// File Version: 0.1
+// Game Version: 0.1
+// Made by Unity AI Lab - Hackall360, Sponge, GFourteen
 
 const EmployeeSystem = {
     // 🧑‍💼 Employee types - varieties of exploitable labor

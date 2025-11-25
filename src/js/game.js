@@ -1,6 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
 // 🖤 MEDIEVAL TRADING GAME - where capitalism meets darkness 🖤
 // ═══════════════════════════════════════════════════════════════
+// File Version: 0.1
+// Game Version: 0.1
+// Made by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
 // listen, this whole file is basically my 3am coding aesthetic
 // if you're reading this during normal human hours, i'm judging you
 
@@ -1802,9 +1806,18 @@ const game = {
                     }
                 }
                 
-                // Check if player is dead
+                // 💀 check if the void claims another soul
                 if (game.player.stats.health <= 0) {
-                    handlePlayerDeath();
+                    // diagnose the final tragedy
+                    let deathCause = 'the void simply called';
+                    if (game.player.stats.hunger <= 0 && game.player.stats.thirst <= 0) {
+                        deathCause = 'withered away - hungry and parched';
+                    } else if (game.player.stats.hunger <= 0) {
+                        deathCause = 'starved while surrounded by gold';
+                    } else if (game.player.stats.thirst <= 0) {
+                        deathCause = 'died of thirst - ironic, really';
+                    }
+                    handlePlayerDeath(deathCause);
                 }
                 
                 updatePlayerStats();
@@ -4148,7 +4161,7 @@ if (document.readyState === 'loading') {
 
     // Show main menu
     showScreen('main-menu');
-    addMessage('Welcome to the Trading Game!');
+    addMessage(typeof GameConfig !== 'undefined' ? GameConfig.ui.welcomeMessage : 'Welcome to Medieval Trading Game!');
     
     // Then initialize all systems with proper order
     setTimeout(() => {
@@ -4174,7 +4187,7 @@ if (document.readyState === 'loading') {
     console.log('⌨️ KeyBindings setup complete');
 
     showScreen('main-menu');
-    addMessage('Welcome to the Trading Game!');
+    addMessage(typeof GameConfig !== 'undefined' ? GameConfig.ui.welcomeMessage : 'Welcome to Medieval Trading Game!');
 
     setTimeout(() => {
         initializeAllSystems();
@@ -4898,9 +4911,10 @@ function hideGameUIForSetup() {
     const messageLog = document.getElementById('message-log');
     if (messageLog) messageLog.classList.add('hidden');
 
-    // Hide panel toolbar (the floating panels button list)
-    const panelToolbar = document.getElementById('panel-toolbar');
-    if (panelToolbar) panelToolbar.classList.add('hidden');
+    // Hide panel toolbar (via PanelManager)
+    if (typeof PanelManager !== 'undefined' && PanelManager.hideToolbar) {
+        PanelManager.hideToolbar();
+    }
 
     // Hide game layout (contains main game area)
     const gameLayout = document.getElementById('game-layout');
@@ -4916,13 +4930,16 @@ function hideGameUIForSetup() {
         gameContainer.style.minHeight = '100vh';
     }
 
-    // Ensure ui-panels is visible and centered for setup
+    // Move ui-panels OUT of game-layout so it's visible during setup
+    // (game-layout is hidden, so anything inside won't show)
     const uiPanels = document.getElementById('ui-panels');
-    if (uiPanels) {
+    if (uiPanels && gameContainer) {
+        gameContainer.appendChild(uiPanels);
         uiPanels.style.position = 'relative';
         uiPanels.style.transform = 'none';
         uiPanels.style.top = 'auto';
         uiPanels.style.left = 'auto';
+        uiPanels.style.pointerEvents = 'auto'; // enable clicking on setup panel
     }
 
     console.log('🎬 Game UI hidden for setup');
@@ -4951,9 +4968,10 @@ function showGameUI() {
     const messageLog = document.getElementById('message-log');
     if (messageLog) messageLog.classList.remove('hidden');
 
-    // Show panel toolbar
-    const panelToolbar = document.getElementById('panel-toolbar');
-    if (panelToolbar) panelToolbar.classList.remove('hidden');
+    // Show panel toolbar (via PanelManager)
+    if (typeof PanelManager !== 'undefined' && PanelManager.showToolbar) {
+        PanelManager.showToolbar();
+    }
 
     // Show game layout
     const gameLayout = document.getElementById('game-layout');
@@ -4969,13 +4987,15 @@ function showGameUI() {
         gameContainer.style.minHeight = '';
     }
 
-    // Reset ui-panels to default positioning
+    // Move ui-panels back into game-layout and reset positioning
     const uiPanels = document.getElementById('ui-panels');
-    if (uiPanels) {
+    if (uiPanels && gameLayout) {
+        gameLayout.appendChild(uiPanels);
         uiPanels.style.position = '';
         uiPanels.style.transform = '';
         uiPanels.style.top = '';
         uiPanels.style.left = '';
+        uiPanels.style.pointerEvents = ''; // restore default (none in CSS for pass-through)
     }
 
     console.log('🎬 Game UI revealed');
@@ -7150,11 +7170,34 @@ function equipWeapon(item) {
 }
 
 
-// Handle player death
-function handlePlayerDeath() {
-    addMessage("💀 You have died! Game Over.");
+// 💀 Handle player death - the final curtain call, darling
+function handlePlayerDeath(deathCause = 'Unknown causes') {
+    addMessage("💀 you have died... the void welcomes you home.");
+
+    // count the days we fought against the inevitable
+    const daysSurvived = TimeSystem.currentTime.day +
+        (TimeSystem.currentTime.month - 1) * 30 +
+        (TimeSystem.currentTime.year - 1) * 360;
+
+    // etch your name into the hall of fallen merchants
+    const rank = HighScoreSystem.addHighScore(
+        game.player?.name || 'Unknown Soul',
+        game.player?.gold || 0,
+        daysSurvived,
+        deathCause
+    );
+
+    // did you make it to the leaderboard? small victories in death
+    if (rank) {
+        addMessage(`🏆 you ranked #${rank} on the leaderboard... immortalized in pixels`);
+    }
+
+    // refresh the memorial wall
+    if (typeof SaveUISystem !== 'undefined') {
+        SaveUISystem.updateLeaderboard();
+    }
+
     changeState(GameState.MENU);
-    // Could implement respawn system here
 }
 
 // Rest and Recovery System

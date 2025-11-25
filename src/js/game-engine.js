@@ -1,18 +1,22 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎮 GAME ENGINE - The heart that makes everything tick
+// 🎮 GAME ENGINE - the beating heart of this digital existence
 // ═══════════════════════════════════════════════════════════════
-// This module orchestrates the game loop, time system, and travel
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
+// this module orchestrates the game loop, time system, and travel
+// basically the puppet master pulling all the strings while you think you're in control
 
 const GameEngine = {
-    // Engine state
+    // engine state - the vital signs of our digital frankenstein
     isRunning: false,
     lastFrameTime: 0,
     animationFrameId: null,
 
-    // Debug mode
+    // debug mode - for when you need to see the matrix
     debug: false,
 
-    // Initialize the engine
+    // wake up the engine from its eternal slumber
     init() {
         console.log('🎮 GameEngine: Initializing...');
 
@@ -35,7 +39,7 @@ const GameEngine = {
         return true;
     },
 
-    // Main game loop - runs continuously
+    // main game loop - the heartbeat that never stops (until it does)
     tick(currentTime) {
         if (!this.isRunning) {
             this.animationFrameId = null;
@@ -69,7 +73,7 @@ const GameEngine = {
         this.animationFrameId = requestAnimationFrame((t) => this.tick(t));
     },
 
-    // Start the engine
+    // start the engine - breathe life into this digital corpse
     start() {
         if (this.isRunning) {
             console.log('🎮 GameEngine: Already running');
@@ -83,7 +87,7 @@ const GameEngine = {
         console.log('🎮 GameEngine: Running!');
     },
 
-    // Stop the engine
+    // stop the engine - eternal silence (dramatic af)
     stop() {
         console.log('🎮 GameEngine: Stopping...');
         this.isRunning = false;
@@ -93,7 +97,7 @@ const GameEngine = {
         }
     },
 
-    // Called when game time advances
+    // called when game time advances - the unstoppable march of entropy
     onTimeAdvance() {
         // Update event system
         if (typeof EventSystem !== 'undefined') {
@@ -141,7 +145,7 @@ const GameEngine = {
         }
     },
 
-    // Update travel system
+    // update travel system - are we there yet? (probably not)
     updateTravel() {
         if (typeof TravelSystem === 'undefined') return;
 
@@ -154,7 +158,7 @@ const GameEngine = {
         }
     },
 
-    // Update UI displays
+    // update ui displays - make the pixels dance for the human
     updateUI() {
         // Update time display
         this.updateTimeDisplay();
@@ -168,7 +172,7 @@ const GameEngine = {
         }
     },
 
-    // Update the time display in the UI
+    // update the time display - watching the clock tick is a vibe tbh
     updateTimeDisplay() {
         if (typeof TimeSystem === 'undefined') return;
 
@@ -207,7 +211,7 @@ const GameEngine = {
         }
     },
 
-    // Update time control button active states
+    // update time control button states - which button is the chosen one rn
     updateTimeControlButtons() {
         if (typeof TimeSystem === 'undefined') return;
 
@@ -235,7 +239,7 @@ const GameEngine = {
         });
     },
 
-    // Setup time control buttons
+    // setup time control buttons - giving humans the illusion of control over time
     setupTimeControls() {
         console.log('🎮 GameEngine: Setting up time controls...');
 
@@ -280,7 +284,7 @@ const GameEngine = {
         console.log('🎮 GameEngine: Time controls ready');
     },
 
-    // Setup travel triggers (clicking on map locations)
+    // setup travel triggers - click a place, suffer the journey
     setupTravelTriggers() {
         console.log('🎮 GameEngine: Setting up travel triggers...');
 
@@ -315,7 +319,7 @@ const GameEngine = {
         }
     },
 
-    // Set game speed (convenience method)
+    // set game speed - time bends to your will (kinda)
     setSpeed(speed) {
         if (typeof TimeSystem !== 'undefined') {
             TimeSystem.setSpeed(speed);
@@ -328,17 +332,17 @@ const GameEngine = {
         }
     },
 
-    // Pause the game
+    // pause the game - freeze time like your emotional state
     pause() {
         this.setSpeed('PAUSED');
     },
 
-    // Resume at normal speed
+    // resume at normal speed - unfreeze the suffering
     play() {
         this.setSpeed('NORMAL');
     },
 
-    // Get current game state info
+    // get current game state info - a snapshot of your digital existence
     getState() {
         return {
             isRunning: this.isRunning,
@@ -350,7 +354,7 @@ const GameEngine = {
     }
 };
 
-// Auto-initialize when DOM is ready
+// auto-initialize when DOM is ready - the ritual begins when the page loads
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
@@ -366,5 +370,5 @@ if (document.readyState === 'loading') {
     }, 500);
 }
 
-// Expose globally
+// expose globally - let the world see our creation
 window.GameEngine = GameEngine;

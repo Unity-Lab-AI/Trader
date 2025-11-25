@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // 🪟 MODAL SYSTEM - popups that demand your attention
 // ═══════════════════════════════════════════════════════════════
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// ═══════════════════════════════════════════════════════════════
 // centralized modal management for all those "are you sure?" moments
 // because one popup is never enough apparently
 

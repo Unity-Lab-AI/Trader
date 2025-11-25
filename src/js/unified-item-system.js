@@ -1,9 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 📦 UNIFIED ITEM SYSTEM - The master item database and handler
+// 📦 UNIFIED ITEM SYSTEM - the master item database and handler
 // ═══════════════════════════════════════════════════════════════
-// Consolidates all item definitions, crafting, gathering, equipment,
-// and consumable systems into one unified circular economy
+// File Version: 0.1
+// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
+// consolidates all item definitions, crafting, gathering, equipment
+// into one unified circular economy of despair and profit
 
 console.log('📦 Unified Item System initializing...');
 
