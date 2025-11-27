@@ -1,6 +1,6 @@
 {
   "name": "medieval-trading-game",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Medieval Trading Game - where capitalism meets darkness",
   "scripts": {
     "test": "npx playwright test",

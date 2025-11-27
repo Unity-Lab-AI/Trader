@@ -513,136 +513,47 @@ jobs:
           UI_ELEMENTS: ${{ needs.test-ui-elements.result }}
           COMPREHENSIVE: ${{ needs.test-comprehensive-ui.result }}
         run: |
-          # Generate status emojis based on results
-          get_status() {
-            case "$1" in
-              "success") echo "🟢" ;;
-              "failure") echo "🔴" ;;
-              "skipped") echo "🟡" ;;
-              "cancelled") echo "⚫" ;;
-              *) echo "⚪" ;;
-            esac
+          # Simple status indicator function
+          status_icon() {
+            if [ "$1" = "success" ]; then echo "✅"; else echo "❌"; fi
           }
 
           # Count results
           SUCCESS_COUNT=0
           FAILURE_COUNT=0
           for result in "$NEW_GAME" "$DEBUG_CMDS" "$PANELS" "$FEATURES" "$SETTINGS" "$UI_ELEMENTS" "$COMPREHENSIVE"; do
-            if [ "$result" = "success" ]; then ((SUCCESS_COUNT++)); fi
-            if [ "$result" = "failure" ]; then ((FAILURE_COUNT++)); fi
+            if [ "$result" = "success" ]; then SUCCESS_COUNT=$((SUCCESS_COUNT + 1)); fi
+            if [ "$result" = "failure" ]; then FAILURE_COUNT=$((FAILURE_COUNT + 1)); fi
           done
-          TOTAL_SUITES=7
 
-          # Build visual pipeline
-          cat >> $GITHUB_STEP_SUMMARY << 'SUMMARY_EOF'
-          # Medieval Trading Game - Test Pipeline
+          # Generate summary
+          echo "# Medieval Trading Game - Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed to:** $DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Suites" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Suite | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| New Game Flow | $(status_icon $NEW_GAME) $NEW_GAME |" >> $GITHUB_STEP_SUMMARY
+          echo "| Debug Commands | $(status_icon $DEBUG_CMDS) $DEBUG_CMDS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Panel Tests | $(status_icon $PANELS) $PANELS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Feature Tests | $(status_icon $FEATURES) $FEATURES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Settings Tests | $(status_icon $SETTINGS) $SETTINGS |" >> $GITHUB_STEP_SUMMARY
+          echo "| UI Elements | $(status_icon $UI_ELEMENTS) $UI_ELEMENTS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Comprehensive UI | $(status_icon $COMPREHENSIVE) $COMPREHENSIVE |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Passed:** $SUCCESS_COUNT / 7" >> $GITHUB_STEP_SUMMARY
+          echo "- **Failed:** $FAILURE_COUNT / 7" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-          ## Deployment
-          SUMMARY_EOF
-
-          echo "| Status | URL |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-----|" >> $GITHUB_STEP_SUMMARY
-          echo "| Live | [$DEPLOY_URL]($DEPLOY_URL) |" >> $GITHUB_STEP_SUMMARY
-
-          cat >> $GITHUB_STEP_SUMMARY << 'SUMMARY_EOF'
-
-          ---
-
-          ## Test Pipeline - Visual Status
-
-          ```
-          +------------------------------------------------------------------+
-          |                     TEST PIPELINE                                |
-          +------------------------------------------------------------------+
-          |                                                                  |
-          |   [BUILD] --> [DEPLOY] --> [TESTS]                              |
-          |                               |                                  |
-          |              +----------------+----------------+                 |
-          |              |                |                |                 |
-          |              v                v                v                 |
-          SUMMARY_EOF
-
-          echo "          |   [NewGame $(get_status $NEW_GAME)]    [Debug $(get_status $DEBUG_CMDS)]     [Panels $(get_status $PANELS)]    |" >> $GITHUB_STEP_SUMMARY
-          echo "          |              |                |                |                 |" >> $GITHUB_STEP_SUMMARY
-          echo "          |              v                v                v                 |" >> $GITHUB_STEP_SUMMARY
-          echo "          |   [Features $(get_status $FEATURES)]   [Settings $(get_status $SETTINGS)]   [UI $(get_status $UI_ELEMENTS)]        |" >> $GITHUB_STEP_SUMMARY
-          echo "          |              |                |                |                 |" >> $GITHUB_STEP_SUMMARY
-          echo "          |              +----------------+----------------+                 |" >> $GITHUB_STEP_SUMMARY
-          echo "          |                               |                                  |" >> $GITHUB_STEP_SUMMARY
-          echo "          |                               v                                  |" >> $GITHUB_STEP_SUMMARY
-          echo "          |                      [CompUI $(get_status $COMPREHENSIVE)]                       |" >> $GITHUB_STEP_SUMMARY
-
-          cat >> $GITHUB_STEP_SUMMARY << 'SUMMARY_EOF'
-          |                               |                                  |
-          |                               v                                  |
-          |                         [SUMMARY]                                |
-          +------------------------------------------------------------------+
-          ```
-
-          ---
-
-          ## Test Results Summary
-
-          | Test Suite | Status | Result |
-          |------------|--------|--------|
-          SUMMARY_EOF
-
-          echo "| New Game Flow | $(get_status $NEW_GAME) | $NEW_GAME |" >> $GITHUB_STEP_SUMMARY
-          echo "| Debug Commands | $(get_status $DEBUG_CMDS) | $DEBUG_CMDS |" >> $GITHUB_STEP_SUMMARY
-          echo "| Panel Tests | $(get_status $PANELS) | $PANELS |" >> $GITHUB_STEP_SUMMARY
-          echo "| Feature Tests | $(get_status $FEATURES) | $FEATURES |" >> $GITHUB_STEP_SUMMARY
-          echo "| Settings Tests | $(get_status $SETTINGS) | $SETTINGS |" >> $GITHUB_STEP_SUMMARY
-          echo "| UI Elements | $(get_status $UI_ELEMENTS) | $UI_ELEMENTS |" >> $GITHUB_STEP_SUMMARY
-          echo "| Comprehensive UI | $(get_status $COMPREHENSIVE) | $COMPREHENSIVE |" >> $GITHUB_STEP_SUMMARY
-
-          cat >> $GITHUB_STEP_SUMMARY << SUMMARY_EOF
-
-          ---
-
-          ## Overall Status
-
-          | Metric | Value |
-          |--------|-------|
-          | Passed Suites | $SUCCESS_COUNT / $TOTAL_SUITES |
-          | Failed Suites | $FAILURE_COUNT / $TOTAL_SUITES |
-          | Success Rate | $(( SUCCESS_COUNT * 100 / TOTAL_SUITES ))% |
-
-          SUMMARY_EOF
-
-          # Add overall status
           if [ "$FAILURE_COUNT" -eq "0" ]; then
-            cat >> $GITHUB_STEP_SUMMARY << 'STATUS_EOF'
-
-          ---
-
-          ## All Tests Passed!
-
-          *The darkness approves of your code, mortal.*
-
-          ```
-          +=======================================+
-          |     ALL SYSTEMS OPERATIONAL           |
-          |                                       |
-          |   127 TESTS PASSING                   |
-          |   0 FAILURES                          |
-          +=======================================+
-          ```
-
-          *May your bugs be few and your commits be clean*
-          STATUS_EOF
+            echo "### All Tests Passed! 🎉" >> $GITHUB_STEP_SUMMARY
           else
-            cat >> $GITHUB_STEP_SUMMARY << 'STATUS_EOF'
-
-          ---
-
-          ## Some Tests Failed
-
-          *The shadows whisper of bugs in the codebase...*
-
-          Please check the individual test job logs for details.
-
-          *Debug by candlelight, developer*
-          STATUS_EOF
+            echo "### Some Tests Failed" >> $GITHUB_STEP_SUMMARY
+            echo "Check individual job logs for details." >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: ❌ Fail if any tests failed

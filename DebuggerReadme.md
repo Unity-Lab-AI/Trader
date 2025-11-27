@@ -1,7 +1,7 @@
 # 🖤 DEBUGGER README - The Secret Arts of Game Manipulation 🖤
 ## Medieval Trading Game - Debug Console Documentation
 
-**Version:** 0.6
+**Version:** 0.7
 **Last Updated:** 2025-11-27
 **Access:** Unlocked via "Super Hacker" achievement OR backtick key (`)
 

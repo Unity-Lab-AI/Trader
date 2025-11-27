@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🖤 GAME CONFIG - the dark heart of all settings 🖤
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.6
+// File Version: 0.7
 // one file to rule them all, one file to bind them
 // change something here and watch the whole world shift
 // it's like being a god but with less responsibility
@@ -12,8 +12,8 @@ const GameConfig = {
     // 📋 VERSION INFO - tracking our descent into madness
     // ═══════════════════════════════════════════════════════════════
     version: {
-        game: '0.6',           // the great reorganization update 🖤
-        file: '0.6',           // keeping pace with the darkness
+        game: '0.7',           // the great reorganization update 🖤
+        file: '0.7',           // keeping pace with the darkness
         build: '2025.11',      // born in the depths of 2024
         releaseDate: '2025'    // the year we unleashed this beast
     },

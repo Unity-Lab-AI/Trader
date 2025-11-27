@@ -1,8 +1,8 @@
-# MEDIEVAL TRADING GAME - MASTER PLAN v0.6
+# MEDIEVAL TRADING GAME - MASTER PLAN v0.7
 ## The Dark Blueprint for Total Domination
 
 **Last Updated:** 2025-11-27
-**Version:** 0.6 - The Great Reorganization
+**Version:** 0.7 - The Great Reorganization
 **Status:** ACTIVE DEVELOPMENT
 
 ---
@@ -156,7 +156,7 @@ Medieval Trading Game is a browser-based economic simulation featuring:
 ## FILE STRUCTURE
 
 ```
-Trader v0.5/
+Trader 0.7/
 ├── index.html              # Entry point (1400+ lines)
 ├── config.js               # Game configuration
 ├── todo.md                 # Active task list

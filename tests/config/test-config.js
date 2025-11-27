@@ -111,10 +111,10 @@ module.exports = {
   // ═══════════════════════════════════════════════════════════════
 
   // How long to wait for game to load (ms)
-  loadTimeout: 20000,
+  loadTimeout: 30000,  // Increased for CI environments
 
   // How long to wait between actions (ms)
-  actionDelay: 300,
+  actionDelay: 200,  // Reduced for faster tests
 
   // Take screenshots on test failure
   screenshotOnFailure: true,

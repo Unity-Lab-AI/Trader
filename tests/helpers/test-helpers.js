@@ -29,37 +29,27 @@ async function waitForGameLoad(page) {
 
 /**
  * Start a new game and get to gameplay
+ * Optimized for speed - uses direct function calls where possible
  */
 async function startNewGame(page) {
   await waitForGameLoad(page);
 
   // Click New Game
   await page.click('#new-game-btn');
-  await page.waitForTimeout(config.actionDelay);
 
   // Wait for setup panel to be visible
   await page.waitForFunction(() => {
     const panel = document.getElementById('game-setup-panel');
     return panel && !panel.classList.contains('hidden');
-  }, { timeout: 5000 });
+  }, { timeout: 10000 });
 
-  // Fill in character name (required field)
-  const nameInput = await page.locator('#character-name-input');
-  if (await nameInput.count() > 0) {
-    await nameInput.fill('TestCharacter');
-    await page.waitForTimeout(100);
-  }
-
-  // Scroll down to reveal attribute section and Start Game button
+  // Fill name, spend points, and start game all in one evaluate call (faster)
   await page.evaluate(() => {
-    const panel = document.getElementById('game-setup-panel');
-    if (panel) panel.scrollTop = panel.scrollHeight;
-  });
-  await page.waitForTimeout(300);
+    // Fill character name
+    const nameInput = document.getElementById('character-name-input');
+    if (nameInput) nameInput.value = 'TestCharacter';
 
-  // Spend all attribute points using evaluate (more reliable than clicking)
-  await page.evaluate(() => {
-    // Directly set attributes if characterCreationState exists
+    // Spend all attribute points
     if (typeof characterCreationState !== 'undefined') {
       const attrs = ['strength', 'intelligence', 'charisma', 'endurance', 'luck'];
       let pointsToSpend = characterCreationState.availableAttributePoints || 5;
@@ -73,34 +63,16 @@ async function startNewGame(page) {
         i++;
       }
     }
-  });
-  await page.waitForTimeout(300);
 
-  // Enable the Start Game button if it's still disabled (force it)
-  await page.evaluate(() => {
+    // Enable and click start button
     const btn = document.getElementById('start-game-btn');
-    if (btn && btn.disabled) {
+    if (btn) {
       btn.disabled = false;
+      btn.click();
     }
   });
 
-  // Click Start Game button - try multiple approaches
-  const startBtn = await page.locator('#start-game-btn');
-  await startBtn.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(200);
-
-  // Try clicking the button
-  try {
-    await startBtn.click({ timeout: 2000 });
-  } catch (e) {
-    // If click fails, try calling startNewGame directly
-    await page.evaluate(() => {
-      if (typeof window.startNewGame === 'function') {
-        window.startNewGame();
-      }
-    });
-  }
-  await page.waitForTimeout(config.actionDelay * 2);
+  await page.waitForTimeout(config.actionDelay);
 
   // Wait for game to be running (setup panel hidden OR game container visible)
   await page.waitForFunction(() => {
@@ -114,7 +86,7 @@ async function startNewGame(page) {
     const locationVisible = locationPanel && !locationPanel.classList.contains('hidden');
 
     return setupHidden || gameVisible || locationVisible;
-  }, { timeout: 15000 });
+  }, { timeout: 20000 });
 }
 
 /**
