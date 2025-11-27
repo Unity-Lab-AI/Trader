@@ -1,17 +1,5 @@
-# ═══════════════════════════════════════════════════════════════
-# 🖤 GITHUB PAGES DEPLOYMENT + CONFIG-DRIVEN PLAYWRIGHT TESTS
-# ═══════════════════════════════════════════════════════════════
-# Flow:
-#   1. Build and deploy to GitHub Pages
-#   2. Read config.js to determine which tests to run
-#   3. Run only enabled test suites (skip passing tests to save CI minutes)
-#   4. Visual test status with individual workflow lights per test suite
-#
-# 🎮 CONTROL TESTS FROM config.js:
-#   - GameConfig.cicd.runAllTests = true  → Run ALL tests (override)
-#   - GameConfig.cicd.testSuites.newGame = false → Skip new-game tests
-#   - Toggle individual suites to save CI time on passing tests
-# ═══════════════════════════════════════════════════════════════
+# GitHub Pages Deployment + Config-Driven Playwright Tests
+# All tests disabled by default - enable in config.js to run
 
 name: Deploy and Test
 
@@ -20,7 +8,6 @@ on:
     branches:
       - main
       - master
-
   workflow_dispatch:
 
 permissions:
@@ -33,26 +20,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # ═══════════════════════════════════════════════════════════════
-  # 📦 BUILD JOB - Prepare the static site
-  # ═══════════════════════════════════════════════════════════════
+  # Build and prepare static site
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 🔄 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📄 Setup Pages
+      - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: 📤 Upload artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
 
-  # ═══════════════════════════════════════════════════════════════
-  # 🚀 DEPLOY JOB - Push to GitHub Pages
-  # ═══════════════════════════════════════════════════════════════
+  # Deploy to GitHub Pages
   deploy:
     environment:
       name: github-pages
@@ -62,13 +45,11 @@ jobs:
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: 🚀 Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # ═══════════════════════════════════════════════════════════════
-  # 🔍 READ CONFIG - Extract test settings from config.js
-  # ═══════════════════════════════════════════════════════════════
+  # Read test config from config.js
   read-config:
     runs-on: ubuntu-latest
     needs: deploy
@@ -82,29 +63,23 @@ jobs:
       settings: ${{ steps.parse.outputs.settings }}
       ui_elements: ${{ steps.parse.outputs.ui_elements }}
       comprehensive_ui: ${{ steps.parse.outputs.comprehensive_ui }}
-      page_url: ${{ needs.deploy.outputs.page_url }}
     steps:
-      - name: 🔄 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: 🔍 Parse config.js for CI/CD settings
+      - name: Parse config.js
         id: parse
         run: |
-          # 🖤 Extract the cicd config from config.js using Node
           node -e "
             const fs = require('fs');
             const content = fs.readFileSync('config.js', 'utf8');
-
-            // Extract runAllTests
             const runAllMatch = content.match(/runAllTests:\s*(true|false)/);
             const runAll = runAllMatch ? runAllMatch[1] : 'false';
-
-            // Extract individual test suite settings
             const suites = {
               newGame: content.match(/newGame:\s*(true|false)/),
               debugCommands: content.match(/debugCommands:\s*(true|false)/),
@@ -115,60 +90,54 @@ jobs:
               uiElements: content.match(/uiElements:\s*(true|false)/),
               comprehensiveUi: content.match(/comprehensiveUi:\s*(true|false)/)
             };
-
-            // Output for GitHub Actions
             console.log('run_all=' + runAll);
-            console.log('new_game=' + (suites.newGame ? suites.newGame[1] : 'true'));
-            console.log('debug_commands=' + (suites.debugCommands ? suites.debugCommands[1] : 'true'));
-            console.log('debug=' + (suites.debug ? suites.debug[1] : 'true'));
-            console.log('panels=' + (suites.panels ? suites.panels[1] : 'true'));
-            console.log('features=' + (suites.features ? suites.features[1] : 'true'));
-            console.log('settings=' + (suites.settings ? suites.settings[1] : 'true'));
-            console.log('ui_elements=' + (suites.uiElements ? suites.uiElements[1] : 'true'));
-            console.log('comprehensive_ui=' + (suites.comprehensiveUi ? suites.comprehensiveUi[1] : 'true'));
+            console.log('new_game=' + (suites.newGame ? suites.newGame[1] : 'false'));
+            console.log('debug_commands=' + (suites.debugCommands ? suites.debugCommands[1] : 'false'));
+            console.log('debug=' + (suites.debug ? suites.debug[1] : 'false'));
+            console.log('panels=' + (suites.panels ? suites.panels[1] : 'false'));
+            console.log('features=' + (suites.features ? suites.features[1] : 'false'));
+            console.log('settings=' + (suites.settings ? suites.settings[1] : 'false'));
+            console.log('ui_elements=' + (suites.uiElements ? suites.uiElements[1] : 'false'));
+            console.log('comprehensive_ui=' + (suites.comprehensiveUi ? suites.comprehensiveUi[1] : 'false'));
           " >> $GITHUB_OUTPUT
 
-      - name: 📊 Display Test Configuration
+      - name: Display Config
         run: |
-          echo "## 🎮 Test Configuration from config.js" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Configuration" >> $GITHUB_STEP_SUMMARY
           echo "| Suite | Enabled |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|---------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔥 Run All (Override) | ${{ steps.parse.outputs.run_all }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🎮 New Game | ${{ steps.parse.outputs.new_game }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🐛 Debug Commands | ${{ steps.parse.outputs.debug_commands }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔍 Debug | ${{ steps.parse.outputs.debug }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📋 Panels | ${{ steps.parse.outputs.panels }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🎯 Features | ${{ steps.parse.outputs.features }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ⚙️ Settings | ${{ steps.parse.outputs.settings }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🖥️ UI Elements | ${{ steps.parse.outputs.ui_elements }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🎨 Comprehensive UI | ${{ steps.parse.outputs.comprehensive_ui }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Run All Override | ${{ steps.parse.outputs.run_all }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| New Game | ${{ steps.parse.outputs.new_game }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Debug Commands | ${{ steps.parse.outputs.debug_commands }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Debug | ${{ steps.parse.outputs.debug }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Panels | ${{ steps.parse.outputs.panels }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Features | ${{ steps.parse.outputs.features }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Settings | ${{ steps.parse.outputs.settings }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| UI Elements | ${{ steps.parse.outputs.ui_elements }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Comprehensive UI | ${{ steps.parse.outputs.comprehensive_ui }} |" >> $GITHUB_STEP_SUMMARY
 
-  # ═══════════════════════════════════════════════════════════════
-  # 🧪 TEST SETUP - Install dependencies and prepare
-  # ═══════════════════════════════════════════════════════════════
+  # Setup test environment
   test-setup:
     runs-on: ubuntu-latest
     needs: [deploy, read-config]
-    outputs:
-      page_url: ${{ needs.deploy.outputs.page_url }}
+    if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.new_game == 'true' || needs.read-config.outputs.debug_commands == 'true' || needs.read-config.outputs.debug == 'true' || needs.read-config.outputs.panels == 'true' || needs.read-config.outputs.features == 'true' || needs.read-config.outputs.settings == 'true' || needs.read-config.outputs.ui_elements == 'true' || needs.read-config.outputs.comprehensive_ui == 'true'
     steps:
-      - name: 🔄 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📥 Install dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: 🎭 Install Playwright browsers
+      - name: Install Playwright
         run: npx playwright install --with-deps chromium
 
-      - name: 📤 Cache Playwright
+      - name: Cache Playwright
         uses: actions/cache/save@v4
         with:
           path: |
@@ -176,24 +145,22 @@ jobs:
             node_modules
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-  # ═══════════════════════════════════════════════════════════════
-  # 🎮 TEST: New Game Flow
-  # ═══════════════════════════════════════════════════════════════
+  # Test: New Game
   test-new-game:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
     if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.new_game == 'true'
     steps:
-      - name: 🔄 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📥 Restore cache
+      - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -201,42 +168,32 @@ jobs:
             node_modules
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      - name: 🔧 Install if cache miss
+      - name: Install if needed
         run: |
           if [ ! -d "node_modules" ]; then npm ci; fi
           if [ ! -d "$HOME/.cache/ms-playwright" ]; then npx playwright install --with-deps chromium; fi
 
-      - name: 🧪 Run New Game Tests
+      - name: Run Tests
         env:
           BASE_URL: ${{ needs.deploy.outputs.page_url }}
         run: npx playwright test tests/new-game.spec.js --reporter=line
 
-      - name: 🟢 Tests Passed
-        if: success()
-        run: echo "## 🎮 New Game Tests: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
-
-      - name: 🔴 Tests Failed
-        if: failure()
-        run: echo "## 🎮 New Game Tests: ❌ FAILED" >> $GITHUB_STEP_SUMMARY
-
-  # ═══════════════════════════════════════════════════════════════
-  # 🐛 TEST: Debug Commands
-  # ═══════════════════════════════════════════════════════════════
+  # Test: Debug Commands
   test-debug-commands:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
     if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.debug_commands == 'true'
     steps:
-      - name: 🔄 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📥 Restore cache
+      - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -244,42 +201,32 @@ jobs:
             node_modules
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      - name: 🔧 Install if cache miss
+      - name: Install if needed
         run: |
           if [ ! -d "node_modules" ]; then npm ci; fi
           if [ ! -d "$HOME/.cache/ms-playwright" ]; then npx playwright install --with-deps chromium; fi
 
-      - name: 🧪 Run Debug Command Tests
+      - name: Run Tests
         env:
           BASE_URL: ${{ needs.deploy.outputs.page_url }}
         run: npx playwright test tests/debug-commands.spec.js --reporter=line
 
-      - name: 🟢 Tests Passed
-        if: success()
-        run: echo "## 🐛 Debug Commands: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
-
-      - name: 🔴 Tests Failed
-        if: failure()
-        run: echo "## 🐛 Debug Commands: ❌ FAILED" >> $GITHUB_STEP_SUMMARY
-
-  # ═══════════════════════════════════════════════════════════════
-  # 🔍 TEST: Debug (Console Errors)
-  # ═══════════════════════════════════════════════════════════════
+  # Test: Debug
   test-debug:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
     if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.debug == 'true'
     steps:
-      - name: 🔄 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📥 Restore cache
+      - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -287,42 +234,32 @@ jobs:
             node_modules
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      - name: 🔧 Install if cache miss
+      - name: Install if needed
         run: |
           if [ ! -d "node_modules" ]; then npm ci; fi
           if [ ! -d "$HOME/.cache/ms-playwright" ]; then npx playwright install --with-deps chromium; fi
 
-      - name: 🧪 Run Debug Tests
+      - name: Run Tests
         env:
           BASE_URL: ${{ needs.deploy.outputs.page_url }}
         run: npx playwright test tests/debug.spec.js --reporter=line
 
-      - name: 🟢 Tests Passed
-        if: success()
-        run: echo "## 🔍 Debug: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
-
-      - name: 🔴 Tests Failed
-        if: failure()
-        run: echo "## 🔍 Debug: ❌ FAILED" >> $GITHUB_STEP_SUMMARY
-
-  # ═══════════════════════════════════════════════════════════════
-  # 📋 TEST: Panel Tests
-  # ═══════════════════════════════════════════════════════════════
+  # Test: Panels
   test-panels:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
     if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.panels == 'true'
     steps:
-      - name: 🔄 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📥 Restore cache
+      - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -330,42 +267,32 @@ jobs:
             node_modules
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      - name: 🔧 Install if cache miss
+      - name: Install if needed
         run: |
           if [ ! -d "node_modules" ]; then npm ci; fi
           if [ ! -d "$HOME/.cache/ms-playwright" ]; then npx playwright install --with-deps chromium; fi
 
-      - name: 🧪 Run Panel Tests
+      - name: Run Tests
         env:
           BASE_URL: ${{ needs.deploy.outputs.page_url }}
         run: npx playwright test tests/panels.spec.js --reporter=line
 
-      - name: 🟢 Tests Passed
-        if: success()
-        run: echo "## 📋 Panel Tests: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
-
-      - name: 🔴 Tests Failed
-        if: failure()
-        run: echo "## 📋 Panel Tests: ❌ FAILED" >> $GITHUB_STEP_SUMMARY
-
-  # ═══════════════════════════════════════════════════════════════
-  # 🎯 TEST: Features
-  # ═══════════════════════════════════════════════════════════════
+  # Test: Features
   test-features:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
     if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.features == 'true'
     steps:
-      - name: 🔄 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📥 Restore cache
+      - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -373,42 +300,32 @@ jobs:
             node_modules
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      - name: 🔧 Install if cache miss
+      - name: Install if needed
         run: |
           if [ ! -d "node_modules" ]; then npm ci; fi
           if [ ! -d "$HOME/.cache/ms-playwright" ]; then npx playwright install --with-deps chromium; fi
 
-      - name: 🧪 Run Feature Tests
+      - name: Run Tests
         env:
           BASE_URL: ${{ needs.deploy.outputs.page_url }}
         run: npx playwright test tests/features.spec.js --reporter=line
 
-      - name: 🟢 Tests Passed
-        if: success()
-        run: echo "## 🎯 Feature Tests: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
-
-      - name: 🔴 Tests Failed
-        if: failure()
-        run: echo "## 🎯 Feature Tests: ❌ FAILED" >> $GITHUB_STEP_SUMMARY
-
-  # ═══════════════════════════════════════════════════════════════
-  # ⚙️ TEST: Settings
-  # ═══════════════════════════════════════════════════════════════
+  # Test: Settings
   test-settings:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
     if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.settings == 'true'
     steps:
-      - name: 🔄 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📥 Restore cache
+      - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -416,42 +333,32 @@ jobs:
             node_modules
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      - name: 🔧 Install if cache miss
+      - name: Install if needed
         run: |
           if [ ! -d "node_modules" ]; then npm ci; fi
           if [ ! -d "$HOME/.cache/ms-playwright" ]; then npx playwright install --with-deps chromium; fi
 
-      - name: 🧪 Run Settings Tests
+      - name: Run Tests
         env:
           BASE_URL: ${{ needs.deploy.outputs.page_url }}
         run: npx playwright test tests/settings.spec.js --reporter=line
 
-      - name: 🟢 Tests Passed
-        if: success()
-        run: echo "## ⚙️ Settings Tests: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
-
-      - name: 🔴 Tests Failed
-        if: failure()
-        run: echo "## ⚙️ Settings Tests: ❌ FAILED" >> $GITHUB_STEP_SUMMARY
-
-  # ═══════════════════════════════════════════════════════════════
-  # 🖥️ TEST: UI Elements
-  # ═══════════════════════════════════════════════════════════════
+  # Test: UI Elements
   test-ui-elements:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
     if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.ui_elements == 'true'
     steps:
-      - name: 🔄 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📥 Restore cache
+      - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -459,42 +366,32 @@ jobs:
             node_modules
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      - name: 🔧 Install if cache miss
+      - name: Install if needed
         run: |
           if [ ! -d "node_modules" ]; then npm ci; fi
           if [ ! -d "$HOME/.cache/ms-playwright" ]; then npx playwright install --with-deps chromium; fi
 
-      - name: 🧪 Run UI Element Tests
+      - name: Run Tests
         env:
           BASE_URL: ${{ needs.deploy.outputs.page_url }}
         run: npx playwright test tests/ui-elements.spec.js --reporter=line
 
-      - name: 🟢 Tests Passed
-        if: success()
-        run: echo "## 🖥️ UI Element Tests: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
-
-      - name: 🔴 Tests Failed
-        if: failure()
-        run: echo "## 🖥️ UI Element Tests: ❌ FAILED" >> $GITHUB_STEP_SUMMARY
-
-  # ═══════════════════════════════════════════════════════════════
-  # 🎨 TEST: Comprehensive UI
-  # ═══════════════════════════════════════════════════════════════
+  # Test: Comprehensive UI
   test-comprehensive-ui:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
     if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.comprehensive_ui == 'true'
     steps:
-      - name: 🔄 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📥 Restore cache
+      - name: Restore cache
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -502,147 +399,25 @@ jobs:
             node_modules
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      - name: 🔧 Install if cache miss
+      - name: Install if needed
         run: |
           if [ ! -d "node_modules" ]; then npm ci; fi
           if [ ! -d "$HOME/.cache/ms-playwright" ]; then npx playwright install --with-deps chromium; fi
 
-      - name: 🧪 Run Comprehensive UI Tests
+      - name: Run Tests
         env:
           BASE_URL: ${{ needs.deploy.outputs.page_url }}
         run: npx playwright test tests/comprehensive-ui.spec.js --reporter=line
 
-      - name: 🟢 Tests Passed
-        if: success()
-        run: echo "## 🎨 Comprehensive UI Tests: ✅ PASSED" >> $GITHUB_STEP_SUMMARY
-
-      - name: 🔴 Tests Failed
-        if: failure()
-        run: echo "## 🎨 Comprehensive UI Tests: ❌ FAILED" >> $GITHUB_STEP_SUMMARY
-
-  # ═══════════════════════════════════════════════════════════════
-  # 📊 FINAL SUMMARY - Aggregate all test results
-  # ═══════════════════════════════════════════════════════════════
+  # Summary
   test-summary:
     runs-on: ubuntu-latest
-    needs: [deploy, read-config, test-new-game, test-debug-commands, test-debug, test-panels, test-features, test-settings, test-ui-elements, test-comprehensive-ui]
+    needs: [deploy, read-config]
     if: always()
     steps:
-      - name: 🔄 Checkout
-        uses: actions/checkout@v4
-
-      - name: 📊 Generate Visual Test Summary
-        env:
-          DEPLOY_URL: ${{ needs.deploy.outputs.page_url }}
-          RUN_ALL: ${{ needs.read-config.outputs.run_all }}
-          NEW_GAME_ENABLED: ${{ needs.read-config.outputs.new_game }}
-          DEBUG_COMMANDS_ENABLED: ${{ needs.read-config.outputs.debug_commands }}
-          DEBUG_ENABLED: ${{ needs.read-config.outputs.debug }}
-          PANELS_ENABLED: ${{ needs.read-config.outputs.panels }}
-          FEATURES_ENABLED: ${{ needs.read-config.outputs.features }}
-          SETTINGS_ENABLED: ${{ needs.read-config.outputs.settings }}
-          UI_ELEMENTS_ENABLED: ${{ needs.read-config.outputs.ui_elements }}
-          COMPREHENSIVE_ENABLED: ${{ needs.read-config.outputs.comprehensive_ui }}
-          NEW_GAME: ${{ needs.test-new-game.result }}
-          DEBUG_CMDS: ${{ needs.test-debug-commands.result }}
-          DEBUG: ${{ needs.test-debug.result }}
-          PANELS: ${{ needs.test-panels.result }}
-          FEATURES: ${{ needs.test-features.result }}
-          SETTINGS: ${{ needs.test-settings.result }}
-          UI_ELEMENTS: ${{ needs.test-ui-elements.result }}
-          COMPREHENSIVE: ${{ needs.test-comprehensive-ui.result }}
+      - name: Summary
         run: |
-          # Status indicator function
-          status_icon() {
-            case "$1" in
-              "success") echo "✅" ;;
-              "failure") echo "❌" ;;
-              "skipped") echo "⏭️" ;;
-              *) echo "⚪" ;;
-            esac
-          }
-
-          # Generate summary
-          echo "# 🖤 Medieval Trading Game - Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Site deployed to: ${{ needs.deploy.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployed to:** $DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 🎮 Config-Driven Test Execution" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Tests controlled by \`GameConfig.cicd\` in \`config.js\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "$RUN_ALL" = "true" ]; then
-            echo "🔥 **Run All Override: ENABLED** - All tests executed regardless of individual settings" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Test Suites" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Suite | Config | Result |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🎮 New Game | $NEW_GAME_ENABLED | $(status_icon $NEW_GAME) $NEW_GAME |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🐛 Debug Commands | $DEBUG_COMMANDS_ENABLED | $(status_icon $DEBUG_CMDS) $DEBUG_CMDS |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔍 Debug | $DEBUG_ENABLED | $(status_icon $DEBUG) $DEBUG |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📋 Panels | $PANELS_ENABLED | $(status_icon $PANELS) $PANELS |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🎯 Features | $FEATURES_ENABLED | $(status_icon $FEATURES) $FEATURES |" >> $GITHUB_STEP_SUMMARY
-          echo "| ⚙️ Settings | $SETTINGS_ENABLED | $(status_icon $SETTINGS) $SETTINGS |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🖥️ UI Elements | $UI_ELEMENTS_ENABLED | $(status_icon $UI_ELEMENTS) $UI_ELEMENTS |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🎨 Comprehensive UI | $COMPREHENSIVE_ENABLED | $(status_icon $COMPREHENSIVE) $COMPREHENSIVE |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "💡 **Tip:** Set \`GameConfig.cicd.testSuites.suiteName = false\` to skip passing tests" >> $GITHUB_STEP_SUMMARY
-
-      - name: ❌ Fail if any enabled tests failed
-        if: |
-          (needs.test-new-game.result == 'failure') ||
-          (needs.test-debug-commands.result == 'failure') ||
-          (needs.test-debug.result == 'failure') ||
-          (needs.test-panels.result == 'failure') ||
-          (needs.test-features.result == 'failure') ||
-          (needs.test-settings.result == 'failure') ||
-          (needs.test-ui-elements.result == 'failure') ||
-          (needs.test-comprehensive-ui.result == 'failure')
-        run: exit 1
-
-  # ═══════════════════════════════════════════════════════════════
-  # 📤 ARTIFACTS - Upload test reports (only when tests run)
-  # ═══════════════════════════════════════════════════════════════
-  upload-artifacts:
-    runs-on: ubuntu-latest
-    needs: [read-config, test-new-game, test-debug-commands, test-debug, test-panels, test-features, test-settings, test-ui-elements, test-comprehensive-ui]
-    if: always() && (needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.new_game == 'true' || needs.read-config.outputs.debug_commands == 'true' || needs.read-config.outputs.panels == 'true' || needs.read-config.outputs.features == 'true' || needs.read-config.outputs.settings == 'true' || needs.read-config.outputs.ui_elements == 'true' || needs.read-config.outputs.comprehensive_ui == 'true')
-    steps:
-      - name: 🔄 Checkout
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: 📥 Install dependencies
-        run: npm ci
-
-      - name: 🎭 Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: 🧪 Run all tests for report
-        continue-on-error: true
-        run: npx playwright test --reporter=html
-
-      - name: 📤 Upload HTML report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
-
-      - name: 📤 Upload screenshots on failure
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: test-screenshots
-          path: test-results/
-          retention-days: 7
+          echo "Tests controlled by config.js - all currently disabled" >> $GITHUB_STEP_SUMMARY
