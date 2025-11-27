@@ -453,7 +453,7 @@
                         
                         <div class="form-actions">
                             <button type="button" id="randomize-character-btn" class="secondary" onclick="console.log('📍 INLINE ONCLICK FIRED'); if(typeof window.randomizeCharacter === 'function') { window.randomizeCharacter(); } else { console.error('❌ window.randomizeCharacter not found, type:', typeof window.randomizeCharacter); }">Randomize</button>
-                            <button type="button" id="start-game-btn" class="primary">Start Game</button>
+                            <button type="button" id="start-game-btn" class="primary" onclick="if(typeof createCharacter === 'function') { createCharacter(event); } else if(typeof window.createCharacter === 'function') { window.createCharacter(event); } else { console.error('createCharacter not found'); }">Start Game</button>
                             <button type="button" id="setup-settings-btn" class="secondary" title="Settings" onclick="if(typeof SettingsPanel !== 'undefined' && SettingsPanel.show) { SettingsPanel.show(); } else { console.error('SettingsPanel not available'); }">⚙️</button>
                             <button type="button" id="cancel-setup-btn" class="secondary" onclick="if(typeof cancelGameSetup === 'function') { cancelGameSetup(); } else { document.getElementById('game-setup-panel')?.classList.add('hidden'); document.getElementById('main-menu')?.classList.remove('hidden'); }">Exit</button>
                         </div>

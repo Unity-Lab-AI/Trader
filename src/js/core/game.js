@@ -6584,10 +6584,16 @@ function createCharacter(event) {
 
     const characterNameInput = document.getElementById('character-name-input');
     const name = characterNameInput ? characterNameInput.value.trim() : '';
-    const difficulty = characterCreationState.difficulty;
+
+    // Get difficulty from radio buttons directly (more reliable)
+    const selectedDifficultyRadio = document.querySelector('input[name="difficulty"]:checked');
+    const difficulty = selectedDifficultyRadio ? selectedDifficultyRadio.value : (characterCreationState.difficulty || 'normal');
+
+    // Update characterCreationState in case it was out of sync
+    characterCreationState.difficulty = difficulty;
 
     console.log('Character name:', name);
-    console.log('Difficulty:', difficulty);
+    console.log('Difficulty from radio:', difficulty);
     console.log('Character creation state:', characterCreationState);
     console.log('Selected perks:', selectedPerks);
 
