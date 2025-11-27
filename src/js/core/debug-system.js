@@ -82,3 +82,15 @@ const DebugSystem = {
 
 // 🌙 expose to global scope 🦇
 window.DebugSystem = DebugSystem;
+
+// 🖤 AUTO-INIT - Debug system initializes itself on load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        DebugSystem.init();
+    });
+} else {
+    // DOM already loaded, init now
+    DebugSystem.init();
+}
+
+console.log('🐛 Debug System loaded!');
