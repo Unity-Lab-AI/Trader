@@ -501,7 +501,7 @@ const WeatherSystem = {
         particles.className = 'weather-particles';
         overlay.appendChild(particles);
 
-        // Create date indicator in top-bar
+        // Create all indicators in top-bar (date, time/phase, weather)
         const topBarWidgets = document.getElementById('top-bar-widgets');
         if (topBarWidgets) {
             // Date indicator
@@ -513,6 +513,16 @@ const WeatherSystem = {
                 <span class="indicator-text" id="date-text">April 1, 1111</span>
             `;
             topBarWidgets.appendChild(dateIndicator);
+
+            // Time/Phase indicator (for DayNightCycle)
+            const timeIndicator = document.createElement('div');
+            timeIndicator.id = 'time-phase-indicator';
+            timeIndicator.className = 'top-bar-indicator';
+            timeIndicator.innerHTML = `
+                <span class="indicator-icon phase-icon">☀️</span>
+                <span class="indicator-text phase-time">08:00</span>
+            `;
+            topBarWidgets.appendChild(timeIndicator);
 
             // Weather indicator
             const weatherIndicator = document.createElement('div');

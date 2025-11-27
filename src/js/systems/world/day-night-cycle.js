@@ -319,11 +319,7 @@ const DayNightCycle = {
         stars.className = 'stars-container';
         overlay.appendChild(stars);
 
-        // Create time indicator
-        const indicator = document.createElement('div');
-        indicator.id = 'time-phase-indicator';
-        indicator.className = 'time-phase-indicator';
-        document.body.appendChild(indicator);
+        // Time phase indicator is now created in top-bar by WeatherSystem
     },
 
     updateVisuals() {
@@ -348,15 +344,16 @@ const DayNightCycle = {
             }
         }
 
+        // Update time phase indicator in top-bar
         if (indicator) {
             const hour = this.getCurrentHour();
             const minute = typeof TimeSystem !== 'undefined' ? (TimeSystem.currentTime?.minute || 0) : 0;
             const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 
-            indicator.innerHTML = `
-                <span class="phase-icon">${phase.icon}</span>
-                <span class="phase-time">${timeStr}</span>
-            `;
+            const iconEl = indicator.querySelector('.phase-icon');
+            const timeEl = indicator.querySelector('.phase-time');
+            if (iconEl) iconEl.textContent = phase.icon;
+            if (timeEl) timeEl.textContent = timeStr;
         }
 
         // Apply brightness to game container if it exists
@@ -434,28 +431,7 @@ const DayNightCycle = {
                 0%, 100% { filter: drop-shadow(0 0 20px rgba(255, 255, 200, 0.5)); }
                 50% { filter: drop-shadow(0 0 30px rgba(255, 255, 200, 0.8)); }
             }
-            .time-phase-indicator {
-                position: fixed;
-                top: 50px;
-                right: 140px;
-                background: rgba(0, 0, 0, 0.7);
-                padding: 8px 12px;
-                border-radius: 20px;
-                color: #fff;
-                font-size: 13px;
-                z-index: 9500;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                border: 1px solid rgba(255, 200, 100, 0.3);
-            }
-            .phase-icon {
-                font-size: 16px;
-            }
-            .phase-time {
-                font-family: monospace;
-                opacity: 0.9;
-            }
+            /* Time phase indicator styled in top-bar via styles.css */
         `;
         document.head.appendChild(style);
     },

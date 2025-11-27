@@ -220,6 +220,15 @@ body:has(#game-setup-panel:not(.hidden)) #overlay-container {
     border-color: rgba(201, 169, 89, 0.3);
 }
 
+#time-phase-indicator {
+    color: #ffcc66;
+    border-color: rgba(255, 200, 100, 0.3);
+}
+
+#time-phase-indicator .phase-time {
+    font-family: monospace;
+}
+
 #weather-indicator {
     color: #7ecfff;
     border-color: rgba(79, 195, 247, 0.3);
