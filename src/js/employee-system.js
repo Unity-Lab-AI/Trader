@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════════════
 // hire people, pay them wages, watch them generate revenue
 // basically playing god with medieval HR
-// File Version: 0.1
-// Game Version: 0.1
+// File Version: 0.5
+// Game Version: 0.2
 // Made by Unity AI Lab - Hackall360, Sponge, GFourteen
 
 const EmployeeSystem = {
@@ -654,7 +654,26 @@ const EmployeeSystem = {
     getPlayerEmployees() {
         return game.player.ownedEmployees || [];
     },
-    
+
+    // Get employees (alias for compatibility)
+    getEmployees() {
+        return this.getPlayerEmployees();
+    },
+
+    // Load employees from save data
+    loadEmployees(employees) {
+        if (!employees || !Array.isArray(employees)) {
+            console.log('💾 No employees to load');
+            return;
+        }
+
+        game.player.ownedEmployees = employees;
+        console.log(`💾 Loaded ${employees.length} employees from save`);
+
+        // Update display if available
+        this.updateEmployeeDisplay();
+    },
+
     // Get employee by ID
     getEmployee(employeeId) {
         return game.player.ownedEmployees.find(emp => emp.id === employeeId);

@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════════════
 // buy property, collect rent, become the landlord of your dreams
 // (or nightmares, maintenance costs are real)
-// File Version: 0.1
-// Game Version: 0.1
+// File Version: 0.5
+// Game Version: 0.2
 // Made by Unity AI Lab - Hackall360, Sponge, GFourteen
 
 const PropertySystem = {
@@ -281,24 +281,33 @@ const PropertySystem = {
         return requirements;
     },
     
-    // Calculate property price based on location and modifiers
-    calculatePropertyPrice(propertyId) {
+    // Calculate property price based on location, acquisition type, and modifiers
+    calculatePropertyPrice(propertyId, acquisitionType = 'buy') {
         const propertyType = this.propertyTypes[propertyId];
         if (!propertyType) return 0;
-        
+
         const location = GameWorld.locations[game.currentLocation.id];
         if (!location) return propertyType.basePrice;
-        
+
         let price = propertyType.basePrice;
-        
+
         // Location type modifier
         const locationModifiers = {
             village: 0.8,
             town: 1.0,
             city: 1.3
         };
-        
+
         price *= locationModifiers[location.type] || 1.0;
+
+        // Acquisition type modifier
+        const acquisitionModifiers = {
+            buy: 1.0,      // full price to own outright
+            rent: 0.2,     // deposit is 20% of value (then weekly rent)
+            build: 0.5     // half price but needs materials and time
+        };
+
+        price *= acquisitionModifiers[acquisitionType] || 1.0;
 
         // Player reputation modifier (if CityReputationSystem is available)
         if (typeof CityReputationSystem !== 'undefined') {
@@ -306,64 +315,342 @@ const PropertySystem = {
             const reputationModifier = 1 - (reputation * 0.002); // Small discount for good reputation
             price *= Math.max(0.7, reputationModifier);
         }
-        
+
+        // Merchant rank trading bonus
+        if (typeof MerchantRankSystem !== 'undefined') {
+            const bonus = MerchantRankSystem.getTradingBonus();
+            price *= (1 - bonus);
+        }
+
         return Math.round(price);
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🔨 BUILDING CONSTRUCTION - time and materials
+    // ═══════════════════════════════════════════════════════════════
+
+    // construction times in game minutes (1 day = 24 * 60 = 1440 minutes)
+    constructionTimes: {
+        house: 3 * 24 * 60,        // 3 days
+        market_stall: 1 * 24 * 60, // 1 day
+        shop: 5 * 24 * 60,         // 5 days
+        warehouse: 7 * 24 * 60,    // 7 days
+        farm: 10 * 24 * 60,        // 10 days
+        tavern: 7 * 24 * 60,       // 7 days
+        craftshop: 5 * 24 * 60,    // 5 days
+        mine: 14 * 24 * 60         // 14 days
+    },
+
+    // materials needed to build each property type
+    buildingMaterials: {
+        house: { wood: 20, stone: 10 },
+        market_stall: { wood: 10 },
+        shop: { wood: 30, stone: 20, iron: 5 },
+        warehouse: { wood: 50, stone: 40, iron: 10 },
+        farm: { wood: 40, stone: 15, tools: 5 },
+        tavern: { wood: 35, stone: 25, iron: 5, furniture: 10 },
+        craftshop: { wood: 25, stone: 20, iron: 15, tools: 10 },
+        mine: { wood: 60, stone: 30, iron: 30, tools: 20 }
+    },
+
+    getConstructionTime(propertyId) {
+        return this.constructionTimes[propertyId] || 5 * 24 * 60; // default 5 days
+    },
+
+    getBuildingMaterials(propertyId) {
+        return this.buildingMaterials[propertyId] || {};
+    },
+
+    checkMaterials(materialsNeeded) {
+        const missing = [];
+        for (const [material, amount] of Object.entries(materialsNeeded)) {
+            const playerHas = game.player.inventory?.[material] || 0;
+            if (playerHas < amount) {
+                missing.push(`${amount - playerHas} more ${material}`);
+            }
+        }
+        return missing;
+    },
+
+    consumeMaterials(materialsNeeded) {
+        for (const [material, amount] of Object.entries(materialsNeeded)) {
+            if (game.player.inventory?.[material]) {
+                game.player.inventory[material] -= amount;
+                if (game.player.inventory[material] <= 0) {
+                    delete game.player.inventory[material];
+                }
+            }
+        }
+    },
+
+    // 🔨 Check if player has a construction tool (hammer)
+    playerHasConstructionTool() {
+        // check equipped tool first
+        if (typeof EquipmentSystem !== 'undefined') {
+            const equippedTool = EquipmentSystem.getEquipped('tool');
+            if (equippedTool) {
+                const item = ItemDatabase?.items?.[equippedTool];
+                if (item && item.toolType === 'construction') {
+                    return true;
+                }
+            }
+        }
+
+        // legacy check for equippedTool
+        if (game.player.equippedTool) {
+            const item = ItemDatabase?.items?.[game.player.equippedTool];
+            if (item && item.toolType === 'construction') {
+                return true;
+            }
+        }
+
+        // check inventory for any construction tool
+        if (game.player.inventory) {
+            for (const itemId of Object.keys(game.player.inventory)) {
+                const item = ItemDatabase?.items?.[itemId];
+                if (item && item.toolType === 'construction') {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    },
+
+    // check and complete construction for properties
+    processConstruction() {
+        if (!game.player.ownedProperties) return;
+
+        const currentTime = TimeSystem.getTotalMinutes();
+
+        game.player.ownedProperties.forEach(property => {
+            if (property.underConstruction && property.constructionEndTime) {
+                if (currentTime >= property.constructionEndTime) {
+                    // construction complete!
+                    property.underConstruction = false;
+                    property.condition = 100;
+                    property.constructionStartTime = null;
+                    property.constructionEndTime = null;
+
+                    const propertyType = this.propertyTypes[property.type];
+                    if (typeof addMessage === 'function') {
+                        addMessage(`🏗️ ${propertyType?.name || property.type} in ${property.locationName} is complete!`, 'success');
+                    }
+
+                    // fire event
+                    document.dispatchEvent(new CustomEvent('construction-complete', { detail: { property } }));
+                }
+            }
+        });
+    },
+
+    // check and process rent payments
+    processRentPayments() {
+        if (!game.player.ownedProperties) return;
+
+        const currentTime = TimeSystem.getTotalMinutes();
+
+        game.player.ownedProperties.forEach(property => {
+            if (property.isRented && property.rentDueTime) {
+                if (currentTime >= property.rentDueTime) {
+                    // rent is due
+                    const rentAmount = property.monthlyRent;
+
+                    if (game.player.gold >= rentAmount) {
+                        game.player.gold -= rentAmount;
+                        property.rentDueTime = currentTime + (7 * 24 * 60); // next week
+
+                        const propertyType = this.propertyTypes[property.type];
+                        if (typeof addMessage === 'function') {
+                            addMessage(`📝 Paid ${rentAmount} gold rent for ${propertyType?.name} in ${property.locationName}`, 'info');
+                        }
+                    } else {
+                        // can't pay rent - lose the property
+                        if (typeof addMessage === 'function') {
+                            const propertyType = this.propertyTypes[property.type];
+                            addMessage(`❌ Couldn't pay rent for ${propertyType?.name}! Property lost.`, 'danger');
+                        }
+                        this.loseProperty(property.id);
+                    }
+                }
+            }
+        });
+    },
+
+    // lose a property (for unpaid rent, etc)
+    loseProperty(propertyId) {
+        const index = game.player.ownedProperties.findIndex(p => p.id === propertyId);
+        if (index !== -1) {
+            game.player.ownedProperties.splice(index, 1);
+            this.updatePropertyDisplay();
+        }
+    },
+
+    // get construction progress percentage
+    getConstructionProgress(property) {
+        if (!property.underConstruction) return 100;
+
+        const currentTime = TimeSystem.getTotalMinutes();
+        const totalTime = property.constructionEndTime - property.constructionStartTime;
+        const elapsed = currentTime - property.constructionStartTime;
+
+        return Math.min(100, Math.round((elapsed / totalTime) * 100));
+    },
+
+    // get available acquisition options for a property type at current location
+    getAcquisitionOptions(propertyId) {
+        const propertyType = this.propertyTypes[propertyId];
+        if (!propertyType) return [];
+
+        const options = [];
+
+        // BUY - always available
+        options.push({
+            type: 'buy',
+            name: 'Purchase',
+            icon: '🏠',
+            description: 'Own it outright, instant transfer',
+            price: this.calculatePropertyPrice(propertyId, 'buy'),
+            time: 0,
+            materials: null
+        });
+
+        // RENT - always available, cheaper upfront
+        options.push({
+            type: 'rent',
+            name: 'Rent',
+            icon: '📝',
+            description: 'Lower deposit, but pay weekly rent',
+            price: this.calculatePropertyPrice(propertyId, 'rent'),
+            weeklyRent: Math.round(propertyType.basePrice * 0.1),
+            time: 0,
+            materials: null
+        });
+
+        // BUILD - requires materials and time
+        const materials = this.getBuildingMaterials(propertyId);
+        const constructionDays = Math.ceil(this.getConstructionTime(propertyId) / (24 * 60));
+        options.push({
+            type: 'build',
+            name: 'Build',
+            icon: '🔨',
+            description: `Cheaper but needs materials and ${constructionDays} days`,
+            price: this.calculatePropertyPrice(propertyId, 'build'),
+            time: constructionDays,
+            materials: materials
+        });
+
+        return options;
     },
     
     // Purchase property
-    purchaseProperty(propertyId) {
+    purchaseProperty(propertyId, acquisitionType = 'buy') {
         const propertyType = this.propertyTypes[propertyId];
         if (!propertyType) {
             addMessage('Invalid property type!');
             return false;
         }
-        
-        const price = this.calculatePropertyPrice(propertyId);
-        
+
+        // Check merchant rank property limit
+        if (typeof MerchantRankSystem !== 'undefined') {
+            const canPurchase = MerchantRankSystem.canPurchaseProperty();
+            if (!canPurchase.allowed) {
+                addMessage(`❌ ${canPurchase.reason}`, 'warning');
+                addMessage(`💡 ${canPurchase.suggestion}`, 'info');
+                return false;
+            }
+        }
+
+        const price = this.calculatePropertyPrice(propertyId, acquisitionType);
+
         if (game.player.gold < price) {
-            addMessage(`You need ${price} gold to purchase a ${propertyType.name}!`);
+            addMessage(`You need ${price} gold to ${acquisitionType} a ${propertyType.name}!`);
             return false;
         }
-        
+
         // Check if player already owns this type in this location
         const existingProperty = game.player.ownedProperties.find(
             p => p.type === propertyId && p.location === game.currentLocation.id
         );
-        
+
         if (existingProperty) {
             addMessage(`You already own a ${propertyType.name} in ${game.currentLocation.name}!`);
             return false;
         }
-        
-        // Purchase property
+
+        // For building, check if player has required materials AND a hammer equipped
+        if (acquisitionType === 'build') {
+            // 🔨 Check if player has a hammer equipped or in inventory
+            const hasHammer = this.playerHasConstructionTool();
+            if (!hasHammer) {
+                addMessage(`🔨 You need a hammer to build! Equip one or have it in your inventory.`, 'warning');
+                return false;
+            }
+
+            const materialsNeeded = this.getBuildingMaterials(propertyId);
+            const missingMaterials = this.checkMaterials(materialsNeeded);
+            if (missingMaterials.length > 0) {
+                addMessage(`Missing materials to build: ${missingMaterials.join(', ')}`, 'warning');
+                return false;
+            }
+            // consume materials
+            this.consumeMaterials(materialsNeeded);
+        }
+
+        // Deduct gold
         game.player.gold -= price;
         
+        // determine if property needs construction time
+        const constructionTime = acquisitionType === 'build' ? this.getConstructionTime(propertyId) : 0;
+        const isUnderConstruction = constructionTime > 0;
+
         const newProperty = {
             id: Date.now().toString(),
             type: propertyId,
             location: game.currentLocation.id,
+            locationName: game.currentLocation.name,
             level: 1,
-            condition: 100,
+            condition: isUnderConstruction ? 0 : 100,
             upgrades: [],
             employees: [],
             lastIncomeTime: TimeSystem.getTotalMinutes(),
             totalIncome: 0,
             purchasePrice: price,
+            acquisitionType: acquisitionType, // 'buy', 'rent', or 'build'
             storageUsed: 0,
             storage: {},
             storageCapacity: 0,
             workQueue: [],
             productionLimits: this.getProductionLimits(propertyId),
             lastProductionTime: TimeSystem.getTotalMinutes(),
-            totalProduction: {}
+            totalProduction: {},
+            // construction tracking
+            underConstruction: isUnderConstruction,
+            constructionStartTime: isUnderConstruction ? TimeSystem.getTotalMinutes() : null,
+            constructionEndTime: isUnderConstruction ? TimeSystem.getTotalMinutes() + constructionTime : null,
+            // rent tracking
+            isRented: acquisitionType === 'rent',
+            rentDueTime: acquisitionType === 'rent' ? TimeSystem.getTotalMinutes() + (7 * 24 * 60) : null, // rent due weekly
+            monthlyRent: acquisitionType === 'rent' ? Math.round(price * 0.1) : 0
         };
-        
+
         // Initialize storage for the new property
         this.initializePropertyStorage(newProperty.id);
-        
+
         game.player.ownedProperties.push(newProperty);
-        
-        addMessage(`Purchased ${propertyType.name} in ${game.currentLocation.name} for ${price} gold!`);
+
+        // fire event for merchant rank tracking
+        document.dispatchEvent(new CustomEvent('property-purchased', { detail: { property: newProperty } }));
+
+        // appropriate message based on acquisition type
+        if (acquisitionType === 'build') {
+            const days = Math.ceil(constructionTime / (24 * 60));
+            addMessage(`🔨 Started building ${propertyType.name} in ${game.currentLocation.name}! Ready in ${days} days.`, 'success');
+        } else if (acquisitionType === 'rent') {
+            addMessage(`📝 Rented ${propertyType.name} in ${game.currentLocation.name} for ${price} gold deposit + ${newProperty.monthlyRent}/week!`, 'success');
+        } else {
+            addMessage(`🏠 Purchased ${propertyType.name} in ${game.currentLocation.name} for ${price} gold!`, 'success');
+        }
         
         // Update UI
         updatePlayerInfo();
@@ -376,7 +663,31 @@ const PropertySystem = {
     getPlayerProperties() {
         return game.player.ownedProperties || [];
     },
-    
+
+    // Get owned properties (alias for compatibility)
+    getOwnedProperties() {
+        return this.getPlayerProperties();
+    },
+
+    // Get properties (alias used by financial sheet)
+    getProperties() {
+        return this.getPlayerProperties();
+    },
+
+    // Load properties from save data
+    loadProperties(properties) {
+        if (!properties || !Array.isArray(properties)) {
+            console.log('💾 No properties to load');
+            return;
+        }
+
+        game.player.ownedProperties = properties;
+        console.log(`💾 Loaded ${properties.length} properties from save`);
+
+        // Update display if available
+        this.updatePropertyDisplay();
+    },
+
     // Get property details
     getProperty(propertyId) {
         return game.player.ownedProperties.find(p => p.id === propertyId);
@@ -1133,14 +1444,131 @@ const PropertySystem = {
         this.applyRepairBenefits(propertyId);
         
         addMessage(`Repaired ${propertyType.name} to full condition for ${repairCost} gold!`);
-        
+
         // Update UI
         updatePlayerInfo();
         this.updatePropertyDisplay();
-        
+
         return true;
     },
-    
+
+    // 💰 Sell property - get half the total investment back
+    sellProperty(propertyId) {
+        const property = this.getProperty(propertyId);
+        if (!property) {
+            addMessage('Invalid property!');
+            return false;
+        }
+
+        const propertyType = this.propertyTypes[property.type];
+        if (!propertyType) {
+            addMessage('Unknown property type!');
+            return false;
+        }
+
+        // Calculate sell value: half of total investment
+        let totalInvestment = property.purchasePrice || propertyType.basePrice;
+
+        // Add upgrade costs
+        property.upgrades.forEach(upgradeId => {
+            const upgrade = this.upgrades[upgradeId];
+            if (upgrade) {
+                totalInvestment += upgrade.cost || 0;
+            }
+        });
+
+        // Add level upgrade costs (50% of base price per level above 1)
+        if (property.level > 1) {
+            for (let i = 1; i < property.level; i++) {
+                totalInvestment += Math.round(propertyType.basePrice * 0.5 * i);
+            }
+        }
+
+        // Sell value is 50% of total investment
+        const sellValue = Math.round(totalInvestment * 0.5);
+
+        // Fire all employees assigned to this property first
+        if (typeof EmployeeSystem !== 'undefined') {
+            const assignedEmployees = EmployeeSystem.getEmployeesAtProperty(propertyId);
+            if (assignedEmployees && assignedEmployees.length > 0) {
+                assignedEmployees.forEach(emp => {
+                    EmployeeSystem.unassignEmployee(emp.id);
+                });
+                addMessage(`${assignedEmployees.length} employee(s) unassigned from property.`);
+            }
+        }
+
+        // Return items from storage to player inventory
+        if (property.storage && Object.keys(property.storage).length > 0) {
+            let itemsReturned = 0;
+            for (const [itemId, quantity] of Object.entries(property.storage)) {
+                if (quantity > 0) {
+                    if (!game.player.inventory) game.player.inventory = {};
+                    game.player.inventory[itemId] = (game.player.inventory[itemId] || 0) + quantity;
+                    itemsReturned += quantity;
+                }
+            }
+            if (itemsReturned > 0) {
+                addMessage(`${itemsReturned} items returned to your inventory from storage.`);
+            }
+        }
+
+        // Remove from player's owned properties
+        const propertyIndex = game.player.ownedProperties.findIndex(p => p.id === propertyId);
+        if (propertyIndex !== -1) {
+            game.player.ownedProperties.splice(propertyIndex, 1);
+        }
+
+        // Give player the gold
+        game.player.gold += sellValue;
+
+        // Fire property-sold event
+        document.dispatchEvent(new CustomEvent('property-sold', {
+            detail: { propertyId, propertyType: property.type, sellValue, location: property.location }
+        }));
+
+        addMessage(`🏠 Sold ${propertyType.name} for ${sellValue} gold! (50% of ${totalInvestment} gold investment)`);
+
+        // Update UI
+        if (typeof updatePlayerInfo === 'function') updatePlayerInfo();
+        this.updatePropertyDisplay();
+
+        // Update merchant rank (wealth changed)
+        if (typeof MerchantRankSystem !== 'undefined') {
+            MerchantRankSystem.checkForRankUp();
+        }
+
+        return { success: true, sellValue, totalInvestment };
+    },
+
+    // Calculate sell value preview (without selling)
+    calculateSellValue(propertyId) {
+        const property = this.getProperty(propertyId);
+        if (!property) return 0;
+
+        const propertyType = this.propertyTypes[property.type];
+        if (!propertyType) return 0;
+
+        let totalInvestment = property.purchasePrice || propertyType.basePrice;
+
+        // Add upgrade costs
+        property.upgrades.forEach(upgradeId => {
+            const upgrade = this.upgrades[upgradeId];
+            if (upgrade) {
+                totalInvestment += upgrade.cost || 0;
+            }
+        });
+
+        // Add level upgrade costs
+        if (property.level > 1) {
+            for (let i = 1; i < property.level; i++) {
+                totalInvestment += Math.round(propertyType.basePrice * 0.5 * i);
+            }
+        }
+
+        return Math.round(totalInvestment * 0.5);
+    },
+
     // Calculate repair cost based on condition and property type
     calculateRepairCost(propertyId) {
         const property = this.getProperty(propertyId);

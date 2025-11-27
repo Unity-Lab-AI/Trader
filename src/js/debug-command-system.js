@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🎮 DEBUG COMMAND SYSTEM - cheat codes for the morally flexible
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // press ` (backtick) when debug console is open to focus command input
@@ -169,9 +169,37 @@ const DebugCommandSystem = {
         this.execute(commandText);
     },
 
+    // Check if debug commands are enabled
+    isDebugEnabled() {
+        // First check if debug is unlocked via Super Hacker achievement
+        if (typeof AchievementSystem !== 'undefined' && AchievementSystem.isDebugUnlockedForSave()) {
+            return true;
+        }
+
+        // Check GameConfig.debug.enabled
+        if (typeof GameConfig !== 'undefined' && GameConfig.debug) {
+            return GameConfig.debug.enabled === true;
+        }
+        // Default to true if config not loaded
+        return true;
+    },
+
     // Execute a command string
     execute(commandText) {
         console.log(`🎮 > ${commandText}`);
+
+        // Check if debug is locked out
+        if (!this.isDebugEnabled()) {
+            // Allow only 'help' command when locked out
+            const cmdLower = commandText.trim().toLowerCase();
+            if (cmdLower !== 'help' && !cmdLower.startsWith('help')) {
+                console.warn('🔒 Debug commands are DISABLED. Set GameConfig.debug.enabled = true to unlock.');
+                if (typeof GameConfig !== 'undefined' && GameConfig.debug?.showConsoleWarnings) {
+                    console.log('🔒 This is a production build - debug commands are locked out.');
+                }
+                return;
+            }
+        }
 
         // Parse command and arguments
         const parts = commandText.trim().split(/\s+/);
@@ -206,8 +234,15 @@ const DebugCommandSystem = {
 
     // Show help
     showHelp() {
+        const isEnabled = this.isDebugEnabled();
+
         console.log('═══════════════════════════════════════════════════');
         console.log('🎮 DEBUG COMMAND SYSTEM - Available Commands:');
+        if (!isEnabled) {
+            console.log('🔒 STATUS: LOCKED - Debug commands disabled in config.js');
+        } else {
+            console.log('🔓 STATUS: UNLOCKED - Debug commands active');
+        }
         console.log('═══════════════════════════════════════════════════');
 
         for (const [name, cmd] of Object.entries(this.commands)) {
@@ -220,6 +255,9 @@ const DebugCommandSystem = {
         console.log('  - Press Enter to execute command');
         console.log('  - Press Up/Down to navigate history');
         console.log('  - Press Tab to autocomplete');
+        if (!isEnabled) {
+            console.log('🔒 Debug is DISABLED. Set GameConfig.debug.enabled = true');
+        }
         console.log('═══════════════════════════════════════════════════');
     },
 
@@ -568,6 +606,164 @@ const DebugCommandSystem = {
                 return 'Reset complete';
             }
             return 'AchievementSystem not found';
+        });
+
+        // unlockall - Unlock ALL achievements (including Super Hacker)
+        this.registerCommand('unlockall', 'Unlock ALL achievements (triggers Super Hacker!)', () => {
+            if (typeof AchievementSystem === 'undefined') {
+                console.warn('🎮 AchievementSystem not found');
+                return 'AchievementSystem not found';
+            }
+
+            console.log('🏆 Unlocking ALL achievements...');
+            const allAchievements = Object.values(AchievementSystem.achievements);
+            let unlockCount = 0;
+
+            // Unlock all achievements except super_hacker first
+            for (const achievement of allAchievements) {
+                if (!achievement.unlocked && achievement.id !== 'super_hacker') {
+                    achievement.unlocked = true;
+                    achievement.unlockedAt = Date.now();
+                    AchievementSystem.grantAchievementRewards(achievement);
+                    unlockCount++;
+                    console.log(`  ✅ ${achievement.name}`);
+                }
+            }
+
+            // Save progress
+            AchievementSystem.saveProgress();
+
+            // Now check for Super Hacker - it should unlock since all others are done
+            AchievementSystem.checkAchievements();
+
+            console.log('═══════════════════════════════════════════════════');
+            console.log(`🏆 Unlocked ${unlockCount} achievements!`);
+            console.log('💻 Super Hacker should now be unlocked!');
+            console.log('🔓 Debug commands will remain available on this save!');
+            console.log('🗡️ Check your inventory for the Blade of the Hacker!');
+            console.log('═══════════════════════════════════════════════════');
+
+            return `${unlockCount} achievements unlocked!`;
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🏆 LEADERBOARD CHEATS
+        // ═══════════════════════════════════════════════════════════════
+
+        // clearleaderboard - Reset the Hall of Champions to empty
+        this.registerCommand('clearleaderboard', 'Clear all entries from the Hall of Champions', async () => {
+            console.log('🏆 Clearing Hall of Champions...');
+
+            if (typeof resetLeaderboard === 'function') {
+                const result = await resetLeaderboard();
+                if (result) {
+                    console.log('✅ Hall of Champions has been cleared!');
+                    console.log('🏆 The leaderboard is now empty and ready for new entries.');
+                    return 'Leaderboard cleared!';
+                } else {
+                    console.error('❌ Failed to clear leaderboard');
+                    return 'Failed to clear';
+                }
+            } else {
+                console.error('❌ resetLeaderboard function not found');
+                return 'Function not found';
+            }
+        });
+
+        // refreshleaderboard - Force refresh the leaderboard display
+        this.registerCommand('refreshleaderboard', 'Force refresh the Hall of Champions display', async () => {
+            console.log('🏆 Refreshing Hall of Champions...');
+
+            if (typeof GlobalLeaderboardSystem !== 'undefined') {
+                await GlobalLeaderboardSystem.refresh();
+                console.log('✅ Leaderboard refreshed!');
+                return 'Refreshed!';
+            }
+            return 'GlobalLeaderboardSystem not found';
+        });
+
+        // showleaderboard - Show current leaderboard entries in console
+        this.registerCommand('showleaderboard', 'Show all leaderboard entries in console', () => {
+            if (typeof GlobalLeaderboardSystem !== 'undefined') {
+                const entries = GlobalLeaderboardSystem.leaderboard || [];
+                console.log(`🏆 Hall of Champions (${entries.length} entries):`);
+                entries.forEach((entry, i) => {
+                    console.log(`  ${i + 1}. ${entry.playerName || 'Unknown'} - ${entry.score || 0} gold, ${entry.daysSurvived || 0} days ${entry.isAlive ? '💚' : '💀'}`);
+                });
+                return `${entries.length} entries`;
+            }
+            return 'GlobalLeaderboardSystem not found';
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🎭 NPC ENCOUNTER CHEATS
+        // ═══════════════════════════════════════════════════════════════
+
+        // encounter - Spawn random encounter
+        this.registerCommand('encounter', 'Spawn random encounter: encounter [type]', (args) => {
+            const type = args[0];
+            if (typeof NPCEncounterSystem !== 'undefined') {
+                const encounter = NPCEncounterSystem.spawnRandomEncounter('road', type || null);
+                if (encounter) {
+                    console.log(`🎭 Spawned ${encounter.type} encounter`);
+                    return encounter.type;
+                }
+                return 'Failed to spawn';
+            }
+            return 'NPCEncounterSystem not found';
+        });
+
+        // trader - Spawn random trader encounter (traveler with inventory)
+        this.registerCommand('trader', 'Spawn random trader encounter', () => {
+            if (typeof NPCEncounterSystem !== 'undefined') {
+                const encounter = NPCEncounterSystem.spawnRandomEncounter('road', 'traveler');
+                if (encounter) {
+                    console.log('🎭 Spawned trader encounter');
+                    console.log('💰 Time paused for encounter');
+                    return 'Trader spawned!';
+                }
+                return 'Failed to spawn';
+            }
+            return 'NPCEncounterSystem not found';
+        });
+
+        // merchant - Spawn merchant encounter
+        this.registerCommand('merchant', 'Spawn merchant encounter', () => {
+            if (typeof NPCEncounterSystem !== 'undefined') {
+                const encounter = NPCEncounterSystem.spawnRandomEncounter('road', 'merchant');
+                if (encounter) {
+                    console.log('🎭 Spawned merchant encounter');
+                    return 'Merchant spawned!';
+                }
+                return 'Failed to spawn';
+            }
+            return 'NPCEncounterSystem not found';
+        });
+
+        // smuggler - Spawn smuggler encounter
+        this.registerCommand('smuggler', 'Spawn smuggler encounter (rare items)', () => {
+            if (typeof NPCEncounterSystem !== 'undefined') {
+                const encounter = NPCEncounterSystem.spawnRandomEncounter('road', 'smuggler');
+                if (encounter) {
+                    console.log('🎭 Spawned smuggler encounter');
+                    return 'Smuggler spawned!';
+                }
+                return 'Failed to spawn';
+            }
+            return 'NPCEncounterSystem not found';
+        });
+
+        // listnpctypes - List all NPC encounter types
+        this.registerCommand('listnpctypes', 'List all NPC encounter types', () => {
+            if (typeof NPCEncounterSystem !== 'undefined') {
+                const types = NPCEncounterSystem.encounterTypes;
+                console.log('🎭 Road encounters:');
+                console.log('  Friendly:', types.road?.friendly?.map(e => e.type).join(', '));
+                console.log('  Neutral:', types.road?.neutral?.map(e => e.type).join(', '));
+                console.log('  Hostile:', types.road?.hostile?.map(e => e.type).join(', '));
+                return 'See console';
+            }
+            return 'NPCEncounterSystem not found';
         });
 
         console.log(`🎮 Registered ${Object.keys(this.commands).length} commands`);

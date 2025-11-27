@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🔊 AUDIO SYSTEM - sounds for the soul (or what's left of it)
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // programmatic sounds using Web Audio API because we're fancy
@@ -14,15 +14,15 @@ const AudioSystem = {
     musicGainNode: null,
     sfxGainNode: null,
     
-    // Audio settings
+    // Audio settings - 🖤 NUKED: disabled by default cuz it was making unholy buzzing noises
     settings: {
-        masterVolume: 0.3,  // Reduced default volume to prevent uncontrolled increase
-        musicVolume: 0.2,  // Much lower music volume
-        sfxVolume: 0.4,   // Moderate SFX volume
-        isMuted: false,
-        isMusicMuted: false,
-        isSfxMuted: false,
-        audioEnabled: true
+        masterVolume: 0,  // silence is golden
+        musicVolume: 0,  // the void speaks louder
+        sfxVolume: 0,   // shhhh
+        isMuted: true,
+        isMusicMuted: true,
+        isSfxMuted: true,
+        audioEnabled: false  // 🖤 audio system disabled - was causing nonstop buzzing hell
     },
     
     // Current audio state
@@ -37,6 +37,12 @@ const AudioSystem = {
     
     // Initialize audio system
     init() {
+        // 🖤 NUKED - audio disabled because it was spawning demons (buzzing noises)
+        if (!this.settings.audioEnabled) {
+            console.log('🖤 AudioSystem disabled - silence reigns supreme');
+            return;
+        }
+
         try {
             // Create audio context
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -612,13 +618,17 @@ const AudioSystem = {
     },
     
     playTavernAmbient(loop = true) {
-        const { oscillator, gainNode } = this.createOscillator(110, 'triangle', 10);
-        gainNode.gain.value = 0.03;
-        
-        oscillator.start(this.audioContext.currentTime);
-        
-        const tavernNode = { oscillator, gainNode };
-        this.ambientNodes.push(tavernNode);
+        // 🖤 DISABLED - this was causing a loud buzzing noise
+        // The oscillator at 110Hz with no stop time was droning forever
+        console.log('🖤 Tavern ambient disabled (was causing buzz)');
+        return;
+
+        // Original code (commented out):
+        // const { oscillator, gainNode } = this.createOscillator(110, 'triangle', 10);
+        // gainNode.gain.value = 0.03;
+        // oscillator.start(this.audioContext.currentTime);
+        // const tavernNode = { oscillator, gainNode };
+        // this.ambientNodes.push(tavernNode);
     },
     
     playForestAmbient(loop = true) {
@@ -775,13 +785,17 @@ const AudioSystem = {
     
     // Music Methods
     playMenuMusic(loop = true) {
-        // Replace with simple ambient sound instead of "two tones"
-        this.playAmbient('tavern', loop);
+        // 🖤 DISABLED - don't auto-play music on startup
+        // Browser policies often block auto-play anyway
+        console.log('🖤 Menu music disabled (requires user interaction)');
+        return;
     },
-    
+
     playGameplayMusic(loop = true) {
-        // Replace with simple ambient sound instead of repetitive music
-        this.playAmbient('city', loop);
+        // 🖤 DISABLED - don't auto-play ambient on gameplay start
+        // Can be re-enabled when user explicitly enables audio
+        console.log('🖤 Gameplay music disabled');
+        return;
     },
     
     playTravelMusic(loop = true) {

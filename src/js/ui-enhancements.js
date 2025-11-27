@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════════════
 // keyboard shortcuts, animations, and all the quality of life stuff
 // because even trading games deserve aesthetic love
-// File Version: 0.1
-// Game Version: 0.1
+// File Version: 0.5
+// Game Version: 0.2
 // Made by Unity AI Lab - Hackall360, Sponge, GFourteen
 
 // ⌨️ Keyboard Shortcuts - for the power users among us
@@ -324,9 +324,10 @@ const KeyboardShortcuts = {
             </div>
         `;
         
-        document.getElementById('overlay-container').appendChild(helpOverlay);
+        const container = document.getElementById('overlay-container') || document.body;
+        container.appendChild(helpOverlay);
     },
-    
+
     // Show help overlay
     showHelpOverlay() {
         const helpOverlay = document.getElementById('help-overlay');
@@ -335,210 +336,31 @@ const KeyboardShortcuts = {
         }
     },
     
-    // Create settings panel
+    // Create settings panel - DEPRECATED: Now uses unified SettingsPanel from settings-panel.js
     createSettingsPanel() {
-        const settingsPanel = document.createElement('div');
-        settingsPanel.id = 'settings-panel';
-        settingsPanel.className = 'overlay hidden';
-        settingsPanel.innerHTML = `
-            <div class="overlay-content">
-                <div class="overlay-header">
-                    <h2>Game Settings</h2>
-                    <button class="close-btn" data-close-overlay="settings-panel">×</button>
-                </div>
-                <div class="overlay-body">
-                    <div class="settings-sections">
-                        <div class="settings-section">
-                            <h3>Controls</h3>
-                            <div class="setting-item">
-                                <label>
-                                    <input type="checkbox" id="enable-tooltips" checked>
-                                    Enable Tooltips
-                                </label>
-                            </div>
-                            <div class="setting-item">
-                                <label>
-                                    <input type="checkbox" id="enable-animations" checked>
-                                    Enable Animations
-                                </label>
-                            </div>
-                            <div class="setting-item">
-                                <label>
-                                    <input type="checkbox" id="enable-sound-effects" checked>
-                                    Enable Sound Effects
-                                </label>
-                            </div>
-                        </div>
-                        <div class="settings-section">
-                            <h3>Display</h3>
-                            <div class="setting-item">
-                                <label>Font Size:</label>
-                                <select id="font-size-select">
-                                    <option value="small">Small</option>
-                                    <option value="medium" selected>Medium</option>
-                                    <option value="large">Large</option>
-                                    <option value="extra-large">Extra Large</option>
-                                </select>
-                            </div>
-                            <div class="setting-item">
-                                <label>
-                                    <input type="checkbox" id="high-contrast-mode">
-                                    High Contrast Mode
-                                </label>
-                            </div>
-                            <div class="setting-item">
-                                <label>Colorblind Mode:</label>
-                                <select id="colorblind-mode-select">
-                                    <option value="normal">Normal</option>
-                                    <option value="protanopia">Protanopia</option>
-                                    <option value="deuteranopia">Deuteranopia</option>
-                                    <option value="tritanopia">Tritanopia</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="settings-section">
-                            <h3>Gameplay</h3>
-                            <div class="setting-item">
-                                <label>
-                                    <input type="checkbox" id="auto-save" checked>
-                                    Auto-save (5 min)
-                                </label>
-                            </div>
-                            <div class="setting-item">
-                                <label>
-                                    <input type="checkbox" id="show-tutorial" checked>
-                                    Show Tutorial
-                                </label>
-                            </div>
-                            <div class="setting-item">
-                                <label>
-                                    <input type="checkbox" id="enable-confirmations" checked>
-                                    Confirmation Dialogs
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="overlay-footer">
-                    <button id="save-settings-btn" class="btn btn-primary">Save Settings</button>
-                    <button id="reset-settings-btn" class="btn btn-secondary">Reset to Default</button>
-                    <button class="btn btn-secondary" data-close-overlay="settings-panel">Close</button>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('overlay-container').appendChild(settingsPanel);
-        this.setupSettingsEventListeners();
+        // Settings panel is now created by settings-panel.js
+        // This function is kept for backwards compatibility but does nothing
+        console.log('UIPolishSystem.createSettingsPanel() - Using unified SettingsPanel');
     },
-    
-    // Setup settings event listeners
-    setupSettingsEventListeners() {
-        const settingsPanel = document.getElementById('settings-panel');
-        if (!settingsPanel) {
-            console.warn('Settings panel not found, skipping event setup');
-            return;
-        }
 
-        // Close button(s) - use querySelectorAll for multiple potential close buttons
-        const closeBtns = settingsPanel.querySelectorAll('#close-settings-btn, [data-close-overlay="settings-panel"]');
-        closeBtns.forEach(btn => {
-            EventManager.addEventListener(btn, 'click', () => {
-                settingsPanel.classList.add('hidden');
-            });
-        });
-        
-        // Save settings button
-        const saveBtn = settingsPanel.querySelector('#save-settings-btn');
-        EventManager.addEventListener(saveBtn, 'click', () => {
-            this.saveSettings();
-            settingsPanel.classList.add('hidden');
-        });
-        
-        // Reset settings button
-        const resetBtn = settingsPanel.querySelector('#reset-settings-btn');
-        EventManager.addEventListener(resetBtn, 'click', () => {
-            this.resetSettings();
-        });
-        
-        // Font size change
-        const fontSelect = settingsPanel.querySelector('#font-size-select');
-        EventManager.addEventListener(fontSelect, 'change', (e) => {
-            this.changeFontSize(e.target.value);
-        });
-        
-        // High contrast toggle
-        const highContrast = settingsPanel.querySelector('#high-contrast-mode');
-        EventManager.addEventListener(highContrast, 'change', () => {
-            this.toggleHighContrast();
-        });
-        
-        // Colorblind mode change
-        const colorblindSelect = settingsPanel.querySelector('#colorblind-mode-select');
-        EventManager.addEventListener(colorblindSelect, 'change', (e) => {
-            this.changeColorblindMode(e.target.value);
-        });
+    // Setup settings event listeners - DEPRECATED
+    setupSettingsEventListeners() {
+        // No longer needed - SettingsPanel handles its own event listeners
     },
-    
-    // Save settings
+
+    // Save settings - DEPRECATED: Now handled by SettingsPanel
     saveSettings() {
-        const settings = {
-            enableTooltips: document.getElementById('enable-tooltips').checked,
-            enableAnimations: document.getElementById('enable-animations').checked,
-            enableSoundEffects: document.getElementById('enable-sound-effects').checked,
-            fontSize: document.getElementById('font-size-select').value,
-            highContrastMode: document.getElementById('high-contrast-mode').checked,
-            colorblindMode: document.getElementById('colorblind-mode-select').value,
-            autoSave: document.getElementById('auto-save').checked,
-            showTutorial: document.getElementById('show-tutorial').checked,
-            enableConfirmations: document.getElementById('enable-confirmations').checked
-        };
-        
-        localStorage.setItem('tradingGameSettings', JSON.stringify(settings));
-        this.applySettings(settings);
-        addMessage('Settings saved successfully!');
+        // Redirect to SettingsPanel if available
+        if (typeof SettingsPanel !== 'undefined' && SettingsPanel.saveSettings) {
+            SettingsPanel.saveSettings();
+        }
     },
-    
-    // Load settings
+
+    // Load settings - DEPRECATED: Now handled by SettingsPanel
     loadSettings() {
-        const savedSettings = localStorage.getItem('tradingGameSettings');
-        if (savedSettings) {
-            let settings;
-            try {
-                settings = JSON.parse(savedSettings);
-            } catch (error) {
-                console.error('Failed to parse settings:', error);
-                return;
-            }
-            this.applySettings(settings);
-            
-            // Update UI to reflect loaded settings
-            if (document.getElementById('enable-tooltips')) {
-                document.getElementById('enable-tooltips').checked = settings.enableTooltips;
-            }
-            if (document.getElementById('enable-animations')) {
-                document.getElementById('enable-animations').checked = settings.enableAnimations;
-            }
-            if (document.getElementById('enable-sound-effects')) {
-                document.getElementById('enable-sound-effects').checked = settings.enableSoundEffects;
-            }
-            if (document.getElementById('font-size-select')) {
-                document.getElementById('font-size-select').value = settings.fontSize;
-            }
-            if (document.getElementById('high-contrast-mode')) {
-                document.getElementById('high-contrast-mode').checked = settings.highContrastMode;
-            }
-            if (document.getElementById('colorblind-mode-select')) {
-                document.getElementById('colorblind-mode-select').value = settings.colorblindMode;
-            }
-            if (document.getElementById('auto-save')) {
-                document.getElementById('auto-save').checked = settings.autoSave;
-            }
-            if (document.getElementById('show-tutorial')) {
-                document.getElementById('show-tutorial').checked = settings.showTutorial;
-            }
-            if (document.getElementById('enable-confirmations')) {
-                document.getElementById('enable-confirmations').checked = settings.enableConfirmations;
-            }
+        // SettingsPanel auto-loads settings on init
+        if (typeof SettingsPanel !== 'undefined' && SettingsPanel.loadSettings) {
+            SettingsPanel.loadSettings();
         }
     },
     
@@ -582,8 +404,22 @@ const KeyboardShortcuts = {
         addMessage('Settings reset to default values!');
     },
     
-    // Create quick action buttons
+    // Create quick action buttons - spawning shortcuts into the void
     createQuickActionButtons() {
+        // check if the container exists before we hurl buttons into the abyss
+        const gameControls = document.getElementById('game-controls');
+        if (!gameControls) {
+            // the void consumed our container... how very on brand
+            console.warn('🖤 game-controls element not found... quick actions drift into the ether');
+            return;
+        }
+
+        // dont spawn duplicates - one set of existential shortcuts is enough
+        if (document.getElementById('quick-actions')) {
+            console.log('🖤 quick actions already exist... no need for clones');
+            return;
+        }
+
         const quickActions = document.createElement('div');
         quickActions.id = 'quick-actions';
         quickActions.innerHTML = `
@@ -592,14 +428,14 @@ const KeyboardShortcuts = {
             <button id="quick-rest-btn" title="Quick Rest (R)" aria-label="Quick Rest" aria-keyshortcuts="R">😴</button>
             <button id="quick-sell-btn" title="Quick Sell (G)" aria-label="Quick Sell" aria-keyshortcuts="G">💰</button>
             <button id="quick-buy-btn" title="Quick Buy (B)" aria-label="Quick Buy" aria-keyshortcuts="B">🛒</button>
-            <button id="settings-btn" title="Settings (F1)" aria-label="Settings" aria-keyshortcuts="F1">⚙️</button>
-            <button id="help-btn" title="Help (F1)" aria-label="Help" aria-keyshortcuts="F1">❓</button>
+            <button id="quick-settings-btn" title="Settings (,)" aria-label="Settings" aria-keyshortcuts=",">⚙️</button>
+            <button id="quick-help-btn" title="Help (F1)" aria-label="Help" aria-keyshortcuts="F1">❓</button>
         `;
-        
-        document.getElementById('game-controls').appendChild(quickActions);
+
+        gameControls.appendChild(quickActions);
         this.setupQuickActionListeners();
     },
-    
+
     // Setup quick action listeners
     setupQuickActionListeners() {
         EventManager.addEventListener(document.getElementById('quick-save-btn'), 'click', () => this.quickSave());
@@ -607,8 +443,8 @@ const KeyboardShortcuts = {
         EventManager.addEventListener(document.getElementById('quick-rest-btn'), 'click', () => this.quickRest());
         EventManager.addEventListener(document.getElementById('quick-sell-btn'), 'click', () => this.quickSell());
         EventManager.addEventListener(document.getElementById('quick-buy-btn'), 'click', () => this.quickBuy());
-        EventManager.addEventListener(document.getElementById('settings-btn'), 'click', () => this.showSettings());
-        EventManager.addEventListener(document.getElementById('help-btn'), 'click', () => this.showHelpOverlay());
+        EventManager.addEventListener(document.getElementById('quick-settings-btn'), 'click', () => this.showSettings());
+        EventManager.addEventListener(document.getElementById('quick-help-btn'), 'click', () => this.showHelpOverlay());
     },
     
     // Quick save
@@ -758,12 +594,14 @@ const KeyboardShortcuts = {
             </div>
         `;
         
-        document.getElementById('overlay-container').appendChild(loadingOverlay);
+        const container = document.getElementById('overlay-container') || document.body;
+        container.appendChild(loadingOverlay);
     },
-    
+
     // Show loading indicator
     showLoadingIndicator(text = 'Loading...') {
         const loadingOverlay = document.getElementById('loading-overlay');
+        if (!loadingOverlay) return;
         const loadingText = loadingOverlay.querySelector('.loading-text');
         const progressFill = loadingOverlay.querySelector('.progress-fill');
         
@@ -891,8 +729,13 @@ const KeyboardShortcuts = {
             </div>
         `;
         
-        document.getElementById('game-world').appendChild(minimapContainer);
-        this.setupMinimap();
+        const gameWorld = document.getElementById('game-world') || document.getElementById('game-container');
+        if (gameWorld) {
+            gameWorld.appendChild(minimapContainer);
+            this.setupMinimap();
+        } else {
+            console.warn('🖤 No game-world element found for minimap');
+        }
     },
     
     // Setup minimap
@@ -959,6 +802,19 @@ const KeyboardShortcuts = {
     
     // Create game statistics
     createGameStats() {
+        // 🖤 check if container exists before spawning stats into the void
+        const gameControls = document.getElementById('game-controls');
+        if (!gameControls) {
+            console.warn('🖤 game-controls element not found... stats fade into darkness');
+            return;
+        }
+
+        // prevent duplicate stats containers
+        if (document.getElementById('game-stats-container')) {
+            console.log('🖤 game stats already exist... no need for duplicates');
+            return;
+        }
+
         const statsContainer = document.createElement('div');
         statsContainer.id = 'game-stats-container';
         statsContainer.innerHTML = `
@@ -993,8 +849,8 @@ const KeyboardShortcuts = {
                 </div>
             </div>
         `;
-        
-        document.getElementById('game-controls').appendChild(statsContainer);
+
+        gameControls.appendChild(statsContainer);
         this.setupStatsListeners();
     },
     
@@ -1050,9 +906,10 @@ const KeyboardShortcuts = {
             </div>
         `;
         
-        document.getElementById('overlay-container').appendChild(confirmationOverlay);
+        const container = document.getElementById('overlay-container') || document.body;
+        container.appendChild(confirmationOverlay);
     },
-    
+
     // Show confirmation dialog
     showConfirmationDialog(title, message, onConfirm, onCancel = null) {
         const overlay = document.getElementById('confirmation-overlay');
@@ -1254,11 +1111,15 @@ const KeyboardShortcuts = {
         }
     },
     
-    // Settings functions
+    // Settings functions - redirect to main SettingsPanel
     showSettings() {
-        const settingsPanel = document.getElementById('settings-panel');
-        if (settingsPanel) {
-            settingsPanel.classList.remove('hidden');
+        if (typeof SettingsPanel !== 'undefined') {
+            if (!SettingsPanel.panelElement) {
+                SettingsPanel.init();
+            }
+            SettingsPanel.show();
+        } else {
+            console.error('SettingsPanel not loaded');
         }
     },
     
@@ -1409,7 +1270,8 @@ const KeyboardShortcuts = {
         tooltip.setAttribute('role', 'tooltip');
         tooltip.textContent = tooltipText;
         
-        document.getElementById('tooltip-container').appendChild(tooltip);
+        const tooltipContainer = document.getElementById('tooltip-container') || document.body;
+        tooltipContainer.appendChild(tooltip);
         
         // Position tooltip
         const rect = element.getBoundingClientRect();
@@ -1492,7 +1354,8 @@ const KeyboardShortcuts = {
         particle.style.left = x + 'px';
         particle.style.top = y + 'px';
         
-        document.getElementById('particle-container').appendChild(particle);
+        const particleContainer = document.getElementById('particle-container') || document.body;
+        particleContainer.appendChild(particle);
         
         // Animate particle
         const animation = particle.animate([
@@ -1511,14 +1374,27 @@ const KeyboardShortcuts = {
     
     // Create auto-save indicator
     createAutoSaveIndicator() {
+        // 🖤 check for container before summoning the save icon from the void
+        const gameHeader = document.getElementById('game-header') || document.getElementById('top-bar') || document.getElementById('game-container');
+        if (!gameHeader) {
+            console.warn('🖤 No suitable container for auto-save indicator... it fades into nothing');
+            return;
+        }
+
+        // prevent duplicates
+        if (document.getElementById('auto-save-indicator')) {
+            return;
+        }
+
         const autoSaveIndicator = document.createElement('div');
         autoSaveIndicator.id = 'auto-save-indicator';
+        autoSaveIndicator.className = 'hidden'; // start hidden
         autoSaveIndicator.innerHTML = `
             <div class="auto-save-icon">💾</div>
             <div class="auto-save-text">Auto-saving...</div>
         `;
-        
-        document.getElementById('game-header').appendChild(autoSaveIndicator);
+
+        gameHeader.appendChild(autoSaveIndicator);
     },
     
     // Show auto-save indicator

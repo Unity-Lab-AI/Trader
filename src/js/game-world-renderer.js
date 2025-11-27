@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🗺️ GAME WORLD RENDERER v2 - painting the void so you know where you're lost
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // rebuilt from scratch cuz canvas was being a drama queen
@@ -212,6 +212,164 @@ const GameWorldRenderer = {
 
         // Mark current location
         this.highlightCurrentLocation();
+
+        // Render player-owned property markers
+        this.renderPropertyMarkers();
+    },
+
+    // 🏠 Render property markers for player-owned properties
+    renderPropertyMarkers() {
+        if (typeof game === 'undefined' || !game.player || !game.player.ownedProperties) return;
+        if (!Array.isArray(game.player.ownedProperties) || game.player.ownedProperties.length === 0) return;
+
+        const locations = (typeof GameWorld !== 'undefined' && GameWorld.locations) ? GameWorld.locations : {};
+
+        // Group properties by location
+        const propertiesByLocation = {};
+        game.player.ownedProperties.forEach(property => {
+            const locId = property.location;
+            if (!propertiesByLocation[locId]) {
+                propertiesByLocation[locId] = [];
+            }
+            propertiesByLocation[locId].push(property);
+        });
+
+        // Render markers for each location with properties
+        Object.entries(propertiesByLocation).forEach(([locationId, properties]) => {
+            const location = locations[locationId];
+            if (!location || !location.mapPosition) return;
+
+            this.createPropertyMarker(location, properties);
+        });
+    },
+
+    // 🏘️ Create a property marker badge at a location
+    createPropertyMarker(location, properties) {
+        if (!location.mapPosition) return;
+
+        const style = this.locationStyles[location.type] || this.locationStyles.town;
+
+        // Count different property states
+        const underConstruction = properties.filter(p => p.underConstruction).length;
+        const rented = properties.filter(p => p.isRented && !p.underConstruction).length;
+        const owned = properties.filter(p => !p.isRented && !p.underConstruction).length;
+        const total = properties.length;
+
+        // Determine badge color based on majority type
+        let badgeColor = '#4CAF50'; // green for owned
+        let badgeIcon = '🏠';
+
+        if (underConstruction > 0 && underConstruction >= owned && underConstruction >= rented) {
+            badgeColor = '#FF9800'; // orange for construction
+            badgeIcon = '🔨';
+        } else if (rented > 0 && rented >= owned) {
+            badgeColor = '#2196F3'; // blue for rented
+            badgeIcon = '📝';
+        }
+
+        // Create property marker badge
+        const marker = document.createElement('div');
+        marker.className = 'property-marker-badge';
+        marker.dataset.locationId = location.id;
+
+        // Position relative to the location (offset to bottom-right)
+        const offsetX = style.size / 2 + 5;
+        const offsetY = -style.size / 2 - 5;
+
+        marker.style.cssText = `
+            position: absolute;
+            left: ${location.mapPosition.x + offsetX}px;
+            top: ${location.mapPosition.y + offsetY}px;
+            transform: translate(-50%, -50%);
+            background: ${badgeColor};
+            border: 2px solid ${this.lightenColor(badgeColor, 20)};
+            border-radius: 12px;
+            padding: 2px 6px;
+            min-width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            z-index: 50;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        `;
+
+        marker.innerHTML = `<span style="font-size: 14px;">${badgeIcon}</span><span>${total}</span>`;
+
+        // Hover effect
+        marker.addEventListener('mouseenter', () => {
+            marker.style.transform = 'translate(-50%, -50%) scale(1.2)';
+            marker.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.6)';
+            this.showPropertyTooltip(location, properties, marker);
+        });
+
+        marker.addEventListener('mouseleave', () => {
+            marker.style.transform = 'translate(-50%, -50%) scale(1)';
+            marker.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.4)';
+            this.hideTooltip();
+        });
+
+        // Click to open properties panel
+        marker.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (typeof PropertyEmployeeUI !== 'undefined') {
+                PropertyEmployeeUI.openPropertyEmployeePanel();
+            }
+        });
+
+        this.mapElement.appendChild(marker);
+    },
+
+    // 🏠 Show tooltip for property marker
+    showPropertyTooltip(location, properties, markerEl) {
+        if (!this.tooltipElement) return;
+
+        const rect = markerEl.getBoundingClientRect();
+
+        // Build property list
+        let propertyList = properties.map(p => {
+            const propType = (typeof PropertySystem !== 'undefined' && PropertySystem.propertyTypes)
+                ? PropertySystem.propertyTypes[p.type]
+                : { name: p.type, icon: '🏠' };
+
+            let status = '';
+            if (p.underConstruction) {
+                const progress = (typeof PropertySystem !== 'undefined' && PropertySystem.getConstructionProgress)
+                    ? PropertySystem.getConstructionProgress(p)
+                    : 0;
+                status = `<span style="color: #FF9800;">🔨 ${progress}%</span>`;
+            } else if (p.isRented) {
+                status = `<span style="color: #2196F3;">📝 Rented</span>`;
+            } else {
+                status = `<span style="color: #4CAF50;">🏠 Owned</span>`;
+            }
+
+            return `<div style="padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <span style="font-size: 16px;">${propType?.icon || '🏠'}</span>
+                <span style="color: #fff;">${propType?.name || p.type}</span>
+                ${status}
+            </div>`;
+        }).join('');
+
+        this.tooltipElement.innerHTML = `
+            <div style="font-size: 14px; font-weight: bold; color: #4fc3f7; margin-bottom: 8px;">
+                🏘️ Your Properties in ${location.name}
+            </div>
+            ${propertyList}
+            <div style="margin-top: 8px; font-size: 11px; color: #aaa;">
+                Click to manage properties
+            </div>
+        `;
+
+        this.tooltipElement.style.display = 'block';
+        this.tooltipElement.style.left = `${rect.right + 10}px`;
+        this.tooltipElement.style.top = `${rect.top}px`;
     },
 
     // 🔍 calculate what you can see vs what lurks in the shadows
@@ -254,17 +412,36 @@ const GameWorldRenderer = {
             visibility[locId] = 'visible';
         });
 
-        // Second pass: mark locations connected to visited ones as 'discovered' (greyed out)
+        // Second pass: ALL locations directly connected to visited ones are ALWAYS 'discovered'
+        // Players must be able to see and travel to any adjacent location from where they've been
+        // This includes outposts, gatehouses, and locations in locked regions
+        // The gate fee system handles access control, not visibility
         visited.forEach(locId => {
             const location = locations[locId];
             if (location && location.connections) {
                 location.connections.forEach(connectedId => {
                     // Only mark as discovered if not already visible
                     if (!visibility[connectedId]) {
-                        // Check if this location is behind a locked gatehouse
-                        if (this.isLocationBehindLockedGate(connectedId)) {
-                            visibility[connectedId] = 'hidden';
-                        } else {
+                        // ALL connected locations are discovered - no exceptions
+                        // You can always see where a path leads from an explored location
+                        visibility[connectedId] = 'discovered';
+                    }
+                });
+            }
+        });
+
+        // Third pass: also show gatehouses that are 2 hops away from visited locations
+        // e.g., visited → discovered → gatehouse should show the gatehouse
+        // This helps players see outposts they need to reach
+        const discoveredLocations = Object.keys(visibility).filter(id => visibility[id] === 'discovered');
+        discoveredLocations.forEach(locId => {
+            const location = locations[locId];
+            if (location && location.connections) {
+                location.connections.forEach(connectedId => {
+                    // Only process if not already visible/discovered
+                    if (!visibility[connectedId] || visibility[connectedId] === 'hidden') {
+                        // If it's a gatehouse, make it discovered so players can see and travel to it
+                        if (this.isGatehouse(connectedId)) {
                             visibility[connectedId] = 'discovered';
                         }
                     }
@@ -280,6 +457,23 @@ const GameWorldRenderer = {
         });
 
         return visibility;
+    },
+
+    // 🏰 check if a location is a gatehouse/outpost (the toll booths of the realm)
+    isGatehouse(locationId) {
+        // Check GatehouseSystem first
+        if (typeof GatehouseSystem !== 'undefined' && GatehouseSystem.GATEHOUSES) {
+            if (GatehouseSystem.GATEHOUSES[locationId]) {
+                return true;
+            }
+        }
+        // Also check location type
+        const locations = (typeof GameWorld !== 'undefined' && GameWorld.locations) ? GameWorld.locations : {};
+        const location = locations[locationId];
+        if (location && location.type === 'outpost') {
+            return true;
+        }
+        return false;
     },
 
     // 🚧 check if some gatekeeping mechanism blocks your path (capitalism simulator moment)
@@ -342,11 +536,30 @@ const GameWorldRenderer = {
                 if (drawnConnections.has(connectionKey)) return;
                 drawnConnections.add(connectionKey);
 
+                // Create a group for the path (visible line + invisible hitbox)
+                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                group.style.cursor = 'help';
+
+                // Calculate path info for tooltip
+                const pathInfo = this.getPathInfo(location, target);
+
+                // Invisible wider line for easier hovering
+                const hitbox = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                hitbox.setAttribute('x1', location.mapPosition.x);
+                hitbox.setAttribute('y1', location.mapPosition.y);
+                hitbox.setAttribute('x2', target.mapPosition.x);
+                hitbox.setAttribute('y2', target.mapPosition.y);
+                hitbox.setAttribute('stroke', 'transparent');
+                hitbox.setAttribute('stroke-width', '15');
+                hitbox.style.pointerEvents = 'stroke';
+
+                // Visible path line
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 line.setAttribute('x1', location.mapPosition.x);
                 line.setAttribute('y1', location.mapPosition.y);
                 line.setAttribute('x2', target.mapPosition.x);
                 line.setAttribute('y2', target.mapPosition.y);
+                line.style.pointerEvents = 'none';
 
                 // Color based on exploration status
                 const bothExplored = visited.includes(location.id) && visited.includes(targetId);
@@ -369,11 +582,204 @@ const GameWorldRenderer = {
                     line.setAttribute('stroke-dasharray', '5,5');
                 }
 
-                svg.appendChild(line);
+                // Add hover events for tooltip
+                hitbox.addEventListener('mouseenter', (e) => {
+                    this.showPathTooltip(e, pathInfo, location, target);
+                    line.setAttribute('stroke-width', bothExplored ? '5' : '4');
+                    line.style.filter = 'drop-shadow(0 0 4px rgba(255, 215, 0, 0.8))';
+                });
+                hitbox.addEventListener('mousemove', (e) => {
+                    this.movePathTooltip(e);
+                });
+                hitbox.addEventListener('mouseleave', () => {
+                    this.hidePathTooltip();
+                    line.setAttribute('stroke-width', bothExplored ? '3' : '2');
+                    line.style.filter = 'none';
+                });
+
+                group.appendChild(line);
+                group.appendChild(hitbox);
+                svg.appendChild(group);
             });
         });
 
         this.mapElement.appendChild(svg);
+    },
+
+    // 🛤️ Get path information for tooltip
+    getPathInfo(fromLocation, toLocation) {
+        // Calculate distance in miles
+        const dx = toLocation.mapPosition.x - fromLocation.mapPosition.x;
+        const dy = toLocation.mapPosition.y - fromLocation.mapPosition.y;
+        const pixelDistance = Math.sqrt(dx * dx + dy * dy);
+        const distanceMiles = Math.round(pixelDistance / 10 * 10) / 10; // ~10 pixels per mile
+
+        // Determine path type based on location types
+        const pathType = this.determinePathType(fromLocation, toLocation);
+        const pathData = this.PATH_TYPES[pathType] || this.PATH_TYPES.road;
+
+        // Calculate travel time (base walking speed ~3 mph)
+        const baseSpeed = 3;
+        const effectiveSpeed = baseSpeed * pathData.speedMultiplier;
+        const travelTimeHours = distanceMiles / effectiveSpeed;
+        const travelTimeMinutes = Math.round(travelTimeHours * 60);
+
+        // Calculate stamina drain
+        const staminaDrain = Math.round(distanceMiles * pathData.staminaDrain * 10) / 10;
+
+        return {
+            type: pathType,
+            typeName: pathData.name,
+            description: pathData.description,
+            distanceMiles: distanceMiles,
+            travelTimeMinutes: travelTimeMinutes,
+            staminaDrain: staminaDrain,
+            safety: Math.round(pathData.safety * 100),
+            speedMultiplier: pathData.speedMultiplier
+        };
+    },
+
+    // 🛤️ Determine path type based on connected locations
+    determinePathType(fromLocation, toLocation) {
+        const fromType = fromLocation?.type || 'unknown';
+        const toType = toLocation?.type || 'unknown';
+
+        // Capital or city connections = main roads
+        if (fromType === 'capital' || toType === 'capital') {
+            return 'main_road';
+        }
+        if (fromType === 'city' || toType === 'city') {
+            return 'main_road';
+        }
+        // Town connections = regular roads
+        if (fromType === 'town' || toType === 'town') {
+            return 'road';
+        }
+        // Village connections = paths
+        if (fromType === 'village' || toType === 'village') {
+            return 'path';
+        }
+        // Outpost/mine/dungeon = trails
+        if (['outpost', 'mine', 'dungeon', 'cave', 'ruins'].includes(fromType) ||
+            ['outpost', 'mine', 'dungeon', 'cave', 'ruins'].includes(toType)) {
+            return 'trail';
+        }
+        // Forest/farm = paths
+        if (['forest', 'farm'].includes(fromType) || ['forest', 'farm'].includes(toType)) {
+            return 'path';
+        }
+
+        return 'road';
+    },
+
+    // 🛤️ Path type definitions
+    PATH_TYPES: {
+        city_street: {
+            name: 'City Street',
+            speedMultiplier: 1.5,
+            staminaDrain: 0.3,
+            safety: 0.9,
+            description: 'Well-paved city streets'
+        },
+        main_road: {
+            name: 'Main Road',
+            speedMultiplier: 1.3,
+            staminaDrain: 0.5,
+            safety: 0.7,
+            description: 'Major trade road'
+        },
+        road: {
+            name: 'Road',
+            speedMultiplier: 1.0,
+            staminaDrain: 0.7,
+            safety: 0.6,
+            description: 'Maintained road'
+        },
+        path: {
+            name: 'Path',
+            speedMultiplier: 0.8,
+            staminaDrain: 0.9,
+            safety: 0.5,
+            description: 'Worn dirt path'
+        },
+        trail: {
+            name: 'Trail',
+            speedMultiplier: 0.6,
+            staminaDrain: 1.2,
+            safety: 0.4,
+            description: 'Rough wilderness trail'
+        },
+        wilderness: {
+            name: 'Wilderness',
+            speedMultiplier: 0.4,
+            staminaDrain: 1.5,
+            safety: 0.3,
+            description: 'Untamed wilderness'
+        }
+    },
+
+    // 💬 Show path tooltip
+    showPathTooltip(e, pathInfo, fromLoc, toLoc) {
+        const formatGameTime = (minutes) => {
+            if (minutes < 60) return `${minutes} min`;
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+        };
+
+        // Calculate real-time based on game speed (2 game min per real second at NORMAL)
+        // At NORMAL: 120 game minutes = 60 real seconds
+        const gameMinutesPerRealSecond = typeof TimeSystem !== 'undefined' ?
+            (TimeSystem.SPEEDS?.NORMAL || 2) : 2;
+        const realTimeSeconds = Math.round(pathInfo.travelTimeMinutes / gameMinutesPerRealSecond);
+        const realTimeDisplay = realTimeSeconds < 60 ?
+            `~${realTimeSeconds}s` :
+            `~${Math.round(realTimeSeconds / 60)}m ${realTimeSeconds % 60}s`;
+
+        this.tooltipElement.innerHTML = `
+            <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #ffd700;">
+                🛤️ ${pathInfo.typeName}
+            </div>
+            <div style="color: #888; font-size: 11px; margin-bottom: 8px; font-style: italic;">
+                ${pathInfo.description}
+            </div>
+            <div style="display: grid; grid-template-columns: auto auto; gap: 4px 12px; font-size: 12px;">
+                <span style="color: #888;">Distance:</span>
+                <span style="color: #4fc3f7;">${pathInfo.distanceMiles} miles</span>
+
+                <span style="color: #888;">Travel Time:</span>
+                <span style="color: #81c784;">${formatGameTime(pathInfo.travelTimeMinutes)} game time</span>
+
+                <span style="color: #888;">Real Time:</span>
+                <span style="color: #ce93d8;">${realTimeDisplay} (at normal speed)</span>
+
+                <span style="color: #888;">Stamina Drain:</span>
+                <span style="color: #ffb74d;">${pathInfo.staminaDrain} pts</span>
+
+                <span style="color: #888;">Safety:</span>
+                <span style="color: ${pathInfo.safety >= 70 ? '#81c784' : pathInfo.safety >= 50 ? '#ffb74d' : '#f44336'};">
+                    ${pathInfo.safety}%
+                </span>
+            </div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: #666;">
+                ${fromLoc.name} ↔ ${toLoc.name}
+            </div>
+        `;
+
+        this.tooltipElement.style.display = 'block';
+        this.tooltipElement.style.left = (e.clientX + 15) + 'px';
+        this.tooltipElement.style.top = (e.clientY + 15) + 'px';
+    },
+
+    // 💬 Move path tooltip
+    movePathTooltip(e) {
+        this.tooltipElement.style.left = (e.clientX + 15) + 'px';
+        this.tooltipElement.style.top = (e.clientY + 15) + 'px';
+    },
+
+    // 💬 Hide path tooltip
+    hidePathTooltip() {
+        this.tooltipElement.style.display = 'none';
     },
 
     // 📍 birth a location into existence on the map
@@ -675,7 +1081,7 @@ const GameWorldRenderer = {
         this.runTravelAnimation();
     },
 
-    // 🔄 keep the travel animation going - time waits for no one
+    // 🔄 keep the travel animation going - time waits for no one (unless paused)
     runTravelAnimation() {
         if (!this.currentTravel) return;
 
@@ -683,10 +1089,16 @@ const GameWorldRenderer = {
 
         // Get current game time progress
         let progress = 0;
+        let isPaused = false;
+
         if (typeof TimeSystem !== 'undefined') {
+            isPaused = TimeSystem.isPaused || TimeSystem.currentSpeed === 'PAUSED';
             const currentGameTime = TimeSystem.getTotalMinutes();
             const elapsed = currentGameTime - travel.startGameTime;
             progress = Math.min(elapsed / travel.durationMinutes, 1);
+
+            // Store progress for UI display
+            travel.currentProgress = progress;
         } else {
             // Fallback if TimeSystem not available
             progress = 1;
@@ -704,8 +1116,26 @@ const GameWorldRenderer = {
         // Update marker position
         this.updatePlayerMarker(currentX, currentY);
 
+        // Update travel progress display if paused (so player sees where they are)
+        if (isPaused && this.playerMarker) {
+            const label = this.playerMarker.querySelector('.marker-label');
+            if (label) {
+                const percentComplete = Math.round(progress * 100);
+                label.textContent = `PAUSED (${percentComplete}%)`;
+                label.style.background = 'linear-gradient(180deg, #888888 0%, #555555 100%)';
+            }
+        } else if (!isPaused && this.playerMarker) {
+            // Resume traveling label
+            const label = this.playerMarker.querySelector('.marker-label');
+            if (label && label.textContent.startsWith('PAUSED')) {
+                label.textContent = 'TRAVELING...';
+                label.style.background = 'linear-gradient(180deg, #ff8844 0%, #cc4400 100%)';
+            }
+        }
+
         if (progress < 1) {
             // Continue animation - check every frame
+            // time-synced so works whether paused or not
             this.travelAnimation = requestAnimationFrame(() => this.runTravelAnimation());
         } else {
             // Animation complete
@@ -823,28 +1253,23 @@ const GameWorldRenderer = {
         const containerWidth = containerRect.width;
         const containerHeight = containerRect.height;
 
-        // Scaled map dimensions
-        const mapWidth = 800 * this.mapState.zoom;
-        const mapHeight = 600 * this.mapState.zoom;
+        // Scaled map dimensions - match the CSS size of #world-map-html (1200x900)
+        const mapWidth = 1200 * this.mapState.zoom;
+        const mapHeight = 900 * this.mapState.zoom;
 
-        // If map is smaller than container, center it
-        if (mapWidth <= containerWidth) {
-            this.mapState.offsetX = (containerWidth - mapWidth) / 2;
-        } else {
-            // Map is larger than container - constrain so it doesn't go past edges
-            const minX = containerWidth - mapWidth; // Can't scroll past right edge
-            const maxX = 0; // Can't scroll past left edge
-            this.mapState.offsetX = Math.max(minX, Math.min(maxX, this.mapState.offsetX));
-        }
+        // Always allow scrolling - constrain to keep map visible
+        // Allow scrolling from (container - map - padding) to (padding)
+        const padding = 100; // Allow some padding beyond edges for smoother UX
 
-        if (mapHeight <= containerHeight) {
-            this.mapState.offsetY = (containerHeight - mapHeight) / 2;
-        } else {
-            // Map is larger than container - constrain so it doesn't go past edges
-            const minY = containerHeight - mapHeight; // Can't scroll past bottom edge
-            const maxY = 0; // Can't scroll past top edge
-            this.mapState.offsetY = Math.max(minY, Math.min(maxY, this.mapState.offsetY));
-        }
+        // Horizontal constraints
+        const minX = Math.min(containerWidth - mapWidth - padding, -padding);
+        const maxX = Math.max(padding, containerWidth - mapWidth + padding);
+        this.mapState.offsetX = Math.max(minX, Math.min(maxX, this.mapState.offsetX));
+
+        // Vertical constraints
+        const minY = Math.min(containerHeight - mapHeight - padding, -padding);
+        const maxY = Math.max(padding, containerHeight - mapHeight + padding);
+        this.mapState.offsetY = Math.max(minY, Math.min(maxY, this.mapState.offsetY));
     },
 
     // 🖱️ mouse events - translating human frustration into map movement
@@ -940,7 +1365,7 @@ const GameWorldRenderer = {
         // If still no position, center the map itself
         if (!pos) {
             console.warn('🗺️ No location position found, centering map');
-            pos = { x: 400, y: 300 }; // Default center of 800x600 map
+            pos = { x: 600, y: 450 }; // Default center of 1200x900 map
         }
 
         const containerRect = this.container.getBoundingClientRect();
@@ -990,20 +1415,45 @@ const GameWorldRenderer = {
         const style = this.locationStyles[location.type] || this.locationStyles.town;
 
         if (isDiscovered) {
-            // Show limited info for undiscovered locations
-            this.tooltipElement.innerHTML = `
-                <div style="font-size: 16px; font-weight: bold; margin-bottom: 5px; color: #888;">
-                    ❓ Unknown Location
-                </div>
-                <div style="color: #666; font-size: 12px; margin-bottom: 5px;">
-                    Unexplored territory
-                </div>
-                <div style="font-size: 12px; line-height: 1.4; color: #888; font-style: italic;">
-                    Travel here to discover what lies in this area...
-                </div>
-                <div style="color: #95E77E; margin-top: 5px;">🖱️ Click to explore</div>
-            `;
+            // Check if this is a gatehouse - show more info including fees so players know where to go
+            const isGate = this.isGatehouse(location.id);
+            let gateInfo = isGate ? this.getGateInfo(location) : '';
+
+            if (isGate) {
+                // Gatehouses show their name and fee info even when discovered
+                // so players can make informed decisions about where to travel
+                this.tooltipElement.innerHTML = `
+                    <div style="font-size: 16px; font-weight: bold; margin-bottom: 5px; color: #ff9800;">
+                        🏰 ${location.name}
+                    </div>
+                    <div style="color: #aaa; font-size: 12px; margin-bottom: 5px;">
+                        Outpost • ${location.region} (unexplored)
+                    </div>
+                    <div style="font-size: 12px; line-height: 1.4; color: #888; font-style: italic;">
+                        A frontier outpost guarding passage to new lands...
+                    </div>
+                    ${gateInfo}
+                    <div style="color: #95E77E; margin-top: 5px;">🖱️ Click to travel here</div>
+                `;
+            } else {
+                // Regular undiscovered locations show limited info
+                this.tooltipElement.innerHTML = `
+                    <div style="font-size: 16px; font-weight: bold; margin-bottom: 5px; color: #888;">
+                        ❓ Unknown Location
+                    </div>
+                    <div style="color: #666; font-size: 12px; margin-bottom: 5px;">
+                        Unexplored territory
+                    </div>
+                    <div style="font-size: 12px; line-height: 1.4; color: #888; font-style: italic;">
+                        Travel here to discover what lies in this area...
+                    </div>
+                    <div style="color: #95E77E; margin-top: 5px;">🖱️ Click to explore</div>
+                `;
+            }
         } else {
+            // Check if this is a gate/outpost with passage fees
+            let gateInfo = this.getGateInfo(location);
+
             this.tooltipElement.innerHTML = `
                 <div style="font-size: 16px; font-weight: bold; margin-bottom: 5px;">
                     ${style.icon} ${location.name}
@@ -1014,6 +1464,7 @@ const GameWorldRenderer = {
                 <div style="font-size: 12px; line-height: 1.4;">
                     ${location.description || 'No description available.'}
                 </div>
+                ${gateInfo}
                 ${this.isCurrentLocation(location) ? '<div style="color: #4fc3f7; margin-top: 5px;">📍 You are here</div>' : '<div style="color: #95E77E; margin-top: 5px;">🖱️ Click to travel</div>'}
             `;
         }
@@ -1023,16 +1474,48 @@ const GameWorldRenderer = {
         this.tooltipElement.style.top = (e.clientY + 15) + 'px';
     },
 
+    // 🏰 Get gate/outpost fee information for tooltips
+    getGateInfo(location) {
+        // Check if GatehouseSystem exists and this location is a gatehouse
+        if (typeof GatehouseSystem === 'undefined') return '';
+
+        const gatehouse = GatehouseSystem.GATEHOUSES[location.id];
+        if (!gatehouse) return '';
+
+        const isUnlocked = GatehouseSystem.isGatehouseUnlocked(location.id);
+        const fee = gatehouse.fee;
+        const zoneName = GatehouseSystem.ZONES[gatehouse.unlocksZone]?.name || 'new region';
+
+        if (isUnlocked) {
+            return `
+                <div style="margin-top: 8px; padding: 8px; background: rgba(76, 175, 80, 0.2); border-radius: 6px; border-left: 3px solid #4caf50;">
+                    <div style="color: #4caf50; font-weight: bold; margin-bottom: 4px;">🔓 Passage Unlocked</div>
+                    <div style="color: #81c784; font-size: 11px;">Free access to ${zoneName}</div>
+                    <div style="color: #aaa; font-size: 10px; margin-top: 4px;">💱 Trading available</div>
+                </div>
+            `;
+        } else {
+            return `
+                <div style="margin-top: 8px; padding: 8px; background: rgba(255, 152, 0, 0.2); border-radius: 6px; border-left: 3px solid #ff9800;">
+                    <div style="color: #ff9800; font-weight: bold; margin-bottom: 4px;">🔒 Passage Fee Required</div>
+                    <div style="color: #ffb74d; font-size: 12px;">💰 ${fee} gold (one-time)</div>
+                    <div style="color: #aaa; font-size: 11px; margin-top: 4px;">Unlocks: ${zoneName}</div>
+                    <div style="color: #81c784; font-size: 10px; margin-top: 4px;">💱 Trading available without fee</div>
+                </div>
+            `;
+        }
+    },
+
     hideTooltip() {
         this.tooltipElement.style.display = 'none';
     },
 
-    // 🚶 Location click handler
+    // 🚶 Location click handler - sets destination first, lets player choose to travel
     onLocationClick(e, location, isDiscovered = false) {
         e.stopPropagation();
 
         if (this.isCurrentLocation(location)) {
-            addMessage(`📍 You are already at ${location.name}`);
+            addMessage(`📍 You are already at ${location.name}. go touch grass or something.`);
             return;
         }
 
@@ -1040,25 +1523,25 @@ const GameWorldRenderer = {
         const currentLoc = typeof GameWorld !== 'undefined' ? GameWorld.locations[game.currentLocation?.id] : null;
         if (currentLoc && currentLoc.connections) {
             if (!currentLoc.connections.includes(location.id)) {
-                addMessage(`❌ This location is not directly connected to your current location`);
+                addMessage(`❌ ${location.name} is not directly connected. you cant teleport, mortal.`);
                 return;
             }
         }
 
-        // Initiate travel (which will reveal the location)
-        if (typeof TravelSystem !== 'undefined' && TravelSystem.travelTo) {
-            TravelSystem.travelTo(location.id);
-        } else if (typeof travelTo === 'function') {
-            travelTo(location.id);
-        } else {
-            addMessage(`🗺️ Traveling to ${isDiscovered ? 'unknown location' : location.name}...`);
-            // Fallback: direct location change
-            if (game && game.setCurrentLocation) {
-                game.setCurrentLocation(location);
-            }
+        // 🎯 SET DESTINATION instead of immediately traveling
+        // the player should see where theyre going before committing their soul to the journey
+        this.setDestination(location.id);
+
+        // Sync with TravelPanelMap if it exists
+        if (typeof TravelPanelMap !== 'undefined' && TravelPanelMap.setDestination) {
+            TravelPanelMap.setDestination(location.id);
         }
 
-        this.render(); // Re-render to update current location highlight and exploration
+        // Show helpful message about what to do next
+        const destName = isDiscovered ? 'mysterious unknown location' : location.name;
+        addMessage(`🎯 Destination set: ${destName}. hit play or use the travel panel to begin your pilgrimage.`);
+
+        this.render(); // Re-render to show destination highlight
     },
 
     // 🔧 Utility functions

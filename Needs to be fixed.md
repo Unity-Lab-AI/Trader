@@ -92,44 +92,44 @@ After applying fixes, test:
 ## Files Modified (Complete List)
 
 ### Session 1 Fixes:
-1. `src/js/event-manager.js` (v20)
+1. `src/js/event-manager.js`
    - Added addEventListener and removeEventListener aliases
 
 ### Session 2 Fixes:
-2. `src/js/game.js` (v24)
+2. `src/js/game.js`
    - Fixed `item.rarity.name` -> `item.rarity` (lines 5430, 6032)
    - Fixed rarity comparisons to use strings (lines 1937-1941)
    - Added `lastWageProcessedDay` property
    - Centralized update logic with proper timing checks
    - Added processWorkQueues() call
 
-3. `src/js/inventory-system.js` (v20)
+3. `src/js/inventory-system.js`
    - Fixed rarity sorting comparison (line 114)
 
-4. `src/js/employee-system.js` (v20)
+4. `src/js/employee-system.js`
    - Fixed filterEmployees to find active button by onclick attribute
    - Removed game.update wrapping
 
-5. `src/js/npc-merchant-system.js` (v20)
+5. `src/js/npc-merchant-system.js`
    - Fixed ItemDatabase access to use getItem() method
 
-6. `src/js/game-world-renderer.js` (v21)
+6. `src/js/game-world-renderer.js`
    - Fixed zoom by adding passive: false and stopPropagation()
 
-7. `src/js/environmental-effects-system.js` (v20)
+7. `src/js/environmental-effects-system.js`
    - Disabled sun-rays effect (floating orb)
    - Disabled ambient particles
 
-8. `src/js/property-system.js` (v20)
+8. `src/js/property-system.js`
    - Removed game.update wrapping (setupIncomeProcessing, setupWorkQueueProcessing)
    - Added CityReputationSystem safety checks (3 locations)
 
-9. `src/js/market-price-history.js` (v20)
+9. `src/js/market-price-history.js`
    - Renamed loadPriceHistory(history) to loadPriceHistoryFromSave(history)
 
-10. `src/js/save-load-system.js` (v20)
+10. `src/js/save-load-system.js`
     - Updated call to use loadPriceHistoryFromSave()
 
-11. `src/js/modal-system.js` (v20)
+11. `src/js/modal-system.js`
     - Fixed inconsistent event registration pattern
     - All listeners now use addListener and store keys for cleanup

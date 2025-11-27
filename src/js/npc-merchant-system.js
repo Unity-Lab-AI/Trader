@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🧙 NPC MERCHANT SYSTEM - shopkeepers with actual personalities
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // every merchant has their own quirks, trauma, and pricing strategies
@@ -132,48 +132,310 @@ const NPCMerchantSystem = {
     // Merchant reputation system
     reputation: {},
 
+    // 💰 Daily economy tracking - because even NPCs need income
+    lastEconomyUpdate: null,
+    economyUpdateInterval: 60, // minutes between NPC purchase simulations
+
     // Initialize the system
     init() {
         this.generateMerchants();
         this.loadReputation();
-        console.log('NPC Merchant System initialized');
+        this.initializeMerchantEconomy();
+        console.log('NPC Merchant System initialized - merchants now have actual wallets');
+    },
+
+    // 💰 Initialize merchant economy - giving shopkeepers their daily allowance
+    initializeMerchantEconomy() {
+        Object.values(this.merchants).forEach(merchant => {
+            this.calculateMerchantWealth(merchant);
+        });
+        this.lastEconomyUpdate = TimeSystem ? TimeSystem.getTotalMinutes() : 0;
+    },
+
+    // 💵 Calculate merchant's current wealth based on inventory value
+    calculateMerchantWealth(merchant) {
+        if (!merchant || !merchant.location) return;
+
+        const location = GameWorld?.locations?.[merchant.location];
+        if (!location || !location.marketPrices) return;
+
+        let totalInventoryValue = 0;
+        let startingStock = {};
+
+        // Calculate total value of merchant's inventory
+        Object.entries(location.marketPrices).forEach(([itemId, marketData]) => {
+            const item = ItemDatabase?.getItem?.(itemId);
+            if (item && marketData.stock > 0) {
+                const itemValue = (marketData.price || item.basePrice || 10) * marketData.stock;
+                totalInventoryValue += itemValue;
+
+                // Track starting stock for day if not already tracked
+                if (!marketData.startingDayStock) {
+                    marketData.startingDayStock = marketData.stock;
+                }
+                startingStock[itemId] = marketData.startingDayStock;
+            }
+        });
+
+        // Merchant gold = total inventory value (they can afford to buy back their stock)
+        merchant.maxGold = totalInventoryValue;
+        merchant.currentGold = merchant.currentGold ?? totalInventoryValue;
+        merchant.startingStock = startingStock;
+
+        return totalInventoryValue;
+    },
+
+    // 💸 Check if merchant can afford to buy from player
+    canMerchantAfford(merchantId, amount) {
+        const merchant = this.merchants[merchantId] || this.getCurrentMerchant();
+        if (!merchant) return false;
+
+        // Ensure merchant has gold calculated
+        if (typeof merchant.currentGold === 'undefined') {
+            this.calculateMerchantWealth(merchant);
+        }
+
+        return merchant.currentGold >= amount;
+    },
+
+    // 💰 Deduct gold from merchant (when buying from player)
+    deductMerchantGold(merchantId, amount, reason = '') {
+        const merchant = this.merchants[merchantId] || this.getCurrentMerchant();
+        if (!merchant) return false;
+
+        if (!this.canMerchantAfford(merchantId, amount)) {
+            return false;
+        }
+
+        merchant.currentGold = Math.max(0, merchant.currentGold - amount);
+        console.log(`${merchant.name} paid ${amount} gold${reason ? ` for ${reason}` : ''}. Remaining: ${merchant.currentGold}`);
+        return true;
+    },
+
+    // 💵 Add gold to merchant (when selling to player)
+    addMerchantGold(merchantId, amount) {
+        const merchant = this.merchants[merchantId] || this.getCurrentMerchant();
+        if (!merchant) return;
+
+        // Ensure merchant has gold calculated
+        if (typeof merchant.maxGold === 'undefined') {
+            this.calculateMerchantWealth(merchant);
+        }
+
+        // Gold is capped at max inventory value
+        merchant.currentGold = Math.min(merchant.maxGold, (merchant.currentGold || 0) + amount);
+    },
+
+    // 🛒 Simulate NPC purchases throughout the day - the invisible customers
+    simulateNPCPurchases() {
+        if (!TimeSystem) return;
+
+        const currentTime = TimeSystem.getTotalMinutes();
+        const currentHour = TimeSystem.currentTime?.hour || 0;
+
+        // Only simulate during business hours (6 AM to 10 PM)
+        if (currentHour < 6 || currentHour > 22) return;
+
+        // Calculate how far through the day we are (6 AM = 0, 10 PM = 1)
+        const dayProgress = Math.min(1, Math.max(0, (currentHour - 6) / 16));
+
+        // Target: items deplete to 25% by end of day
+        const targetStockPercent = 1 - (dayProgress * 0.75); // Start at 100%, end at 25%
+
+        Object.values(this.merchants).forEach(merchant => {
+            if (!merchant.location) return;
+
+            const location = GameWorld?.locations?.[merchant.location];
+            if (!location || !location.marketPrices) return;
+
+            Object.entries(location.marketPrices).forEach(([itemId, marketData]) => {
+                if (!marketData.startingDayStock || marketData.startingDayStock <= 0) return;
+
+                const targetStock = Math.ceil(marketData.startingDayStock * targetStockPercent);
+                const currentStock = marketData.stock || 0;
+
+                // If we have more than target, NPCs "buy" some
+                if (currentStock > targetStock) {
+                    // Random chance to not deplete (makes it feel organic)
+                    if (Math.random() > 0.7) return;
+
+                    // Calculate how many NPCs buy (1-3 items per interval)
+                    const purchaseAmount = Math.min(
+                        currentStock - targetStock,
+                        Math.floor(Math.random() * 3) + 1
+                    );
+
+                    if (purchaseAmount > 0) {
+                        const item = ItemDatabase?.getItem?.(itemId);
+                        const salePrice = marketData.price || item?.basePrice || 10;
+                        const totalSale = salePrice * purchaseAmount;
+
+                        // Decrease stock
+                        marketData.stock = Math.max(0, currentStock - purchaseAmount);
+
+                        // Increase merchant gold (capped at max)
+                        merchant.currentGold = Math.min(
+                            merchant.maxGold || totalSale * 10,
+                            (merchant.currentGold || 0) + totalSale
+                        );
+                    }
+                }
+            });
+        });
+
+        this.lastEconomyUpdate = currentTime;
+    },
+
+    // 🌅 Reset daily economy - new day, new hustle
+    resetDailyEconomy() {
+        Object.values(this.merchants).forEach(merchant => {
+            if (!merchant.location) return;
+
+            const location = GameWorld?.locations?.[merchant.location];
+            if (!location || !location.marketPrices) return;
+
+            // Reset starting stock for new day
+            Object.entries(location.marketPrices).forEach(([itemId, marketData]) => {
+                marketData.startingDayStock = marketData.stock;
+            });
+
+            // Recalculate max gold based on new inventory
+            this.calculateMerchantWealth(merchant);
+        });
+
+        console.log('Daily merchant economy reset - fresh wallets for all');
+    },
+
+    // 📊 Get merchant's current financial status
+    getMerchantFinances(merchantId) {
+        const merchant = this.merchants[merchantId] || this.getCurrentMerchant();
+        if (!merchant) return null;
+
+        // Ensure finances are calculated
+        if (typeof merchant.currentGold === 'undefined') {
+            this.calculateMerchantWealth(merchant);
+        }
+
+        const goldPercent = merchant.maxGold > 0
+            ? Math.round((merchant.currentGold / merchant.maxGold) * 100)
+            : 0;
+
+        let wealthStatus = 'flush'; // Has lots of gold
+        if (goldPercent < 25) wealthStatus = 'broke';
+        else if (goldPercent < 50) wealthStatus = 'tight';
+        else if (goldPercent < 75) wealthStatus = 'comfortable';
+
+        return {
+            currentGold: Math.floor(merchant.currentGold || 0),
+            maxGold: Math.floor(merchant.maxGold || 0),
+            goldPercent: goldPercent,
+            wealthStatus: wealthStatus,
+            canTrade: (merchant.currentGold || 0) > 0
+        };
+    },
+
+    // 🗣️ Get wealth-based dialogue - merchants complain when broke
+    getWealthDialogue(merchant) {
+        const finances = this.getMerchantFinances(merchant?.id);
+        if (!finances) return '';
+
+        const brokeDialogues = [
+            "gold's tighter than a miser's fist today. might not be able to buy much.",
+            "business has been... slow. my coin purse weeps.",
+            "the other traders have bled me dry. hope you're selling cheap.",
+            "i'm running on fumes here. don't expect top coin for your wares."
+        ];
+
+        const tightDialogues = [
+            "coin's a bit short today. let's keep trades reasonable.",
+            "not my richest day. might have to pass on expensive goods.",
+            "the market's been rough. my buying power is... limited."
+        ];
+
+        const comfortableDialogues = [
+            "business is decent. let's see what you've got.",
+            "my purse is healthy enough. show me your wares.",
+            "trade's been fair. i can make a deal or two."
+        ];
+
+        const flushDialogues = [
+            "gold's flowing like ale at a festival! what are you selling?",
+            "prosperous times! i'm buying quality goods at fair prices.",
+            "my coffers overflow! well, almost. let's trade."
+        ];
+
+        let dialogues;
+        switch (finances.wealthStatus) {
+            case 'broke': dialogues = brokeDialogues; break;
+            case 'tight': dialogues = tightDialogues; break;
+            case 'comfortable': dialogues = comfortableDialogues; break;
+            default: dialogues = flushDialogues;
+        }
+
+        return dialogues[Math.floor(Math.random() * dialogues.length)];
+    },
+
+    // ⏰ Update economy (call this from game loop)
+    updateEconomy() {
+        if (!TimeSystem) return;
+
+        const currentTime = TimeSystem.getTotalMinutes();
+        const timeSinceUpdate = currentTime - (this.lastEconomyUpdate || 0);
+
+        // Update every hour of game time
+        if (timeSinceUpdate >= this.economyUpdateInterval) {
+            this.simulateNPCPurchases();
+        }
+
+        // Check for new day
+        const currentDay = TimeSystem.currentTime?.day || 1;
+        if (this.lastEconomyDay !== currentDay) {
+            this.resetDailyEconomy();
+            this.lastEconomyDay = currentDay;
+        }
     },
 
     // Generate merchants for each location
     generateMerchants() {
-        const locations = [
-            'greendale', 'riverwood', 'stonebridge', 'amberhaven', 'oakshire',
-            'silverpeak', 'blackwater', 'thornhill', 'ironforge', 'goldenleaf',
-            'azure_bay', 'ember_rock', 'royal_capital'
+        // Get all locations from GameWorld if available, otherwise use fallback list
+        let locations = [];
+        if (typeof GameWorld !== 'undefined' && GameWorld.locations) {
+            locations = Object.keys(GameWorld.locations);
+        } else {
+            // Fallback list if GameWorld isn't loaded yet
+            locations = [
+                'greendale', 'riverwood', 'stonebridge', 'royal_capital', 'ironforge_city',
+                'jade_harbor', 'silverkeep', 'sunhaven', 'frostholm_village', 'vineyard_village',
+                'darkwood_village', 'hillcrest', 'meadowbrook', 'coastal_village', 'mountain_pass',
+                'desert_oasis', 'lakeside_town', 'forest_clearing', 'ancient_ruins', 'trading_post'
+            ];
+        }
+
+        const merchantFirstNames = [
+            'Aldric', 'Mira', 'Thorin', 'Elara', 'Garrett', 'Lysa', 'Marcus', 'Seraphina',
+            'Boris', 'Celeste', 'Viktor', 'Helena', 'Orin', 'Freya', 'Magnus', 'Isolde',
+            'Rowan', 'Gwendolyn', 'Bartholomew', 'Astrid', 'Edmund', 'Rosalind', 'Percival', 'Beatrix'
         ];
 
-        const merchantNames = [
-            { first: 'Aldric', last: 'Goldweaver' },
-            { first: 'Mira', last: 'Swifthand' },
-            { first: 'Thorin', last: 'Ironpurse' },
-            { first: 'Elara', last: 'Moonwhisper' },
-            { first: 'Garrett', last: 'Coinsworth' },
-            { first: 'Lysa', last: 'Fairweather' },
-            { first: 'Marcus', last: 'Blackmarket' },
-            { first: 'Seraphina', last: 'Starlight' },
-            { first: 'Boris', last: 'Grumblefoot' },
-            { first: 'Celeste', last: 'Dreamweaver' },
-            { first: 'Viktor', last: 'Shadowdealer' },
-            { first: 'Helena', last: 'Brightcoin' },
-            { first: 'Orin', last: 'Stoutbelly' }
+        const merchantLastNames = [
+            'Goldweaver', 'Swifthand', 'Ironpurse', 'Moonwhisper', 'Coinsworth', 'Fairweather',
+            'Blackmarket', 'Starlight', 'Grumblefoot', 'Dreamweaver', 'Shadowdealer', 'Brightcoin',
+            'Stoutbelly', 'Silvertongue', 'Copperkettle', 'Ironbark', 'Meadowsweet', 'Thornwood',
+            'Riverstone', 'Hillcrest', 'Nightingale', 'Whitecliff', 'Redforge', 'Greenleaf'
         ];
 
         locations.forEach((locationId, index) => {
-            const nameData = merchantNames[index % merchantNames.length];
+            const firstName = merchantFirstNames[index % merchantFirstNames.length];
+            const lastName = merchantLastNames[(index + 7) % merchantLastNames.length]; // offset for variety
             const personalityKeys = Object.keys(this.personalityTypes);
             const personalityId = personalityKeys[Math.floor(Math.random() * personalityKeys.length)];
             const personality = this.personalityTypes[personalityId];
 
             this.merchants[locationId] = {
                 id: `merchant_${locationId}`,
-                name: `${nameData.first} ${nameData.last}`,
-                firstName: nameData.first,
-                lastName: nameData.last,
+                name: `${firstName} ${lastName}`,
+                firstName: firstName,
+                lastName: lastName,
                 location: locationId,
                 personality: personality,
                 specialties: this.generateSpecialties(),
@@ -184,6 +446,8 @@ const NPCMerchantSystem = {
                 relationship: 0 // -100 to 100
             };
         });
+
+        console.log(`🧙 NPCMerchantSystem: Generated ${Object.keys(this.merchants).length} merchants for all locations`);
     },
 
     // Generate merchant specialties (items they have unique or in bulk)

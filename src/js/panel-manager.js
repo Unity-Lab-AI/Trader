@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🪟 PANEL MANAGER - herding cats but the cats are floating windows
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // handles panel open/close order, ESC key navigation, and reopen buttons
@@ -212,6 +212,11 @@ const PanelManager = {
 
     // Check if panel is currently open/visible
     isPanelOpen(panelId) {
+        // Special handling for settings-panel - check SettingsPanel.isOpen
+        if (panelId === 'settings-panel') {
+            return typeof SettingsPanel !== 'undefined' && SettingsPanel.isOpen === true;
+        }
+
         const panel = document.getElementById(panelId);
         if (!panel) return false;
 
@@ -232,7 +237,28 @@ const PanelManager = {
     // Toggle panel visibility
     togglePanel(panelId) {
         const panel = document.getElementById(panelId);
+        const info = this.panelInfo[panelId];
+
+        // Special handling for settings-panel - use SettingsPanel.show()
+        if (panelId === 'settings-panel') {
+            if (typeof SettingsPanel !== 'undefined') {
+                if (SettingsPanel.isOpen) {
+                    SettingsPanel.hide();
+                } else {
+                    SettingsPanel.show();
+                }
+            }
+            return;
+        }
+
+        // Special handling for dynamically created panels that may not exist yet
         if (!panel) {
+            // If it's a dynamically created panel, try to open it (which will create it)
+            if (panelId === 'character-sheet-overlay' || panelId === 'financial-sheet-overlay') {
+                console.log(`🪟 Panel ${panelId} not found, attempting to create it...`);
+                this.openPanel(panelId);
+                return;
+            }
             console.warn(`🪟 Panel not found: ${panelId}`);
             return;
         }
@@ -247,24 +273,50 @@ const PanelManager = {
     // Open a panel
     openPanel(panelId) {
         const panel = document.getElementById(panelId);
-        if (!panel) return;
-
         const info = this.panelInfo[panelId];
+
+        // Special handling for settings-panel - use SettingsPanel.show()
+        if (panelId === 'settings-panel') {
+            if (typeof SettingsPanel !== 'undefined' && SettingsPanel.show) {
+                SettingsPanel.show();
+            }
+            return;
+        }
 
         // Handle panels that use 'active' class (like achievement-overlay)
         if (info && info.useActiveClass) {
-            panel.classList.add('active');
-            // Also call the specific open function if it exists
+            // Special handling for dynamically created overlays
+            if (panelId === 'character-sheet-overlay') {
+                // Use KeyBindings to create/show the character sheet
+                if (typeof KeyBindings !== 'undefined' && KeyBindings.openCharacterSheet) {
+                    KeyBindings.openCharacterSheet();
+                    return;
+                }
+            }
+            if (panelId === 'financial-sheet-overlay') {
+                // Use KeyBindings to create/show the financial sheet
+                if (typeof KeyBindings !== 'undefined' && KeyBindings.openFinancialSheet) {
+                    KeyBindings.openFinancialSheet();
+                    return;
+                }
+            }
             if (panelId === 'achievement-overlay' && typeof openAchievementPanel === 'function') {
                 openAchievementPanel();
                 return; // Let the function handle everything
             }
+            // For other active-class panels, just add the class
+            if (panel) {
+                panel.classList.add('active');
+            }
         } else {
             // Show the panel normally
+            if (!panel) return;
             panel.classList.remove('hidden');
             panel.style.display = '';
             panel.style.visibility = '';
         }
+
+        if (!panel) return;
 
         // Add to open stack (remove if already there, then add to end)
         this.openPanels = this.openPanels.filter(id => id !== panelId);
@@ -279,6 +331,16 @@ const PanelManager = {
 
     // Close a panel
     closePanel(panelId) {
+        // Special handling for settings-panel - use SettingsPanel.hide()
+        if (panelId === 'settings-panel') {
+            if (typeof SettingsPanel !== 'undefined' && SettingsPanel.hide) {
+                SettingsPanel.hide();
+            }
+            this.openPanels = this.openPanels.filter(id => id !== panelId);
+            this.updateToolbarButtons();
+            return;
+        }
+
         const panel = document.getElementById(panelId);
         if (!panel) return;
 

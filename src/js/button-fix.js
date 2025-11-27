@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🔧 BUTTON FIX - because buttons are drama queens
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // fixing all the button functionality issues
@@ -10,7 +10,8 @@
 console.log('🔧 Summoning button repair spirits...');
 
 // Function to safely add event listeners - prevents duplicate handlers
-function safeAddEventListener(elementId, eventType, handler) {
+// Now silently skips missing optional elements instead of spamming console errors
+function safeAddEventListener(elementId, eventType, handler, optional = false) {
     const element = document.getElementById(elementId);
     if (element) {
         // Check if we already added a listener to this element
@@ -25,7 +26,10 @@ function safeAddEventListener(elementId, eventType, handler) {
         console.log(`✓ Added ${eventType} listener to ${elementId}`);
         return true;
     } else {
-        console.error(`✗ Element not found: ${elementId}`);
+        // Only log error for required buttons, silently skip optional ones
+        if (!optional) {
+            console.warn(`⚠️ Optional element not found: ${elementId}`);
+        }
         return false;
     }
 }
@@ -66,6 +70,7 @@ function initializeButtonListeners() {
         }
     });
     
+    // Optional button - may not exist in all UI configurations
     safeAddEventListener('transportation-quick-btn', 'click', function() {
         console.log('Quick Transportation button clicked');
         if (typeof openTransportation === 'function') {
@@ -73,7 +78,7 @@ function initializeButtonListeners() {
         } else {
             console.error('openTransportation function not found');
         }
-    });
+    }, true); // true = optional
     
     safeAddEventListener('inventory-btn', 'click', function() {
         console.log('Inventory button clicked');
@@ -84,6 +89,7 @@ function initializeButtonListeners() {
         }
     });
     
+    // Optional button - UI uses bottom-save-btn instead
     safeAddEventListener('save-btn', 'click', function() {
         console.log('Save button clicked');
         if (typeof saveGame === 'function') {
@@ -91,7 +97,7 @@ function initializeButtonListeners() {
         } else {
             console.error('saveGame function not found');
         }
-    });
+    }, true); // true = optional
     
     safeAddEventListener('menu-btn', 'click', function() {
         console.log('Menu button clicked');
@@ -102,7 +108,7 @@ function initializeButtonListeners() {
         }
     });
     
-    // Character Creation Buttons
+    // Character Creation Buttons - optional, handled by form submit
     safeAddEventListener('create-character-btn', 'click', function(e) {
         console.log('Create Character button clicked');
         e.preventDefault();
@@ -111,7 +117,7 @@ function initializeButtonListeners() {
         } else {
             console.error('createCharacter function not found');
         }
-    });
+    }, true); // true = optional, form submit handles this
     
     safeAddEventListener('randomize-character-btn', 'click', function() {
         console.log('Randomize Character button clicked');

@@ -2,8 +2,8 @@
 // 💰 TRADING SYSTEM - capitalism simulator for the medieval masochist
 // ═══════════════════════════════════════════════════════════════
 // buy low, sell high, cry always... the trader's way
-// File Version: 0.1
-// Game Version: 0.1
+// File Version: 0.5
+// Game Version: 0.2
 // Made by Unity AI Lab - Hackall360, Sponge, GFourteen
 
 const TradingSystem = {
@@ -351,48 +351,9 @@ const TradingSystem = {
         `).join('');
     },
     
-    // 📋 Update trade history - a gallery of past choices
-    updateTradeHistoryDisplay() {
-        const historyContainer = document.getElementById('trade-history');
-        if (!historyContainer) return;
-        
-        if (this.tradeHistory.length === 0) {
-            historyContainer.innerHTML = '<p>No trade history available.</p>';
-            return;
-        }
-        
-        historyContainer.innerHTML = this.tradeHistory.map(trade => `
-            <div class="trade-history-item">
-                <div class="trade-type">${trade.type.toUpperCase()}</div>
-                <div class="trade-items">${trade.items.map(item => `${item.itemName} ×${item.quantity}`).join(', ')}</div>
-                <div class="trade-location">${trade.location}</div>
-                <div class="trade-time">${new Date(trade.timestamp).toLocaleString()}</div>
-            </div>
-        `).join('');
-    },
-    
-    // 📱 Update price alerts - our market stalker list
-    updatePriceAlertsDisplay() {
-        const alertsContainer = document.getElementById('price-alerts');
-        if (!alertsContainer) return;
-        
-        if (this.priceAlerts.length === 0) {
-            alertsContainer.innerHTML = '<p>No price alerts set.</p>';
-            return;
-        }
-        
-        alertsContainer.innerHTML = this.priceAlerts.map(alert => `
-            <div class="price-alert-item ${!alert.active ? 'inactive' : ''}">
-                <div class="alert-info">
-                    <div class="alert-item">${alert.itemName}</div>
-                    <div class="alert-target">${alert.type} ${alert.targetPrice} gold</div>
-                    <div class="alert-status">${alert.active ? 'Active' : 'Inactive'}</div>
-                </div>
-                <button class="remove-alert-btn" onclick="TradingSystem.removePriceAlert('${alert.itemId}')">×</button>
-            </div>
-        `).join('');
-    },
-    
+    // 🖤 DUPLICATE FUNCTIONS REMOVED - they were haunting lines 266-283 and 333-352
+    // the originals live on, the clones have been exorcised
+
     // 🧹 Clear trade history - erasing the evidence
     clearTradeHistory() {
         this.tradeHistory = [];

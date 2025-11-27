@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 📚 ITEM DATABASE - the sacred tome of all tradeable things
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // every item that exists in this cruel medieval economy lives here
@@ -142,7 +142,7 @@ const ItemDatabase = {
             basePrice: 6
         },
 
-        // Tools
+        // Tools - equippable with bonuses
         hammer: {
             id: 'hammer',
             name: 'Hammer',
@@ -153,7 +153,9 @@ const ItemDatabase = {
             weight: 3,
             basePrice: 15,
             toolType: 'construction',
-            durability: 100
+            durability: 100,
+            equipSlot: 'tool',
+            bonuses: { crafting: 2, construction: 5 }
         },
         axe: {
             id: 'axe',
@@ -165,7 +167,9 @@ const ItemDatabase = {
             weight: 4,
             basePrice: 20,
             toolType: 'woodcutting',
-            durability: 120
+            durability: 120,
+            equipSlot: 'tool',
+            bonuses: { gathering: 2, woodcutting: 5 }
         },
         pickaxe: {
             id: 'pickaxe',
@@ -177,10 +181,12 @@ const ItemDatabase = {
             weight: 6,
             basePrice: 25,
             toolType: 'mining',
-            durability: 100
+            durability: 100,
+            equipSlot: 'tool',
+            bonuses: { gathering: 2, mining: 5 }
         },
 
-        // Weapons
+        // Weapons - equippable with combat bonuses
         sword: {
             id: 'sword',
             name: 'Sword',
@@ -190,7 +196,10 @@ const ItemDatabase = {
             rarity: 'common',
             weight: 5,
             basePrice: 50,
-            damage: 10
+            damage: 10,
+            equipSlot: 'weapon',
+            equipType: 'weapon',
+            bonuses: { attack: 5, damage: 10 }
         },
         spear: {
             id: 'spear',
@@ -201,7 +210,10 @@ const ItemDatabase = {
             rarity: 'common',
             weight: 4,
             basePrice: 30,
-            damage: 8
+            damage: 8,
+            equipSlot: 'weapon',
+            equipType: 'weapon',
+            bonuses: { attack: 4, damage: 8 }
         },
         bow: {
             id: 'bow',
@@ -212,7 +224,10 @@ const ItemDatabase = {
             rarity: 'common',
             weight: 3,
             basePrice: 40,
-            damage: 7
+            damage: 7,
+            equipSlot: 'weapon',
+            equipType: 'weapon',
+            bonuses: { attack: 3, damage: 7, luck: 1 }
         },
 
         // Luxury goods
@@ -867,7 +882,10 @@ const ItemDatabase = {
             rarity: 'common',
             weight: 1,
             basePrice: 15,
-            damage: 8
+            damage: 8,
+            equipSlot: 'weapon',
+            equipType: 'weapon',
+            bonuses: { attack: 3, damage: 8, speed: 2 }
         },
         crossbow: {
             id: 'crossbow',
@@ -878,7 +896,10 @@ const ItemDatabase = {
             rarity: 'uncommon',
             weight: 6,
             basePrice: 60,
-            damage: 25
+            damage: 25,
+            equipSlot: 'weapon',
+            equipType: 'weapon',
+            bonuses: { attack: 8, damage: 25, luck: 2 }
         },
         longsword: {
             id: 'longsword',
@@ -889,7 +910,10 @@ const ItemDatabase = {
             rarity: 'uncommon',
             weight: 4,
             basePrice: 85,
-            damage: 35
+            damage: 35,
+            equipSlot: 'weapon',
+            equipType: 'weapon',
+            bonuses: { attack: 12, damage: 35, defense: 3 }
         },
         battleaxe: {
             id: 'battleaxe',
@@ -900,7 +924,10 @@ const ItemDatabase = {
             rarity: 'rare',
             weight: 8,
             basePrice: 110,
-            damage: 45
+            damage: 45,
+            equipSlot: 'weapon',
+            equipType: 'weapon',
+            bonuses: { attack: 15, damage: 45, strength: 3 }
         },
         warhammer: {
             id: 'warhammer',
@@ -911,7 +938,10 @@ const ItemDatabase = {
             rarity: 'rare',
             weight: 10,
             basePrice: 95,
-            damage: 40
+            damage: 40,
+            equipSlot: 'weapon',
+            equipType: 'weapon',
+            bonuses: { attack: 12, damage: 40, strength: 5 }
         },
         lance: {
             id: 'lance',
@@ -922,7 +952,10 @@ const ItemDatabase = {
             rarity: 'uncommon',
             weight: 7,
             basePrice: 70,
-            damage: 30
+            damage: 30,
+            equipSlot: 'weapon',
+            equipType: 'weapon',
+            bonuses: { attack: 10, damage: 30, speed: 3 }
         },
 
         // === EXPANDED ITEMS - Armor Sets ===
@@ -935,7 +968,10 @@ const ItemDatabase = {
             rarity: 'common',
             weight: 8,
             basePrice: 45,
-            defense: 10
+            defense: 10,
+            equipSlot: 'body',
+            equipType: 'armor',
+            bonuses: { defense: 10, speed: 1 }
         },
         chainmail: {
             id: 'chainmail',
@@ -946,7 +982,10 @@ const ItemDatabase = {
             rarity: 'uncommon',
             weight: 15,
             basePrice: 120,
-            defense: 25
+            defense: 25,
+            equipSlot: 'body',
+            equipType: 'armor',
+            bonuses: { defense: 25, endurance: 2 }
         },
         plate_armor: {
             id: 'plate_armor',
@@ -957,7 +996,10 @@ const ItemDatabase = {
             rarity: 'rare',
             weight: 30,
             basePrice: 250,
-            defense: 50
+            defense: 50,
+            equipSlot: 'body',
+            equipType: 'armor',
+            bonuses: { defense: 50, endurance: 5, speed: -2 }
         },
         shield: {
             id: 'shield',
@@ -968,7 +1010,10 @@ const ItemDatabase = {
             rarity: 'common',
             weight: 6,
             basePrice: 30,
-            defense: 8
+            defense: 8,
+            equipSlot: 'offhand',
+            equipType: 'shield',
+            bonuses: { defense: 8, block: 10 }
         },
         helmet: {
             id: 'helmet',
@@ -979,7 +1024,155 @@ const ItemDatabase = {
             rarity: 'common',
             weight: 3,
             basePrice: 25,
-            defense: 5
+            defense: 5,
+            equipSlot: 'head',
+            equipType: 'helmet',
+            bonuses: { defense: 5, perception: 1 }
+        },
+
+        // === EXPANDED ITEMS - Accessories & Gear ===
+        leather_boots: {
+            id: 'leather_boots',
+            name: 'Leather Boots',
+            description: 'Sturdy boots for traveling.',
+            icon: '👢',
+            category: 'armor',
+            rarity: 'common',
+            weight: 2,
+            basePrice: 20,
+            equipSlot: 'feet',
+            equipType: 'boots',
+            bonuses: { speed: 2, travel: 5 }
+        },
+        iron_boots: {
+            id: 'iron_boots',
+            name: 'Iron Boots',
+            description: 'Heavy armored boots.',
+            icon: '👢',
+            category: 'armor',
+            rarity: 'uncommon',
+            weight: 5,
+            basePrice: 55,
+            equipSlot: 'feet',
+            equipType: 'boots',
+            bonuses: { defense: 5, speed: -1 }
+        },
+        leather_gloves: {
+            id: 'leather_gloves',
+            name: 'Leather Gloves',
+            description: 'Simple gloves for work and travel.',
+            icon: '🧤',
+            category: 'armor',
+            rarity: 'common',
+            weight: 1,
+            basePrice: 12,
+            equipSlot: 'hands',
+            equipType: 'gloves',
+            bonuses: { crafting: 2, gathering: 1 }
+        },
+        blacksmith_gloves: {
+            id: 'blacksmith_gloves',
+            name: 'Blacksmith Gloves',
+            description: 'Heat-resistant gloves for metalwork.',
+            icon: '🧤',
+            category: 'armor',
+            rarity: 'uncommon',
+            weight: 2,
+            basePrice: 35,
+            equipSlot: 'hands',
+            equipType: 'gloves',
+            bonuses: { crafting: 5, smithing: 10 }
+        },
+        silver_ring: {
+            id: 'silver_ring',
+            name: 'Silver Ring',
+            description: 'A simple silver band that brings luck.',
+            icon: '💍',
+            category: 'accessory',
+            rarity: 'uncommon',
+            weight: 0.1,
+            basePrice: 50,
+            equipSlot: 'accessory1',
+            equipType: 'ring',
+            bonuses: { luck: 3, charisma: 1 }
+        },
+        gold_ring: {
+            id: 'gold_ring',
+            name: 'Gold Ring',
+            description: 'An elegant gold ring of wealth.',
+            icon: '💍',
+            category: 'accessory',
+            rarity: 'rare',
+            weight: 0.1,
+            basePrice: 150,
+            equipSlot: 'accessory1',
+            equipType: 'ring',
+            bonuses: { luck: 5, charisma: 3, tradingDiscount: 5 }
+        },
+        merchants_amulet: {
+            id: 'merchants_amulet',
+            name: "Merchant's Amulet",
+            description: 'An amulet blessed for successful trades.',
+            icon: '📿',
+            category: 'accessory',
+            rarity: 'rare',
+            weight: 0.2,
+            basePrice: 200,
+            equipSlot: 'accessory2',
+            equipType: 'amulet',
+            bonuses: { charisma: 5, tradingDiscount: 10, luck: 2 }
+        },
+        travelers_cloak: {
+            id: 'travelers_cloak',
+            name: "Traveler's Cloak",
+            description: 'A warm cloak that speeds journeys.',
+            icon: '🧥',
+            category: 'accessory',
+            rarity: 'uncommon',
+            weight: 2,
+            basePrice: 65,
+            equipSlot: 'body',
+            equipType: 'clothing',
+            bonuses: { speed: 5, travel: 10, endurance: 2 }
+        },
+        miners_helmet: {
+            id: 'miners_helmet',
+            name: "Miner's Helmet",
+            description: 'Helmet with lantern for dark places.',
+            icon: '⛑️',
+            category: 'armor',
+            rarity: 'uncommon',
+            weight: 2,
+            basePrice: 40,
+            equipSlot: 'head',
+            equipType: 'helmet',
+            bonuses: { mining: 5, perception: 3 }
+        },
+        fishing_hat: {
+            id: 'fishing_hat',
+            name: 'Fishing Hat',
+            description: 'Wide-brimmed hat favored by anglers.',
+            icon: '🎩',
+            category: 'accessory',
+            rarity: 'common',
+            weight: 0.5,
+            basePrice: 15,
+            equipSlot: 'head',
+            equipType: 'hat',
+            bonuses: { fishing: 5, luck: 1 }
+        },
+        sturdy_backpack: {
+            id: 'sturdy_backpack',
+            name: 'Sturdy Backpack',
+            description: 'Large backpack for hauling goods.',
+            icon: '🎒',
+            category: 'accessory',
+            rarity: 'common',
+            weight: 2,
+            basePrice: 30,
+            equipSlot: 'accessory2',
+            equipType: 'accessory',
+            bonuses: { carryCapacity: 20 }
         },
 
         // === EXPANDED ITEMS - More Food & Drink ===
@@ -1525,6 +1718,35 @@ const ItemDatabase = {
             basePrice: 180,
             damage: 50,
             craftable: true
+        },
+
+        // === LEGENDARY WEAPONS (Achievement Rewards) ===
+        blade_of_the_hacker: {
+            id: 'blade_of_the_hacker',
+            name: '💻 Blade of the Hacker',
+            description: 'A legendary digital blade that glitches reality itself. Awarded for completing ALL achievements. +100 Attack, +100 Damage, +50 to all stats. Unstoppable.',
+            icon: '🗡️',
+            category: 'weapons',
+            rarity: 'legendary',
+            weight: 0,  // Weightless - it exists outside physics
+            basePrice: 999999,  // Priceless - cannot be sold
+            damage: 100,
+            equipSlot: 'weapon',
+            equipType: 'weapon',
+            special: true,  // Cannot be dropped/sold
+            unique: true,   // Only one can exist
+            bonuses: {
+                attack: 100,
+                damage: 100,
+                defense: 50,
+                luck: 50,
+                gathering: 50,
+                crafting: 50,
+                speed: 25,
+                strength: 25
+            },
+            lore: 'Forged in the fires of a thousand debug sessions, this blade cuts through code and flesh alike. Only those who have proven themselves worthy by mastering every challenge may wield it.',
+            visualEffect: 'glitch'  // Special visual effect when equipped
         },
 
         // === ARMOR (Crafted) ===

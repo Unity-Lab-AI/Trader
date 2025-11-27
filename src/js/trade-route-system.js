@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🛤️ TRADE ROUTE SYSTEM - paths to profit (or ruin)
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // plan your routes, dodge the bandits, make the money
@@ -65,10 +65,26 @@ const TradeRouteSystem = {
     getActiveRoutes() {
         return game.player.tradeRoutes.filter(route => route.isActive);
     },
-    
+
     // Get all routes
     getAllRoutes() {
         return game.player.tradeRoutes || [];
+    },
+
+    // Get trade routes (alias for save system compatibility)
+    getTradeRoutes() {
+        return this.getAllRoutes();
+    },
+
+    // Load trade routes from save data
+    loadTradeRoutes(routes) {
+        if (!routes || !Array.isArray(routes)) {
+            console.log('💾 No trade routes to load');
+            return;
+        }
+
+        game.player.tradeRoutes = routes;
+        console.log(`💾 Loaded ${routes.length} trade routes from save`);
     },
     
     // Get route by ID

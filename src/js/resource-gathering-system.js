@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // ⛏️ RESOURCE GATHERING SYSTEM - digging for your sins
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // handles time-based resource gathering at mines, forests, etc
@@ -248,25 +248,272 @@ const ResourceGatheringSystem = {
         return { hasSkill: true };
     },
 
+    // ═══════════════════════════════════════════════════════════════
+    // 📊 DRAIN PREVIEW SYSTEM - know what youre getting into
+    // ═══════════════════════════════════════════════════════════════
+    // calculate expected resource consumption before committing
+
+    // Base stamina drain per gathering action by resource type
+    GATHERING_DRAIN: {
+        // Mining - hardest work, most drain
+        iron_ore: { staminaDrain: 15, healthRisk: 5 },
+        coal: { staminaDrain: 12, healthRisk: 3 },
+        stone: { staminaDrain: 10, healthRisk: 2 },
+        copper_ore: { staminaDrain: 15, healthRisk: 4 },
+        silver_ore: { staminaDrain: 18, healthRisk: 6 },
+        gold_ore: { staminaDrain: 22, healthRisk: 8 },
+        gems: { staminaDrain: 25, healthRisk: 10 },
+        rare_minerals: { staminaDrain: 20, healthRisk: 7 },
+        crystals: { staminaDrain: 28, healthRisk: 12 },
+
+        // Forestry - moderate work
+        wood: { staminaDrain: 12, healthRisk: 3 },
+        planks: { staminaDrain: 15, healthRisk: 4 },
+        rare_wood: { staminaDrain: 18, healthRisk: 5 },
+
+        // Herbalism - lighter work
+        herbs: { staminaDrain: 5, healthRisk: 1 },
+        medicinal_plants: { staminaDrain: 8, healthRisk: 2 },
+        rare_herbs: { staminaDrain: 10, healthRisk: 3 },
+        mushrooms: { staminaDrain: 6, healthRisk: 2 },
+
+        // Fishing - patience game
+        fish: { staminaDrain: 8, healthRisk: 1 },
+        exotic_fish: { staminaDrain: 12, healthRisk: 2 },
+        river_pearls: { staminaDrain: 15, healthRisk: 4 },
+
+        // Basic gathering
+        food: { staminaDrain: 3, healthRisk: 0 },
+        water: { staminaDrain: 2, healthRisk: 0 }
+    },
+
+    // Calculate expected drain for a gathering session
+    calculateGatheringDrain(resourceId, location) {
+        const baseDrain = this.GATHERING_DRAIN[resourceId] || { staminaDrain: 10, healthRisk: 3 };
+
+        // Get player stats
+        const playerStats = typeof game !== 'undefined' ? game.player : {};
+        const endurance = playerStats?.attributes?.endurance || 5;
+        const currentStamina = playerStats?.stats?.stamina || 100;
+        const currentHealth = playerStats?.stats?.health || 100;
+
+        // Location difficulty modifier based on region
+        let difficultyMod = 1.0;
+        if (location?.region) {
+            const regionMods = {
+                capital: 0.7,
+                starter: 0.8,
+                eastern: 1.0,
+                southern: 1.0,
+                western: 1.3,
+                northern: 1.4
+            };
+            difficultyMod = regionMods[location.region] || 1.0;
+        }
+
+        // Tool efficiency reduces drain
+        const toolCheck = this.hasRequiredTool(resourceId);
+        const toolEfficiency = toolCheck.toolInfo?.efficiency || 1.0;
+        const efficiencyMod = 1 / toolEfficiency;
+
+        // Endurance reduces stamina drain (5% per point above 5)
+        const enduranceMod = Math.max(0.5, 1 - (endurance - 5) * 0.05);
+
+        // Calculate final drain estimates
+        const staminaDrain = Math.round(baseDrain.staminaDrain * difficultyMod * efficiencyMod * enduranceMod);
+        const healthRisk = Math.round(baseDrain.healthRisk * difficultyMod);
+
+        // Determine risk level
+        const staminaPercent = staminaDrain / currentStamina;
+        const healthPercent = healthRisk / currentHealth;
+        const avgRisk = (staminaPercent + healthPercent) / 2;
+
+        let riskLevel, riskColor, riskEmoji;
+        if (avgRisk > 0.5) {
+            riskLevel = 'EXHAUSTING';
+            riskColor = '#ff0000';
+            riskEmoji = '💀';
+        } else if (avgRisk > 0.3) {
+            riskLevel = 'HARD WORK';
+            riskColor = '#ff6600';
+            riskEmoji = '💪';
+        } else if (avgRisk > 0.15) {
+            riskLevel = 'MODERATE';
+            riskColor = '#ffcc00';
+            riskEmoji = '⚡';
+        } else {
+            riskLevel = 'EASY';
+            riskColor = '#00ff00';
+            riskEmoji = '😎';
+        }
+
+        return {
+            staminaDrain: {
+                min: Math.max(1, staminaDrain - 3),
+                max: staminaDrain + 5,
+                current: currentStamina,
+                survivable: currentStamina > staminaDrain + 5
+            },
+            healthRisk: {
+                min: 0,
+                max: healthRisk,
+                current: currentHealth,
+                survivable: currentHealth > healthRisk
+            },
+            difficulty: difficultyMod,
+            toolBonus: toolEfficiency,
+            enduranceBonus: enduranceMod,
+            risk: {
+                level: riskLevel,
+                color: riskColor,
+                emoji: riskEmoji
+            },
+            canGather: currentStamina > staminaDrain + 5 && currentHealth > healthRisk
+        };
+    },
+
+    // Get drain preview HTML for display
+    getDrainPreviewHTML(resourceId, location) {
+        const drain = this.calculateGatheringDrain(resourceId, location);
+
+        return `
+            <div class="gathering-drain-preview" style="background: ${drain.risk.color}15; border: 1px solid ${drain.risk.color}40; border-radius: 8px; padding: 10px; margin: 10px 0;">
+                <div class="drain-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: bold; color: ${drain.risk.color};">
+                        ${drain.risk.emoji} ${drain.risk.level}
+                    </span>
+                    <span style="color: ${drain.canGather ? '#4caf50' : '#f44336'};">
+                        ${drain.canGather ? '✓ Can gather' : '✗ Too exhausted'}
+                    </span>
+                </div>
+                <div class="drain-stats" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <span style="font-size: 0.9em;">
+                        ⚡ Stamina: ${drain.staminaDrain.min}-${drain.staminaDrain.max}
+                        <span style="color: #888;">(you have ${drain.staminaDrain.current})</span>
+                    </span>
+                    <span style="font-size: 0.9em;">
+                        ❤️ Health Risk: 0-${drain.healthRisk.max}
+                        <span style="color: #888;">(you have ${drain.healthRisk.current})</span>
+                    </span>
+                </div>
+                ${drain.toolBonus > 1 ? `<div style="margin-top: 5px; font-size: 0.85em; color: #4caf50;">🔧 Tool bonus: ${Math.round((drain.toolBonus - 1) * 100)}% efficiency</div>` : ''}
+            </div>
+        `;
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎒 CARRY WEIGHT SYSTEM - your back can only take so much
+    // ═══════════════════════════════════════════════════════════════
+
+    // Get player's current carry weight
+    getCurrentCarryWeight() {
+        if (typeof game === 'undefined' || !game.player?.inventory) return 0;
+
+        let totalWeight = 0;
+        game.player.inventory.forEach(item => {
+            const weight = this.getResourceWeight(item.id) || 1;
+            totalWeight += weight * (item.quantity || 1);
+        });
+
+        return totalWeight;
+    },
+
+    // Get player's max carry capacity
+    getMaxCarryCapacity() {
+        if (typeof game === 'undefined' || !game.player) return 100;
+
+        // Base capacity + strength bonus + transport bonus
+        const baseCapacity = 50;
+        const strength = game.player.attributes?.strength || 5;
+        const strengthBonus = (strength - 5) * 10; // 10 lbs per point above 5
+
+        // Transport bonuses
+        let transportBonus = 0;
+        const transport = game.player.transportation || 'foot';
+        const transportCapacities = {
+            foot: 0,
+            mule: 100,
+            horse: 50,
+            cart: 300,
+            wagon: 500
+        };
+        transportBonus = transportCapacities[transport] || 0;
+
+        return baseCapacity + strengthBonus + transportBonus;
+    },
+
+    // Check if player can carry more weight
+    canCarryMore(additionalWeight = 0) {
+        const current = this.getCurrentCarryWeight();
+        const max = this.getMaxCarryCapacity();
+        return (current + additionalWeight) <= max;
+    },
+
+    // Get weight percentage
+    getCarryWeightPercent() {
+        const current = this.getCurrentCarryWeight();
+        const max = this.getMaxCarryCapacity();
+        return Math.min(100, (current / max) * 100);
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // ⛏️ CONTINUOUS GATHERING SYSTEM - work until you drop
+    // ═══════════════════════════════════════════════════════════════
+    // players can leave before first action, but once committed, they work
+    // until stamina runs out (then slow pace) or carry weight maxes out (stop)
+
+    // Track if player is committed to this location
+    isCommitted: false,
+
+    // Mark player as committed to the location (cant leave freely now)
+    commitToLocation(locationId) {
+        this.isCommitted = true;
+        this.committedLocationId = locationId;
+        addMessage('⚔️ youve committed to this location. finish your work or exhaust yourself trying.', 'info');
+    },
+
+    // Check if player can leave current location
+    canLeaveLocation() {
+        // Can always leave if not committed
+        if (!this.isCommitted) return { canLeave: true };
+
+        // If gathering, cannot leave
+        if (this.activeGathering) {
+            return {
+                canLeave: false,
+                reason: 'youre in the middle of gathering. finish or cancel first, quitter.'
+            };
+        }
+
+        // If committed but not actively gathering, they can leave (took a break)
+        return { canLeave: true };
+    },
+
+    // Reset commitment when leaving location
+    resetCommitment() {
+        this.isCommitted = false;
+        this.committedLocationId = null;
+    },
+
     // Start gathering at a location
     startGathering(locationId, resourceId) {
         // Check if already gathering
         if (this.activeGathering) {
-            addMessage('You are already gathering resources!', 'warning');
+            addMessage('⛏️ already gathering. one task at a time, eager beaver.', 'warning');
             return false;
         }
 
         // Find the location
         const location = this.findLocation(locationId);
         if (!location) {
-            addMessage('Invalid gathering location!', 'error');
+            addMessage('❌ invalid location. did you wander off the map?', 'error');
             return false;
         }
 
         // Check if location supports this resource
         const resources = location.resources || [];
         if (!resources.includes(resourceId)) {
-            addMessage(`This location doesn't have ${resourceId}!`, 'error');
+            addMessage(`❌ no ${resourceId} here. try opening your eyes.`, 'error');
             return false;
         }
 
@@ -284,10 +531,40 @@ const ResourceGatheringSystem = {
             return false;
         }
 
+        // Check stamina
+        const currentStamina = game.player?.stats?.stamina || 0;
+        if (currentStamina <= 0) {
+            addMessage('💤 youre too exhausted to gather. rest or consume something, weakling.', 'error');
+            return false;
+        }
+
+        // Check carry weight
+        const resourceWeight = this.getResourceWeight(resourceId) || 1;
+        if (!this.canCarryMore(resourceWeight)) {
+            addMessage('🎒 youre carrying too much! sell or drop something first.', 'error');
+            return false;
+        }
+
+        // COMMIT to location on first action
+        if (!this.isCommitted) {
+            this.commitToLocation(locationId);
+        }
+
         // Calculate gathering time (base: 15-30 minutes game time)
         const baseTime = 15 + Math.random() * 15;
         const toolEfficiency = toolCheck.toolInfo?.efficiency || 1.0;
-        const gatheringTime = Math.round(baseTime / toolEfficiency);
+        let gatheringTime = Math.round(baseTime / toolEfficiency);
+
+        // SLOW MODE: if stamina is low, gathering takes longer
+        const staminaPercent = currentStamina / (game.player?.stats?.maxStamina || 100);
+        if (staminaPercent < 0.3) {
+            gatheringTime = Math.round(gatheringTime * 2); // double time when exhausted
+            addMessage('😓 low stamina... working at half speed. push through the pain.', 'warning');
+        }
+
+        // Calculate stamina cost
+        const drainInfo = this.calculateGatheringDrain(resourceId, location);
+        const staminaCost = Math.round((drainInfo.staminaDrain.min + drainInfo.staminaDrain.max) / 2);
 
         // Start gathering session
         this.activeGathering = {
@@ -296,7 +573,10 @@ const ResourceGatheringSystem = {
             tool: toolCheck.tool,
             startTime: TimeSystem.getTotalMinutes(),
             duration: gatheringTime,
-            abundance: location.abundance?.[resourceId] || 0.5
+            abundance: location.abundance?.[resourceId] || 0.5,
+            staminaCost: staminaCost,
+            isSlowMode: staminaPercent < 0.3,
+            cycleCount: (this.activeGathering?.cycleCount || 0) + 1
         };
 
         // Auto-start time if paused
@@ -307,7 +587,8 @@ const ResourceGatheringSystem = {
             }
         }
 
-        addMessage(`⛏️ Started gathering ${resourceId}... Estimated time: ${gatheringTime} minutes.`, 'info');
+        const slowNote = this.activeGathering.isSlowMode ? ' (slow mode - youre exhausted)' : '';
+        addMessage(`⛏️ gathering ${this.getResourceName(resourceId)}... ~${gatheringTime} min${slowNote}`, 'info');
 
         // Show gathering progress UI
         this.showGatheringProgress();
@@ -336,12 +617,56 @@ const ResourceGatheringSystem = {
     completeGathering() {
         if (!this.activeGathering) return;
 
-        const { resourceId, abundance, tool } = this.activeGathering;
+        const { resourceId, abundance, tool, staminaCost, locationId, isSlowMode } = this.activeGathering;
 
-        // Calculate yield based on abundance and luck
+        // Calculate yield based on abundance, luck, and equipment bonuses
         const baseYield = Math.floor(1 + abundance * 3);
         const bonusYield = Math.random() < abundance ? 1 : 0;
-        const totalYield = baseYield + bonusYield;
+        let totalYield = baseYield + bonusYield;
+
+        // 🔧 Apply equipment gathering bonuses
+        if (typeof EquipmentSystem !== 'undefined') {
+            const gatherBonus = EquipmentSystem.getTotalBonus('gathering');
+            const toolBonus = EquipmentSystem.getGatheringBonus(tool);
+            const luckBonus = EquipmentSystem.getTotalBonus('luck');
+
+            // gathering bonus adds flat yield
+            totalYield += Math.floor(gatherBonus / 5);
+
+            // tool-specific bonus adds yield
+            totalYield += Math.floor(toolBonus / 10);
+
+            // luck gives chance for extra drops
+            if (luckBonus > 0 && Math.random() < (luckBonus / 20)) {
+                totalYield += 1;
+                addMessage(`🍀 Lucky find! Equipment bonus gave extra yield!`, 'success');
+            }
+        }
+
+        // Reduce yield in slow mode
+        if (isSlowMode) {
+            totalYield = Math.max(1, Math.floor(totalYield * 0.5));
+        }
+
+        // Check carry weight before adding
+        const resourceWeight = this.getResourceWeight(resourceId) || 1;
+        const totalNewWeight = resourceWeight * totalYield;
+
+        if (!this.canCarryMore(totalNewWeight)) {
+            // Only add what we can carry
+            const currentWeight = this.getCurrentCarryWeight();
+            const maxCapacity = this.getMaxCarryCapacity();
+            const availableCapacity = maxCapacity - currentWeight;
+            totalYield = Math.floor(availableCapacity / resourceWeight);
+
+            if (totalYield <= 0) {
+                addMessage('🎒 youre completely overloaded! cant carry any more. time to head back.', 'warning');
+                this.stopGatheringSession('overweight');
+                return;
+            }
+
+            addMessage(`🎒 only grabbed ${totalYield} - bags are almost full!`, 'warning');
+        }
 
         // Add resources to inventory
         if (typeof game !== 'undefined' && game.player && game.player.inventory) {
@@ -358,11 +683,16 @@ const ResourceGatheringSystem = {
             }
         }
 
+        // DRAIN STAMINA
+        if (game.player?.stats) {
+            game.player.stats.stamina = Math.max(0, game.player.stats.stamina - staminaCost);
+        }
+
         // Reduce tool durability
-        if (tool && game.player.tools[tool]) {
+        if (tool && game.player.tools?.[tool]) {
             game.player.tools[tool].durability -= 5;
             if (game.player.tools[tool].durability <= 0) {
-                addMessage(`⚠️ Your ${this.TOOLS[tool]?.name || tool} has broken!`, 'warning');
+                addMessage(`💔 your ${this.TOOLS[tool]?.name || tool} shattered! the void claims another victim.`, 'warning');
                 delete game.player.tools[tool];
             }
         }
@@ -374,27 +704,68 @@ const ResourceGatheringSystem = {
             game.player.skills[requirement.skill] = (game.player.skills[requirement.skill] || 0) + xpGain * 0.01;
         }
 
-        addMessage(`✅ Gathered ${totalYield}x ${this.getResourceName(resourceId)}!`, 'success');
+        addMessage(`✅ got ${totalYield}x ${this.getResourceName(resourceId)}!`, 'success');
 
-        // Clear active gathering
-        this.activeGathering = null;
-
-        // Hide progress UI
-        this.hideGatheringProgress();
-
-        // Update player stats
+        // Update player stats display
         if (typeof updatePlayerStats === 'function') {
             updatePlayerStats();
         }
+
+        // Check if we should continue gathering (auto-continue feature)
+        const currentStamina = game.player?.stats?.stamina || 0;
+        const weightPercent = this.getCarryWeightPercent();
+
+        // Stop conditions
+        if (currentStamina <= 0) {
+            this.stopGatheringSession('exhausted');
+            addMessage('💀 completely exhausted! you collapse. time to rest, warrior.', 'warning');
+        } else if (weightPercent >= 100) {
+            this.stopGatheringSession('overweight');
+            addMessage('🎒 bags are bursting! you physically cant carry more. head back.', 'warning');
+        } else if (!this.hasRequiredTool(resourceId).hasTool) {
+            this.stopGatheringSession('broken_tool');
+            addMessage('🔧 tool broke! need a new one to continue.', 'warning');
+        } else {
+            // AUTO-CONTINUE GATHERING
+            // Clear current session and start next cycle
+            this.activeGathering = null;
+            this.hideGatheringProgress();
+
+            // Small delay then continue
+            setTimeout(() => {
+                if (this.isCommitted && this.committedLocationId === locationId) {
+                    this.startGathering(locationId, resourceId);
+                }
+            }, 500);
+        }
+    },
+
+    // Stop gathering session completely
+    stopGatheringSession(reason = 'manual') {
+        this.activeGathering = null;
+        this.hideGatheringProgress();
+
+        // Reset commitment
+        this.resetCommitment();
+
+        const reasonMessages = {
+            exhausted: '😴 you worked until you dropped. respect.',
+            overweight: '🏋️ youre a beast of burden now. go sell this stuff.',
+            broken_tool: '🔨 tools have limits. so do you.',
+            manual: '👋 called it quits. coward. (jk, self-care is important)'
+        };
+
+        console.log(`⛏️ Gathering stopped: ${reasonMessages[reason] || reason}`);
     },
 
     // Cancel current gathering
     cancelGathering() {
         if (!this.activeGathering) return;
 
-        addMessage('Gathering cancelled.', 'info');
+        addMessage('⏹️ gathering cancelled. the resources will wait. probably.', 'info');
         this.activeGathering = null;
         this.hideGatheringProgress();
+        // Note: does NOT reset commitment - player is still stuck at location
     },
 
     // Find location by ID

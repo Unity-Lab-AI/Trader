@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🗺️ TRAVEL PANEL MAP - your portable window to the void
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // mirrors GameWorldRenderer for the travel panel
@@ -198,16 +198,6 @@ const TravelPanelMap = {
             });
         }
 
-        // Fast Travel button
-        const fastTravelBtn = document.getElementById('fast-travel-destination-btn');
-        if (fastTravelBtn) {
-            fastTravelBtn.addEventListener('click', () => {
-                if (this.currentDestination) {
-                    this.fastTravelToDestination();
-                }
-            });
-        }
-
         // Clear button
         const clearBtn = document.getElementById('clear-destination-btn');
         if (clearBtn) {
@@ -267,7 +257,7 @@ const TravelPanelMap = {
             return GameWorldRenderer.calculateLocationVisibility();
         }
 
-        // Fallback implementation
+        // Fallback implementation - mirrors GameWorldRenderer logic
         const visibility = {};
         const locations = (typeof GameWorld !== 'undefined' && GameWorld.locations) ? GameWorld.locations : {};
 
@@ -293,13 +283,30 @@ const TravelPanelMap = {
             visibility[locId] = 'visible';
         });
 
-        // Mark connected locations as discovered
+        // ALL locations directly connected to visited ones are ALWAYS 'discovered'
+        // Players must be able to see and travel to any adjacent location
         visited.forEach(locId => {
             const location = locations[locId];
             if (location && location.connections) {
                 location.connections.forEach(connectedId => {
                     if (!visibility[connectedId]) {
+                        // ALL connected locations are discovered - no exceptions
                         visibility[connectedId] = 'discovered';
+                    }
+                });
+            }
+        });
+
+        // Also show gatehouses that are 2 hops away from visited locations
+        const discoveredLocations = Object.keys(visibility).filter(id => visibility[id] === 'discovered');
+        discoveredLocations.forEach(locId => {
+            const location = locations[locId];
+            if (location && location.connections) {
+                location.connections.forEach(connectedId => {
+                    if (!visibility[connectedId] || visibility[connectedId] === 'hidden') {
+                        if (this.isGatehouse(connectedId)) {
+                            visibility[connectedId] = 'discovered';
+                        }
                     }
                 });
             }
@@ -313,6 +320,41 @@ const TravelPanelMap = {
         });
 
         return visibility;
+    },
+
+    // 🏰 Check if a location is a gatehouse/outpost
+    isGatehouse(locationId) {
+        if (typeof GatehouseSystem !== 'undefined' && GatehouseSystem.GATEHOUSES) {
+            if (GatehouseSystem.GATEHOUSES[locationId]) {
+                return true;
+            }
+        }
+        const locations = (typeof GameWorld !== 'undefined' && GameWorld.locations) ? GameWorld.locations : {};
+        const location = locations[locationId];
+        if (location && location.type === 'outpost') {
+            return true;
+        }
+        return false;
+    },
+
+    // 🚧 Check if location is behind a locked gate
+    isLocationBehindLockedGate(locationId) {
+        if (typeof GatehouseSystem === 'undefined' || !GatehouseSystem.canAccessLocation) {
+            return false;
+        }
+        // Check starting zone
+        if (typeof GatehouseSystem.startingZone !== 'undefined') {
+            const locZone = GatehouseSystem.LOCATION_ZONES ? GatehouseSystem.LOCATION_ZONES[locationId] : null;
+            if (locZone === 'capital' || locZone === GatehouseSystem.startingZone) {
+                return false;
+            }
+        }
+        try {
+            const access = GatehouseSystem.canAccessLocation(locationId);
+            return !access.accessible;
+        } catch (e) {
+            return false;
+        }
     },
 
     // 🔗 Draw connection lines between locations
@@ -778,6 +820,9 @@ const TravelPanelMap = {
                 statusLine = '<div style="color: #ff9800; margin-top: 5px;">🎯 Click to set as destination</div>';
             }
 
+            // Get gate info if this is a gatehouse
+            const gateInfo = this.getGateInfo(location);
+
             this.tooltipElement.innerHTML = `
                 <div style="font-size: 15px; font-weight: bold; margin-bottom: 5px;">
                     ${style.icon} ${location.name}
@@ -788,6 +833,7 @@ const TravelPanelMap = {
                 <div style="font-size: 11px; line-height: 1.4; color: #ccc;">
                     ${location.description || 'No description available.'}
                 </div>
+                ${gateInfo}
                 ${statusLine}
             `;
         }
@@ -795,6 +841,38 @@ const TravelPanelMap = {
         this.tooltipElement.style.display = 'block';
         this.tooltipElement.style.left = (e.clientX + 15) + 'px';
         this.tooltipElement.style.top = (e.clientY + 15) + 'px';
+    },
+
+    // 🏰 Get gate/outpost fee information for tooltips
+    getGateInfo(location) {
+        // Check if GatehouseSystem exists and this location is a gatehouse
+        if (typeof GatehouseSystem === 'undefined') return '';
+
+        const gatehouse = GatehouseSystem.GATEHOUSES[location.id];
+        if (!gatehouse) return '';
+
+        const isUnlocked = GatehouseSystem.isGatehouseUnlocked(location.id);
+        const fee = gatehouse.fee;
+        const zoneName = GatehouseSystem.ZONES[gatehouse.unlocksZone]?.name || 'new region';
+
+        if (isUnlocked) {
+            return `
+                <div style="margin-top: 6px; padding: 6px; background: rgba(76, 175, 80, 0.2); border-radius: 4px; border-left: 3px solid #4caf50;">
+                    <div style="color: #4caf50; font-weight: bold; font-size: 11px;">🔓 Passage Unlocked</div>
+                    <div style="color: #81c784; font-size: 10px;">Free access to ${zoneName}</div>
+                    <div style="color: #aaa; font-size: 9px; margin-top: 2px;">💱 Trading available</div>
+                </div>
+            `;
+        } else {
+            return `
+                <div style="margin-top: 6px; padding: 6px; background: rgba(255, 152, 0, 0.2); border-radius: 4px; border-left: 3px solid #ff9800;">
+                    <div style="color: #ff9800; font-weight: bold; font-size: 11px;">🔒 Passage Fee Required</div>
+                    <div style="color: #ffb74d; font-size: 11px;">💰 ${fee} gold (one-time)</div>
+                    <div style="color: #aaa; font-size: 10px;">Unlocks: ${zoneName}</div>
+                    <div style="color: #81c784; font-size: 9px; margin-top: 2px;">💱 Trading available without fee</div>
+                </div>
+            `;
+        }
     },
 
     hideTooltip() {
@@ -889,24 +967,65 @@ const TravelPanelMap = {
         } else {
             const dest = this.currentDestination;
 
-            // Calculate distance and travel time if possible
-            let distanceInfo = '';
-            if (typeof game !== 'undefined' && game.currentLocation && typeof GameWorld !== 'undefined') {
-                const fromLoc = GameWorld.locations[game.currentLocation.id];
-                const toLoc = GameWorld.locations[dest.id];
+            // Get travel info from TravelSystem for accurate multi-hop calculations
+            let travelInfoHtml = '';
+            let routeInfoHtml = '';
 
-                if (fromLoc && toLoc && fromLoc.mapPosition && toLoc.mapPosition) {
-                    const dx = toLoc.mapPosition.x - fromLoc.mapPosition.x;
-                    const dy = toLoc.mapPosition.y - fromLoc.mapPosition.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const estimatedTime = Math.ceil(distance / 10); // Rough estimate
+            if (typeof TravelSystem !== 'undefined' && TravelSystem.calculateTravelInfo) {
+                const destLocation = TravelSystem.locations[dest.id];
+                if (destLocation) {
+                    const travelInfo = TravelSystem.calculateTravelInfo(destLocation);
 
-                    distanceInfo = `
+                    // Build travel info display
+                    travelInfoHtml = `
                         <div class="dest-travel-info">
-                            <span>📏 Distance: ~${Math.round(distance)} units</span>
-                            <span>⏱️ Est. Time: ~${estimatedTime} minutes</span>
+                            <div class="travel-stat">
+                                <span class="stat-icon">📏</span>
+                                <span class="stat-label">Distance:</span>
+                                <span class="stat-value">${travelInfo.distance} miles</span>
+                            </div>
+                            <div class="travel-stat">
+                                <span class="stat-icon">⏱️</span>
+                                <span class="stat-label">Travel Time:</span>
+                                <span class="stat-value">${travelInfo.timeDisplay}</span>
+                            </div>
+                            <div class="travel-stat">
+                                <span class="stat-icon">🛤️</span>
+                                <span class="stat-label">Path Type:</span>
+                                <span class="stat-value">${travelInfo.pathTypeName || travelInfo.pathType}</span>
+                            </div>
+                            <div class="travel-stat">
+                                <span class="stat-icon">⚠️</span>
+                                <span class="stat-label">Safety:</span>
+                                <span class="stat-value ${travelInfo.safety < 50 ? 'danger' : travelInfo.safety < 75 ? 'warning' : ''}">${travelInfo.safety}%</span>
+                            </div>
+                            ${travelInfo.hops > 1 ? `
+                            <div class="travel-stat">
+                                <span class="stat-icon">📍</span>
+                                <span class="stat-label">Stops:</span>
+                                <span class="stat-value">${travelInfo.hops} waypoints</span>
+                            </div>` : ''}
                         </div>
                     `;
+
+                    // Show route for multi-hop journeys
+                    if (travelInfo.routeDescription) {
+                        routeInfoHtml = `
+                            <div class="dest-route-info">
+                                <span class="route-label">🗺️ Route:</span>
+                                <span class="route-path">${travelInfo.routeDescription}</span>
+                            </div>
+                        `;
+                    }
+
+                    // Warning for wilderness travel
+                    if (travelInfo.isWilderness) {
+                        routeInfoHtml += `
+                            <div class="dest-warning">
+                                ⚠️ No established path - traveling through wilderness is dangerous and slow!
+                            </div>
+                        `;
+                    }
                 }
             }
 
@@ -922,7 +1041,8 @@ const TravelPanelMap = {
                     <div class="dest-description">
                         ${dest.description || 'No description available.'}
                     </div>
-                    ${distanceInfo}
+                    ${travelInfoHtml}
+                    ${routeInfoHtml}
                 </div>
             `;
             if (actionsEl) actionsEl.classList.remove('hidden');
@@ -933,27 +1053,257 @@ const TravelPanelMap = {
     travelToDestination() {
         if (!this.currentDestination) return;
 
-        if (typeof TravelSystem !== 'undefined' && TravelSystem.travelTo) {
-            TravelSystem.travelTo(this.currentDestination.id);
+        // Start travel - destination will be cleared when arrival completes
+        if (typeof TravelSystem !== 'undefined' && TravelSystem.startTravel) {
+            TravelSystem.startTravel(this.currentDestination.id);
         } else if (typeof travelTo === 'function') {
             travelTo(this.currentDestination.id);
         }
 
-        // Clear destination after traveling
-        this.clearDestination();
+        // Start the travel UI countdown - don't clear destination yet!
+        this.startTravelCountdown();
     },
 
-    // ⚡ Fast travel to destination
-    fastTravelToDestination() {
+    // 🕐 Travel state tracking
+    travelState: {
+        isActive: false,
+        destination: null,
+        startLocation: null,
+        startTime: null,
+        duration: null,
+        countdownInterval: null
+    },
+
+    // ⏱️ Start the travel countdown display
+    startTravelCountdown() {
         if (!this.currentDestination) return;
 
-        if (typeof TravelSystem !== 'undefined' && TravelSystem.fastTravel) {
-            TravelSystem.fastTravel(this.currentDestination.id);
-        } else if (typeof fastTravelTo === 'function') {
-            fastTravelTo(this.currentDestination.id);
+        // Store travel state
+        this.travelState.isActive = true;
+        this.travelState.destination = { ...this.currentDestination };
+
+        // Store the starting location for the travel marker
+        if (typeof game !== 'undefined' && game.currentLocation) {
+            this.travelState.startLocation = { ...game.currentLocation };
+        }
+
+        // Get travel info from TravelSystem
+        if (typeof TravelSystem !== 'undefined') {
+            this.travelState.startTime = TravelSystem.playerPosition.travelStartTime;
+            this.travelState.duration = TravelSystem.playerPosition.travelDuration;
+        }
+
+        // Update the destination display to show travel progress
+        this.updateTravelProgressDisplay();
+
+        // Start countdown interval
+        if (this.travelState.countdownInterval) {
+            clearInterval(this.travelState.countdownInterval);
+        }
+        this.travelState.countdownInterval = setInterval(() => {
+            this.updateTravelProgressDisplay();
+        }, 250); // Update 4x per second for smooth countdown
+    },
+
+    // 📊 Update travel progress display in destination tab
+    updateTravelProgressDisplay() {
+        const displayEl = document.getElementById('current-destination-display');
+        const actionsEl = document.getElementById('destination-actions');
+        if (!displayEl) return;
+
+        // Check if we're still traveling
+        if (typeof TravelSystem !== 'undefined' && TravelSystem.playerPosition.isTraveling) {
+            const dest = this.travelState.destination || this.currentDestination;
+            if (!dest) return;
+
+            const progress = TravelSystem.playerPosition.travelProgress || 0;
+            const progressPercent = Math.round(progress * 100);
+
+            // Calculate remaining time
+            const duration = TravelSystem.playerPosition.travelDuration || 1;
+            const remainingMinutes = duration * (1 - progress);
+            const remainingDisplay = this.formatTravelTime(remainingMinutes);
+
+            // Calculate ETA
+            let etaDisplay = '';
+            if (typeof TimeSystem !== 'undefined') {
+                const currentTime = TimeSystem.getTotalMinutes();
+                const arrivalTime = currentTime + remainingMinutes;
+                const arrivalHour = Math.floor((arrivalTime % 1440) / 60);
+                const arrivalMin = Math.floor(arrivalTime % 60);
+                const period = arrivalHour >= 12 ? 'PM' : 'AM';
+                const displayHour = arrivalHour % 12 || 12;
+                etaDisplay = `${displayHour}:${arrivalMin.toString().padStart(2, '0')} ${period}`;
+            }
+
+            displayEl.innerHTML = `
+                <div class="travel-in-progress">
+                    <div class="travel-status-header">
+                        <span class="travel-icon">🚶</span>
+                        <h3>Traveling to ${dest.name}</h3>
+                    </div>
+                    <div class="travel-destination-info">
+                        <span class="dest-icon">${dest.icon || '📍'}</span>
+                        <div class="dest-details">
+                            <span class="dest-name">${dest.name}</span>
+                            <span class="dest-type">${dest.type ? dest.type.charAt(0).toUpperCase() + dest.type.slice(1) : ''} • ${dest.region || 'Unknown'}</span>
+                        </div>
+                    </div>
+                    <div class="travel-progress-container">
+                        <div class="travel-progress-bar">
+                            <div class="travel-progress-fill" style="width: ${progressPercent}%">
+                                <span class="travel-progress-marker">🚶</span>
+                            </div>
+                        </div>
+                        <div class="travel-progress-labels">
+                            <span class="progress-start">📍 Start</span>
+                            <span class="progress-percent">${progressPercent}%</span>
+                            <span class="progress-end">🎯 ${dest.name}</span>
+                        </div>
+                    </div>
+                    <div class="travel-time-info">
+                        <div class="time-stat">
+                            <span class="time-label">⏱️ Time Remaining</span>
+                            <span class="time-value countdown">${remainingDisplay}</span>
+                        </div>
+                        ${etaDisplay ? `
+                        <div class="time-stat">
+                            <span class="time-label">🕐 ETA</span>
+                            <span class="time-value">${etaDisplay}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="travel-actions-during">
+                        <button class="travel-btn-danger" onclick="TravelPanelMap.cancelTravel()">✕ Cancel Journey</button>
+                    </div>
+                </div>
+            `;
+
+            // Hide normal action buttons during travel
+            if (actionsEl) actionsEl.classList.add('hidden');
+
+            // Update the visual travel marker on mini-map
+            this.updateTravelMarker(progress);
+
         } else {
-            // Fallback to normal travel
-            this.travelToDestination();
+            // Travel completed or cancelled
+            this.onTravelComplete();
+        }
+    },
+
+    // 🎯 Update visual travel marker on mini-map
+    travelMarker: null,
+
+    updateTravelMarker(progress) {
+        if (!this.mapElement || !this.travelState.destination) return;
+
+        // Get start and end positions
+        // Use the stored start location from when travel began
+        let startLocId = this.travelState.startLocation?.id;
+        // Fallback to TravelSystem or game state
+        if (!startLocId && typeof TravelSystem !== 'undefined') {
+            startLocId = TravelSystem.playerPosition?.currentLocation;
+        }
+        if (!startLocId && typeof game !== 'undefined') {
+            startLocId = game.currentLocation?.id;
+        }
+
+        const startLoc = typeof GameWorld !== 'undefined' && startLocId ? GameWorld.locations[startLocId] : null;
+        const endLoc = typeof GameWorld !== 'undefined' ? GameWorld.locations[this.travelState.destination.id] : null;
+
+        if (!startLoc?.mapPosition || !endLoc?.mapPosition) return;
+
+        // Create travel marker if it doesn't exist
+        if (!this.travelMarker) {
+            this.travelMarker = document.createElement('div');
+            this.travelMarker.id = 'travel-moving-marker';
+            this.travelMarker.innerHTML = '🚶';
+            this.travelMarker.style.cssText = `
+                position: absolute;
+                z-index: 150;
+                font-size: 20px;
+                transform: translate(-50%, -50%);
+                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+                animation: walk-bounce 0.3s ease-in-out infinite;
+                pointer-events: none;
+            `;
+            this.mapElement.appendChild(this.travelMarker);
+        }
+
+        // Interpolate position
+        const currentX = startLoc.mapPosition.x + (endLoc.mapPosition.x - startLoc.mapPosition.x) * progress;
+        const currentY = startLoc.mapPosition.y + (endLoc.mapPosition.y - startLoc.mapPosition.y) * progress;
+
+        this.travelMarker.style.left = currentX + 'px';
+        this.travelMarker.style.top = currentY + 'px';
+        this.travelMarker.style.display = 'block';
+
+        // Flip direction if moving left
+        if (endLoc.mapPosition.x < startLoc.mapPosition.x) {
+            this.travelMarker.style.transform = 'translate(-50%, -50%) scaleX(-1)';
+        } else {
+            this.travelMarker.style.transform = 'translate(-50%, -50%)';
+        }
+    },
+
+    // ❌ Cancel ongoing travel
+    cancelTravel() {
+        if (typeof TravelSystem !== 'undefined') {
+            TravelSystem.playerPosition.isTraveling = false;
+            TravelSystem.playerPosition.destination = null;
+            TravelSystem.playerPosition.travelProgress = 0;
+
+            if (typeof addMessage === 'function') {
+                addMessage('🛑 Journey cancelled');
+            }
+        }
+        this.onTravelComplete();
+    },
+
+    // ✅ Handle travel completion
+    onTravelComplete() {
+        // Clear interval
+        if (this.travelState.countdownInterval) {
+            clearInterval(this.travelState.countdownInterval);
+            this.travelState.countdownInterval = null;
+        }
+
+        // Hide travel marker
+        if (this.travelMarker) {
+            this.travelMarker.style.display = 'none';
+        }
+
+        // Reset travel state
+        this.travelState.isActive = false;
+        this.travelState.destination = null;
+        this.travelState.startLocation = null;
+        this.travelState.startTime = null;
+        this.travelState.duration = null;
+
+        // Clear the destination
+        this.currentDestination = null;
+
+        // Update display back to normal
+        this.updateDestinationDisplay();
+        this.render();
+
+        // Update player marker position to new location
+        this.updatePlayerMarker();
+    },
+
+    // ⏱️ Format travel time nicely
+    formatTravelTime(minutes) {
+        if (minutes < 1) {
+            const seconds = Math.round(minutes * 60);
+            return `${seconds}s`;
+        } else if (minutes < 60) {
+            const mins = Math.floor(minutes);
+            const secs = Math.round((minutes - mins) * 60);
+            return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+        } else {
+            const hours = Math.floor(minutes / 60);
+            const mins = Math.round(minutes % 60);
+            return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
         }
     },
 
@@ -1277,6 +1627,176 @@ if (document.readyState === 'loading') {
         @keyframes marker-pulse {
             0% { transform: scale(1); opacity: 0.6; }
             100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        /* Walking animation for travel marker */
+        @keyframes walk-bounce {
+            0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+            50% { transform: translate(-50%, -50%) translateY(-4px); }
+        }
+
+        /* Travel In Progress Styles */
+        .travel-in-progress {
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(40, 60, 80, 0.8) 0%, rgba(30, 50, 70, 0.9) 100%);
+            border-radius: 12px;
+            border: 2px solid #ff9800;
+            animation: travel-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes travel-glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 152, 0, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(255, 152, 0, 0.5); }
+        }
+
+        .travel-status-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .travel-status-header .travel-icon {
+            font-size: 28px;
+            animation: walk-bounce 0.5s ease-in-out infinite;
+        }
+
+        .travel-status-header h3 {
+            margin: 0;
+            color: #ff9800;
+            font-size: 16px;
+        }
+
+        .travel-destination-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        .travel-destination-info .dest-icon {
+            font-size: 32px;
+        }
+
+        .travel-destination-info .dest-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .travel-destination-info .dest-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .travel-destination-info .dest-type {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .travel-progress-container {
+            margin-bottom: 15px;
+        }
+
+        .travel-progress-bar {
+            position: relative;
+            height: 24px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            overflow: visible;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+
+        .travel-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff9800 0%, #ffb74d 50%, #ff9800 100%);
+            background-size: 200% 100%;
+            animation: progress-shimmer 2s linear infinite;
+            border-radius: 12px;
+            position: relative;
+            min-width: 30px;
+            transition: width 0.25s ease-out;
+        }
+
+        @keyframes progress-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .travel-progress-marker {
+            position: absolute;
+            right: -5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            animation: walk-bounce 0.4s ease-in-out infinite;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        .travel-progress-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 10px;
+            color: #888;
+        }
+
+        .travel-progress-labels .progress-percent {
+            font-weight: bold;
+            color: #ff9800;
+            font-size: 12px;
+        }
+
+        .travel-time-info {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .travel-time-info .time-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        .travel-time-info .time-label {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .travel-time-info .time-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .travel-time-info .time-value.countdown {
+            color: #ff9800;
+            font-family: monospace;
+            font-size: 18px;
+        }
+
+        .travel-actions-during {
+            display: flex;
+            justify-content: center;
+        }
+
+        .travel-actions-during .travel-btn-danger {
+            padding: 8px 20px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .travel-actions-during .travel-btn-danger:hover {
+            opacity: 1;
         }
     `;
 

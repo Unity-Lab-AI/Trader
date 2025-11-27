@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🖤 TRAVEL SYSTEM - wandering through the void, one step at a time 🖤
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // maps, paths, and the eternal journey to somewhere else
@@ -129,7 +129,17 @@ const TravelSystem = {
     },
 
     // conjure a canvas from the digital abyss
+    // NOTE: Canvas setup is DISABLED - we now use HTML-based rendering via
+    // GameWorldRenderer and TravelPanelMap. This function is kept as a no-op.
     setupCanvas() {
+        // Canvas-based map rendering is disabled.
+        // Map display is now handled by:
+        // - GameWorldRenderer (main map - HTML divs)
+        // - TravelPanelMap (travel panel map - HTML divs)
+        console.log('🗺️ TravelSystem.setupCanvas: Canvas rendering disabled - using HTML-based GameWorldRenderer and TravelPanelMap instead');
+        return;
+
+        /* OLD CANVAS CODE - DISABLED
         // try to find the main canvas (if it even exists)
         let canvas = document.getElementById('world-map-canvas');
 
@@ -158,6 +168,7 @@ const TravelSystem = {
         } else {
             console.error('💀 TravelSystem: No canvas found... the void stares back');
         }
+        */
     },
 
     // birth a world from the void (playing god at 3am hits different)
@@ -889,9 +900,10 @@ const TravelSystem = {
                 const pathInfo = this.PATH_TYPES[pathType] || this.PATH_TYPES.trail;
 
                 // math out how far we need to suffer
+                // Note: coordinates are 10x scaled, so divide by 100 to get miles
                 const dx = targetLocation.x - location.x;
                 const dy = targetLocation.y - location.y;
-                const distance = Math.sqrt(dx * dx + dy * dy) / 10; // pixels to miles (arbitrary units of pain)
+                const distance = Math.sqrt(dx * dx + dy * dy) / 100; // scaled coords to miles
 
                 // manifest the path into reality
                 const path = {
@@ -1239,75 +1251,331 @@ const TravelSystem = {
     },
 
     // calculate how long this journey of suffering will take
+    // Now handles multi-hop paths with realistic varied travel times
     calculateTravelInfo(destination) {
         const currentLoc = this.getCurrentLocation();
         if (!currentLoc) {
-            return { timeDisplay: 'Unknown', distance: 0, safety: 0, pathType: 'unknown', timeHours: 0 };
+            return { timeDisplay: 'Unknown', distance: 0, safety: 0, pathType: 'unknown', timeHours: 0, hops: 0 };
         }
 
         const path = this.findPath(currentLoc, destination);
+
+        // Get base travel speed from transportation
+        const transport = game.player?.transportation || 'backpack';
+        const transportData = typeof transportationOptions !== 'undefined' ? transportationOptions[transport] : null;
+        const baseSpeed = transportData?.speed || this.getTransportSpeed(transport);
+
+        // For multi-hop paths, calculate time for each segment
+        let totalTimeHours = 0;
+        let totalDistance = 0;
+        let totalStaminaCost = 0;
+        const segmentTimes = [];
+
+        if (path.segments && path.segments.length > 0) {
+            // Multi-hop route - calculate each segment's travel time
+            for (const segment of path.segments) {
+                const segmentType = segment.type || 'trail';
+                const segmentInfo = this.PATH_TYPES[segmentType] || this.PATH_TYPES.trail;
+                const segmentDistance = segment.distance || 5; // default 5 miles
+
+                // Calculate effective speed for this segment
+                const effectiveSpeed = baseSpeed * segmentInfo.speedMultiplier;
+
+                // Calculate time for this segment (no cap - real journeys take real time)
+                const segmentTime = segmentDistance / effectiveSpeed;
+
+                // Add some variance to make travel times feel more realistic (±15%)
+                const variance = 0.85 + (Math.random() * 0.3);
+                const adjustedTime = segmentTime * variance;
+
+                totalTimeHours += adjustedTime;
+                totalDistance += segmentDistance;
+                totalStaminaCost += Math.round(segmentInfo.staminaDrain * adjustedTime * 10);
+
+                segmentTimes.push({
+                    from: segment.from,
+                    to: segment.to,
+                    type: segmentType,
+                    distance: segmentDistance,
+                    time: adjustedTime
+                });
+            }
+        } else {
+            // Direct path or wilderness - use overall path info
+            const pathType = path.type || 'trail';
+            const pathInfo = this.PATH_TYPES[pathType] || this.PATH_TYPES.trail;
+            const distance = path.totalDistance || this.calculateDistance(currentLoc, destination);
+
+            const effectiveSpeed = baseSpeed * pathInfo.speedMultiplier;
+            totalTimeHours = distance / effectiveSpeed;
+            totalDistance = distance;
+            totalStaminaCost = Math.round(pathInfo.staminaDrain * totalTimeHours * 10);
+
+            // Wilderness paths are slower and more dangerous
+            if (path.isWilderness) {
+                totalTimeHours *= 1.5; // 50% longer for off-road travel
+                totalStaminaCost = Math.round(totalStaminaCost * 1.5);
+            }
+        }
+
+        // Add rest stops for very long journeys (every ~4 hours adds 30 min rest)
+        const restStops = Math.floor(totalTimeHours / 4);
+        totalTimeHours += restStops * 0.5;
+
+        // Generate route description for multi-hop journeys
+        let routeDescription = '';
+        if (path.route && path.route.length > 2) {
+            const stopNames = path.route.slice(1, -1).map(id => {
+                const loc = this.locations[id];
+                return loc ? loc.name : id;
+            });
+            routeDescription = `Via: ${stopNames.join(' → ')}`;
+        }
+
         const pathType = path.type || 'trail';
         const pathInfo = this.PATH_TYPES[pathType] || this.PATH_TYPES.trail;
 
-        // Get base travel speed from transportation
-        const transport = game.player?.currentTransportation || 'foot';
-        const baseSpeed = this.getTransportSpeed(transport);
-
-        // Apply path speed multiplier
-        const effectiveSpeed = baseSpeed * pathInfo.speedMultiplier;
-
-        // Calculate distance
-        const distance = path.distance || this.calculateDistance(currentLoc, destination);
-
-        // Calculate time in hours
-        let timeHours = distance / effectiveSpeed;
-
-        // CAP travel time at 2 hours maximum per path segment
-        const MAX_TRAVEL_HOURS = 2;
-        timeHours = Math.min(timeHours, MAX_TRAVEL_HOURS);
-
-        // Calculate stamina cost based on path type and time
-        const staminaCost = Math.round(pathInfo.staminaDrain * timeHours * 10);
-
         return {
-            timeDisplay: this.formatTime(timeHours),
-            timeHours: timeHours,
-            distance: Math.round(distance),
-            safety: Math.round(pathInfo.safety * 100),
+            timeDisplay: this.formatTime(totalTimeHours),
+            timeHours: totalTimeHours,
+            distance: Math.round(totalDistance),
+            safety: Math.round((path.safety || pathInfo.safety) * 100),
             pathType: pathType,
             pathTypeName: pathInfo.name,
             pathDescription: pathInfo.description,
-            staminaCost: staminaCost,
-            speedMultiplier: pathInfo.speedMultiplier
+            staminaCost: totalStaminaCost,
+            speedMultiplier: pathInfo.speedMultiplier,
+            hops: path.hops || 1,
+            route: path.route || [currentLoc.id, destination.id],
+            routeDescription: routeDescription,
+            segments: segmentTimes,
+            isWilderness: path.isWilderness || false
         };
     },
 
     // Calculate distance between locations
+    // Note: TravelSystem coordinates are 10x scaled from mapPosition, so we divide by 100
+    // to get the same miles value as GameWorldRenderer (which uses mapPosition / 10)
     calculateDistance(from, to) {
         const dx = to.x - from.x;
         const dy = to.y - from.y;
-        return Math.sqrt(dx * dx + dy * dy) / 10; // Convert to miles
+        return Math.sqrt(dx * dx + dy * dy) / 100; // Convert scaled coords to miles
     },
 
-    // Find path between locations
+    // Find path between locations using A* pathfinding
+    // Returns an object with the full route (array of location IDs), total distance, and path segments
     findPath(from, to) {
-        // Check if there's a direct path
-        const directPath = this.paths.find(path => 
+        // If same location, no path needed
+        if (from.id === to.id) {
+            return {
+                route: [from.id],
+                segments: [],
+                totalDistance: 0,
+                type: 'none',
+                safety: 1.0,
+                quality: 'excellent',
+                travelBonus: 0,
+                hops: 0
+            };
+        }
+
+        // Check if there's a direct connection first
+        const directPath = this.paths.find(path =>
             (path.from === from.id && path.to === to.id) ||
             (path.from === to.id && path.to === from.id)
         );
-        
+
         if (directPath) {
-            return directPath;
+            return {
+                route: [from.id, to.id],
+                segments: [directPath],
+                totalDistance: directPath.distance || this.calculateDistance(from, to),
+                type: directPath.type || 'road',
+                safety: directPath.safety || 0.7,
+                quality: directPath.quality || 'fair',
+                travelBonus: directPath.travelBonus || 0,
+                hops: 1
+            };
         }
-        
-        // For now, return a direct path calculation
-        // In a more complex implementation, you'd use pathfinding algorithms
+
+        // A* pathfinding for multi-hop routes
+        const route = this.aStarPathfind(from.id, to.id);
+
+        if (!route || route.length === 0) {
+            // No path found - return wilderness path (direct but dangerous)
+            console.warn(`🗺️ No connected path from ${from.name} to ${to.name}, using wilderness route`);
+            return {
+                route: [from.id, to.id],
+                segments: [],
+                totalDistance: this.calculateDistance(from, to),
+                type: 'wilderness',
+                safety: 0.3,
+                quality: 'poor',
+                travelBonus: -0.2,
+                hops: 1,
+                isWilderness: true
+            };
+        }
+
+        // Build the full path info from the route
+        return this.buildPathFromRoute(route);
+    },
+
+    // A* pathfinding algorithm - finds shortest path through connected locations
+    aStarPathfind(startId, goalId) {
+        const locations = this.locations;
+        if (!locations[startId] || !locations[goalId]) return null;
+
+        // Priority queue (using array with sorting - not optimal but works)
+        const openSet = [startId];
+        const cameFrom = {};
+        const gScore = { [startId]: 0 };
+        const fScore = { [startId]: this.heuristicDistance(startId, goalId) };
+
+        while (openSet.length > 0) {
+            // Get node with lowest fScore
+            openSet.sort((a, b) => (fScore[a] || Infinity) - (fScore[b] || Infinity));
+            const current = openSet.shift();
+
+            if (current === goalId) {
+                // Reconstruct path
+                const path = [current];
+                let node = current;
+                while (cameFrom[node]) {
+                    node = cameFrom[node];
+                    path.unshift(node);
+                }
+                return path;
+            }
+
+            // Get neighbors (connected locations)
+            const currentLoc = locations[current];
+            const neighbors = currentLoc?.connections || [];
+
+            for (const neighborId of neighbors) {
+                if (!locations[neighborId]) continue;
+
+                // Calculate cost to reach neighbor
+                const pathSegment = this.getPathBetween(current, neighborId);
+                const moveCost = pathSegment?.distance || this.calculateDistance(
+                    locations[current],
+                    locations[neighborId]
+                );
+
+                // Add terrain/path type penalty
+                const pathType = pathSegment?.type || 'trail';
+                const pathInfo = this.PATH_TYPES[pathType] || this.PATH_TYPES.trail;
+                const terrainPenalty = 1 / (pathInfo.speedMultiplier || 0.5); // Slower paths cost more
+
+                const tentativeG = gScore[current] + (moveCost * terrainPenalty);
+
+                if (tentativeG < (gScore[neighborId] || Infinity)) {
+                    cameFrom[neighborId] = current;
+                    gScore[neighborId] = tentativeG;
+                    fScore[neighborId] = tentativeG + this.heuristicDistance(neighborId, goalId);
+
+                    if (!openSet.includes(neighborId)) {
+                        openSet.push(neighborId);
+                    }
+                }
+            }
+        }
+
+        // No path found
+        return null;
+    },
+
+    // Heuristic distance for A* (straight line distance)
+    heuristicDistance(fromId, toId) {
+        const from = this.locations[fromId];
+        const to = this.locations[toId];
+        if (!from || !to) return Infinity;
+        return this.calculateDistance(from, to);
+    },
+
+    // Get the path segment between two directly connected locations
+    getPathBetween(fromId, toId) {
+        return this.paths.find(path =>
+            (path.from === fromId && path.to === toId) ||
+            (path.from === toId && path.to === fromId)
+        );
+    },
+
+    // Build full path info from a route array
+    buildPathFromRoute(route) {
+        if (!route || route.length < 2) {
+            return {
+                route: route || [],
+                segments: [],
+                totalDistance: 0,
+                type: 'none',
+                safety: 1.0,
+                quality: 'excellent',
+                travelBonus: 0,
+                hops: 0
+            };
+        }
+
+        const segments = [];
+        let totalDistance = 0;
+        let worstSafety = 1.0;
+        let worstQuality = 'excellent';
+        let totalTravelBonus = 0;
+        const qualityRank = { excellent: 4, good: 3, fair: 2, poor: 1 };
+
+        for (let i = 0; i < route.length - 1; i++) {
+            const fromId = route[i];
+            const toId = route[i + 1];
+            const from = this.locations[fromId];
+            const to = this.locations[toId];
+
+            if (!from || !to) continue;
+
+            const segment = this.getPathBetween(fromId, toId) || {
+                from: fromId,
+                to: toId,
+                type: 'trail',
+                distance: this.calculateDistance(from, to),
+                safety: 0.5,
+                quality: 'fair',
+                travelBonus: 0
+            };
+
+            // Ensure segment has distance
+            if (!segment.distance) {
+                segment.distance = this.calculateDistance(from, to);
+            }
+
+            segments.push(segment);
+            totalDistance += segment.distance;
+
+            // Track worst conditions
+            if (segment.safety < worstSafety) {
+                worstSafety = segment.safety;
+            }
+            if (qualityRank[segment.quality] < qualityRank[worstQuality]) {
+                worstQuality = segment.quality;
+            }
+            totalTravelBonus += segment.travelBonus || 0;
+        }
+
+        // Determine overall path type (use most common or worst)
+        const typeCounts = {};
+        segments.forEach(s => {
+            typeCounts[s.type] = (typeCounts[s.type] || 0) + 1;
+        });
+        const dominantType = Object.entries(typeCounts)
+            .sort((a, b) => b[1] - a[1])[0]?.[0] || 'trail';
+
         return {
-            type: 'direct',
-            safety: 0.5,
-            quality: 'fair',
-            travelBonus: 0
+            route,
+            segments,
+            totalDistance,
+            type: dominantType,
+            safety: worstSafety,
+            quality: worstQuality,
+            travelBonus: totalTravelBonus / segments.length, // Average bonus
+            hops: route.length - 1
         };
     },
 
@@ -1349,39 +1617,87 @@ const TravelSystem = {
         }
     },
 
-    // Start travel to destination
+    // Start travel to destination - venturing into the unknown (again)
     startTravel(destinationId) {
-        const destination = this.locations[destinationId] || 
+        console.log('🖤 startTravel invoked for:', destinationId);
+
+        const destination = this.locations[destinationId] ||
                           this.resourceNodes.find(n => n.id === destinationId) ||
                           this.pointsOfInterest.find(p => p.id === destinationId);
-        
+
         if (!destination) {
-            addMessage('Invalid destination!');
+            addMessage('🖤 destination does not exist... the void claims another');
+            console.warn('🖤 destination not found:', destinationId);
             return;
         }
-        
+
         const currentLoc = this.getCurrentLocation();
         if (!currentLoc) {
-            addMessage('Cannot determine current location!');
+            addMessage('🖤 where even are you? location unknown...');
+            console.warn('🖤 current location is undefined');
             return;
         }
-        
+
+        // already traveling? dont start another journey, thats how you lose yourself
+        if (this.playerPosition.isTraveling) {
+            addMessage('🖤 already wandering... patience, dark soul');
+            console.warn('🖤 travel rejected - already traveling');
+            return;
+        }
+
         const travelInfo = this.calculateTravelInfo(destination);
-        
-        // Start travel
+
+        // sanity check travel duration
+        if (!travelInfo || !travelInfo.timeHours || travelInfo.timeHours <= 0) {
+            console.warn('🖤 travel time calculation returned void:', travelInfo);
+            // fallback to minimum travel time
+            travelInfo.timeHours = 0.5; // 30 min minimum
+            travelInfo.timeDisplay = '30 minutes';
+        }
+
+        // Start travel - embrace the journey, or whatever
         this.playerPosition.isTraveling = true;
         this.playerPosition.destination = destination;
         this.playerPosition.travelProgress = 0;
         this.playerPosition.travelStartTime = TimeSystem.getTotalMinutes();
-        this.playerPosition.travelDuration = travelInfo.timeHours * 60; // Convert to minutes
+        this.playerPosition.travelDuration = Math.max(1, travelInfo.timeHours * 60); // Convert to minutes, minimum 1
         this.playerPosition.path = this.findPath(currentLoc, destination);
-        
-        addMessage(`Starting travel to ${destination.name}... Estimated time: ${travelInfo.timeDisplay}`);
 
-        // Auto-unpause time when starting travel (so the journey actually progresses)
-        if (typeof TimeSystem !== 'undefined' && (TimeSystem.isPaused || TimeSystem.currentSpeed === 'PAUSED')) {
+        // Store route info for multi-hop journeys
+        this.playerPosition.route = travelInfo.route;
+        this.playerPosition.routeIndex = 0; // Current position in route
+        this.playerPosition.hops = travelInfo.hops;
+
+        console.log('🖤 travel initiated:', {
+            from: currentLoc.name,
+            to: destination.name,
+            startTime: this.playerPosition.travelStartTime,
+            duration: this.playerPosition.travelDuration,
+            estimatedArrival: this.playerPosition.travelStartTime + this.playerPosition.travelDuration,
+            hops: travelInfo.hops,
+            route: travelInfo.route
+        });
+
+        // Build travel message based on route complexity
+        let travelMessage = `🚶 Starting journey to ${destination.name}...`;
+        if (travelInfo.hops > 1) {
+            travelMessage += ` (${travelInfo.hops} stops)`;
+        }
+        if (travelInfo.routeDescription) {
+            addMessage(travelMessage);
+            addMessage(`📍 ${travelInfo.routeDescription}`);
+        } else {
+            addMessage(travelMessage);
+        }
+        addMessage(`⏱️ Estimated travel time: ${travelInfo.timeDisplay} | Distance: ${travelInfo.distance} miles`);
+
+        // Auto-unpause time when starting travel (if auto-time toggle is enabled)
+        const autoTimeToggle = document.getElementById('auto-travel-time-toggle');
+        const autoTimeEnabled = autoTimeToggle ? autoTimeToggle.checked : true; // Default to enabled
+
+        if (autoTimeEnabled && typeof TimeSystem !== 'undefined' && (TimeSystem.isPaused || TimeSystem.currentSpeed === 'PAUSED')) {
             TimeSystem.setSpeed('NORMAL');
-            addMessage('⏱️ Time has started - your journey begins!');
+            addMessage('⏱️ Time auto-started - your journey begins!');
         }
 
         // Hide location details panel
@@ -1404,25 +1720,45 @@ const TravelSystem = {
         this.updateTravelUI();
     },
 
-    // Update travel progress
+    // Update travel progress - dragging ourselves through the endless void
     updateTravelProgress() {
         if (!this.playerPosition.isTraveling) return;
-        
+
         const currentTime = TimeSystem.getTotalMinutes();
-        const elapsed = currentTime - this.playerPosition.travelStartTime;
-        this.playerPosition.travelProgress = Math.min(1.0, elapsed / this.playerPosition.travelDuration);
-        
+        const startTime = this.playerPosition.travelStartTime;
+        const duration = this.playerPosition.travelDuration;
+
+        // sanity check - if something's broken, dont spiral into NaN hell
+        if (!startTime || !duration || duration <= 0) {
+            console.warn('🖤 travel params are screaming into the void... startTime:', startTime, 'duration:', duration);
+            this.completeTravel(); // just end the suffering
+            return;
+        }
+
+        const elapsed = currentTime - startTime;
+        const oldProgress = this.playerPosition.travelProgress;
+        this.playerPosition.travelProgress = Math.min(1.0, elapsed / duration);
+
+        // debug log every ~10% progress (for the curious and the damned)
+        const progressPct = Math.floor(this.playerPosition.travelProgress * 100);
+        const oldProgressPct = Math.floor(oldProgress * 100);
+        if (progressPct > oldProgressPct && progressPct % 10 === 0) {
+            console.log(`🚶 journey progress: ${progressPct}% (${elapsed}/${duration} mins elapsed)`);
+        }
+
         // Apply character stat drain during travel
         this.applyTravelStatDrain(elapsed);
-        
+
         // Update player position along path
         this.updatePlayerPositionAlongPath();
-        
-        // Check if travel is complete
+
+        // Check if travel is complete - the light at the end of the tunnel
         if (this.playerPosition.travelProgress >= 1.0) {
+            console.log('🖤 destination reached... finally.');
             this.completeTravel();
+            return; // exit early, we're done wandering
         }
-        
+
         // Check for random encounters - only if player is actually traveling and game is initialized
         if (this.playerPosition.isTraveling &&
             typeof game !== 'undefined' &&
@@ -1431,7 +1767,7 @@ const TravelSystem = {
             Math.random() < 0.01) { // 1% chance per update
             this.triggerRandomEncounter();
         }
-        
+
         this.updateTravelUI();
     },
     
@@ -1475,16 +1811,28 @@ const TravelSystem = {
             if (game.player.stats.hunger <= 0) {
                 game.player.stats.health = Math.max(0, game.player.stats.health - 5);
                 addMessage("⚠️ You're starving! Health decreasing rapidly.", 'warning');
+                // Track for death cause - traveling while starving
+                if (typeof DeathCauseSystem !== 'undefined') {
+                    DeathCauseSystem.recordTravelHazard('starvation', { context: 'while traveling' });
+                }
             }
-            
+
             if (game.player.stats.thirst <= 0) {
                 game.player.stats.health = Math.max(0, game.player.stats.health - 8);
                 addMessage("⚠️ You're dehydrated! Health decreasing rapidly.", 'warning');
+                // Track for death cause - traveling while dehydrated
+                if (typeof DeathCauseSystem !== 'undefined') {
+                    DeathCauseSystem.recordTravelHazard('dehydration', { context: 'while traveling' });
+                }
             }
-            
+
             if (game.player.stats.stamina <= 0) {
                 game.player.stats.health = Math.max(0, game.player.stats.health - 3);
                 addMessage("⚠️ You're exhausted! Health decreasing.", 'warning');
+                // Track for death cause
+                if (typeof DeathCauseSystem !== 'undefined') {
+                    DeathCauseSystem.recordExhaustion();
+                }
             }
             
             // Update UI
@@ -1510,10 +1858,17 @@ const TravelSystem = {
         this.render();
     },
 
-    // Complete travel
+    // Complete travel - finally, the wandering ends (for now)
     completeTravel() {
         const destination = this.playerPosition.destination;
         const currentLoc = this.getCurrentLocation();
+
+        // safety net for the void - sometimes destinations vanish like my will to live
+        if (!destination) {
+            console.warn('🖤 no destination found... did the void eat it?');
+            this.playerPosition.isTraveling = false;
+            return;
+        }
 
         // Calculate distance traveled for this journey
         let distance = 0;
@@ -1525,6 +1880,8 @@ const TravelSystem = {
         this.playerPosition.currentLocation = destination.id;
         this.playerPosition.destination = null;
         this.playerPosition.travelProgress = 0;
+        this.playerPosition.travelStartTime = null;
+        this.playerPosition.travelDuration = null;
 
         // Add to travel history
         this.travelHistory.push({
@@ -1541,7 +1898,10 @@ const TravelSystem = {
             type: destination.type
         };
 
-        addMessage(`Arrived at ${destination.name}!`);
+        // 🔔 RING THE BELL OF ARRIVAL - let the realm know we survived
+        this.showArrivalNotification(destination);
+
+        addMessage(`🔔 Arrived at ${destination.name}!`);
 
         // Update player position to destination coordinates
         if (destination.x !== undefined && destination.y !== undefined) {
@@ -1577,6 +1937,119 @@ const TravelSystem = {
         // Update UI
         this.updateTravelUI();
         this.render();
+
+        // Auto-pause after arrival if auto-time toggle is enabled
+        const autoTimeToggle = document.getElementById('auto-travel-time-toggle');
+        const autoTimeEnabled = autoTimeToggle ? autoTimeToggle.checked : true;
+
+        if (autoTimeEnabled && typeof TimeSystem !== 'undefined') {
+            TimeSystem.setSpeed('PAUSED');
+            addMessage('⏱️ Time auto-stopped - you have arrived!');
+        } else if (typeof TimeSystem !== 'undefined' && game.settings?.pauseOnArrival) {
+            // Fallback to old behavior if toggle doesn't exist
+            TimeSystem.setSpeed('PAUSED');
+        }
+    },
+
+    // 🔔 Show arrival notification - the bell tolls for thee (in a good way this time)
+    showArrivalNotification(destination) {
+        // play the sacred bell sound if audio system exists
+        if (typeof AudioSystem !== 'undefined' && AudioSystem.playSound) {
+            AudioSystem.playSound('notification');
+        }
+
+        // create a dramatic notification popup
+        const existingNotification = document.getElementById('arrival-notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+
+        const notification = document.createElement('div');
+        notification.id = 'arrival-notification';
+        notification.className = 'arrival-notification';
+        notification.innerHTML = `
+            <div class="arrival-notification-content">
+                <div class="arrival-bell">🔔</div>
+                <div class="arrival-text">
+                    <div class="arrival-title">Journey Complete</div>
+                    <div class="arrival-destination">Welcome to ${destination.name}</div>
+                    ${destination.type ? `<div class="arrival-type">${destination.type}</div>` : ''}
+                </div>
+            </div>
+        `;
+
+        // style it inline because we're chaotic like that
+        notification.style.cssText = `
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(20, 20, 30, 0.95) 0%, rgba(40, 40, 60, 0.95) 100%);
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            z-index: 10000;
+            animation: arrivalSlideIn 0.5s ease-out, arrivalFadeOut 0.5s ease-in 3s forwards;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+            text-align: center;
+            color: #fff;
+            font-family: inherit;
+        `;
+
+        // add the animation keyframes if they dont exist
+        if (!document.getElementById('arrival-notification-styles')) {
+            const styleSheet = document.createElement('style');
+            styleSheet.id = 'arrival-notification-styles';
+            styleSheet.textContent = `
+                @keyframes arrivalSlideIn {
+                    from { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+                    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+                }
+                @keyframes arrivalFadeOut {
+                    from { opacity: 1; }
+                    to { opacity: 0; visibility: hidden; }
+                }
+                .arrival-notification .arrival-bell {
+                    font-size: 2.5rem;
+                    animation: bellRing 0.5s ease-in-out 3;
+                    margin-bottom: 0.5rem;
+                }
+                @keyframes bellRing {
+                    0%, 100% { transform: rotate(0deg); }
+                    25% { transform: rotate(15deg); }
+                    75% { transform: rotate(-15deg); }
+                }
+                .arrival-notification .arrival-title {
+                    font-size: 0.9rem;
+                    color: #888;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    margin-bottom: 0.25rem;
+                }
+                .arrival-notification .arrival-destination {
+                    font-size: 1.4rem;
+                    font-weight: bold;
+                    color: #ffd700;
+                    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+                }
+                .arrival-notification .arrival-type {
+                    font-size: 0.8rem;
+                    color: #aaa;
+                    margin-top: 0.25rem;
+                    font-style: italic;
+                }
+            `;
+            document.head.appendChild(styleSheet);
+        }
+
+        document.body.appendChild(notification);
+
+        // remove after animation completes (4 seconds total)
+        setTimeout(() => {
+            notification.remove();
+        }, 4000);
+
+        console.log('🔔 arrival notification summoned for:', destination.name);
     },
 
     // Trigger random encounters during travel
@@ -2043,42 +2516,52 @@ const TravelSystem = {
     },
 
     // Render the map
+    // NOTE: Canvas-based rendering is DISABLED - we now use GameWorldRenderer (HTML-based)
+    // and TravelPanelMap (HTML-based) for all map displays. This function is kept as a
+    // no-op to prevent errors from existing calls throughout the codebase.
     render() {
+        // Old canvas rendering disabled - GameWorldRenderer and TravelPanelMap handle map display now
+        // If you need to update the travel panel map, use: TravelPanelMap.render()
+        // If you need to update the main map, use: GameWorldRenderer.render()
+        return;
+
+        /* OLD CANVAS CODE - DISABLED
         if (!this.ctx || !this.canvas) return;
-        
+
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
+
         // Save context state
         this.ctx.save();
-        
+
         // Apply zoom and pan
         this.ctx.translate(this.worldMap.offsetX, this.worldMap.offsetY);
         this.ctx.scale(this.worldMap.zoom, this.worldMap.zoom);
-        
+
         // Render terrain background
         this.renderTerrain();
-        
+
         // Render paths
         this.renderPaths();
-        
+
         // Render resource nodes
         this.renderResourceNodes();
-        
+
         // Render locations
         this.renderLocations();
-        
+
         // Render points of interest
         this.renderPointsOfInterest();
-        
+
         // Render player
         this.renderPlayer();
-        
+
         // Restore context state
         this.ctx.restore();
-        
+
         // Render tooltip (not affected by zoom/pan)
         this.renderTooltip();
+        */
     },
 
     // Render terrain background
@@ -2655,54 +3138,6 @@ const TravelSystem = {
         }
         
         updatePlayerInfo();
-    },
-
-    // Fast travel system
-    fastTravel(destinationId, cost) {
-        if (game.player.gold < cost) {
-            addMessage(`You need ${cost} gold for fast travel!`);
-            return false;
-        }
-        
-        const destination = this.locations[destinationId];
-        if (!destination) {
-            addMessage('Invalid destination!');
-            return false;
-        }
-        
-        // Deduct cost
-        game.player.gold -= cost;
-        
-        // Instant travel
-        this.playerPosition.x = destination.x;
-        this.playerPosition.y = destination.y;
-        this.playerPosition.currentLocation = destination.id;
-        
-        // Update game state
-        game.currentLocation = {
-            id: destination.id,
-            name: destination.name,
-            type: destination.type
-        };
-        
-        // Add to travel history
-        this.travelHistory.push({
-            from: this.getCurrentLocation()?.name || 'Unknown',
-            to: destination.name,
-            duration: 0,
-            cost: cost,
-            fastTravel: true,
-            timestamp: TimeSystem.getTotalMinutes()
-        });
-        
-        addMessage(`Fast traveled to ${destination.name} for ${cost} gold!`);
-        
-        // Update UI
-        updatePlayerInfo();
-        this.updateTravelUI();
-        this.render();
-        
-        return true;
     },
 
     // Save travel system state

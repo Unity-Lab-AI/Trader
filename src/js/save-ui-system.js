@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🖤 SAVE UI SYSTEM - the interface for timeline manipulation 🖤
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // save dialogs, load browsers, and the leaderboard of fallen souls
@@ -161,11 +161,17 @@ const SaveUISystem = {
     },
 
     openSaveAsDialog() {
+        console.log('🖤 openSaveAsDialog called');
         const overlay = document.getElementById('save-as-overlay');
-        if (!overlay) return;
+        if (!overlay) {
+            console.error('🖤 save-as-overlay not found! Recreating...');
+            this.createSaveAsDialog();
+            return this.openSaveAsDialog(); // Try again after creating
+        }
 
         // sorry pal, no saving in the void
         if (typeof game === 'undefined' || game.state !== GameState.PLAYING) {
+            console.warn('🖤 Cannot save - game state:', game?.state);
             if (typeof addMessage === 'function') {
                 addMessage('Cannot save outside of gameplay!', 'error');
             }
@@ -188,8 +194,10 @@ const SaveUISystem = {
             nameInput.select();
         }
 
-        // reveal the save dialog from the shadows
+        // 🖤 CRITICAL: Remove hidden class AND set display to ensure visibility
+        overlay.classList.remove('hidden');
         overlay.style.display = 'flex';
+        console.log('🖤 Save dialog opened');
 
         // freeze time because multitasking is a myth
         if (typeof TimeSystem !== 'undefined' && !TimeSystem.isPaused) {
@@ -250,7 +258,10 @@ const SaveUISystem = {
                             </div>
                             <div class="slot-date">${date} ${time}</div>
                         </div>
-                        <div class="slot-overwrite-warning">⚠️ Overwrite</div>
+                        <div class="slot-actions">
+                            <div class="slot-overwrite-warning">⚠️ Overwrite</div>
+                            <button class="slot-delete-btn" onclick="event.stopPropagation(); SaveUISystem.deleteSaveSlot(${i});" title="Delete this save">🗑️</button>
+                        </div>
                     </div>
                 `;
             }
@@ -326,12 +337,21 @@ const SaveUISystem = {
         const saveName = nameInput?.value.trim() || `Save ${this._selectedSaveSlot}`;
         const savedSlot = this._selectedSaveSlot;
 
+        console.log('🖤 confirmSave: committing slot', savedSlot, 'to the void...');
+
         // commit your progress to the digital afterlife
         const success = SaveLoadSystem.saveToSlot(this._selectedSaveSlot, saveName);
 
         if (success) {
-            // update the cemetery of saves
+            console.log('🖤 save succeeded, refreshing the graveyard...');
+
+            // immediately force refresh the save slots display
+            // (SaveLoadSystem.notifyUIRefresh should also call this, but belt and suspenders)
             this.populateSaveSlots();
+
+            // re-select the slot we just saved to (keeps it highlighted)
+            this._selectedSaveSlot = savedSlot;
+            this.selectSaveSlot(savedSlot);
 
             // flash the slot like it's taking its dying breath
             setTimeout(() => {
@@ -340,13 +360,51 @@ const SaveUISystem = {
                     slotElement.classList.add('just-saved');
                     setTimeout(() => slotElement.classList.remove('just-saved'), 1500);
                 }
-            }, 100);
+            }, 50);
 
             // vanish back into the game with your achievement unlocked
             setTimeout(() => {
                 this.closeSaveAsDialog();
                 this._selectedSaveSlot = null;
             }, 1000);
+        } else {
+            console.warn('🖤 save failed... the void rejected our offering');
+        }
+    },
+
+    // 🗑️ Delete a save from the save panel
+    deleteSaveSlot(slotNumber) {
+        const slot = SaveLoadSystem.saveSlots[slotNumber];
+        if (!slot || !slot.exists) {
+            console.log('🗑️ Slot is already empty');
+            return;
+        }
+
+        const confirmDelete = confirm(`⚠️ DELETE SAVE?\n\nYou are about to delete:\n"${slot.name}"\n\nThis cannot be undone!`);
+        if (!confirmDelete) return;
+
+        console.log(`🗑️ Deleting save slot ${slotNumber}...`);
+
+        // Delete the save
+        SaveLoadSystem.deleteSave(slotNumber);
+
+        // Refresh the save slots display
+        this.populateSaveSlots();
+
+        // Clear selection if we deleted the selected slot
+        if (this._selectedSaveSlot === slotNumber) {
+            this._selectedSaveSlot = null;
+            // Select first available empty slot
+            for (let i = 1; i <= SaveLoadSystem.maxSaveSlots; i++) {
+                if (!SaveLoadSystem.saveSlots[i]?.exists) {
+                    this.selectSaveSlot(i);
+                    break;
+                }
+            }
+        }
+
+        if (typeof addMessage === 'function') {
+            addMessage(`Save "${slot.name}" deleted.`, 'info');
         }
     },
 
@@ -401,8 +459,13 @@ const SaveUISystem = {
     },
 
     openLoadGameDialog() {
+        console.log('🖤 openLoadGameDialog called');
         const overlay = document.getElementById('load-game-overlay');
-        if (!overlay) return;
+        if (!overlay) {
+            console.error('🖤 load-game-overlay not found! Recreating...');
+            this.createLoadGameDialog();
+            return this.openLoadGameDialog(); // Try again after creating
+        }
 
         // wipe the slate clean, no preconceptions
         this._selectedLoadSlot = null;
@@ -425,8 +488,10 @@ const SaveUISystem = {
         document.getElementById('confirm-load-btn')?.setAttribute('disabled', 'true');
         document.getElementById('delete-save-btn')?.setAttribute('disabled', 'true');
 
-        // unveil the dialog of second chances
+        // 🖤 CRITICAL: Remove hidden class AND set display to ensure visibility
+        overlay.classList.remove('hidden');
         overlay.style.display = 'flex';
+        console.log('🖤 Load dialog opened');
     },
 
     closeLoadGameDialog() {
@@ -656,24 +721,61 @@ const SaveUISystem = {
     },
 
     confirmLoad() {
-        if (this._selectedLoadSlot === null) return;
+        if (this._selectedLoadSlot === null) {
+            console.log('🖤 confirmLoad: No slot selected');
+            return;
+        }
+
+        console.log('🖤 confirmLoad: Attempting to load slot', this._selectedLoadSlot, 'type:', this._selectedLoadType);
 
         let success = false;
 
-        if (this._selectedLoadType === 'manual') {
-            success = SaveLoadSystem.loadFromSlot(this._selectedLoadSlot);
-        } else {
-            success = SaveLoadSystem.loadAutoSave(this._selectedLoadSlot);
+        try {
+            if (this._selectedLoadType === 'manual') {
+                success = SaveLoadSystem.loadFromSlot(this._selectedLoadSlot);
+            } else {
+                success = SaveLoadSystem.loadAutoSave(this._selectedLoadSlot);
+            }
+        } catch (e) {
+            console.error('🖤 confirmLoad error:', e);
+            success = false;
         }
 
+        console.log('🖤 confirmLoad: Load result =', success);
+
         if (success) {
+            // 🖤 CRITICAL: Close overlays and menus properly
+            // BUT don't break the save/load dialogs for future use!
+            console.log('🖤 Load successful, closing menus...');
+
+            // Close the load dialog (just hide, don't add .hidden class)
             this.closeLoadGameDialog();
 
-            // dismiss the main menu, you've got a game to lose again
+            // Dismiss the main menu completely
             const mainMenu = document.getElementById('main-menu');
             if (mainMenu) {
+                mainMenu.classList.add('hidden');
                 mainMenu.style.display = 'none';
             }
+
+            // Hide any game-blocking overlays (but NOT the save-ui-overlay dialogs)
+            const overlaysToHide = document.querySelectorAll('.overlay, .modal-overlay');
+            overlaysToHide.forEach(overlay => {
+                // Skip save/load dialogs - just set display:none, don't add .hidden
+                if (overlay.id === 'save-as-overlay' || overlay.id === 'load-game-overlay') {
+                    overlay.style.display = 'none';
+                    return;
+                }
+                // Skip game over overlay
+                if (overlay.id?.includes('game-over')) {
+                    return;
+                }
+                // Hide other overlays
+                overlay.classList.add('hidden');
+                overlay.style.display = 'none';
+            });
+
+            console.log('🖤 Menus closed, game running! Save/Load dialogs ready for reuse.');
         }
     },
 
@@ -707,68 +809,169 @@ const SaveUISystem = {
     },
 
     // ═══════════════════════════════════════════════════════════════
-    // ⚰️ LEADERBOARD DISPLAY - monuments to glorious failure
+    // 🏆 HALL OF CHAMPIONS DISPLAY - the single source of truth
     // ═══════════════════════════════════════════════════════════════
 
     createLeaderboardDisplay() {
-        // inject the hall of shame into the main menu
+        // inject the Hall of Champions into the main menu
         const mainMenu = document.getElementById('main-menu');
         if (!mainMenu) return;
 
         const menuContent = mainMenu.querySelector('.menu-content');
         if (!menuContent) return;
 
-        // don't create duplicates, we're not that sloppy
+        // don't create duplicates
         if (document.getElementById('main-menu-leaderboard')) return;
 
         const leaderboard = document.createElement('div');
         leaderboard.id = 'main-menu-leaderboard';
         leaderboard.className = 'menu-leaderboard';
         leaderboard.innerHTML = `
-            <h3>🏆 Hall of Fame</h3>
+            <h3>🏆 Hall of Champions</h3>
             <div id="leaderboard-entries" class="leaderboard-entries">
-                <div class="leaderboard-empty">No heroes yet...</div>
+                <div class="leaderboard-empty">No champions yet...</div>
             </div>
+            <button class="view-all-champions-btn" onclick="SaveUISystem.openHallOfChampions()">View All Champions</button>
         `;
 
-        menuContent.appendChild(leaderboard);
+        // Insert before social links (so it appears after settings button)
+        const socialLinks = document.getElementById('menu-social-links');
+        if (socialLinks) {
+            menuContent.insertBefore(leaderboard, socialLinks);
+        } else {
+            // Fallback: insert before menu-footer
+            const menuFooter = menuContent.querySelector('.menu-footer');
+            if (menuFooter) {
+                menuContent.insertBefore(leaderboard, menuFooter);
+            } else {
+                menuContent.appendChild(leaderboard);
+            }
+        }
     },
 
     updateLeaderboard() {
         const container = document.getElementById('leaderboard-entries');
         if (!container) return;
 
-        // dig up the corpses of past players
-        const scores = typeof HighScoreSystem !== 'undefined' ? HighScoreSystem.getHighScores() : [];
+        // Helper function to get ordinal suffix (1st, 2nd, 3rd, etc.)
+        const getOrdinal = (n) => {
+            const s = ['th', 'st', 'nd', 'rd'];
+            const v = n % 100;
+            return n + (s[(v - 20) % 10] || s[v] || s[0]);
+        };
 
-        if (!scores || scores.length === 0) {
-            container.innerHTML = '<div class="leaderboard-empty">No heroes have fallen yet...</div>';
+        // Use GlobalLeaderboardSystem as the single source of truth
+        if (typeof GlobalLeaderboardSystem !== 'undefined') {
+            // Fetch and render from GlobalLeaderboardSystem
+            GlobalLeaderboardSystem.fetchLeaderboard().then(scores => {
+                if (!scores || scores.length === 0) {
+                    container.innerHTML = '<div class="leaderboard-empty">No champions have risen yet...</div>';
+                    return;
+                }
+
+                let html = '';
+                // Only show top 3 on start menu - full list available via "View All Champions"
+                scores.slice(0, 3).forEach((score, index) => {
+                    const rank = index + 1;
+                    let rankDisplay;
+                    let rankClass = '';
+
+                    // 1st, 2nd, 3rd get medals + ordinal
+                    if (rank === 1) {
+                        rankDisplay = '👑 1st';
+                        rankClass = 'gold';
+                    } else if (rank === 2) {
+                        rankDisplay = '🥈 2nd';
+                        rankClass = 'silver';
+                    } else if (rank === 3) {
+                        rankDisplay = '🥉 3rd';
+                        rankClass = 'bronze';
+                    }
+
+                    const statusIcon = score.isAlive ? '💚' : '💀';
+                    const statusText = score.isAlive ? 'still playing' : (score.causeOfDeath || 'unknown');
+
+                    html += `
+                        <div class="leaderboard-entry ${rankClass}">
+                            <div class="entry-rank ${rankClass}">${rankDisplay}</div>
+                            <div class="entry-info">
+                                <div class="entry-name">${GlobalLeaderboardSystem.escapeHtml(score.playerName || 'Unknown')}</div>
+                                <div class="entry-stats">
+                                    <span>💰 ${(score.score || 0).toLocaleString()}</span>
+                                    <span>📅 ${score.daysSurvived || 0} days</span>
+                                </div>
+                                <div class="entry-status ${score.isAlive ? 'alive' : 'dead'}">${statusIcon} ${statusText}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Show count of additional champions
+                if (scores.length > 3) {
+                    html += `<div class="leaderboard-more">+${scores.length - 3} more champions</div>`;
+                }
+
+                container.innerHTML = html;
+            }).catch(err => {
+                console.error('Failed to load Hall of Champions:', err);
+                container.innerHTML = '<div class="leaderboard-empty">Failed to load champions...</div>';
+            });
+        } else {
+            container.innerHTML = '<div class="leaderboard-empty">Leaderboard system unavailable...</div>';
+        }
+    },
+
+    // Open the full Hall of Champions panel
+    openHallOfChampions() {
+        console.log('🏆 Opening Hall of Champions panel...');
+        const overlay = document.getElementById('leaderboard-overlay');
+        const content = document.getElementById('leaderboard-panel-content');
+
+        if (!overlay) {
+            console.error('🏆 leaderboard-overlay element not found!');
             return;
         }
 
-        let html = '';
-        scores.slice(0, 10).forEach((score, index) => {
-            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
-            const deathInfo = score.deathCause ? `☠️ ${score.deathCause}` : '';
-            const date = new Date(score.date).toLocaleDateString();
+        // Show the overlay immediately
+        overlay.classList.remove('hidden');
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
 
-            html += `
-                <div class="leaderboard-entry ${index < 3 ? 'top-three' : ''}">
-                    <div class="entry-rank">${medal}</div>
-                    <div class="entry-info">
-                        <div class="entry-name">${score.name}</div>
-                        <div class="entry-stats">
-                            <span>💰 ${score.gold.toLocaleString()}</span>
-                            <span>📅 ${score.survivedDays} days</span>
-                        </div>
-                        ${deathInfo ? `<div class="entry-death">${deathInfo}</div>` : ''}
-                    </div>
-                    <div class="entry-date">${date}</div>
-                </div>
-            `;
-        });
+        // Show loading state
+        if (content) {
+            content.innerHTML = '<div class="leaderboard-loading">Loading Hall of Champions...</div>';
+        }
 
-        container.innerHTML = html;
+        // Fetch and render the leaderboard
+        if (typeof GlobalLeaderboardSystem !== 'undefined') {
+            GlobalLeaderboardSystem.fetchLeaderboard().then(() => {
+                GlobalLeaderboardSystem.renderFullHallOfChampions('leaderboard-panel-content');
+            }).catch(err => {
+                console.error('🏆 Failed to fetch leaderboard:', err);
+                if (content) {
+                    // Still show local data if available
+                    if (GlobalLeaderboardSystem.leaderboard && GlobalLeaderboardSystem.leaderboard.length > 0) {
+                        GlobalLeaderboardSystem.renderFullHallOfChampions('leaderboard-panel-content');
+                    } else {
+                        content.innerHTML = '<div class="leaderboard-empty"><p>Unable to load champions...</p><p>Check your connection and try again.</p></div>';
+                    }
+                }
+            });
+        } else {
+            if (content) {
+                content.innerHTML = '<div class="leaderboard-empty"><p>Leaderboard system not available.</p></div>';
+            }
+        }
+    },
+
+    // Close the Hall of Champions panel
+    closeHallOfChampions() {
+        const overlay = document.getElementById('leaderboard-overlay');
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }
     },
 
     // ═══════════════════════════════════════════════════════════════
@@ -1003,6 +1206,13 @@ const SaveUISystem = {
             border-color: #4fc3f7;
         }
 
+        .save-slot.has-data .slot-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
         .save-slot.has-data .slot-overwrite-warning {
             display: none;
             color: #ff9800;
@@ -1011,6 +1221,28 @@ const SaveUISystem = {
 
         .save-slot.has-data.selected .slot-overwrite-warning {
             display: block;
+        }
+
+        .slot-delete-btn {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.4);
+            color: #dc3545;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0.6;
+            transition: all 0.2s ease;
+        }
+
+        .slot-delete-btn:hover {
+            background: rgba(220, 53, 69, 0.4);
+            border-color: #dc3545;
+            opacity: 1;
+        }
+
+        .save-slot.has-data:hover .slot-delete-btn {
+            opacity: 1;
         }
 
         .slot-number {
@@ -1344,9 +1576,37 @@ const SaveUISystem = {
         }
 
         .entry-rank {
-            font-size: 18px;
-            min-width: 35px;
+            font-size: 14px;
+            min-width: 55px;
             text-align: center;
+            font-weight: bold;
+        }
+
+        .entry-rank.gold {
+            color: #ffd700;
+        }
+
+        .entry-rank.silver {
+            color: #c0c0c0;
+        }
+
+        .entry-rank.bronze {
+            color: #cd7f32;
+        }
+
+        .leaderboard-entry.gold {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+        }
+
+        .leaderboard-entry.silver {
+            background: linear-gradient(135deg, rgba(192, 192, 192, 0.15) 0%, rgba(192, 192, 192, 0.05) 100%);
+            border: 1px solid rgba(192, 192, 192, 0.4);
+        }
+
+        .leaderboard-entry.bronze {
+            background: linear-gradient(135deg, rgba(205, 127, 50, 0.15) 0%, rgba(205, 127, 50, 0.05) 100%);
+            border: 1px solid rgba(205, 127, 50, 0.4);
         }
 
         .entry-info {
@@ -1378,6 +1638,49 @@ const SaveUISystem = {
             color: #666;
         }
 
+        .entry-status {
+            font-size: 10px;
+            margin-top: 3px;
+            font-style: italic;
+        }
+
+        .entry-status.alive {
+            color: #4caf50;
+        }
+
+        .entry-status.dead {
+            color: #f44336;
+        }
+
+        .leaderboard-more {
+            color: #888;
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+            font-size: 12px;
+            border-top: 1px dashed rgba(255, 215, 0, 0.2);
+            margin-top: 10px;
+        }
+
+        .view-all-champions-btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: linear-gradient(180deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 215, 0, 0.1) 100%);
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            border-radius: 8px;
+            color: #ffd700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-all-champions-btn:hover {
+            background: linear-gradient(180deg, rgba(255, 215, 0, 0.5) 0%, rgba(255, 215, 0, 0.2) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
         /* Just Saved Animation */
         .save-slot.just-saved {
             background: rgba(76, 175, 80, 0.3) !important;
@@ -1403,6 +1706,9 @@ const SaveUISystem = {
 
     document.head.appendChild(styles);
 })();
+
+// 🌐 Expose SaveUISystem globally so onclick handlers can access it
+window.SaveUISystem = SaveUISystem;
 
 // wake up the system when the dom finally gets its act together
 if (document.readyState === 'loading') {

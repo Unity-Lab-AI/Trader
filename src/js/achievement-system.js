@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════════════
 // because real accomplishments are overrated, here's some pixel ones
 // at least these ones give dopamine hits
-// File Version: 0.1
-// Game Version: 0.1
+// File Version: 0.5
+// Game Version: 0.2
 // Made by Unity AI Lab - Hackall360, Sponge, GFourteen
 
 const AchievementSystem = {
@@ -54,6 +54,221 @@ const AchievementSystem = {
             unlocked: false,
             unlockedAt: null,
             condition: () => game.player && game.player.gold >= 50000
+        },
+
+        // --- MERCHANT RANK ACHIEVEMENTS ---
+        rank_vagrant: {
+            id: 'rank_vagrant',
+            name: 'Humble Beginnings',
+            description: 'Start your journey as a vagrant',
+            icon: '🥺',
+            category: 'wealth',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.currentRank?.id === 'vagrant'
+        },
+        rank_peddler: {
+            id: 'rank_peddler',
+            name: 'First Steps',
+            description: 'Become a Peddler with 500 gold in wealth',
+            icon: '🧳',
+            category: 'wealth',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.currentRank?.level >= 2
+        },
+        rank_hawker: {
+            id: 'rank_hawker',
+            name: 'Street Smart',
+            description: 'Become a Hawker with 2,000 gold in wealth',
+            icon: '🛒',
+            category: 'wealth',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.currentRank?.level >= 3
+        },
+        rank_trader: {
+            id: 'rank_trader',
+            name: 'Legitimate Business',
+            description: 'Become a Trader with 5,000 gold in wealth',
+            icon: '⚖️',
+            category: 'wealth',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.currentRank?.level >= 4
+        },
+        rank_merchant: {
+            id: 'rank_merchant',
+            name: 'Rising Star',
+            description: 'Become a Merchant with 15,000 gold in wealth',
+            icon: '💼',
+            category: 'wealth',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.currentRank?.level >= 5
+        },
+        rank_magnate: {
+            id: 'rank_magnate',
+            name: 'Power Player',
+            description: 'Become a Magnate with 50,000 gold in wealth',
+            icon: '🏛️',
+            category: 'wealth',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.currentRank?.level >= 6
+        },
+        rank_tycoon: {
+            id: 'rank_tycoon',
+            name: 'Industrial Giant',
+            description: 'Become a Tycoon with 150,000 gold in wealth',
+            icon: '🏭',
+            category: 'wealth',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.currentRank?.level >= 7
+        },
+        rank_baron: {
+            id: 'rank_baron',
+            name: 'Noble Commerce',
+            description: 'Become a Trade Baron with 500,000 gold in wealth',
+            icon: '👑',
+            category: 'wealth',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.currentRank?.level >= 8
+        },
+        rank_mogul: {
+            id: 'rank_mogul',
+            name: 'Empire Builder',
+            description: 'Become a Merchant Mogul with 1,500,000 gold in wealth',
+            icon: '🌟',
+            category: 'wealth',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.currentRank?.level >= 9
+        },
+        rank_royal_merchant: {
+            id: 'rank_royal_merchant',
+            name: 'Royal Favor',
+            description: 'Become a Royal Merchant with 5,000,000 gold in wealth',
+            icon: '👸',
+            category: 'wealth',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.currentRank?.level >= 10
+        },
+
+        // --- QUEST ACHIEVEMENTS ---
+        first_quest: {
+            id: 'first_quest',
+            name: 'Adventurer\'s Call',
+            description: 'Complete your first quest',
+            icon: '📜',
+            category: 'quests',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.length >= 1
+        },
+        quest_helper: {
+            id: 'quest_helper',
+            name: 'Helpful Hero',
+            description: 'Complete 10 quests',
+            icon: '🦸',
+            category: 'quests',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.length >= 10
+        },
+        quest_master: {
+            id: 'quest_master',
+            name: 'Questmaster',
+            description: 'Complete 50 quests',
+            icon: '🏅',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.length >= 50
+        },
+        main_quest_complete: {
+            id: 'main_quest_complete',
+            name: 'Hero of the Realm',
+            description: 'Complete the main quest by defeating Malachar',
+            icon: '⚔️',
+            category: 'quests',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('main_tower_assault')
+        },
+        dragon_slayer: {
+            id: 'dragon_slayer',
+            name: 'Dragonslayer',
+            description: 'Slay the legendary dragon',
+            icon: '🐉',
+            category: 'quests',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('legendary_dragon_slayer')
+        },
+        frost_vanquisher: {
+            id: 'frost_vanquisher',
+            name: 'Frost Vanquisher',
+            description: 'Defeat the Frost Lord and end the eternal winter',
+            icon: '❄️',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('frostholm_frost_lord')
+        },
+
+        // --- BOSS DEFEAT ACHIEVEMENTS ---
+        boss_slayer: {
+            id: 'boss_slayer',
+            name: 'Boss Slayer',
+            description: 'Defeat your first dungeon boss',
+            icon: '👹',
+            category: 'combat',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof DungeonExplorationSystem !== 'undefined' && Object.keys(DungeonExplorationSystem.defeatedBosses || {}).length >= 1
+        },
+        boss_hunter: {
+            id: 'boss_hunter',
+            name: 'Boss Hunter',
+            description: 'Defeat 5 dungeon bosses',
+            icon: '💀',
+            category: 'combat',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof DungeonExplorationSystem !== 'undefined' && Object.keys(DungeonExplorationSystem.defeatedBosses || {}).length >= 5
+        },
+        all_bosses: {
+            id: 'all_bosses',
+            name: 'Champion of the Realm',
+            description: 'Defeat all dungeon bosses',
+            icon: '🏆',
+            category: 'combat',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof DungeonExplorationSystem !== 'undefined' && Object.keys(DungeonExplorationSystem.defeatedBosses || {}).length >= 8
         },
 
         // --- TRADING ACHIEVEMENTS ---
@@ -773,6 +988,32 @@ const AchievementSystem = {
                 const nonHidden = Object.values(AchievementSystem.achievements).filter(a => !a.hidden && a.id !== 'completionist');
                 return nonHidden.every(a => a.unlocked);
             }
+        },
+
+        // --- ULTRA ACHIEVEMENT - THE FINAL REWARD ---
+        // This is THE achievement. The end game. The ultimate flex.
+        super_hacker: {
+            id: 'super_hacker',
+            name: '💻 SUPER HACKER 💻',
+            description: 'Unlock EVERY achievement in the game. Debug console unlocked. Legendary reward granted.',
+            icon: '🔓',
+            category: 'ultra',
+            rarity: 'ultra',  // New rarity tier above legendary
+            unlocked: false,
+            unlockedAt: null,
+            hidden: true,
+            isUltra: true,  // Special flag for ultra achievements
+            reward: {
+                item: 'blade_of_the_hacker',
+                unlockDebug: true
+            },
+            condition: () => {
+                // Must have ALL other achievements unlocked (except this one)
+                const allOthers = Object.values(AchievementSystem.achievements).filter(
+                    a => a.id !== 'super_hacker'
+                );
+                return allOthers.every(a => a.unlocked);
+            }
         }
     },
 
@@ -880,6 +1121,10 @@ const AchievementSystem = {
                     achievement.unlocked = true;
                     achievement.unlockedAt = Date.now();
                     newlyUnlocked.push(achievement);
+
+                    // Grant any rewards for this achievement
+                    this.grantAchievementRewards(achievement);
+
                     console.log(`Achievement unlocked: ${achievement.name}`);
                 }
             } catch (err) {
@@ -903,6 +1148,9 @@ const AchievementSystem = {
         achievement.unlocked = true;
         achievement.unlockedAt = Date.now();
 
+        // Handle special rewards for achievements
+        this.grantAchievementRewards(achievement);
+
         // Save progress
         this.saveProgress();
 
@@ -910,6 +1158,50 @@ const AchievementSystem = {
         this.queueAchievementPopups([achievement]);
 
         console.log(`Achievement unlocked: ${achievement.name}`);
+    },
+
+    // Grant rewards for achievements that have them
+    grantAchievementRewards(achievement) {
+        if (!achievement.reward) return;
+
+        // Grant item reward
+        if (achievement.reward.item && game.player) {
+            const itemId = achievement.reward.item;
+            if (!game.player.inventory[itemId]) {
+                game.player.inventory[itemId] = 0;
+            }
+            game.player.inventory[itemId] += 1;
+            console.log(`🎁 Achievement reward: Received ${itemId}!`);
+
+            // Show message to player
+            if (typeof addMessage === 'function') {
+                addMessage(`🎁 Achievement Reward: You received the legendary ${itemId}!`);
+            }
+        }
+
+        // Unlock debug console for this save
+        if (achievement.reward.unlockDebug) {
+            // Store in game state that debug is unlocked for this save
+            if (game.player) {
+                game.player.debugUnlocked = true;
+            }
+            console.log('🔓 DEBUG CONSOLE UNLOCKED! You are now a Super Hacker!');
+
+            if (typeof addMessage === 'function') {
+                addMessage('🔓 DEBUG CONSOLE UNLOCKED! Press ` to access debug commands!');
+            }
+        }
+    },
+
+    // Check if debug is unlocked for current save (via Super Hacker achievement)
+    isDebugUnlockedForSave() {
+        // Check if player has debugUnlocked flag
+        if (game.player && game.player.debugUnlocked) {
+            return true;
+        }
+        // Also check if super_hacker achievement is unlocked
+        const superHacker = this.achievements.super_hacker;
+        return superHacker && superHacker.unlocked;
     },
 
     // Queue achievements for popup display
@@ -962,7 +1254,8 @@ const AchievementSystem = {
             common: { bg: '#4a5568', border: '#718096', glow: 'rgba(113, 128, 150, 0.5)' },
             uncommon: { bg: '#2f855a', border: '#48bb78', glow: 'rgba(72, 187, 120, 0.5)' },
             rare: { bg: '#2b6cb0', border: '#4299e1', glow: 'rgba(66, 153, 225, 0.6)' },
-            legendary: { bg: '#b7791f', border: '#ecc94b', glow: 'rgba(236, 201, 75, 0.7)' }
+            legendary: { bg: '#b7791f', border: '#ecc94b', glow: 'rgba(236, 201, 75, 0.7)' },
+            ultra: { bg: '#6b21a8', border: '#a855f7', glow: 'rgba(168, 85, 247, 0.9)' }  // Purple for ULTRA
         };
         const colors = rarityColors[achievement.rarity] || rarityColors.common;
 
@@ -1253,6 +1546,35 @@ const AchievementSystem = {
                 color: #faf089;
                 border: 1px solid #ecc94b;
                 box-shadow: 0 0 15px rgba(236, 201, 75, 0.5);
+            }
+
+            /* 💻 ULTRA RARITY - the ultimate achievement style 💻 */
+            .achievement-popup-rarity.rarity-ultra {
+                background: linear-gradient(180deg, #7c3aed 0%, #6b21a8 50%, #4c1d95 100%);
+                color: #e9d5ff;
+                border: 2px solid #a855f7;
+                box-shadow: 0 0 25px rgba(168, 85, 247, 0.8), 0 0 50px rgba(168, 85, 247, 0.4);
+                animation: ultra-pulse 2s ease-in-out infinite;
+                text-transform: uppercase;
+                font-weight: bold;
+                letter-spacing: 2px;
+            }
+
+            @keyframes ultra-pulse {
+                0%, 100% { box-shadow: 0 0 25px rgba(168, 85, 247, 0.8), 0 0 50px rgba(168, 85, 247, 0.4); }
+                50% { box-shadow: 0 0 40px rgba(168, 85, 247, 1), 0 0 80px rgba(168, 85, 247, 0.6); }
+            }
+
+            /* Ultra achievement container gets special treatment */
+            .achievement-popup-container.ultra-achievement {
+                border: 3px solid #a855f7;
+                box-shadow: 0 0 30px rgba(168, 85, 247, 0.6), inset 0 0 20px rgba(168, 85, 247, 0.2);
+                animation: ultra-glow 3s ease-in-out infinite;
+            }
+
+            @keyframes ultra-glow {
+                0%, 100% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.6), inset 0 0 20px rgba(168, 85, 247, 0.2); }
+                50% { box-shadow: 0 0 50px rgba(168, 85, 247, 0.9), inset 0 0 30px rgba(168, 85, 247, 0.4); }
             }
 
             .achievement-popup-category {

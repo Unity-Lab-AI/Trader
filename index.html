@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="src/css/styles.css?v=0.1">
     <link rel="stylesheet" href="src/css/ui-enhancements.css?v=0.1">
     <link rel="stylesheet" href="src/css/save-load-ui.css?v=0.1">
+    <link rel="stylesheet" href="src/css/npc-systems.css?v=0.5">
     <!-- ⚙️ CONFIG MUST LOAD FIRST - All other scripts depend on it -->
     <script src="config.js?v=0.1"></script>
     <script>
@@ -24,13 +25,14 @@
             <div class="overlay-content">
                 <button class="overlay-close" data-close-overlay="world-map-overlay">×</button>
                 <div class="map-container">
-                    <canvas id="world-map-overlay-canvas" width="1200" height="800"></canvas>
+                    <!-- HTML-based map container - GameWorldRenderer renders here -->
+                    <div id="world-map-overlay-html" class="html-map-container"></div>
                     <div class="map-controls">
-                        <button id="overlay-zoom-in-btn" title="Zoom In" onclick="if(typeof TravelSystem !== 'undefined' && TravelSystem.zoomIn) TravelSystem.zoomIn()">+</button>
-                        <button id="overlay-zoom-out-btn" title="Zoom Out" onclick="if(typeof TravelSystem !== 'undefined' && TravelSystem.zoomOut) TravelSystem.zoomOut()">-</button>
-                        <button id="overlay-reset-view-btn" title="Reset View" onclick="if(typeof TravelSystem !== 'undefined' && TravelSystem.resetView) TravelSystem.resetView()">⟲</button>
+                        <button id="overlay-zoom-in-btn" title="Zoom In">+</button>
+                        <button id="overlay-zoom-out-btn" title="Zoom Out">-</button>
+                        <button id="overlay-reset-view-btn" title="Reset View">⟲</button>
                         <button id="overlay-toggle-grid-btn" title="Toggle Grid">⊞</button>
-                        <button id="overlay-center-player-btn" title="Center on Player" onclick="if(typeof TravelSystem !== 'undefined' && TravelSystem.autoFocusOnPlayer) TravelSystem.autoFocusOnPlayer()">🎯</button>
+                        <button id="overlay-center-player-btn" title="Center on Player">🎯</button>
                     </div>
                 </div>
                 <div id="overlay-location-details" class="location-details-panel hidden">
@@ -39,16 +41,8 @@
             </div>
         </div>
 
-        <!-- ⚙️ Settings Overlay - tweak your experience -->
-        <div id="settings-overlay" class="overlay">
-            <div class="overlay-content">
-                <button class="overlay-close" data-close-overlay="settings-overlay">×</button>
-                <h2>Game Settings</h2>
-                <div id="settings-content">
-                    <!-- 🎨 settings-panel.js does the heavy lifting here -->
-                </div>
-            </div>
-        </div>
+        <!-- ⚙️ Settings Panel is now dynamically created by settings-panel.js -->
+        <!-- The unified SettingsPanel handles all settings with proper z-index -->
 
         <!-- 👤 Character Creation Overlay - define your tragic protagonist -->
         <div id="character-creation-overlay" class="overlay">
@@ -169,10 +163,35 @@
                     <button class="achievement-category-btn" data-category="collection" onclick="filterAchievements(this, 'collection')">🎒 Collection</button>
                     <button class="achievement-category-btn" data-category="time" onclick="filterAchievements(this, 'time')">⏰ Time</button>
                     <button class="achievement-category-btn" data-category="special" onclick="filterAchievements(this, 'special')">✨ Special</button>
+                    <button class="achievement-category-btn leaderboard-btn" onclick="showLeaderboardPanel()">🏆 Hall of Champions</button>
                 </div>
 
                 <div id="achievement-grid" class="achievement-grid">
                     <!-- Achievements will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 💀 Game Over Screen - the final curtain -->
+        <div id="game-over-overlay" class="game-over-overlay hidden">
+            <div class="game-over-panel">
+                <div class="game-over-header">
+                    <h1 id="game-over-title">💀 GAME OVER 💀</h1>
+                    <p id="game-over-cause" class="game-over-cause">your journey ends here...</p>
+                </div>
+                <div class="game-over-stats">
+                    <h3>📊 Final Reckoning</h3>
+                    <div class="stats-grid" id="game-over-stats-grid">
+                        <!-- Stats populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="game-over-ranking" id="game-over-ranking">
+                    <!-- Ranking info populated by JavaScript -->
+                </div>
+                <div class="game-over-actions">
+                    <button class="game-over-btn primary" onclick="closeGameOverAndRestart()">🔄 Try Again</button>
+                    <button class="game-over-btn" onclick="closeGameOverToMenu()">🏠 Main Menu</button>
+                    <button class="game-over-btn" onclick="showLeaderboardFromGameOver()">🏆 View Leaderboard</button>
                 </div>
             </div>
         </div>
@@ -198,7 +217,8 @@
                 <section id="game-world">
                     <!-- World Map Container - EXPANDED -->
                     <div id="map-container" class="map-container">
-                        <canvas id="world-map-canvas" width="1200" height="800"></canvas>
+                        <!-- OLD CANVAS - HIDDEN: Now using HTML-based GameWorldRenderer -->
+                        <canvas id="world-map-canvas" width="1200" height="800" style="display: none !important;"></canvas>
                         <div id="map-controls" class="map-controls">
                             <button id="zoom-in-btn" title="Zoom In" onclick="if(GameWorldRenderer) GameWorldRenderer.zoomIn()">+</button>
                             <button id="zoom-out-btn" title="Zoom Out" onclick="if(GameWorldRenderer) GameWorldRenderer.zoomOut()">-</button>
@@ -295,8 +315,14 @@
                     <button id="inventory-btn" class="side-btn">🎒 Inventory [I]</button>
                     <button id="character-sheet-btn" class="side-btn" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openCharacterSheet();">👤 Character [C]</button>
                     <button id="financial-sheet-btn" class="side-btn" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openFinancialSheet();">💰 Finances [F]</button>
+                    <button id="quests-btn" class="side-btn" onclick="if(typeof QuestSystem !== 'undefined') QuestSystem.toggleQuestLog();">📜 Quests [Q]</button>
                     <button id="property-employee-btn" class="side-btn" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openProperties();">🏠 Properties [P]</button>
                     <button id="ingame-settings-btn" class="side-btn" onclick="if(typeof SettingsPanel !== 'undefined' && SettingsPanel.show) SettingsPanel.show();">⚙️ Settings [,]</button>
+                </div>
+
+                <!-- 🎮 Game Controls Container - for dynamic UI elements -->
+                <div id="game-controls" class="side-panel-section game-controls-section">
+                    <!-- Quick actions and game stats will be dynamically added here -->
                 </div>
             </aside>
 
@@ -378,41 +404,41 @@
                                 <div class="attribute">
                                     <span class="attribute-name">Strength</span>
                                     <div class="attribute-controls">
-                                        <button type="button" class="attr-btn attr-down" data-attr="strength" onclick="decreaseAttribute('strength')">▼</button>
+                                        <button type="button" class="attr-btn attr-down" data-attr="strength">▼</button>
                                         <span class="attribute-value" id="attr-strength">5</span>
-                                        <button type="button" class="attr-btn attr-up" data-attr="strength" onclick="increaseAttribute('strength')">▲</button>
+                                        <button type="button" class="attr-btn attr-up" data-attr="strength">▲</button>
                                     </div>
                                 </div>
                                 <div class="attribute">
                                     <span class="attribute-name">Intelligence</span>
                                     <div class="attribute-controls">
-                                        <button type="button" class="attr-btn attr-down" data-attr="intelligence" onclick="decreaseAttribute('intelligence')">▼</button>
+                                        <button type="button" class="attr-btn attr-down" data-attr="intelligence">▼</button>
                                         <span class="attribute-value" id="attr-intelligence">5</span>
-                                        <button type="button" class="attr-btn attr-up" data-attr="intelligence" onclick="increaseAttribute('intelligence')">▲</button>
+                                        <button type="button" class="attr-btn attr-up" data-attr="intelligence">▲</button>
                                     </div>
                                 </div>
                                 <div class="attribute">
                                     <span class="attribute-name">Charisma</span>
                                     <div class="attribute-controls">
-                                        <button type="button" class="attr-btn attr-down" data-attr="charisma" onclick="decreaseAttribute('charisma')">▼</button>
+                                        <button type="button" class="attr-btn attr-down" data-attr="charisma">▼</button>
                                         <span class="attribute-value" id="attr-charisma">5</span>
-                                        <button type="button" class="attr-btn attr-up" data-attr="charisma" onclick="increaseAttribute('charisma')">▲</button>
+                                        <button type="button" class="attr-btn attr-up" data-attr="charisma">▲</button>
                                     </div>
                                 </div>
                                 <div class="attribute">
                                     <span class="attribute-name">Endurance</span>
                                     <div class="attribute-controls">
-                                        <button type="button" class="attr-btn attr-down" data-attr="endurance" onclick="decreaseAttribute('endurance')">▼</button>
+                                        <button type="button" class="attr-btn attr-down" data-attr="endurance">▼</button>
                                         <span class="attribute-value" id="attr-endurance">5</span>
-                                        <button type="button" class="attr-btn attr-up" data-attr="endurance" onclick="increaseAttribute('endurance')">▲</button>
+                                        <button type="button" class="attr-btn attr-up" data-attr="endurance">▲</button>
                                     </div>
                                 </div>
                                 <div class="attribute">
                                     <span class="attribute-name">Luck</span>
                                     <div class="attribute-controls">
-                                        <button type="button" class="attr-btn attr-down" data-attr="luck" onclick="decreaseAttribute('luck')">▼</button>
+                                        <button type="button" class="attr-btn attr-down" data-attr="luck">▼</button>
                                         <span class="attribute-value" id="attr-luck">5</span>
-                                        <button type="button" class="attr-btn attr-up" data-attr="luck" onclick="increaseAttribute('luck')">▲</button>
+                                        <button type="button" class="attr-btn attr-up" data-attr="luck">▲</button>
                                     </div>
                                 </div>
                             </div>
@@ -421,7 +447,8 @@
                         <div class="form-actions">
                             <button type="button" id="randomize-character-btn" class="secondary" onclick="console.log('📍 INLINE ONCLICK FIRED'); if(typeof window.randomizeCharacter === 'function') { window.randomizeCharacter(); } else { console.error('❌ window.randomizeCharacter not found, type:', typeof window.randomizeCharacter); }">Randomize</button>
                             <button type="button" id="start-game-btn" class="primary">Start Game</button>
-                            <button type="button" id="cancel-setup-btn" class="secondary">Cancel</button>
+                            <button type="button" id="setup-settings-btn" class="secondary" title="Settings" onclick="if(typeof SettingsPanel !== 'undefined' && SettingsPanel.show) { SettingsPanel.show(); } else { console.error('SettingsPanel not available'); }">⚙️</button>
+                            <button type="button" id="cancel-setup-btn" class="secondary" onclick="if(typeof cancelGameSetup === 'function') { cancelGameSetup(); } else { document.getElementById('game-setup-panel')?.classList.add('hidden'); document.getElementById('main-menu')?.classList.remove('hidden'); }">Exit</button>
                         </div>
                     </form>
                 </section>
@@ -461,9 +488,22 @@
                                 <span class="merchant-label">Specialties:</span>
                                 <span id="merchant-specialties">None</span>
                             </div>
+                            <div class="merchant-detail merchant-finances">
+                                <span class="merchant-label">💰 Gold:</span>
+                                <span id="merchant-gold" class="merchant-gold">0 gold</span>
+                                <span id="merchant-wealth-status" class="merchant-wealth-status">💵 comfortable</span>
+                            </div>
+                            <div class="merchant-gold-bar-container">
+                                <div id="merchant-gold-bar" class="merchant-gold-bar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div class="merchant-actions">
+                            <button id="talk-to-merchant-btn" class="talk-merchant-btn" onclick="NPCChatUI.openMerchantChat()">
+                                🗨️ Talk to Merchant
+                            </button>
                         </div>
                     </div>
-                    
+
                     <!-- Trading Controls -->
                     <div class="trading-controls">
                         <div class="trade-mode-toggle">
@@ -604,7 +644,7 @@
                             <div class="inventory-actions">
                                 <button id="sort-inventory-btn" title="Sort Inventory">🔤</button>
                                 <button id="filter-inventory-btn" title="Filter Items">🔍</button>
-                                <button id="inventory-settings-btn" title="Inventory Settings">⚙️</button>
+                                <button id="inventory-settings-btn" title="Inventory Settings" onclick="if(typeof SettingsPanel !== 'undefined' && SettingsPanel.show) SettingsPanel.show();">⚙️</button>
                             </div>
                         </div>
                     </div>
@@ -738,9 +778,8 @@
                                 </div>
                             </div>
                             <div id="destination-actions" class="destination-actions hidden">
-                                <button id="travel-to-destination-btn" class="travel-btn-primary">🚶 Travel Now</button>
-                                <button id="fast-travel-destination-btn" class="travel-btn-secondary">⚡ Fast Travel</button>
-                                <button id="clear-destination-btn" class="travel-btn-danger">✕ Clear</button>
+                                <button id="travel-to-destination-btn" class="travel-btn-primary">🚶 Begin Journey</button>
+                                <button id="clear-destination-btn" class="travel-btn-danger">✕ Cancel</button>
                             </div>
                         </div>
 
@@ -751,6 +790,7 @@
                                     <label for="destination-filter">Filter:</label>
                                     <select id="destination-filter">
                                         <option value="all">All Locations</option>
+                                        <option value="visited">🏆 Visited Only</option>
                                         <option value="connected">Connected Only</option>
                                         <option value="capital">👑 Capitals</option>
                                         <option value="city">🏰 Cities</option>
@@ -768,6 +808,13 @@
                                         <option value="name">Name</option>
                                         <option value="type">Type</option>
                                     </select>
+                                </div>
+                                <div class="travel-auto-time">
+                                    <label class="toggle-switch" title="Auto-start time when traveling, auto-stop on arrival">
+                                        <input type="checkbox" id="auto-travel-time-toggle" checked>
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label">⏱️ Auto Time</span>
+                                    </label>
                                 </div>
                             </div>
                             <div id="destinations" class="destinations-list">
@@ -1075,9 +1122,11 @@
             <button id="bottom-inventory-btn" class="action-btn-bottom" title="Inventory [I]" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openInventory();">🎒</button>
             <button id="bottom-character-btn" class="action-btn-bottom" title="Character [C]" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openCharacterSheet();">👤</button>
             <button id="bottom-financial-btn" class="action-btn-bottom" title="Finances [F]" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openFinancialSheet();">💰</button>
+            <button id="bottom-quests-btn" class="action-btn-bottom" title="Quest Log [Q]" onclick="if(typeof QuestSystem !== 'undefined') QuestSystem.toggleQuestLog();">📜</button>
             <button id="bottom-achievements-btn" class="action-btn-bottom" title="Achievements" onclick="if(typeof openAchievementPanel === 'function') openAchievementPanel();">🏆</button>
             <button id="bottom-save-btn" class="action-btn-bottom" title="Save Game [F5]" onclick="if(typeof SaveUISystem !== 'undefined') SaveUISystem.openSaveAsDialog(); else if(typeof SaveLoadUI !== 'undefined') SaveLoadUI.show('saves');">💾</button>
             <button id="bottom-load-btn" class="action-btn-bottom" title="Load Game [F9]" onclick="if(typeof SaveUISystem !== 'undefined') SaveUISystem.openLoadGameDialog(); else if(typeof SaveLoadUI !== 'undefined') SaveLoadUI.show('load');">📂</button>
+            <button id="bottom-settings-btn" class="action-btn-bottom" title="Settings [,]" onclick="if(typeof SettingsPanel !== 'undefined' && SettingsPanel.show) SettingsPanel.show();">⚙️</button>
         </footer>
     </div>
 
@@ -1097,15 +1146,44 @@
             <h1 id="main-menu-title">Medieval Trading Game</h1>
             <p id="main-menu-version" class="version-text"></p>
             <div class="menu-buttons">
-                <button id="new-game-btn">New Game</button>
-                <button id="load-game-btn" disabled>Load Game</button>
-                <button id="settings-btn">Settings</button>
+                <button id="new-game-btn" onclick="if(typeof startNewGame === 'function') startNewGame();">New Game</button>
+                <button id="load-game-btn" onclick="if(typeof loadGame === 'function') loadGame();" disabled>Load Game</button>
+                <button id="settings-btn" onclick="if(typeof SettingsPanel !== 'undefined' && SettingsPanel.show) SettingsPanel.show(); else console.error('SettingsPanel not loaded');">Settings</button>
+            </div>
+
+            <!-- 🏆 Hall of Champions is created dynamically by save-ui-system.js -->
+            <!-- It includes the "View All Champions" button -->
+
+            <!-- 🔗 Social Links - escape routes -->
+            <div id="menu-social-links" class="menu-social-links">
+                <!-- Will be populated by JavaScript from GameConfig -->
+            </div>
+
+            <div class="menu-footer">
+                <span id="menu-copyright"></span>
             </div>
         </div>
     </div>
 
-    <!-- 🐛 DEBUG CONSOLE - ON-SCREEN CONSOLE LOG -->
-    <div id="debug-console" style="position: fixed; bottom: 0; right: 0; width: 600px; height: 80vh; max-height: 800px; background: rgba(0,0,0,0.95); color: #0f0; font-family: monospace; font-size: 11px; z-index: 99999; border: 2px solid #0f0; display: none; flex-direction: column;">
+    <!-- 🏆 Leaderboard Panel - Hall of Champions overlay (MUST be outside overlay-container for z-index to work above main-menu) -->
+    <div id="leaderboard-overlay" class="leaderboard-overlay hidden" onclick="if(event.target === this) { if(typeof SaveUISystem !== 'undefined') SaveUISystem.closeHallOfChampions(); else closeLeaderboardPanel(); }">
+        <div class="leaderboard-panel" onclick="event.stopPropagation()">
+            <div class="leaderboard-panel-header">
+                <h2>🏆 Hall of Champions</h2>
+                <p class="leaderboard-subtitle">top 100 merchants of all time</p>
+                <button class="close-leaderboard-panel" onclick="if(typeof SaveUISystem !== 'undefined') SaveUISystem.closeHallOfChampions(); else closeLeaderboardPanel();" title="Close">✕</button>
+            </div>
+            <div id="leaderboard-panel-content" class="leaderboard-panel-content">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div class="leaderboard-panel-footer">
+                <button class="close-champions-btn" onclick="if(typeof SaveUISystem !== 'undefined') SaveUISystem.closeHallOfChampions(); else closeLeaderboardPanel();">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🐛 DEBUG CONSOLE - ON-SCREEN CONSOLE LOG (z-index higher than settings panel) -->
+    <div id="debug-console" style="position: fixed; bottom: 0; right: 0; width: 600px; height: 80vh; max-height: 800px; background: rgba(0,0,0,0.95); color: #0f0; font-family: monospace; font-size: 11px; z-index: 999999; border: 2px solid #0f0; display: none; flex-direction: column;">
         <!-- Header -->
         <div style="display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #0f0; background: rgba(0,0,0,0.98); flex-shrink: 0;">
             <strong style="color: #0ff;">🐛 DEBUG CONSOLE (Press ` for commands)</strong>
@@ -1127,7 +1205,7 @@
             <button id="debug-command-help" style="background: #005; border: 1px solid #0ff; color: #0ff; padding: 8px 12px; cursor: pointer; font-family: monospace; font-size: 12px; border-radius: 4px;">?</button>
         </div>
     </div>
-    <button id="toggle-debug-console" onclick="var dc = document.getElementById('debug-console'); dc.style.display = dc.style.display === 'none' ? 'flex' : 'none'" style="position: fixed; bottom: 10px; right: 10px; z-index: 99998; background: #000; color: #0f0; border: 2px solid #0f0; padding: 10px; cursor: pointer; font-family: monospace;">
+    <button id="toggle-debug-console" onclick="var dc = document.getElementById('debug-console'); dc.style.display = dc.style.display === 'none' ? 'flex' : 'none'" style="position: fixed; bottom: 10px; right: 10px; z-index: 999998; background: #000; color: #0f0; border: 2px solid #0f0; padding: 10px; cursor: pointer; font-family: monospace;">
         🐛 DEBUG
     </button>
 
@@ -1158,8 +1236,27 @@
     <script src="src/js/inventory-system.js?v=0.1"></script>
     <script src="src/js/npc-merchant-system.js?v=0.1"></script>
 
+    <!-- 🎙️ NPC Voice Chat & AI System -->
+    <script src="src/js/npc-dialogue-system.js?v=0.5"></script>
+    <script src="src/js/npc-workflow-system.js?v=0.5"></script>
+    <script src="src/js/npc-voice-chat-system.js?v=0.1"></script>
+    <script src="src/js/npc-chat-ui.js?v=0.1"></script>
+    <script src="src/js/npc-encounter-system.js?v=0.1"></script>
+
+    <!-- 🤖 NPC Command & Interaction Systems (v0.5) -->
+    <script src="src/js/api-command-system.js?v=0.5"></script>
+    <script src="src/js/quest-system.js?v=0.5"></script>
+    <script src="src/js/npc-relationship-system.js?v=0.5"></script>
+    <script src="src/js/npc-trade-window.js?v=0.5"></script>
+
+    <!-- 👑 Merchant Rank System - defines property/employee limits -->
+    <script src="src/js/merchant-rank-system.js?v=0.5"></script>
+
+    <!-- ⚔️ Equipment System - gear up for adventure -->
+    <script src="src/js/equipment-system.js?v=0.5"></script>
+
     <!-- 🏗️ Property & Employee Systems -->
-    <script src="src/js/property-system.js?v=0.1"></script>
+    <script src="src/js/property-system.js?v=0.5"></script>
     <script src="src/js/employee-system.js?v=0.1"></script>
     <script src="src/js/property-employee-bridge.js?v=0.1"></script>
     <script src="src/js/property-employee-ui.js?v=0.1"></script>
@@ -1171,6 +1268,7 @@
     <!-- 🏰 Gatehouse & Resource Gathering Systems -->
     <script src="src/js/gatehouse-system.js?v=0.1"></script>
     <script src="src/js/resource-gathering-system.js?v=0.1"></script>
+    <script src="src/js/dungeon-exploration-system.js?v=0.1"></script>
 
     <!-- 🖤 Game World Renderer - where the map magic happens -->
     <script src="src/js/game-world-renderer.js?v=0.1"></script>
@@ -1179,11 +1277,21 @@
     <!-- 🎯 Achievement System -->
     <script src="src/js/achievement-system.js?v=0.1"></script>
 
+    <!-- 🏆 Global Leaderboard System -->
+    <script src="src/js/global-leaderboard-system.js?v=0.2"></script>
+
+    <!-- 💀 Death Cause System - tracks how your journey ends -->
+    <script src="src/js/death-cause-system.js?v=0.2"></script>
+
+    <!-- 💀 Game Over System -->
+    <script src="src/js/game-over-system.js?v=0.2"></script>
+
     <!-- 🎨 UI & Polish Systems -->
     <script src="src/js/ui-enhancements.js?v=0.1"></script>
     <script src="src/js/ui-polish-system.js?v=0.1"></script>
     <script src="src/js/button-fix.js?v=0.1"></script>
     <script src="src/js/settings-panel.js?v=0.1"></script>
+    <script src="src/js/tooltip-system.js?v=0.1"></script>
     <script src="src/js/draggable-panels.js?v=0.1"></script>
     <script src="src/js/panel-manager.js?v=0.1"></script>
 
@@ -1240,6 +1348,37 @@
             // Update welcome message
             const welcomeMsg = document.getElementById('welcome-message');
             if (welcomeMsg) welcomeMsg.textContent = GameConfig.ui.welcomeMessage;
+
+            // Update copyright
+            const menuCopyright = document.getElementById('menu-copyright');
+            if (menuCopyright) menuCopyright.textContent = GameConfig.credits.copyright;
+
+            // Populate social links
+            const socialLinksContainer = document.getElementById('menu-social-links');
+            if (socialLinksContainer && GameConfig.links) {
+                const links = GameConfig.links;
+                let linksHTML = '';
+
+                if (links.website) {
+                    linksHTML += `<a href="${links.website}" target="_blank" class="menu-social-link" title="Website"><span class="link-icon">🌐</span></a>`;
+                }
+                if (links.github) {
+                    linksHTML += `<a href="${links.github}" target="_blank" class="menu-social-link" title="GitHub"><span class="link-icon">💻</span></a>`;
+                }
+                if (links.discord) {
+                    linksHTML += `<a href="${links.discord}" target="_blank" class="menu-social-link" title="Discord"><span class="link-icon">💬</span></a>`;
+                }
+                if (links.support) {
+                    linksHTML += `<a href="mailto:${links.support}" class="menu-social-link" title="Contact Us"><span class="link-icon">✉️</span></a>`;
+                }
+
+                socialLinksContainer.innerHTML = linksHTML;
+
+                // Hide if no links
+                if (!linksHTML) {
+                    socialLinksContainer.style.display = 'none';
+                }
+            }
 
             console.log(`🎮 ${GameConfig.game.name} v${GameConfig.version.game} initialized`);
             console.log(`🏢 Made by ${GameConfig.credits.studio}`);

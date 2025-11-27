@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🎮 GAME ENGINE - the beating heart of this digital existence
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // this module orchestrates the game loop, time system, and travel
@@ -39,7 +39,9 @@ const GameEngine = {
         return true;
     },
 
-    // main game loop - the heartbeat that never stops (until it does)
+    // main game loop - DISABLED: game.js gameLoop() handles all updates
+    // This was causing duplicate updates and race conditions with travel/time
+    // keeping the function for compatibility but it only updates UI now
     tick(currentTime) {
         if (!this.isRunning) {
             this.animationFrameId = null;
@@ -53,20 +55,19 @@ const GameEngine = {
         // Cap delta time to prevent spiral of death
         const cappedDelta = Math.min(deltaTime, 100);
 
-        // Update time system (this makes game time advance)
-        if (typeof TimeSystem !== 'undefined') {
-            const timeAdvanced = TimeSystem.update(cappedDelta);
+        // DISABLED: TimeSystem.update() is called by game.gameLoop() in game.js
+        // Calling it here too causes double time advancement and travel bugs
+        // if (typeof TimeSystem !== 'undefined') {
+        //     const timeAdvanced = TimeSystem.update(cappedDelta);
+        //     if (timeAdvanced) {
+        //         this.onTimeAdvance();
+        //     }
+        // }
 
-            // If time advanced, update all dependent systems
-            if (timeAdvanced) {
-                this.onTimeAdvance();
-            }
-        }
+        // DISABLED: TravelSystem.update() is called by game.gameLoop() in game.js
+        // this.updateTravel();
 
-        // Update travel progress if traveling
-        this.updateTravel();
-
-        // Update UI displays
+        // Only update UI displays - this is safe to run in parallel
         this.updateUI();
 
         // Continue the loop
@@ -124,9 +125,17 @@ const GameEngine = {
             DynamicMarketSystem.updateMarketPrices();
         }
 
-        // Process property work queues
+        // Process property work queues and construction/rent
         if (typeof PropertySystem !== 'undefined') {
             PropertySystem.processWorkQueues();
+            // Check construction completion
+            if (PropertySystem.processConstruction) {
+                PropertySystem.processConstruction();
+            }
+            // Check rent payments
+            if (PropertySystem.processRentPayments) {
+                PropertySystem.processRentPayments();
+            }
         }
 
         // Daily processing at midnight
@@ -288,35 +297,14 @@ const GameEngine = {
     setupTravelTriggers() {
         console.log('🎮 GameEngine: Setting up travel triggers...');
 
-        // The TravelSystem handles its own click events on the canvas
-        // But we need to ensure travel auto-starts time when initiated
+        // DISABLED: TravelSystem.startTravel already handles auto-starting time
+        // The original patching here was causing issues with double-wrapping
+        // and potential race conditions. TravelSystem handles this natively now.
 
-        // Patch TravelSystem.startTravel to auto-start time
-        if (typeof TravelSystem !== 'undefined' && TravelSystem.startTravel) {
-            const originalStartTravel = TravelSystem.startTravel.bind(TravelSystem);
-            const self = this;
+        // The TravelSystem handles its own click events and time management
+        // See travel-system.js startTravel() which auto-unpauses time
 
-            TravelSystem.startTravel = function(destinationId) {
-                console.log('🚶 Travel initiated to:', destinationId);
-
-                // Call original start travel
-                originalStartTravel(destinationId);
-
-                // Auto-start time if paused
-                if (TimeSystem.isPaused || TimeSystem.currentSpeed === 'PAUSED') {
-                    console.log('🚶 Auto-starting time for travel...');
-                    TimeSystem.setSpeed('NORMAL');
-                    self.updateTimeControlButtons();
-                }
-
-                // Ensure engine is running
-                if (!self.isRunning) {
-                    self.start();
-                }
-            };
-
-            console.log('🎮 GameEngine: Travel triggers patched');
-        }
+        console.log('🎮 GameEngine: Travel triggers ready (handled by TravelSystem)');
     },
 
     // set game speed - time bends to your will (kinda)

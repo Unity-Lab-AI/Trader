@@ -2,8 +2,8 @@
 // 🎒 INVENTORY SYSTEM - hoarding simulator 3000
 // ═══════════════════════════════════════════════════════════════
 // where we store all the junk we cant let go of... i relate
-// File Version: 0.1
-// Game Version: 0.1
+// File Version: 0.5
+// Game Version: 0.2
 // Made by Unity AI Lab - Hackall360, Sponge, GFourteen
 
 const InventorySystem = {
@@ -69,15 +69,33 @@ const InventorySystem = {
             
             const itemElement = document.createElement('div');
             itemElement.className = 'inventory-item';
+
+            // check if item is equippable
+            const isEquippable = typeof EquipmentSystem !== 'undefined' && EquipmentSystem.isEquippable(itemId);
+            const equipSlot = isEquippable ? EquipmentSystem.findSlotForItem(itemId) : null;
+
+            // check if item is currently equipped
+            const isEquipped = isEquippable && game.player.equipment?.[equipSlot] === itemId;
+
             itemElement.innerHTML = `
                 <div class="item-icon">${item.icon}</div>
-                <div class="item-name">${item.name}</div>
+                <div class="item-name">${item.name}${isEquipped ? ' <span class="equipped-badge">✓</span>' : ''}</div>
                 <div class="item-quantity">×${quantity}</div>
                 <div class="item-weight">${weight.toFixed(1)} lbs</div>
                 <div class="item-value">${value} gold</div>
-                ${item.consumable ? `<button class="use-item-btn" onclick="InventorySystem.useItem('${itemId}')">Use</button>` : ''}
+                <div class="item-actions">
+                    ${item.consumable ? `<button class="use-item-btn" onclick="InventorySystem.useItem('${itemId}')">Use</button>` : ''}
+                    ${isEquippable ? `<button class="equip-item-btn" onclick="EquipmentSystem.equip('${itemId}')">Equip</button>` : ''}
+                </div>
             `;
-            
+
+            // show bonuses on hover if item has them
+            if (item.bonuses) {
+                itemElement.title = Object.entries(item.bonuses)
+                    .map(([stat, val]) => `${stat}: ${val > 0 ? '+' : ''}${val}`)
+                    .join(', ');
+            }
+
             inventoryContainer.appendChild(itemElement);
         }
         
@@ -201,10 +219,13 @@ const InventorySystem = {
         addMessage('Filter options not yet implemented');
     },
     
-    // Show inventory settings
+    // Show inventory settings - redirect to main settings panel
     showInventorySettings() {
-        // Implementation for inventory settings UI
-        addMessage('Inventory settings not yet implemented');
+        if (typeof SettingsPanel !== 'undefined' && SettingsPanel.show) {
+            SettingsPanel.show();
+        } else {
+            addMessage('settings panel loading... try again in a moment');
+        }
     },
     
     // Save inventory state for save system

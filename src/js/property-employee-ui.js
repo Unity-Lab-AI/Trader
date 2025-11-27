@@ -1,22 +1,348 @@
 // ═══════════════════════════════════════════════════════════════
 // 🏢 PROPERTY & EMPLOYEE UI - managing your empire visually
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.1
+// File Version: 0.5
 // conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
 // ═══════════════════════════════════════════════════════════════
 // the interface for all your landlord and boss simulator needs
 // hire, fire, buy, sell... all with pretty buttons
 
 const PropertyEmployeeUI = {
+    // track current UI state
+    currentAcquisitionTab: 'available', // 'available' or 'build'
+    selectedPropertyType: null,
+    selectedLocation: null,
+    selectedAcquisitionType: 'buy',
+
     // Initialize UI components
     init() {
         this.setupPropertyEmployeePanel();
+        this.setupAcquisitionModal();
     },
-    
+
     // Setup property and employee panel (using existing HTML structure)
     setupPropertyEmployeePanel() {
         // Setup event listeners for existing HTML elements
         this.setupPropertyEmployeeEventListeners();
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🏠 PROPERTY ACQUISITION MODAL - rent/buy/build interface
+    // ═══════════════════════════════════════════════════════════════
+    setupAcquisitionModal() {
+        // Check if modal already exists
+        if (document.getElementById('property-acquisition-modal')) return;
+
+        const modal = document.createElement('div');
+        modal.id = 'property-acquisition-modal';
+        modal.className = 'overlay hidden';
+        modal.innerHTML = `
+            <div class="overlay-content property-acquisition-content">
+                <button class="overlay-close" onclick="PropertyEmployeeUI.closeAcquisitionModal()">×</button>
+                <div class="acquisition-header">
+                    <h2>🏠 Acquire Property</h2>
+                    <div class="merchant-rank-widget-container" id="acquisition-rank-widget"></div>
+                </div>
+
+                <div class="acquisition-tabs">
+                    <button class="acq-tab-btn active" data-tab="available" onclick="PropertyEmployeeUI.switchAcquisitionTab('available')">📍 Available Here</button>
+                    <button class="acq-tab-btn" data-tab="locations" onclick="PropertyEmployeeUI.switchAcquisitionTab('locations')">🗺️ Other Locations</button>
+                </div>
+
+                <div class="acquisition-content">
+                    <div id="acq-available-tab" class="acq-tab-content active">
+                        <div class="location-info-bar">
+                            <span class="current-location-name" id="acq-current-location">Current Location</span>
+                            <span class="property-slots" id="acq-property-slots">🏠 0/0 Properties</span>
+                        </div>
+                        <div class="available-properties-grid" id="available-properties-grid">
+                            <!-- Properties available at current location -->
+                        </div>
+                    </div>
+
+                    <div id="acq-locations-tab" class="acq-tab-content">
+                        <div class="locations-grid" id="acq-locations-grid">
+                            <!-- All game locations for property selection -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="acquisition-footer">
+                    <button class="btn-secondary" onclick="PropertyEmployeeUI.closeAcquisitionModal()">Cancel</button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('overlay-container').appendChild(modal);
+    },
+
+    // Open the property acquisition modal
+    openAcquisitionModal() {
+        const modal = document.getElementById('property-acquisition-modal');
+        if (!modal) {
+            this.setupAcquisitionModal();
+        }
+
+        document.getElementById('property-acquisition-modal').classList.remove('hidden');
+        this.updateRankWidget();
+        this.switchAcquisitionTab('available');
+    },
+
+    closeAcquisitionModal() {
+        document.getElementById('property-acquisition-modal').classList.add('hidden');
+        this.selectedPropertyType = null;
+        this.selectedLocation = null;
+    },
+
+    switchAcquisitionTab(tabName) {
+        this.currentAcquisitionTab = tabName;
+
+        // Update tab buttons
+        document.querySelectorAll('.acq-tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+
+        // Update tab content
+        document.querySelectorAll('.acq-tab-content').forEach(content => {
+            content.classList.toggle('active', content.id === `acq-${tabName}-tab`);
+        });
+
+        if (tabName === 'available') {
+            this.renderAvailableProperties();
+        } else if (tabName === 'locations') {
+            this.renderLocationsGrid();
+        }
+    },
+
+    updateRankWidget() {
+        const container = document.getElementById('acquisition-rank-widget');
+        if (!container) return;
+
+        if (typeof MerchantRankSystem !== 'undefined') {
+            container.innerHTML = MerchantRankSystem.createRankWidget();
+        } else {
+            container.innerHTML = '<div class="rank-info-simple">🏠 Properties: ' +
+                (game.player?.ownedProperties?.length || 0) + '</div>';
+        }
+    },
+
+    renderAvailableProperties() {
+        const grid = document.getElementById('available-properties-grid');
+        const locationName = document.getElementById('acq-current-location');
+        const slotsDisplay = document.getElementById('acq-property-slots');
+
+        if (!grid) return;
+
+        // Update location name
+        if (locationName && game.currentLocation) {
+            locationName.textContent = `📍 ${game.currentLocation.name}`;
+        }
+
+        // Update property slots
+        if (slotsDisplay && typeof MerchantRankSystem !== 'undefined') {
+            const current = game.player?.ownedProperties?.length || 0;
+            const max = MerchantRankSystem.getMaxProperties();
+            slotsDisplay.innerHTML = `🏠 ${current}/${max} Properties`;
+        }
+
+        // Get available properties
+        const availableProperties = PropertySystem.getAvailableProperties();
+
+        if (availableProperties.length === 0) {
+            grid.innerHTML = `
+                <div class="no-properties-available">
+                    <span class="empty-icon">🏚️</span>
+                    <p>No properties available at this location.</p>
+                    <p class="hint">Try a different location or check if you already own properties here.</p>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = availableProperties.map(property => this.createPropertyCard(property)).join('');
+    },
+
+    createPropertyCard(property) {
+        const options = PropertySystem.getAcquisitionOptions(property.id);
+        const canAfford = property.affordability;
+        const canPurchase = typeof MerchantRankSystem !== 'undefined'
+            ? MerchantRankSystem.canPurchaseProperty().allowed
+            : true;
+
+        return `
+            <div class="property-acquisition-card ${!canPurchase ? 'disabled' : ''}">
+                <div class="pac-header">
+                    <span class="pac-icon">${property.icon}</span>
+                    <div class="pac-title-area">
+                        <h3 class="pac-name">${property.name}</h3>
+                        <span class="pac-type">${property.type}</span>
+                    </div>
+                </div>
+                <p class="pac-description">${property.description}</p>
+
+                <div class="pac-stats">
+                    <div class="pac-stat">
+                        <span class="stat-label">Income:</span>
+                        <span class="stat-value">+${property.projectedDailyIncome} gold/day</span>
+                    </div>
+                    <div class="pac-stat">
+                        <span class="stat-label">ROI:</span>
+                        <span class="stat-value">${property.roiDays === Infinity ? '∞' : property.roiDays} days</span>
+                    </div>
+                    <div class="pac-stat">
+                        <span class="stat-label">Storage:</span>
+                        <span class="stat-value">+${PropertySystem.propertyTypes[property.id]?.storageBonus || 0} lbs</span>
+                    </div>
+                </div>
+
+                <div class="pac-acquisition-options">
+                    ${options.map(opt => this.createAcquisitionOption(property.id, opt, canPurchase)).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    createAcquisitionOption(propertyId, option, canPurchase) {
+        const canAfford = game.player.gold >= option.price;
+        const disabled = !canAfford || !canPurchase;
+        let materialsHtml = '';
+
+        if (option.type === 'build' && option.materials) {
+            const missingMaterials = PropertySystem.checkMaterials(option.materials);
+            const hasMaterials = missingMaterials.length === 0;
+
+            materialsHtml = `
+                <div class="build-materials ${hasMaterials ? 'has-all' : 'missing-some'}">
+                    <span class="materials-label">Materials:</span>
+                    <div class="materials-list">
+                        ${Object.entries(option.materials).map(([mat, amt]) => {
+                            const playerHas = game.player.inventory?.[mat] || 0;
+                            const hasEnough = playerHas >= amt;
+                            return `<span class="material-item ${hasEnough ? 'has' : 'missing'}">${mat}: ${playerHas}/${amt}</span>`;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        let rentInfo = '';
+        if (option.type === 'rent') {
+            rentInfo = `<span class="rent-info">+ ${option.weeklyRent} gold/week</span>`;
+        }
+
+        let timeInfo = '';
+        if (option.time > 0) {
+            timeInfo = `<span class="time-info">🕐 ${option.time} days to build</span>`;
+        }
+
+        return `
+            <div class="acquisition-option ${option.type} ${disabled ? 'disabled' : ''}">
+                <div class="ao-header">
+                    <span class="ao-icon">${option.icon}</span>
+                    <span class="ao-name">${option.name}</span>
+                </div>
+                <div class="ao-details">
+                    <span class="ao-price ${canAfford ? 'affordable' : 'expensive'}">${option.price} gold</span>
+                    ${rentInfo}
+                    ${timeInfo}
+                </div>
+                <p class="ao-description">${option.description}</p>
+                ${materialsHtml}
+                <button class="ao-btn ${disabled ? 'disabled' : ''}"
+                        onclick="PropertyEmployeeUI.confirmAcquisition('${propertyId}', '${option.type}')"
+                        ${disabled ? 'disabled' : ''}>
+                    ${option.type === 'buy' ? '🏠 Purchase' : option.type === 'rent' ? '📝 Rent' : '🔨 Build'}
+                </button>
+            </div>
+        `;
+    },
+
+    confirmAcquisition(propertyId, acquisitionType) {
+        const propertyType = PropertySystem.propertyTypes[propertyId];
+        if (!propertyType) return;
+
+        const price = PropertySystem.calculatePropertyPrice(propertyId, acquisitionType);
+
+        let confirmMsg = `Are you sure you want to ${acquisitionType} a ${propertyType.name} for ${price} gold?`;
+
+        if (acquisitionType === 'rent') {
+            const weeklyRent = Math.round(propertyType.basePrice * 0.1);
+            confirmMsg += `\n\nYou will also pay ${weeklyRent} gold per week in rent.`;
+        } else if (acquisitionType === 'build') {
+            const days = Math.ceil(PropertySystem.getConstructionTime(propertyId) / (24 * 60));
+            const materials = PropertySystem.getBuildingMaterials(propertyId);
+            confirmMsg += `\n\nThis will take ${days} days to complete.`;
+            confirmMsg += `\n\nMaterials required: ${Object.entries(materials).map(([m, a]) => `${a} ${m}`).join(', ')}`;
+        }
+
+        if (confirm(confirmMsg)) {
+            const success = PropertySystem.purchaseProperty(propertyId, acquisitionType);
+            if (success) {
+                this.closeAcquisitionModal();
+                this.updateOwnedProperties();
+            }
+        }
+    },
+
+    renderLocationsGrid() {
+        const grid = document.getElementById('acq-locations-grid');
+        if (!grid || typeof GameWorld === 'undefined') return;
+
+        const locations = Object.values(GameWorld.locations)
+            .filter(loc => ['village', 'town', 'city'].includes(loc.type))
+            .sort((a, b) => {
+                // Sort by type priority then name
+                const typePriority = { city: 1, town: 2, village: 3 };
+                const aDist = typePriority[a.type] || 4;
+                const bDist = typePriority[b.type] || 4;
+                if (aDist !== bDist) return aDist - bDist;
+                return a.name.localeCompare(b.name);
+            });
+
+        grid.innerHTML = locations.map(location => {
+            const isCurrent = game.currentLocation?.id === location.id;
+            const typeIcons = { city: '🏰', town: '🏘️', village: '🏠' };
+
+            // Count owned properties in this location
+            const ownedHere = (game.player?.ownedProperties || [])
+                .filter(p => p.location === location.id).length;
+
+            return `
+                <div class="location-card ${isCurrent ? 'current' : ''}" onclick="PropertyEmployeeUI.selectLocationForProperty('${location.id}')">
+                    <div class="loc-header">
+                        <span class="loc-icon">${typeIcons[location.type] || '📍'}</span>
+                        <h4 class="loc-name">${location.name}</h4>
+                        ${isCurrent ? '<span class="current-badge">You are here</span>' : ''}
+                    </div>
+                    <div class="loc-info">
+                        <span class="loc-type">${location.type}</span>
+                        <span class="loc-owned">${ownedHere > 0 ? `🏠 ${ownedHere} owned` : ''}</span>
+                    </div>
+                    <p class="loc-description">${location.description || 'A location in the realm.'}</p>
+                </div>
+            `;
+        }).join('');
+    },
+
+    selectLocationForProperty(locationId) {
+        const location = GameWorld.locations[locationId];
+        if (!location) return;
+
+        // If not at this location, inform user they need to travel
+        if (game.currentLocation?.id !== locationId) {
+            if (confirm(`You must travel to ${location.name} to acquire property there. Would you like to set it as your destination?`)) {
+                // Set travel destination
+                if (typeof TravelSystem !== 'undefined') {
+                    TravelSystem.setDestination(locationId);
+                    this.closeAcquisitionModal();
+                    addMessage(`🗺️ Destination set to ${location.name}. Travel there to acquire property!`, 'info');
+                }
+            }
+            return;
+        }
+
+        // Already at this location, show available properties
+        this.switchAcquisitionTab('available');
     },
     
     // Setup event listeners for property and employee panel
@@ -40,7 +366,7 @@ const PropertyEmployeeUI = {
         const routeHistoryBtn = document.getElementById('route-history-btn');
         const closeBtn = document.getElementById('close-property-employee-btn');
         
-        if (buyPropertyBtn) EventManager.addEventListener(buyPropertyBtn, 'click', () => this.switchPropertyEmployeeTab('properties'));
+        if (buyPropertyBtn) EventManager.addEventListener(buyPropertyBtn, 'click', () => this.openAcquisitionModal());
         if (propertyUpgradesBtn) EventManager.addEventListener(propertyUpgradesBtn, 'click', () => this.switchPropertyEmployeeTab('properties'));
         if (repairAllBtn) EventManager.addEventListener(repairAllBtn, 'click', () => PropertySystem.repairAllProperties());
         if (hireEmployeeBtn) EventManager.addEventListener(hireEmployeeBtn, 'click', () => this.switchPropertyEmployeeTab('employees'));
@@ -142,58 +468,164 @@ const PropertyEmployeeUI = {
     updateOwnedProperties() {
         const container = document.getElementById('owned-properties');
         if (!container) return;
-        
+
         container.innerHTML = '';
-        
+
+        // Add merchant rank header with property limits
+        const rankHeader = document.createElement('div');
+        rankHeader.className = 'property-rank-header';
+
+        if (typeof MerchantRankSystem !== 'undefined') {
+            const rank = MerchantRankSystem.getCurrentRank();
+            const current = game.player?.ownedProperties?.length || 0;
+            const max = MerchantRankSystem.getMaxProperties();
+            const progress = MerchantRankSystem.getProgressToNextRank();
+
+            rankHeader.innerHTML = `
+                <div class="rank-summary">
+                    <span class="rank-icon" style="color: ${rank.color}">${rank.icon}</span>
+                    <span class="rank-title" style="color: ${rank.color}">${rank.name}</span>
+                    <span class="property-count">🏠 ${current}/${max} Properties</span>
+                </div>
+                <div class="rank-progress-mini">
+                    <div class="rank-progress-bar-mini" style="width: ${progress.progress}%; background: ${rank.color}"></div>
+                </div>
+                ${progress.nextRank ? `<span class="next-rank-hint">Next: ${progress.nextRank.name} (${MerchantRankSystem.formatGold(progress.remaining)} gold needed)</span>` : '<span class="max-rank-badge">🏆 Max Rank!</span>'}
+            `;
+        } else {
+            rankHeader.innerHTML = `<div class="rank-summary"><span class="property-count">🏠 ${game.player?.ownedProperties?.length || 0} Properties</span></div>`;
+        }
+
+        container.appendChild(rankHeader);
+
         const properties = PropertySystem.getPlayerProperties();
-        
+
         if (properties.length === 0) {
-            container.innerHTML = '<p class="empty-message">You own no properties.</p>';
+            const emptyMsg = document.createElement('p');
+            emptyMsg.className = 'empty-message';
+            emptyMsg.innerHTML = 'You own no properties. Click "Buy Property" to acquire your first!';
+            container.appendChild(emptyMsg);
             return;
         }
-        
-        properties.forEach(property => {
-            const propertyElement = this.createOwnedPropertyElement(property);
-            container.appendChild(propertyElement);
-        });
+
+        // Separate properties by status
+        const underConstruction = properties.filter(p => p.underConstruction);
+        const active = properties.filter(p => !p.underConstruction);
+
+        // Show under construction first
+        if (underConstruction.length > 0) {
+            const constructionHeader = document.createElement('h4');
+            constructionHeader.className = 'property-section-header construction';
+            constructionHeader.textContent = `🔨 Under Construction (${underConstruction.length})`;
+            container.appendChild(constructionHeader);
+
+            underConstruction.forEach(property => {
+                const propertyElement = this.createOwnedPropertyElement(property);
+                container.appendChild(propertyElement);
+            });
+        }
+
+        // Then show active properties
+        if (active.length > 0) {
+            const activeHeader = document.createElement('h4');
+            activeHeader.className = 'property-section-header active';
+            activeHeader.textContent = `🏠 Active Properties (${active.length})`;
+            container.appendChild(activeHeader);
+
+            active.forEach(property => {
+                const propertyElement = this.createOwnedPropertyElement(property);
+                container.appendChild(propertyElement);
+            });
+        }
     },
     
     // Create owned property element
     createOwnedPropertyElement(property) {
         const propertyType = PropertySystem.propertyTypes[property.type];
         const element = document.createElement('div');
-        element.className = 'property-item owned';
+        element.className = `property-item owned ${property.underConstruction ? 'under-construction' : ''} ${property.isRented ? 'rented' : ''}`;
         element.dataset.propertyId = property.id;
-        
+
+        // Determine status badge
+        let statusBadge = '';
+        if (property.underConstruction) {
+            const progress = PropertySystem.getConstructionProgress(property);
+            statusBadge = `<span class="property-badge construction">🔨 Building ${progress}%</span>`;
+        } else if (property.isRented) {
+            statusBadge = `<span class="property-badge rented">📝 Rented</span>`;
+        } else {
+            statusBadge = `<span class="property-badge owned">🏠 Owned</span>`;
+        }
+
+        // Acquisition type indicator
+        const acqType = property.acquisitionType || 'buy';
+        const acqIcons = { buy: '🏠', rent: '📝', build: '🔨' };
+
+        // Construction progress bar
+        let constructionBar = '';
+        if (property.underConstruction) {
+            const progress = PropertySystem.getConstructionProgress(property);
+            constructionBar = `
+                <div class="construction-progress">
+                    <div class="construction-bar">
+                        <div class="construction-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <span class="construction-text">${progress}% complete</span>
+                </div>
+            `;
+        }
+
+        // Rent due warning
+        let rentWarning = '';
+        if (property.isRented && property.rentDueTime) {
+            const currentTime = typeof TimeSystem !== 'undefined' ? TimeSystem.getTotalMinutes() : 0;
+            const timeUntilDue = property.rentDueTime - currentTime;
+            const daysUntilDue = Math.ceil(timeUntilDue / (24 * 60));
+
+            if (daysUntilDue <= 2) {
+                rentWarning = `<div class="rent-warning urgent">⚠️ Rent due in ${daysUntilDue} day${daysUntilDue !== 1 ? 's' : ''}! (${property.monthlyRent} gold)</div>`;
+            } else {
+                rentWarning = `<div class="rent-info">📅 Rent: ${property.monthlyRent} gold in ${daysUntilDue} days</div>`;
+            }
+        }
+
         element.innerHTML = `
             <div class="property-header">
                 <span class="property-icon">${propertyType.icon}</span>
                 <span class="property-name">${propertyType.name}</span>
-                <span class="property-level">Level ${property.level}</span>
+                ${statusBadge}
             </div>
+            ${constructionBar}
             <div class="property-stats">
                 <div class="property-stat">
                     <span class="stat-label">Location:</span>
-                    <span class="stat-value">${GameWorld.locations[property.location].name}</span>
+                    <span class="stat-value">${GameWorld.locations[property.location]?.name || property.locationName}</span>
                 </div>
                 <div class="property-stat">
                     <span class="stat-label">Condition:</span>
-                    <span class="stat-value">${property.condition}%</span>
+                    <span class="stat-value ${property.condition < 50 ? 'warning' : ''}">${property.condition}%</span>
                 </div>
+                ${!property.underConstruction ? `
                 <div class="property-stat">
                     <span class="stat-label">Income:</span>
-                    <span class="stat-value">${PropertySystem.calculatePropertyIncome(property)} gold/day</span>
+                    <span class="stat-value">+${PropertySystem.calculatePropertyIncome ? PropertySystem.calculatePropertyIncome(property) : property.totalIncome || 0} gold/day</span>
                 </div>
                 <div class="property-stat">
                     <span class="stat-label">Employees:</span>
-                    <span class="stat-value">${property.employees.length}/${propertyType.workerSlots || 0}</span>
+                    <span class="stat-value">${property.employees?.length || 0}/${propertyType.workerSlots || 0}</span>
                 </div>
+                ` : ''}
             </div>
+            ${rentWarning}
             <div class="property-actions">
-                <button class="property-action-btn" onclick="PropertyEmployeeUI.showPropertyDetails('${property.id}')">Manage</button>
+                ${!property.underConstruction ? `
+                    <button class="property-action-btn" onclick="PropertyEmployeeUI.showPropertyDetails('${property.id}')">Manage</button>
+                ` : `
+                    <button class="property-action-btn disabled" disabled>Under Construction</button>
+                `}
             </div>
         `;
-        
+
         return element;
     },
     

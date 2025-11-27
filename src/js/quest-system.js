@@ -1,0 +1,2001 @@
+// ═══════════════════════════════════════════════════════════════
+// 📜 QUEST SYSTEM - the chains that bind you to this damn game
+// ═══════════════════════════════════════════════════════════════
+// File Version: 0.5
+// every task, every fetch quest, every "go kill 10 rats" moment
+// all flows through the NPCs who pretend to give a shit about you
+// quest items weigh nothing because even the game pities you
+// ═══════════════════════════════════════════════════════════════
+
+const QuestSystem = {
+    // ═══════════════════════════════════════════════════════════════
+    // 📋 STATE - tracking your endless servitude
+    // ═══════════════════════════════════════════════════════════════
+    initialized: false,
+    activeQuests: {},
+    completedQuests: [],
+    failedQuests: [],
+    discoveredQuests: [], // quests the player knows about (shows details in log)
+    questCompletionTimes: {}, // when quests were completed (for cooldowns and display)
+    questLogOpen: false,
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎒 QUEST ITEMS - special items that exist only for quests
+    // ═══════════════════════════════════════════════════════════════
+    // these weigh nothing and can't be dropped because we're not monsters
+    questItems: {
+        // delivery packages
+        greendale_package: { name: 'Package for Ironhaven', description: 'Sealed merchant goods', quest: 'delivery_ironhaven', icon: '📦' },
+        ironhaven_ore_sample: { name: 'Ore Sample', description: 'High quality iron ore sample', quest: 'ore_quality_check', icon: '�ite' },
+        silk_shipment: { name: 'Silk Shipment', description: 'Delicate silk fabric from Jade Harbor', quest: 'silk_delivery', icon: '🧵' },
+        medicine_bundle: { name: 'Medicine Bundle', description: 'Urgently needed medical supplies', quest: 'urgent_medicine', icon: '💊' },
+        secret_letter: { name: 'Sealed Letter', description: 'A letter with a wax seal - do not open', quest: 'secret_message', icon: '✉️' },
+        royal_decree: { name: 'Royal Decree', description: 'Official document from the Capital', quest: 'royal_summons', icon: '📜' },
+
+        // dungeon artifacts
+        blade_of_virtue: { name: 'Blade of Virtue', description: 'A legendary sword pulled from the Shadow Tower', quest: 'retrieve_blade', icon: '⚔️' },
+        crystal_heart: { name: 'Crystal Heart', description: 'A pulsing gem from the Crystal Cave', quest: 'crystal_retrieval', icon: '💎' },
+        ancient_tome: { name: 'Ancient Tome', description: 'Forbidden knowledge from the ruins', quest: 'forbidden_knowledge', icon: '📕' },
+        dragon_scale: { name: 'Dragon Scale', description: 'Proof of a legendary kill', quest: 'dragon_slayer', icon: '🐉' },
+        shadow_essence: { name: 'Shadow Essence', description: 'Dark energy from Malachar', quest: 'defeat_malachar', icon: '🖤' },
+        frozen_tear: { name: 'Frozen Tear', description: 'Ice crystal from the Frost Lord', quest: 'defeat_frost_lord', icon: '❄️' },
+
+        // evidence/proof items
+        bandit_insignia: { name: 'Bandit Insignia', description: 'Proof of bandits eliminated', quest: 'bandit_cleanup', icon: '🏴' },
+        wolf_pelts: { name: 'Wolf Pelts', description: 'Quality pelts from dangerous wolves', quest: 'wolf_hunt', icon: '🐺' },
+        goblin_ears: { name: 'Goblin Ears', description: 'Disgusting but required proof', quest: 'goblin_menace', icon: '👂' },
+
+        // special quest keys
+        shadow_key: { name: 'Shadow Key', description: 'Opens the inner sanctum', quest: 'shadow_tower_chain', icon: '🗝️' },
+        mine_pass: { name: 'Mining Pass', description: 'Authorization to enter deep mines', quest: 'deep_mine_access', icon: '🎫' },
+        guild_token: { name: 'Guild Token', description: 'Proof of guild membership', quest: 'join_guild', icon: '🏅' }
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📚 QUEST DATABASE - every damn task in this godforsaken realm
+    // ═══════════════════════════════════════════════════════════════
+    quests: {
+        // ═══════════════════════════════════════════════════════════
+        // 🌟 MAIN STORY QUEST CHAIN - The Shadow Rising
+        // ═══════════════════════════════════════════════════════════
+        main_prologue: {
+            id: 'main_prologue',
+            name: 'A New Beginning',
+            description: 'Establish yourself as a trader. Complete your first trade and speak with the village elder.',
+            giver: 'elder',
+            giverName: 'Elder Morin',
+            location: 'greendale',
+            type: 'main',
+            chain: 'shadow_rising',
+            chainOrder: 1,
+            difficulty: 'easy',
+            objectives: [
+                { type: 'buy', count: 1, current: 0, description: 'Make your first purchase' },
+                { type: 'talk', npc: 'elder', completed: false, description: 'Speak with Elder Morin' }
+            ],
+            rewards: { gold: 25, reputation: 10, experience: 20 },
+            timeLimit: null,
+            repeatable: false,
+            prerequisite: null,
+            nextQuest: 'main_rumors',
+            dialogue: {
+                offer: "Welcome to Greendale, young one. Before we discuss important matters, prove yourself as a trader. Make a purchase, then return to me.",
+                progress: "Have you completed a trade yet? The merchants await your coin.",
+                complete: "Good. You have the makings of a capable trader. Now, let me tell you of darker things..."
+            }
+        },
+
+        main_rumors: {
+            id: 'main_rumors',
+            name: 'Whispers of Darkness',
+            description: 'Strange rumors speak of darkness gathering in the north. Travel to Ironhaven and speak with the guard captain.',
+            giver: 'elder',
+            giverName: 'Elder Morin',
+            location: 'greendale',
+            type: 'main',
+            chain: 'shadow_rising',
+            chainOrder: 2,
+            difficulty: 'easy',
+            objectives: [
+                { type: 'visit', location: 'ironhaven', completed: false, description: 'Travel to Ironhaven' },
+                { type: 'talk', npc: 'guard', completed: false, description: 'Speak with Guard Captain' }
+            ],
+            rewards: { gold: 50, reputation: 15, experience: 40 },
+            timeLimit: null,
+            repeatable: false,
+            prerequisite: 'main_prologue',
+            nextQuest: 'main_investigation',
+            dialogue: {
+                offer: "Dark rumors reach my ears. Something stirs in the Shadow Tower to the north. Travel to Ironhaven - their guard captain may know more.",
+                progress: "Have you reached Ironhaven yet? Time may be running short.",
+                complete: "What did the captain say? The darkness grows... we must act."
+            }
+        },
+
+        main_investigation: {
+            id: 'main_investigation',
+            name: 'Into the Shadows',
+            description: 'Investigate the abandoned mines near Ironhaven. Find evidence of dark activity.',
+            giver: 'guard',
+            giverName: 'Captain Aldric',
+            location: 'ironhaven',
+            type: 'main',
+            chain: 'shadow_rising',
+            chainOrder: 3,
+            difficulty: 'medium',
+            objectives: [
+                { type: 'explore', dungeon: 'abandoned_mines', rooms: 5, current: 0, description: 'Explore 5 rooms of the mines' },
+                { type: 'collect', item: 'shadow_essence', count: 1, current: 0, description: 'Find evidence of dark magic' }
+            ],
+            rewards: { gold: 100, items: { potion: 3 }, reputation: 20, experience: 75 },
+            givesQuestItem: 'shadow_essence',
+            timeLimit: null,
+            repeatable: false,
+            prerequisite: 'main_rumors',
+            nextQuest: 'main_preparation',
+            dialogue: {
+                offer: "The elder sent you? Good. We've seen dark figures near the old mines. Investigate - and bring back proof of what lurks there.",
+                progress: "Be careful in those mines. Dark things dwell in the deep places.",
+                complete: "Shadow essence... by the gods. This confirms our fears. The dark wizard Malachar has returned."
+            }
+        },
+
+        main_preparation: {
+            id: 'main_preparation',
+            name: 'Preparing for War',
+            description: 'Gather supplies for the assault on the Shadow Tower. The blacksmith needs iron ore, the apothecary needs herbs.',
+            giver: 'guard',
+            giverName: 'Captain Aldric',
+            location: 'ironhaven',
+            type: 'main',
+            chain: 'shadow_rising',
+            chainOrder: 4,
+            difficulty: 'medium',
+            objectives: [
+                { type: 'collect', item: 'iron_ore', count: 15, current: 0, description: 'Gather 15 iron ore' },
+                { type: 'collect', item: 'herb', count: 10, current: 0, description: 'Gather 10 healing herbs' },
+                { type: 'talk', npc: 'blacksmith', completed: false, description: 'Deliver ore to blacksmith' },
+                { type: 'talk', npc: 'apothecary', completed: false, description: 'Deliver herbs to apothecary' }
+            ],
+            rewards: { gold: 150, items: { sword: 1, potion: 5 }, reputation: 25, experience: 100 },
+            timeLimit: null,
+            repeatable: false,
+            prerequisite: 'main_investigation',
+            nextQuest: 'main_shadow_key',
+            dialogue: {
+                offer: "We must prepare. The blacksmith needs ore for weapons, the apothecary needs herbs for medicine. Gather these supplies - war is coming.",
+                progress: "Do you have the supplies? Every moment we delay, Malachar grows stronger.",
+                complete: "Excellent work. The blacksmith forged you a blade. Take these potions too. You'll need them."
+            }
+        },
+
+        main_shadow_key: {
+            id: 'main_shadow_key',
+            name: 'The Shadow Key',
+            description: 'Find the Shadow Key hidden in the Crystal Cave. Without it, the inner sanctum of the Shadow Tower cannot be breached.',
+            giver: 'elder',
+            giverName: 'Elder Morin',
+            location: 'greendale',
+            type: 'main',
+            chain: 'shadow_rising',
+            chainOrder: 5,
+            difficulty: 'hard',
+            objectives: [
+                { type: 'visit', location: 'crystal_cave', completed: false, description: 'Enter the Crystal Cave' },
+                { type: 'explore', dungeon: 'crystal_cave', rooms: 8, current: 0, description: 'Navigate the cave depths' },
+                { type: 'collect', item: 'shadow_key', count: 1, current: 0, description: 'Retrieve the Shadow Key' }
+            ],
+            rewards: { gold: 200, items: { crystal_heart: 1 }, reputation: 30, experience: 150 },
+            givesQuestItem: 'shadow_key',
+            timeLimit: null,
+            repeatable: false,
+            prerequisite: 'main_preparation',
+            nextQuest: 'main_tower_assault',
+            dialogue: {
+                offer: "Ancient texts speak of a Shadow Key, hidden deep in the Crystal Cave. Without it, Malachar's sanctum is impenetrable. You must find it.",
+                progress: "The Crystal Cave is treacherous. Many have entered, few returned. Be cautious.",
+                complete: "The Shadow Key! You've done what countless others could not. Now... only the final battle remains."
+            }
+        },
+
+        main_tower_assault: {
+            id: 'main_tower_assault',
+            name: 'The Shadow Tower',
+            description: 'Assault the Shadow Tower and defeat the dark wizard Malachar once and for all.',
+            giver: 'elder',
+            giverName: 'Elder Morin',
+            location: 'greendale',
+            type: 'main',
+            chain: 'shadow_rising',
+            chainOrder: 6,
+            difficulty: 'legendary',
+            objectives: [
+                { type: 'visit', location: 'shadow_tower', completed: false, description: 'Enter the Shadow Tower' },
+                { type: 'explore', dungeon: 'shadow_tower', rooms: 10, current: 0, description: 'Climb to the top' },
+                { type: 'defeat', enemy: 'malachar', count: 1, current: 0, description: 'Defeat Malachar' },
+                { type: 'collect', item: 'blade_of_virtue', count: 1, current: 0, description: 'Claim the Blade of Virtue' }
+            ],
+            rewards: { gold: 1000, items: { blade_of_virtue: 1, dark_staff: 1 }, reputation: 100, experience: 500 },
+            givesQuestItem: 'blade_of_virtue',
+            timeLimit: null,
+            repeatable: false,
+            prerequisite: 'main_shadow_key',
+            nextQuest: null,
+            dialogue: {
+                offer: "The time has come. Take the Shadow Key, climb the tower, and end Malachar's reign of terror. The realm is counting on you.",
+                progress: "Steel your resolve. Malachar awaits at the tower's peak.",
+                complete: "You've done it... Malachar is defeated! You are the savior of the realm! The Blade of Virtue is yours by right."
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 🌾 GREENDALE QUESTS - starter zone, farming community
+        // ═══════════════════════════════════════════════════════════
+        greendale_herbs: {
+            id: 'greendale_herbs',
+            name: 'Healing Herbs',
+            description: 'The apothecary needs healing herbs for medicine.',
+            giver: 'apothecary',
+            giverName: 'Helena the Healer',
+            location: 'greendale',
+            type: 'collect',
+            difficulty: 'easy',
+            objectives: [
+                { type: 'collect', item: 'herb', count: 5, current: 0, description: 'Gather 5 healing herbs' }
+            ],
+            rewards: { gold: 40, items: { potion: 2 }, reputation: 10, experience: 20 },
+            timeLimit: null,
+            repeatable: true,
+            repeatCooldown: 1, // days
+            prerequisite: null,
+            dialogue: {
+                offer: "I'm running low on herbs, and the sick keep coming. Could you gather 5 healing herbs? I'll make it worth your while.",
+                progress: "Still gathering? The herb patches are east of the village, near the forest edge.",
+                complete: "Perfect specimens! Here's your payment, and some potions - you might need them out there."
+            }
+        },
+
+        greendale_wheat: {
+            id: 'greendale_wheat',
+            name: 'Wheat for the Mill',
+            description: 'The miller needs 20 wheat to keep the village fed.',
+            giver: 'merchant',
+            giverName: 'Thomas the Miller',
+            location: 'greendale',
+            type: 'collect',
+            difficulty: 'easy',
+            objectives: [
+                { type: 'collect', item: 'wheat', count: 20, current: 0, description: 'Gather 20 wheat' }
+            ],
+            rewards: { gold: 60, items: { bread: 5 }, reputation: 10, experience: 25 },
+            timeLimit: 3,
+            repeatable: true,
+            repeatCooldown: 2,
+            prerequisite: null,
+            dialogue: {
+                offer: "The harvest was poor this season. I need 20 wheat to keep bread on everyone's table. Can you help?",
+                progress: "Any luck finding wheat? Try the farms south of town, or buy from traveling merchants.",
+                complete: "This will keep us fed for weeks! Here - fresh bread, and coin for your trouble."
+            }
+        },
+
+        greendale_delivery_ironhaven: {
+            id: 'greendale_delivery_ironhaven',
+            name: 'Package to Ironhaven',
+            description: 'Deliver a merchant package to the blacksmith in Ironhaven.',
+            giver: 'merchant',
+            giverName: 'Merchant Giles',
+            location: 'greendale',
+            type: 'delivery',
+            difficulty: 'medium',
+            objectives: [
+                { type: 'carry', item: 'greendale_package', count: 1, current: 0, description: 'Carry the package' },
+                { type: 'visit', location: 'ironhaven', completed: false, description: 'Travel to Ironhaven' },
+                { type: 'talk', npc: 'blacksmith', completed: false, description: 'Deliver to blacksmith' }
+            ],
+            rewards: { gold: 80, reputation: 15, experience: 40 },
+            givesQuestItem: 'greendale_package',
+            timeLimit: 2,
+            repeatable: true,
+            repeatCooldown: 1,
+            prerequisite: null,
+            dialogue: {
+                offer: "I've got a package that needs to reach the blacksmith in Ironhaven. Time-sensitive goods. Can you make the delivery?",
+                progress: "The blacksmith's name is Grimjaw. Surly fellow, but he pays well.",
+                complete: "Delivered on time! You're reliable. Here's your cut."
+            }
+        },
+
+        greendale_rat_problem: {
+            id: 'greendale_rat_problem',
+            name: 'Rat Problem',
+            description: 'Giant rats infest the village storehouse. Clear them out.',
+            giver: 'innkeeper',
+            giverName: 'Martha the Innkeep',
+            location: 'greendale',
+            type: 'combat',
+            difficulty: 'easy',
+            objectives: [
+                { type: 'defeat', enemy: 'giant_rat', count: 5, current: 0, description: 'Kill 5 giant rats' }
+            ],
+            rewards: { gold: 35, items: { food: 3 }, reputation: 10, experience: 30 },
+            timeLimit: null,
+            repeatable: true,
+            repeatCooldown: 3,
+            prerequisite: null,
+            dialogue: {
+                offer: "Damn rats are in the storehouse again! Big ones too. Clear 'em out and I'll feed you for free.",
+                progress: "Still rats in there? Hit 'em hard - they bite back.",
+                complete: "Finally! No more squeaking at night. Here, eat up - you've earned it."
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // ⚒️ IRONHAVEN QUESTS - mining/smithing hub
+        // ═══════════════════════════════════════════════════════════
+        ironhaven_ore: {
+            id: 'ironhaven_ore',
+            name: 'Iron in the Fire',
+            description: 'The blacksmith needs iron ore for a special commission.',
+            giver: 'blacksmith',
+            giverName: 'Grimjaw the Smith',
+            location: 'ironhaven',
+            type: 'collect',
+            difficulty: 'medium',
+            objectives: [
+                { type: 'collect', item: 'iron_ore', count: 10, current: 0, description: 'Gather 10 iron ore' }
+            ],
+            rewards: { gold: 120, items: { sword: 1 }, reputation: 20, experience: 60 },
+            timeLimit: null,
+            repeatable: true,
+            repeatCooldown: 2,
+            prerequisite: null,
+            dialogue: {
+                offer: "Got a big order but I'm short on ore. Bring me 10 iron ore and I'll forge you something special.",
+                progress: "The mines to the north have the best ore. Watch out for creatures down there.",
+                complete: "Quality stuff! Here - I forged this blade. Consider it a bonus for good work."
+            }
+        },
+
+        ironhaven_bandit_hunt: {
+            id: 'ironhaven_bandit_hunt',
+            name: 'Bandit Bounty',
+            description: 'Bandits raid the trade routes. Eliminate them.',
+            giver: 'guard',
+            giverName: 'Captain Aldric',
+            location: 'ironhaven',
+            type: 'combat',
+            difficulty: 'hard',
+            objectives: [
+                { type: 'defeat', enemy: 'bandit', count: 5, current: 0, description: 'Kill 5 bandits' },
+                { type: 'collect', item: 'bandit_insignia', count: 3, current: 0, description: 'Collect 3 insignias as proof' }
+            ],
+            rewards: { gold: 200, reputation: 30, experience: 100 },
+            timeLimit: 5,
+            repeatable: true,
+            repeatCooldown: 3,
+            prerequisite: null,
+            dialogue: {
+                offer: "Bandits are bleeding the trade routes dry. 5 gold per head, plus a bonus for insignias. You in?",
+                progress: "They camp in the forests between towns. Hit fast, hit hard.",
+                complete: "Five dead bandits. The roads are safer. Here's your bounty."
+            }
+        },
+
+        ironhaven_coal_run: {
+            id: 'ironhaven_coal_run',
+            name: 'Coal for the Forge',
+            description: 'The forge is running low on coal.',
+            giver: 'blacksmith',
+            giverName: 'Grimjaw the Smith',
+            location: 'ironhaven',
+            type: 'collect',
+            difficulty: 'easy',
+            objectives: [
+                { type: 'collect', item: 'coal', count: 15, current: 0, description: 'Gather 15 coal' }
+            ],
+            rewards: { gold: 50, reputation: 10, experience: 30 },
+            timeLimit: null,
+            repeatable: true,
+            repeatCooldown: 1,
+            prerequisite: null,
+            dialogue: {
+                offer: "Forge is hungry. Need coal. 15 lumps. You get coin. Simple.",
+                progress: "Coal. Mines. Get it.",
+                complete: "Good coal. Fire burns hot now. Take payment."
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 🌊 JADE HARBOR QUESTS - exotic trade hub
+        // ═══════════════════════════════════════════════════════════
+        jade_silk_delivery: {
+            id: 'jade_silk_delivery',
+            name: 'Silk Road Express',
+            description: 'Deliver precious silk to the Royal Capital.',
+            giver: 'merchant',
+            giverName: 'Mei Lin',
+            location: 'jade_harbor',
+            type: 'delivery',
+            difficulty: 'medium',
+            objectives: [
+                { type: 'carry', item: 'silk_shipment', count: 1, current: 0, description: 'Carry silk shipment' },
+                { type: 'visit', location: 'royal_capital', completed: false, description: 'Travel to Royal Capital' },
+                { type: 'talk', npc: 'merchant', completed: false, description: 'Deliver to noble merchant' }
+            ],
+            rewards: { gold: 150, items: { silk: 2 }, reputation: 20, experience: 60 },
+            givesQuestItem: 'silk_shipment',
+            timeLimit: 4,
+            repeatable: true,
+            repeatCooldown: 2,
+            prerequisite: null,
+            dialogue: {
+                offer: "Finest silk needs to reach the Capital. Nobles pay premium for on-time delivery. Interested?",
+                progress: "Handle with care! That silk is worth more than most houses.",
+                complete: "Safe delivery. The nobles are pleased. Your reputation grows."
+            }
+        },
+
+        jade_fish_feast: {
+            id: 'jade_fish_feast',
+            name: 'Fresh Catch',
+            description: 'The inn is hosting a feast. They need fresh fish.',
+            giver: 'innkeeper',
+            giverName: 'Captain Wong',
+            location: 'jade_harbor',
+            type: 'collect',
+            difficulty: 'easy',
+            objectives: [
+                { type: 'collect', item: 'fish', count: 15, current: 0, description: 'Catch 15 fish' }
+            ],
+            rewards: { gold: 45, items: { ale: 3 }, reputation: 10, experience: 25 },
+            timeLimit: 1,
+            repeatable: true,
+            repeatCooldown: 1,
+            prerequisite: null,
+            dialogue: {
+                offer: "Big feast tonight! Need fish - lots of it. 15 should do. Quick now!",
+                progress: "The docks have fishermen selling catch. Or try your luck in the water.",
+                complete: "Just in time! Here's payment, and drink with us tonight!"
+            }
+        },
+
+        jade_smuggler_intel: {
+            id: 'jade_smuggler_intel',
+            name: 'Smuggler\'s Cove',
+            description: 'Investigate the smuggler operations at the cove.',
+            giver: 'guard',
+            giverName: 'Harbor Master Chen',
+            location: 'jade_harbor',
+            type: 'exploration',
+            difficulty: 'hard',
+            objectives: [
+                { type: 'visit', location: 'smugglers_cove', completed: false, description: 'Find Smuggler\'s Cove' },
+                { type: 'explore', dungeon: 'smugglers_cove', rooms: 5, current: 0, description: 'Investigate the hideout' },
+                { type: 'defeat', enemy: 'smuggler', count: 3, current: 0, description: 'Deal with guards' }
+            ],
+            rewards: { gold: 250, items: { exotic_goods: 2 }, reputation: 35, experience: 120 },
+            timeLimit: null,
+            repeatable: false,
+            prerequisite: null,
+            dialogue: {
+                offer: "Smugglers operate from a hidden cove. Find it, see what they're moving. If you have to fight... so be it.",
+                progress: "Follow the rocky coast south. The cove is hidden but not invisible.",
+                complete: "Valuable intel. We'll shut them down. Keep what you found - call it hazard pay."
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 👑 ROYAL CAPITAL QUESTS - political intrigue
+        // ═══════════════════════════════════════════════════════════
+        capital_royal_delivery: {
+            id: 'capital_royal_delivery',
+            name: 'Royal Summons',
+            description: 'Deliver a royal decree to the elder of Greendale.',
+            giver: 'guard',
+            giverName: 'Royal Herald',
+            location: 'royal_capital',
+            type: 'delivery',
+            difficulty: 'medium',
+            objectives: [
+                { type: 'carry', item: 'royal_decree', count: 1, current: 0, description: 'Carry the decree' },
+                { type: 'visit', location: 'greendale', completed: false, description: 'Return to Greendale' },
+                { type: 'talk', npc: 'elder', completed: false, description: 'Deliver to Elder Morin' }
+            ],
+            rewards: { gold: 100, reputation: 25, experience: 50 },
+            givesQuestItem: 'royal_decree',
+            timeLimit: 3,
+            repeatable: false,
+            prerequisite: null,
+            dialogue: {
+                offer: "The crown has a message for Elder Morin of Greendale. Deliver it promptly and discretely.",
+                progress: "Royal business waits for no one. Make haste.",
+                complete: "The crown appreciates swift messengers. You may prove useful again."
+            }
+        },
+
+        capital_noble_wine: {
+            id: 'capital_noble_wine',
+            name: 'Noble Tastes',
+            description: 'A noble requires fine wine from Sunhaven.',
+            giver: 'merchant',
+            giverName: 'Lord Ashworth\'s Steward',
+            location: 'royal_capital',
+            type: 'collect',
+            difficulty: 'medium',
+            objectives: [
+                { type: 'visit', location: 'sunhaven', completed: false, description: 'Travel to Sunhaven' },
+                { type: 'collect', item: 'wine', count: 5, current: 0, description: 'Acquire 5 bottles of wine' },
+                { type: 'talk', npc: 'merchant', completed: false, description: 'Return to the Steward' }
+            ],
+            rewards: { gold: 180, reputation: 20, experience: 70 },
+            timeLimit: 5,
+            repeatable: true,
+            repeatCooldown: 3,
+            prerequisite: null,
+            dialogue: {
+                offer: "Lord Ashworth desires Sunhaven's finest wine. Five bottles. Price is no object - quality is.",
+                progress: "The vineyards of Sunhaven produce the realm's best vintage.",
+                complete: "Excellent selection. Lord Ashworth will be pleased. Your discretion is noted."
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // ☀️ SUNHAVEN QUESTS - wine country, coastal
+        // ═══════════════════════════════════════════════════════════
+        sunhaven_harvest: {
+            id: 'sunhaven_harvest',
+            name: 'Harvest Help',
+            description: 'The vineyard needs help bringing in the grape harvest.',
+            giver: 'merchant',
+            giverName: 'Vintner Rosa',
+            location: 'sunhaven',
+            type: 'collect',
+            difficulty: 'easy',
+            objectives: [
+                { type: 'collect', item: 'grapes', count: 30, current: 0, description: 'Harvest 30 bunches of grapes' }
+            ],
+            rewards: { gold: 50, items: { wine: 2 }, reputation: 15, experience: 35 },
+            timeLimit: 2,
+            repeatable: true,
+            repeatCooldown: 5,
+            prerequisite: null,
+            dialogue: {
+                offer: "Harvest season and we're short-handed! Help gather grapes and I'll pay well - plus some wine for yourself.",
+                progress: "The vines are heavy with fruit. Just pick carefully!",
+                complete: "A wonderful harvest! Here's your pay, and a taste of what those grapes become."
+            }
+        },
+
+        sunhaven_lighthouse: {
+            id: 'sunhaven_lighthouse',
+            name: 'Light the Way',
+            description: 'The lighthouse keeper needs oil to keep ships safe.',
+            giver: 'villager',
+            giverName: 'Old Samuel',
+            location: 'sunhaven',
+            type: 'collect',
+            difficulty: 'easy',
+            objectives: [
+                { type: 'collect', item: 'oil', count: 5, current: 0, description: 'Gather 5 barrels of oil' }
+            ],
+            rewards: { gold: 40, reputation: 10, experience: 25 },
+            timeLimit: null,
+            repeatable: true,
+            repeatCooldown: 2,
+            prerequisite: null,
+            dialogue: {
+                offer: "The lighthouse runs on oil. Ships wreck without it. Help an old man keep the light burning?",
+                progress: "Merchants sell oil, or you can render it from fish. Whatever works.",
+                complete: "The light will burn bright tonight. Ships will find safe harbor. Thank you."
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // ❄️ FROSTHOLM QUESTS - northern frontier
+        // ═══════════════════════════════════════════════════════════
+        frostholm_furs: {
+            id: 'frostholm_furs',
+            name: 'Winter Pelts',
+            description: 'The furrier needs quality pelts for winter gear.',
+            giver: 'merchant',
+            giverName: 'Bjorn the Furrier',
+            location: 'frostholm',
+            type: 'collect',
+            difficulty: 'medium',
+            objectives: [
+                { type: 'collect', item: 'fur', count: 8, current: 0, description: 'Collect 8 quality furs' }
+            ],
+            rewards: { gold: 100, items: { warm_cloak: 1 }, reputation: 15, experience: 50 },
+            timeLimit: null,
+            repeatable: true,
+            repeatCooldown: 2,
+            prerequisite: null,
+            dialogue: {
+                offer: "Winter's coming and I need furs. Good ones. Wolves, bears - whatever you can hunt.",
+                progress: "The forests are dangerous but full of game. Hunt well.",
+                complete: "Fine pelts! Here's a cloak from my best stock. You'll need it up here."
+            }
+        },
+
+        frostholm_wolf_hunt: {
+            id: 'frostholm_wolf_hunt',
+            name: 'Wolf Pack',
+            description: 'A wolf pack threatens the village. Hunt them down.',
+            giver: 'guard',
+            giverName: 'Huntmaster Erik',
+            location: 'frostholm',
+            type: 'combat',
+            difficulty: 'hard',
+            objectives: [
+                { type: 'defeat', enemy: 'wolf', count: 8, current: 0, description: 'Kill 8 wolves' },
+                { type: 'defeat', enemy: 'alpha_wolf', count: 1, current: 0, description: 'Kill the alpha' }
+            ],
+            rewards: { gold: 180, items: { wolf_pelts: 3 }, reputation: 25, experience: 90 },
+            timeLimit: 5,
+            repeatable: true,
+            repeatCooldown: 5,
+            prerequisite: null,
+            dialogue: {
+                offer: "Wolves killed two hunters last week. The pack is bold. We need someone to thin their numbers.",
+                progress: "Follow the howls. The alpha is the key - kill it and the pack scatters.",
+                complete: "The alpha's dead. The pack will disperse. Frostholm sleeps safer tonight."
+            }
+        },
+
+        frostholm_frost_lord: {
+            id: 'frostholm_frost_lord',
+            name: 'The Frost Lord',
+            description: 'An ancient ice elemental awakens in the Frozen Cave. Destroy it.',
+            giver: 'elder',
+            giverName: 'Sage Helga',
+            location: 'frostholm',
+            type: 'boss',
+            difficulty: 'legendary',
+            objectives: [
+                { type: 'visit', location: 'frozen_cave', completed: false, description: 'Enter the Frozen Cave' },
+                { type: 'explore', dungeon: 'frozen_cave', rooms: 8, current: 0, description: 'Reach the inner sanctum' },
+                { type: 'defeat', enemy: 'frost_lord', count: 1, current: 0, description: 'Defeat the Frost Lord' },
+                { type: 'collect', item: 'frozen_tear', count: 1, current: 0, description: 'Claim the Frozen Tear' }
+            ],
+            rewards: { gold: 800, items: { frozen_tear: 1, ice_blade: 1 }, reputation: 80, experience: 400 },
+            givesQuestItem: 'frozen_tear',
+            timeLimit: null,
+            repeatable: false,
+            prerequisite: 'frostholm_wolf_hunt',
+            dialogue: {
+                offer: "The Frost Lord stirs. An elemental of ancient power. If it fully awakens, endless winter will consume us all.",
+                progress: "The Frozen Cave... I sense immense cold emanating from within.",
+                complete: "You've done the impossible. The Frozen Tear... it holds the Frost Lord's power. Guard it well."
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 🏗️ STONEBRIDGE QUESTS - construction/quarry town
+        // ═══════════════════════════════════════════════════════════
+        stonebridge_quarry: {
+            id: 'stonebridge_quarry',
+            name: 'Stone for the Bridge',
+            description: 'The bridge needs repair. Gather quality stone.',
+            giver: 'merchant',
+            giverName: 'Mason Gerald',
+            location: 'stonebridge',
+            type: 'collect',
+            difficulty: 'medium',
+            objectives: [
+                { type: 'collect', item: 'stone', count: 20, current: 0, description: 'Quarry 20 stone blocks' }
+            ],
+            rewards: { gold: 80, reputation: 15, experience: 45 },
+            timeLimit: null,
+            repeatable: true,
+            repeatCooldown: 2,
+            prerequisite: null,
+            dialogue: {
+                offer: "The old bridge is crumbling. I need good stone - 20 blocks. The quarry's open to those who work.",
+                progress: "Swing that pickaxe! Quality stone doesn't quarry itself.",
+                complete: "Solid work! These blocks will hold for centuries."
+            }
+        },
+
+        stonebridge_goblin_menace: {
+            id: 'stonebridge_goblin_menace',
+            name: 'Goblin Menace',
+            description: 'Goblins raid from the Shadow Dungeon. Clear them out.',
+            giver: 'guard',
+            giverName: 'Sergeant Thom',
+            location: 'stonebridge',
+            type: 'combat',
+            difficulty: 'hard',
+            objectives: [
+                { type: 'defeat', enemy: 'goblin', count: 10, current: 0, description: 'Kill 10 goblins' },
+                { type: 'collect', item: 'goblin_ears', count: 5, current: 0, description: 'Collect proof (ears)' }
+            ],
+            rewards: { gold: 150, reputation: 25, experience: 80 },
+            timeLimit: 7,
+            repeatable: true,
+            repeatCooldown: 4,
+            prerequisite: null,
+            dialogue: {
+                offer: "Goblins from the Shadow Dungeon. Vile creatures. Ten dead ones, five sets of ears as proof. That's the bounty.",
+                progress: "They lurk in the dungeon entrance. Nasty but cowardly - kill a few and the rest scatter.",
+                complete: "Ears don't lie. Good hunting. The roads are safer."
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 🏰 DUNGEON QUESTS - special dungeon-related missions
+        // ═══════════════════════════════════════════════════════════
+        dungeon_ancient_tome: {
+            id: 'dungeon_ancient_tome',
+            name: 'Forbidden Knowledge',
+            description: 'An ancient tome lies deep in the Ruins of Eldoria. Retrieve it.',
+            giver: 'elder',
+            giverName: 'Scholar Aldwin',
+            location: 'royal_capital',
+            type: 'exploration',
+            difficulty: 'hard',
+            objectives: [
+                { type: 'visit', location: 'ruins_of_eldoria', completed: false, description: 'Find the Ruins' },
+                { type: 'explore', dungeon: 'ruins_of_eldoria', rooms: 7, current: 0, description: 'Navigate the ruins' },
+                { type: 'collect', item: 'ancient_tome', count: 1, current: 0, description: 'Retrieve the tome' }
+            ],
+            rewards: { gold: 300, items: { ancient_tome: 1 }, reputation: 40, experience: 150 },
+            givesQuestItem: 'ancient_tome',
+            timeLimit: null,
+            repeatable: false,
+            prerequisite: null,
+            dialogue: {
+                offer: "The Ruins of Eldoria contain an ancient tome of forgotten magic. Dangerous, yes, but the knowledge... invaluable.",
+                progress: "The ruins are filled with traps and guardians. Tread carefully.",
+                complete: "The tome! Centuries of lost knowledge, recovered! You have my eternal gratitude."
+            }
+        },
+
+        dungeon_dragon_slayer: {
+            id: 'dungeon_dragon_slayer',
+            name: 'Dragon Slayer',
+            description: 'A dragon nests in the Deep Cavern. Slay it and claim its scale.',
+            giver: 'guard',
+            giverName: 'Knight Commander Vance',
+            location: 'royal_capital',
+            type: 'boss',
+            difficulty: 'legendary',
+            objectives: [
+                { type: 'visit', location: 'deep_cavern', completed: false, description: 'Enter the Deep Cavern' },
+                { type: 'explore', dungeon: 'deep_cavern', rooms: 10, current: 0, description: 'Find the dragon\'s lair' },
+                { type: 'defeat', enemy: 'dragon', count: 1, current: 0, description: 'Slay the dragon' },
+                { type: 'collect', item: 'dragon_scale', count: 1, current: 0, description: 'Claim a scale' }
+            ],
+            rewards: { gold: 2000, items: { dragon_scale: 1, dragonbone_blade: 1 }, reputation: 100, experience: 750 },
+            givesQuestItem: 'dragon_scale',
+            timeLimit: null,
+            repeatable: false,
+            prerequisite: 'main_tower_assault',
+            dialogue: {
+                offer: "You've proven yourself against Malachar. Now... a dragon terrorizes the realm. Only a true hero could face such a beast.",
+                progress: "The dragon hoards treasure in the deepest cavern. Bring fire resistance. Lots of it.",
+                complete: "A dragon slain! You are legend now. The realm will sing of this for generations!"
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════
+        // 🔁 REPEATABLE DAILY/WEEKLY QUESTS
+        // ═══════════════════════════════════════════════════════════
+        daily_trade_route: {
+            id: 'daily_trade_route',
+            name: 'Trade Route Runner',
+            description: 'Complete a trade between any two major cities.',
+            giver: 'merchant',
+            giverName: 'Trader\'s Guild',
+            location: 'any',
+            type: 'trade',
+            difficulty: 'easy',
+            objectives: [
+                { type: 'trade', count: 1, current: 0, description: 'Complete a trade of 100g or more' }
+            ],
+            rewards: { gold: 25, reputation: 5, experience: 15 },
+            timeLimit: 1,
+            repeatable: true,
+            repeatCooldown: 1,
+            prerequisite: null,
+            dialogue: {
+                offer: "The guild rewards active traders. Complete a significant trade today for a bonus.",
+                progress: "Buy low, sell high. That's the trader's way.",
+                complete: "A profitable day! The guild appreciates your contribution."
+            }
+        },
+
+        weekly_bounty: {
+            id: 'weekly_bounty',
+            name: 'Weekly Bounty',
+            description: 'Defeat enemies threatening the realm.',
+            giver: 'guard',
+            giverName: 'Bounty Board',
+            location: 'any',
+            type: 'combat',
+            difficulty: 'medium',
+            objectives: [
+                { type: 'defeat', enemy: 'any', count: 15, current: 0, description: 'Defeat 15 enemies' }
+            ],
+            rewards: { gold: 100, reputation: 20, experience: 75 },
+            timeLimit: 7,
+            repeatable: true,
+            repeatCooldown: 7,
+            prerequisite: null,
+            dialogue: {
+                offer: "Weekly bounty: 15 threats eliminated, 100 gold reward. Simple as that.",
+                progress: "Bandits, wolves, goblins - they all count. Keep fighting.",
+                complete: "Fifteen down. The realm is safer. Here's your bounty."
+            }
+        }
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🚀 INITIALIZATION - waking up this beast
+    // ═══════════════════════════════════════════════════════════════
+    init() {
+        if (this.initialized) {
+            console.log('📜 QuestSystem already awake and judging you');
+            return this;
+        }
+
+        console.log('📜 QuestSystem dragging itself out of bed...');
+        this.loadQuestProgress();
+        this.createQuestLogUI();
+        this.setupEventListeners();
+        this.initialized = true;
+        console.log(`📜 QuestSystem ready - ${Object.keys(this.quests).length} quests to make you suffer`);
+        return this;
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 💾 PERSISTENCE - because losing progress would be too merciful
+    // ═══════════════════════════════════════════════════════════════
+    saveQuestProgress() {
+        const saveData = {
+            activeQuests: this.activeQuests,
+            completedQuests: this.completedQuests,
+            failedQuests: this.failedQuests,
+            discoveredQuests: this.discoveredQuests,
+            questCompletionTimes: this.questCompletionTimes,
+            questItemInventory: this.getQuestItemInventory()
+        };
+        try {
+            localStorage.setItem('medievalTradingGameQuests', JSON.stringify(saveData));
+        } catch (e) {
+            console.error('📜 Save failed - your progress screams into the void:', e);
+        }
+    },
+
+    loadQuestProgress() {
+        try {
+            const saved = localStorage.getItem('medievalTradingGameQuests');
+            if (saved) {
+                const data = JSON.parse(saved);
+                this.activeQuests = data.activeQuests || {};
+                this.completedQuests = data.completedQuests || [];
+                this.failedQuests = data.failedQuests || [];
+                this.discoveredQuests = data.discoveredQuests || [];
+                this.questCompletionTimes = data.questCompletionTimes || {};
+                console.log(`📜 Loaded ${Object.keys(this.activeQuests).length} active, ${this.completedQuests.length} completed quests from the abyss`);
+            }
+        } catch (e) {
+            console.error('📜 Load failed - starting fresh, like your hopes:', e);
+        }
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎒 QUEST ITEM HANDLING - weightless burdens
+    // ═══════════════════════════════════════════════════════════════
+    getQuestItemInventory() {
+        const items = {};
+        for (const questId in this.activeQuests) {
+            const quest = this.activeQuests[questId];
+            if (quest.givesQuestItem) {
+                items[quest.givesQuestItem] = true;
+            }
+        }
+        return items;
+    },
+
+    hasQuestItem(itemId) {
+        return this.questItems[itemId] && this.getQuestItemInventory()[itemId];
+    },
+
+    isQuestItem(itemId) {
+        return !!this.questItems[itemId];
+    },
+
+    getQuestItemWeight(itemId) {
+        // quest items weigh nothing - small mercy in this cruel world
+        return this.isQuestItem(itemId) ? 0 : null;
+    },
+
+    canDropItem(itemId) {
+        // quest items can't be dropped - you're stuck with them
+        return !this.isQuestItem(itemId);
+    },
+
+    giveQuestItem(questId) {
+        const quest = this.quests[questId];
+        if (quest?.givesQuestItem) {
+            const itemId = quest.givesQuestItem;
+            const itemInfo = this.questItems[itemId];
+            if (itemInfo && typeof addMessage === 'function') {
+                addMessage(`Received quest item: ${itemInfo.name}`, 'success');
+            }
+            // quest items are tracked in the quest itself, not regular inventory
+            return true;
+        }
+        return false;
+    },
+
+    removeQuestItem(questId) {
+        const quest = this.activeQuests[questId] || this.quests[questId];
+        if (quest?.givesQuestItem) {
+            // item removed when quest completes
+            return true;
+        }
+        return false;
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📜 QUEST MANAGEMENT - the bureaucracy of adventure
+    // ═══════════════════════════════════════════════════════════════
+    assignQuest(questId, giverNPC = null) {
+        const quest = this.quests[questId];
+        if (!quest) {
+            console.warn(`📜 Quest "${questId}" doesn't exist - nice try`);
+            return { success: false, error: 'Quest not found' };
+        }
+
+        if (this.activeQuests[questId]) {
+            return { success: false, error: 'Quest already active', quest: this.activeQuests[questId] };
+        }
+
+        if (this.completedQuests.includes(questId) && !quest.repeatable) {
+            return { success: false, error: 'Quest already completed' };
+        }
+
+        if (quest.prerequisite && !this.completedQuests.includes(quest.prerequisite)) {
+            return { success: false, error: 'Prerequisite not met', prerequisite: quest.prerequisite };
+        }
+
+        // check cooldown for repeatable quests
+        if (quest.repeatable && quest.repeatCooldown) {
+            const lastCompletion = this.getLastCompletionTime(questId);
+            if (lastCompletion) {
+                const cooldownMs = quest.repeatCooldown * 24 * 60 * 60 * 1000;
+                if (Date.now() - lastCompletion < cooldownMs) {
+                    return { success: false, error: 'Quest on cooldown' };
+                }
+            }
+        }
+
+        const activeQuest = {
+            ...JSON.parse(JSON.stringify(quest)),
+            assignedAt: Date.now(),
+            assignedBy: giverNPC?.name || quest.giverName || quest.giver,
+            expiresAt: quest.timeLimit ? Date.now() + (quest.timeLimit * 24 * 60 * 60 * 1000) : null
+        };
+
+        activeQuest.objectives.forEach(obj => {
+            if (obj.current !== undefined) obj.current = 0;
+            if (obj.completed !== undefined) obj.completed = false;
+        });
+
+        this.activeQuests[questId] = activeQuest;
+
+        // mark quest as discovered
+        this.discoverQuest(questId);
+
+        // give quest item if applicable
+        if (quest.givesQuestItem) {
+            this.giveQuestItem(questId);
+        }
+
+        this.saveQuestProgress();
+
+        if (typeof addMessage === 'function') {
+            addMessage(`New Quest: ${quest.name}`, 'success');
+        }
+
+        document.dispatchEvent(new CustomEvent('quest-started', { detail: { quest: activeQuest } }));
+        this.updateQuestLogUI();
+
+        return { success: true, quest: activeQuest };
+    },
+
+    checkProgress(questId) {
+        const quest = this.activeQuests[questId];
+        if (!quest) {
+            if (this.completedQuests.includes(questId)) return { status: 'completed', questId };
+            if (this.failedQuests.includes(questId)) return { status: 'failed', questId };
+            return { status: 'not_started', questId };
+        }
+
+        let completedObjectives = 0;
+        const totalObjectives = quest.objectives.length;
+
+        quest.objectives.forEach(obj => {
+            if (obj.type === 'collect' || obj.type === 'defeat' || obj.type === 'buy' || obj.type === 'trade') {
+                if ((obj.current || 0) >= obj.count) completedObjectives++;
+            } else if (obj.type === 'explore') {
+                if ((obj.current || 0) >= obj.rooms) completedObjectives++;
+            } else if (obj.completed) {
+                completedObjectives++;
+            }
+        });
+
+        return {
+            status: completedObjectives === totalObjectives ? 'ready_to_complete' : 'in_progress',
+            questId,
+            quest,
+            progress: `${completedObjectives}/${totalObjectives}`,
+            objectives: quest.objectives,
+            timeRemaining: quest.expiresAt ? quest.expiresAt - Date.now() : null
+        };
+    },
+
+    updateProgress(type, data) {
+        let questUpdated = false;
+
+        for (const questId in this.activeQuests) {
+            const quest = this.activeQuests[questId];
+
+            for (const objective of quest.objectives) {
+                if (objective.type !== type) continue;
+
+                let updated = false;
+
+                switch (type) {
+                    case 'collect':
+                        if (data.item === objective.item) {
+                            objective.current = Math.min((objective.current || 0) + (data.count || 1), objective.count);
+                            updated = true;
+                        }
+                        break;
+
+                    case 'buy':
+                    case 'trade':
+                        objective.current = Math.min((objective.current || 0) + 1, objective.count);
+                        updated = true;
+                        break;
+
+                    case 'defeat':
+                        if (data.enemy === objective.enemy || data.enemy === 'any' || objective.enemy === 'any') {
+                            objective.current = Math.min((objective.current || 0) + (data.count || 1), objective.count);
+                            updated = true;
+                        }
+                        break;
+
+                    case 'visit':
+                        if (data.location === objective.location) {
+                            objective.completed = true;
+                            updated = true;
+                        }
+                        break;
+
+                    case 'talk':
+                        if (data.npc === objective.npc || data.npcType === objective.npc) {
+                            objective.completed = true;
+                            updated = true;
+                        }
+                        break;
+
+                    case 'explore':
+                        if (data.dungeon === objective.dungeon) {
+                            objective.current = Math.min((objective.current || 0) + (data.rooms || 1), objective.rooms);
+                            updated = true;
+                        }
+                        break;
+
+                    case 'carry':
+                        if (typeof game !== 'undefined' && game.player?.inventory) {
+                            if (game.player.inventory[objective.item] >= objective.count) {
+                                objective.current = objective.count;
+                                updated = true;
+                            }
+                        }
+                        break;
+                }
+
+                if (updated) {
+                    questUpdated = true;
+                    console.log(`📜 Quest progress: ${quest.name} - ${objective.description || objective.type}`);
+                }
+            }
+        }
+
+        if (questUpdated) {
+            this.saveQuestProgress();
+            this.updateQuestLogUI();
+            this.checkForAutoComplete();
+        }
+    },
+
+    checkForAutoComplete() {
+        for (const questId in this.activeQuests) {
+            const progress = this.checkProgress(questId);
+            if (progress.status === 'ready_to_complete') {
+                if (typeof addMessage === 'function') {
+                    addMessage(`Quest "${this.activeQuests[questId].name}" ready to turn in!`, 'info');
+                }
+            }
+        }
+    },
+
+    completeQuest(questId) {
+        const quest = this.activeQuests[questId];
+        if (!quest) return { success: false, error: 'Quest not active' };
+
+        const progress = this.checkProgress(questId);
+        if (progress.status !== 'ready_to_complete') {
+            return { success: false, error: 'Objectives not complete', progress };
+        }
+
+        const rewards = quest.rewards;
+        const rewardsGiven = { gold: 0, items: {}, reputation: 0, experience: 0 };
+
+        if (typeof game !== 'undefined' && game.player) {
+            if (rewards.gold) {
+                game.player.gold = (game.player.gold || 0) + rewards.gold;
+                rewardsGiven.gold = rewards.gold;
+            }
+
+            if (rewards.items) {
+                for (const [item, qty] of Object.entries(rewards.items)) {
+                    // don't add quest items to regular inventory
+                    if (!this.isQuestItem(item)) {
+                        game.player.inventory = game.player.inventory || {};
+                        game.player.inventory[item] = (game.player.inventory[item] || 0) + qty;
+                    }
+                    rewardsGiven.items[item] = qty;
+                }
+            }
+
+            if (rewards.experience) {
+                game.player.experience = (game.player.experience || 0) + rewards.experience;
+                rewardsGiven.experience = rewards.experience;
+            }
+        }
+
+        if (rewards.reputation && typeof NPCRelationshipSystem !== 'undefined') {
+            NPCRelationshipSystem.modifyReputation(quest.giver, rewards.reputation);
+            rewardsGiven.reputation = rewards.reputation;
+        }
+
+        // remove quest item if applicable
+        this.removeQuestItem(questId);
+
+        // track completion time for cooldowns
+        this.setLastCompletionTime(questId);
+
+        delete this.activeQuests[questId];
+        if (!this.completedQuests.includes(questId)) {
+            this.completedQuests.push(questId);
+        }
+
+        this.saveQuestProgress();
+
+        if (typeof addMessage === 'function') {
+            addMessage(`Quest Complete: ${quest.name}!`, 'success');
+            if (rewardsGiven.gold) addMessage(`+${rewardsGiven.gold} gold`, 'success');
+            for (const [item, qty] of Object.entries(rewardsGiven.items)) {
+                addMessage(`+${qty}x ${item}`, 'success');
+            }
+        }
+
+        document.dispatchEvent(new CustomEvent('quest-completed', { detail: { quest, rewards: rewardsGiven } }));
+        this.updateQuestLogUI();
+
+        // auto-offer next quest in chain
+        if (quest.nextQuest) {
+            console.log(`📜 Next quest in chain: ${quest.nextQuest}`);
+        }
+
+        return { success: true, quest, rewards: rewardsGiven, nextQuest: quest.nextQuest };
+    },
+
+    failQuest(questId) {
+        const quest = this.activeQuests[questId];
+        if (!quest) return { success: false, error: 'Quest not active' };
+
+        this.removeQuestItem(questId);
+        delete this.activeQuests[questId];
+        if (!this.failedQuests.includes(questId)) {
+            this.failedQuests.push(questId);
+        }
+
+        this.saveQuestProgress();
+
+        if (typeof addMessage === 'function') {
+            addMessage(`Quest Failed: ${quest.name}`, 'danger');
+        }
+
+        document.dispatchEvent(new CustomEvent('quest-failed', { detail: { quest } }));
+        this.updateQuestLogUI();
+
+        return { success: true, quest };
+    },
+
+    abandonQuest(questId) {
+        if (this.activeQuests[questId]) {
+            const quest = this.activeQuests[questId];
+            this.removeQuestItem(questId);
+            delete this.activeQuests[questId];
+            this.saveQuestProgress();
+
+            if (typeof addMessage === 'function') {
+                addMessage(`Abandoned: ${quest.name}`, 'warning');
+            }
+
+            this.updateQuestLogUI();
+            return { success: true };
+        }
+        return { success: false, error: 'Quest not active' };
+    },
+
+    // cooldown tracking - stores in both localStorage and questCompletionTimes
+    getLastCompletionTime(questId) {
+        // check our tracked times first
+        if (this.questCompletionTimes && this.questCompletionTimes[questId]) {
+            return this.questCompletionTimes[questId];
+        }
+        // fallback to localStorage
+        try {
+            const times = JSON.parse(localStorage.getItem('questCompletionTimes') || '{}');
+            return times[questId] || null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    setLastCompletionTime(questId) {
+        const now = Date.now();
+        // store in our tracked times for UI display
+        this.questCompletionTimes = this.questCompletionTimes || {};
+        this.questCompletionTimes[questId] = now;
+        // also store in localStorage for persistence
+        try {
+            const times = JSON.parse(localStorage.getItem('questCompletionTimes') || '{}');
+            times[questId] = now;
+            localStorage.setItem('questCompletionTimes', JSON.stringify(times));
+        } catch (e) {
+            console.error('📜 Failed to save completion time:', e);
+        }
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🤖 NPC/API INTEGRATION - what the AI needs to know
+    // ═══════════════════════════════════════════════════════════════
+    getQuestsForNPC(npcType, location) {
+        return Object.values(this.quests).filter(quest => {
+            if (quest.giver !== npcType) return false;
+            if (quest.location && quest.location !== location && quest.location !== 'any') return false;
+            if (this.activeQuests[quest.id]) return false;
+            if (this.completedQuests.includes(quest.id) && !quest.repeatable) return false;
+            if (quest.prerequisite && !this.completedQuests.includes(quest.prerequisite)) return false;
+            return true;
+        });
+    },
+
+    getActiveQuestsForNPC(npcType) {
+        return Object.values(this.activeQuests).filter(quest => {
+            return quest.giver === npcType;
+        });
+    },
+
+    getQuestContextForNPC(npcType, location) {
+        const available = this.getQuestsForNPC(npcType, location);
+        const active = this.getActiveQuestsForNPC(npcType);
+        const readyToComplete = active.filter(q => this.checkProgress(q.id).status === 'ready_to_complete');
+
+        // also find quests where this NPC is the delivery TARGET (not the giver)
+        const deliveriesToReceive = Object.values(this.activeQuests).filter(q => {
+            // look for talk objectives that target this NPC type
+            return q.objectives?.some(obj =>
+                obj.type === 'talk' && obj.npc === npcType && !obj.completed
+            );
+        });
+
+        let context = '\n[QUESTS YOU CAN OFFER OR CHECK]\n';
+
+        // === READY TO COMPLETE (highest priority) ===
+        if (readyToComplete.length > 0) {
+            context += '\n🎉 READY TO COMPLETE (player finished these - reward them!):\n';
+            readyToComplete.forEach(q => {
+                context += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                context += `Quest: "${q.name}" (ID: ${q.id})\n`;
+                context += `Type: ${q.type}\n`;
+
+                // check if it's a delivery quest that needs item taken
+                if (q.type === 'delivery' && q.givesQuestItem) {
+                    const itemInfo = this.questItems[q.givesQuestItem];
+                    context += `⚠️ DELIVERY QUEST - Take the item first!\n`;
+                    context += `  1. Say something like "Ah, you have the ${itemInfo?.name || q.givesQuestItem}!"\n`;
+                    context += `  2. Use: {takeQuestItem:${q.givesQuestItem}}\n`;
+                    context += `  3. Then: {completeQuest:${q.id}}\n`;
+                    context += `  Combined example: "The package! Finally. {takeQuestItem:${q.givesQuestItem}}{completeQuest:${q.id}}"\n`;
+                }
+                // check if it's a collection quest
+                else if (q.type === 'collect') {
+                    const collectObj = q.objectives.find(o => o.type === 'collect');
+                    if (collectObj) {
+                        context += `⚠️ COLLECTION QUEST - Take the items first!\n`;
+                        context += `  1. Say something acknowledging the items\n`;
+                        context += `  2. Use: {takeCollection:${collectObj.item},${collectObj.count}}\n`;
+                        context += `  3. Then: {completeQuest:${q.id}}\n`;
+                        context += `  Combined: "Excellent! ${collectObj.count} ${collectObj.item}. {takeCollection:${collectObj.item},${collectObj.count}}{completeQuest:${q.id}}"\n`;
+                    }
+                } else {
+                    context += `  Just use: {completeQuest:${q.id}}\n`;
+                }
+                context += `Completion dialogue: "${q.dialogue?.complete || 'Well done!'}"\n`;
+                context += `Rewards: ${q.rewards.gold}g`;
+                if (q.rewards.items) context += `, ${Object.entries(q.rewards.items).map(([k,v]) => `${v}x ${k}`).join(', ')}`;
+                context += '\n';
+            });
+        }
+
+        // === DELIVERIES TO RECEIVE (this NPC is the destination) ===
+        if (deliveriesToReceive.length > 0) {
+            context += '\n📦 DELIVERIES COMING TO YOU (player may be delivering):\n';
+            deliveriesToReceive.forEach(q => {
+                const talkObj = q.objectives.find(o => o.type === 'talk' && o.npc === npcType);
+                if (!talkObj) return;
+
+                context += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                context += `Quest: "${q.name}" (ID: ${q.id})\n`;
+                context += `From: ${q.giverName} in ${q.location}\n`;
+
+                if (q.givesQuestItem) {
+                    const itemInfo = this.questItems[q.givesQuestItem];
+                    context += `Player should have: ${itemInfo?.name || q.givesQuestItem} ${itemInfo?.icon || '📦'}\n`;
+                    context += `To accept delivery:\n`;
+                    context += `  1. Use: {confirmDelivery:${q.id},${q.givesQuestItem}}\n`;
+                    context += `  This marks your objective complete and takes the item.\n`;
+                    context += `  The player must return to ${q.giverName} to finish the quest.\n`;
+                    context += `Example: "Ah, the delivery from ${q.giverName}! {confirmDelivery:${q.id},${q.givesQuestItem}} Much appreciated."\n`;
+                } else {
+                    context += `To mark delivery complete: {confirmDelivery:${q.id}}\n`;
+                }
+            });
+        }
+
+        // === IN PROGRESS ===
+        if (active.length > 0) {
+            const inProgress = active.filter(q => this.checkProgress(q.id).status === 'in_progress');
+            if (inProgress.length > 0) {
+                context += '\n⏳ IN PROGRESS (ask about their progress):\n';
+                inProgress.forEach(q => {
+                    const progress = this.checkProgress(q.id);
+                    context += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                    context += `Quest: "${q.name}" (${q.id})\n`;
+                    context += `Progress: ${progress.progress}\n`;
+
+                    // show detailed objective status
+                    if (progress.objectives) {
+                        context += `Objectives:\n`;
+                        progress.objectives.forEach(obj => {
+                            let status = '';
+                            let done = false;
+                            if (obj.count !== undefined) {
+                                status = `${obj.current || 0}/${obj.count}`;
+                                done = (obj.current || 0) >= obj.count;
+                            } else if (obj.rooms !== undefined) {
+                                status = `${obj.current || 0}/${obj.rooms} rooms`;
+                                done = (obj.current || 0) >= obj.rooms;
+                            } else {
+                                status = obj.completed ? '✓' : '○';
+                                done = obj.completed;
+                            }
+                            context += `  ${done ? '✓' : '○'} ${obj.description || obj.type}: ${status}\n`;
+                        });
+                    }
+                    context += `Progress dialogue: "${q.dialogue?.progress || 'How goes the task?'}"\n`;
+                });
+            }
+        }
+
+        // === AVAILABLE TO OFFER ===
+        if (available.length > 0) {
+            context += '\n📋 AVAILABLE TO OFFER (use {assignQuest:questId}):\n';
+            available.forEach(q => {
+                context += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                context += `Quest: "${q.name}"\n`;
+                context += `ID: ${q.id}\n`;
+                context += `Type: ${q.type} | Difficulty: ${q.difficulty}\n`;
+
+                // show what kind of quest this is
+                if (q.type === 'delivery' && q.givesQuestItem) {
+                    const itemInfo = this.questItems[q.givesQuestItem];
+                    context += `📦 DELIVERY QUEST - You give them: ${itemInfo?.name || q.givesQuestItem}\n`;
+                    context += `  (Item is given automatically when you assign the quest)\n`;
+                } else if (q.type === 'collect') {
+                    const collectObj = q.objectives?.find(o => o.type === 'collect');
+                    if (collectObj) {
+                        context += `🎒 COLLECTION QUEST - They must bring you: ${collectObj.count}x ${collectObj.item}\n`;
+                    }
+                } else if (q.type === 'combat') {
+                    const defeatObj = q.objectives?.find(o => o.type === 'defeat');
+                    if (defeatObj) {
+                        context += `⚔️ COMBAT QUEST - They must defeat: ${defeatObj.count}x ${defeatObj.enemy}\n`;
+                    }
+                } else if (q.type === 'boss') {
+                    context += `👹 BOSS QUEST - Dangerous dungeon mission\n`;
+                } else if (q.type === 'exploration') {
+                    context += `🗺️ EXPLORATION QUEST - Dungeon delving required\n`;
+                }
+
+                // show objectives summary
+                if (q.objectives && q.objectives.length > 0) {
+                    context += `Objectives: ${q.objectives.map(o => o.description || `${o.type}`).join(' → ')}\n`;
+                }
+
+                context += `Rewards: ${q.rewards.gold}g`;
+                if (q.rewards.experience) context += `, ${q.rewards.experience} XP`;
+                if (q.rewards.items) context += `, items: ${Object.entries(q.rewards.items).map(([k,v]) => `${v}x ${k}`).join(', ')}`;
+                context += '\n';
+
+                if (q.timeLimit) context += `⏰ Time limit: ${q.timeLimit} days\n`;
+                if (q.prerequisite) {
+                    const prereq = this.quests[q.prerequisite];
+                    context += `⚠️ Requires completing "${prereq?.name || q.prerequisite}" first\n`;
+                }
+
+                context += `To offer: {assignQuest:${q.id}}\n`;
+                context += `Offer dialogue: "${q.dialogue?.offer || 'I have a task for you.'}"\n`;
+            });
+        }
+
+        if (available.length === 0 && active.length === 0 && deliveriesToReceive.length === 0) {
+            context += '\nNo quests available from you right now.\n';
+        }
+
+        return context;
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎨 UI - because even suffering needs a pretty interface
+    // ═══════════════════════════════════════════════════════════════
+
+    // discover a quest (makes it visible in the log with details)
+    discoverQuest(questId) {
+        if (!this.discoveredQuests.includes(questId)) {
+            this.discoveredQuests.push(questId);
+            this.saveQuestProgress();
+            console.log(`📜 Quest discovered: ${this.quests[questId]?.name || questId}`);
+        }
+    },
+
+    // get quest chains for organizing the UI
+    getQuestChains() {
+        const chains = {};
+        Object.values(this.quests).forEach(quest => {
+            const chainName = quest.chain || 'side_quests';
+            if (!chains[chainName]) {
+                chains[chainName] = {
+                    name: this.getChainDisplayName(chainName),
+                    quests: [],
+                    type: quest.type === 'main' ? 'main' : 'side'
+                };
+            }
+            chains[chainName].quests.push(quest);
+        });
+
+        // sort quests within chains by chainOrder
+        Object.values(chains).forEach(chain => {
+            chain.quests.sort((a, b) => (a.chainOrder || 999) - (b.chainOrder || 999));
+        });
+
+        return chains;
+    },
+
+    getChainDisplayName(chainId) {
+        const chainNames = {
+            'shadow_rising': '⭐ The Shadow Rising',
+            'greendale': '🌾 Greendale Tales',
+            'ironhaven': '⚒️ Ironhaven Duties',
+            'jade_harbor': '🚢 Jade Harbor Intrigue',
+            'royal_capital': '👑 Royal Affairs',
+            'sunhaven': '☀️ Sunhaven Stories',
+            'frostholm': '❄️ Frostholm Legends',
+            'stonebridge': '🌉 Stonebridge Matters',
+            'dungeons': '🏰 Dungeon Delving',
+            'repeatable': '🔄 Daily Tasks',
+            'side_quests': '📋 Miscellaneous'
+        };
+        return chainNames[chainId] || chainId;
+    },
+
+    // get progress stats for display
+    getProgress() {
+        const total = Object.keys(this.quests).length;
+        const completed = this.completedQuests.length;
+        const active = Object.keys(this.activeQuests).length;
+        const discovered = this.discoveredQuests.length;
+        const percentage = Math.round((completed / total) * 100);
+        return { total, completed, active, discovered, percentage };
+    },
+
+    createQuestLogUI() {
+        // remove existing if present
+        const existing = document.getElementById('quest-overlay');
+        if (existing) existing.remove();
+
+        // create the overlay matching achievement style
+        const overlay = document.createElement('div');
+        overlay.id = 'quest-overlay';
+        overlay.className = 'quest-overlay';
+        overlay.innerHTML = `
+            <div class="quest-panel">
+                <div class="quest-panel-header">
+                    <h2 class="quest-panel-title">📜 Quest Log</h2>
+                    <button class="close-quest-panel" onclick="QuestSystem.hideQuestLog()">×</button>
+                </div>
+
+                <div class="quest-progress">
+                    <span id="quest-progress-text">0 / 0 (0%)</span>
+                    <div class="quest-progress-bar">
+                        <div class="quest-progress-fill" id="quest-progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="quest-categories">
+                    <button class="quest-category-btn active" onclick="QuestSystem.filterQuests(this, 'all')">All</button>
+                    <button class="quest-category-btn" onclick="QuestSystem.filterQuests(this, 'active')">Active</button>
+                    <button class="quest-category-btn" onclick="QuestSystem.filterQuests(this, 'main')">Main Story</button>
+                    <button class="quest-category-btn" onclick="QuestSystem.filterQuests(this, 'side')">Side Quests</button>
+                    <button class="quest-category-btn" onclick="QuestSystem.filterQuests(this, 'completed')">Completed</button>
+                </div>
+
+                <div class="quest-grid" id="quest-grid">
+                    <!-- quest cards go here -->
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        this.updateQuestLogUI();
+    },
+
+    updateQuestLogUI() {
+        // update progress bar
+        const progress = this.getProgress();
+        const progressText = document.getElementById('quest-progress-text');
+        const progressFill = document.getElementById('quest-progress-fill');
+
+        if (progressText) {
+            progressText.textContent = `${progress.completed} / ${progress.total} Completed (${progress.percentage}%)`;
+        }
+        if (progressFill) {
+            progressFill.style.width = `${progress.percentage}%`;
+        }
+
+        // update grid with current filter
+        this.populateQuestGrid(this.currentFilter || 'all');
+        this.updateQuestTracker();
+    },
+
+    currentFilter: 'all',
+
+    filterQuests(button, category) {
+        // update active button
+        document.querySelectorAll('.quest-category-btn').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+
+        this.currentFilter = category;
+        this.populateQuestGrid(category);
+    },
+
+    populateQuestGrid(category = 'all') {
+        const grid = document.getElementById('quest-grid');
+        if (!grid) return;
+
+        grid.innerHTML = '';
+
+        // get all quests organized by chain
+        const chains = this.getQuestChains();
+        let questsToShow = [];
+
+        // filter based on category
+        Object.entries(chains).forEach(([chainId, chain]) => {
+            chain.quests.forEach(quest => {
+                const isActive = !!this.activeQuests[quest.id];
+                const isCompleted = this.completedQuests.includes(quest.id);
+                const isFailed = this.failedQuests.includes(quest.id);
+                const isDiscovered = this.discoveredQuests.includes(quest.id) || isActive || isCompleted;
+                const isMain = quest.type === 'main';
+
+                // filter logic
+                let show = false;
+                switch (category) {
+                    case 'all':
+                        show = true;
+                        break;
+                    case 'active':
+                        show = isActive;
+                        break;
+                    case 'main':
+                        show = isMain;
+                        break;
+                    case 'side':
+                        show = !isMain;
+                        break;
+                    case 'completed':
+                        show = isCompleted;
+                        break;
+                }
+
+                if (show) {
+                    questsToShow.push({
+                        quest,
+                        chain: chainId,
+                        chainName: chain.name,
+                        isActive,
+                        isCompleted,
+                        isFailed,
+                        isDiscovered,
+                        isMain
+                    });
+                }
+            });
+        });
+
+        // sort: active first, then completed, then undiscovered
+        questsToShow.sort((a, b) => {
+            if (a.isActive && !b.isActive) return -1;
+            if (!a.isActive && b.isActive) return 1;
+            if (a.isCompleted && !b.isCompleted) return -1;
+            if (!a.isCompleted && b.isCompleted) return 1;
+            if (a.isDiscovered && !b.isDiscovered) return -1;
+            if (!a.isDiscovered && b.isDiscovered) return 1;
+            if (a.isMain && !b.isMain) return -1;
+            if (!a.isMain && b.isMain) return 1;
+            return (a.quest.chainOrder || 999) - (b.quest.chainOrder || 999);
+        });
+
+        // render cards
+        questsToShow.forEach(({ quest, chainName, isActive, isCompleted, isFailed, isDiscovered, isMain }) => {
+            const card = this.createQuestCard(quest, chainName, isActive, isCompleted, isFailed, isDiscovered, isMain);
+            grid.appendChild(card);
+        });
+
+        if (questsToShow.length === 0) {
+            grid.innerHTML = '<div class="no-quests">No quests match this filter</div>';
+        }
+    },
+
+    createQuestCard(quest, chainName, isActive, isCompleted, isFailed, isDiscovered, isMain) {
+        const card = document.createElement('div');
+
+        // determine card state class
+        let stateClass = 'undiscovered';
+        if (isActive) stateClass = 'active';
+        else if (isCompleted) stateClass = 'completed';
+        else if (isFailed) stateClass = 'failed';
+        else if (isDiscovered) stateClass = 'available';
+
+        card.className = `quest-card ${stateClass} ${isMain ? 'main-quest' : ''} ${quest.difficulty || ''}`;
+
+        // get quest icon based on type
+        const icon = this.getQuestIcon(quest);
+
+        // undiscovered quests show minimal info
+        if (!isDiscovered && !isActive && !isCompleted) {
+            card.innerHTML = `
+                <div class="quest-card-icon">${isMain ? '⭐' : '❓'}</div>
+                <div class="quest-card-name">${chainName}</div>
+                <div class="quest-card-description">??? Undiscovered ???</div>
+                <div class="quest-card-footer">
+                    <div class="quest-rarity rarity-${quest.difficulty || 'easy'}">${(quest.difficulty || 'UNKNOWN').toUpperCase()}</div>
+                    <div class="quest-locked-badge">HIDDEN</div>
+                </div>
+            `;
+            return card;
+        }
+
+        // active quest - show progress
+        if (isActive) {
+            const activeQuest = this.activeQuests[quest.id];
+            const progress = this.checkProgress(quest.id);
+
+            const objectivesHTML = activeQuest.objectives.map(obj => {
+                let progressText = '';
+                let isDone = false;
+
+                if (obj.count !== undefined) {
+                    progressText = `${obj.current || 0}/${obj.count}`;
+                    isDone = (obj.current || 0) >= obj.count;
+                } else if (obj.rooms !== undefined) {
+                    progressText = `${obj.current || 0}/${obj.rooms}`;
+                    isDone = (obj.current || 0) >= obj.rooms;
+                } else {
+                    progressText = obj.completed ? '✓' : '○';
+                    isDone = obj.completed;
+                }
+
+                return `<div class="quest-objective ${isDone ? 'done' : ''}">${isDone ? '✓' : '○'} ${obj.description || this.getObjectiveText(obj)} ${progressText}</div>`;
+            }).join('');
+
+            card.innerHTML = `
+                <div class="quest-card-icon">${icon}</div>
+                <div class="quest-card-name">${isMain ? '⭐ ' : ''}${quest.name}</div>
+                <div class="quest-card-description">${quest.description}</div>
+                <div class="quest-objectives-mini">${objectivesHTML}</div>
+                <div class="quest-card-footer">
+                    <div class="quest-rarity rarity-${quest.difficulty || 'easy'}">${(quest.difficulty || 'EASY').toUpperCase()}</div>
+                    ${progress.status === 'ready_to_complete'
+                        ? '<div class="quest-ready-badge">READY!</div>'
+                        : '<div class="quest-active-badge">IN PROGRESS</div>'
+                    }
+                </div>
+                ${activeQuest.expiresAt ? `<div class="quest-timer">⏰ ${this.formatTimeRemaining(activeQuest.expiresAt - Date.now())}</div>` : ''}
+            `;
+            return card;
+        }
+
+        // completed quest
+        if (isCompleted) {
+            const completedAt = this.questCompletionTimes[quest.id];
+            const dateStr = completedAt ? new Date(completedAt).toLocaleDateString() : '';
+
+            card.innerHTML = `
+                <div class="quest-card-icon">${icon}</div>
+                <div class="quest-card-name">${isMain ? '⭐ ' : ''}${quest.name}</div>
+                <div class="quest-card-description">${quest.description}</div>
+                <div class="quest-card-footer">
+                    <div class="quest-rarity rarity-${quest.difficulty || 'easy'}">${(quest.difficulty || 'EASY').toUpperCase()}</div>
+                    <div class="quest-completed-badge">✓ COMPLETED</div>
+                </div>
+                ${dateStr ? `<div class="quest-date">Completed on ${dateStr}</div>` : ''}
+            `;
+            return card;
+        }
+
+        // failed quest
+        if (isFailed) {
+            card.innerHTML = `
+                <div class="quest-card-icon">${icon}</div>
+                <div class="quest-card-name">${isMain ? '⭐ ' : ''}${quest.name}</div>
+                <div class="quest-card-description">${quest.description}</div>
+                <div class="quest-card-footer">
+                    <div class="quest-rarity rarity-${quest.difficulty || 'easy'}">${(quest.difficulty || 'EASY').toUpperCase()}</div>
+                    <div class="quest-failed-badge">✗ FAILED</div>
+                </div>
+            `;
+            return card;
+        }
+
+        // available/discovered quest
+        const prereqMet = !quest.prerequisite || this.completedQuests.includes(quest.prerequisite);
+        const prereqQuest = quest.prerequisite ? this.quests[quest.prerequisite] : null;
+
+        card.innerHTML = `
+            <div class="quest-card-icon">${icon}</div>
+            <div class="quest-card-name">${isMain ? '⭐ ' : ''}${quest.name}</div>
+            <div class="quest-card-description">${quest.description}</div>
+            <div class="quest-info-mini">
+                <span>📍 ${this.getLocationDisplayName(quest.location)}</span>
+                <span>👤 ${quest.giverName || quest.giver}</span>
+            </div>
+            <div class="quest-rewards-mini">
+                ${quest.rewards.gold ? `<span>💰 ${quest.rewards.gold}g</span>` : ''}
+                ${quest.rewards.experience ? `<span>⭐ ${quest.rewards.experience} XP</span>` : ''}
+            </div>
+            <div class="quest-card-footer">
+                <div class="quest-rarity rarity-${quest.difficulty || 'easy'}">${(quest.difficulty || 'EASY').toUpperCase()}</div>
+                ${prereqMet
+                    ? '<div class="quest-available-badge">AVAILABLE</div>'
+                    : `<div class="quest-locked-badge">🔒 Requires: ${prereqQuest?.name || quest.prerequisite}</div>`
+                }
+            </div>
+        `;
+
+        return card;
+    },
+
+    getQuestIcon(quest) {
+        const icons = {
+            'main': '⭐',
+            'delivery': '📦',
+            'collect': '🎒',
+            'combat': '⚔️',
+            'boss': '👹',
+            'exploration': '🗺️',
+            'talk': '💬',
+            'repeatable': '🔄',
+            'side': '📋'
+        };
+        return icons[quest.type] || '📜';
+    },
+
+    getLocationDisplayName(locationId) {
+        const names = {
+            'greendale': 'Greendale',
+            'ironhaven': 'Ironhaven',
+            'jade_harbor': 'Jade Harbor',
+            'royal_capital': 'Royal Capital',
+            'sunhaven': 'Sunhaven',
+            'frostholm': 'Frostholm',
+            'stonebridge': 'Stonebridge',
+            'shadow_tower': 'Shadow Tower',
+            'crystal_cave': 'Crystal Cave',
+            'frost_peak': 'Frost Peak',
+            'any': 'Any Location'
+        };
+        return names[locationId] || locationId;
+    },
+
+    getObjectiveText(objective) {
+        switch (objective.type) {
+            case 'collect': return `Collect ${objective.item}`;
+            case 'defeat': return `Defeat ${objective.enemy}`;
+            case 'visit': return `Visit ${objective.location}`;
+            case 'talk': return `Talk to ${objective.npc}`;
+            case 'buy': return 'Make a purchase';
+            case 'trade': return 'Complete a trade';
+            case 'carry': return `Carry ${objective.item}`;
+            case 'explore': return `Explore ${objective.dungeon}`;
+            default: return objective.type;
+        }
+    },
+
+    formatTimeRemaining(ms) {
+        if (ms <= 0) return 'EXPIRED';
+        const hours = Math.floor(ms / 3600000);
+        const days = Math.floor(hours / 24);
+        if (days > 0) return `${days}d ${hours % 24}h`;
+        const minutes = Math.floor((ms % 3600000) / 60000);
+        return `${hours}h ${minutes}m`;
+    },
+
+    updateQuestTracker() {
+        let tracker = document.getElementById('quest-tracker');
+        if (!tracker) {
+            tracker = document.createElement('div');
+            tracker.id = 'quest-tracker';
+            tracker.className = 'quest-tracker';
+            document.body.appendChild(tracker);
+        }
+
+        const activeQuestsList = Object.values(this.activeQuests).slice(0, 3);
+        if (activeQuestsList.length === 0) {
+            tracker.classList.add('hidden');
+            return;
+        }
+
+        tracker.classList.remove('hidden');
+        tracker.innerHTML = `
+            <div class="tracker-header" onclick="QuestSystem.showQuestLog()">
+                📜 Quests (${Object.keys(this.activeQuests).length})
+            </div>
+            <div class="tracker-quests">
+                ${activeQuestsList.map(quest => {
+                    const progress = this.checkProgress(quest.id);
+                    return `
+                        <div class="tracker-quest ${progress.status === 'ready_to_complete' ? 'ready' : ''}">
+                            <span class="tracker-quest-name">${quest.name}</span>
+                            <span class="tracker-quest-progress">${progress.progress}</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    showQuestLog() {
+        if (!document.getElementById('quest-overlay')) {
+            this.createQuestLogUI();
+        }
+        const overlay = document.getElementById('quest-overlay');
+        if (overlay) {
+            overlay.classList.add('active');
+            this.questLogOpen = true;
+            this.updateQuestLogUI();
+        }
+    },
+
+    hideQuestLog() {
+        const overlay = document.getElementById('quest-overlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+            this.questLogOpen = false;
+        }
+    },
+
+    toggleQuestLog() {
+        const overlay = document.getElementById('quest-overlay');
+        if (overlay && overlay.classList.contains('active')) {
+            this.hideQuestLog();
+        } else {
+            this.showQuestLog();
+        }
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎧 EVENT LISTENERS - watching your every move
+    // ═══════════════════════════════════════════════════════════════
+    setupEventListeners() {
+        document.addEventListener('item-received', (e) => {
+            this.updateProgress('collect', { item: e.detail.itemId, count: e.detail.quantity });
+        });
+
+        document.addEventListener('item-purchased', (e) => {
+            this.updateProgress('buy', { item: e.detail.itemId });
+        });
+
+        document.addEventListener('trade-completed', (e) => {
+            this.updateProgress('trade', { value: e.detail.value || 100 });
+        });
+
+        document.addEventListener('enemy-defeated', (e) => {
+            this.updateProgress('defeat', { enemy: e.detail.enemyType, count: 1 });
+        });
+
+        document.addEventListener('location-changed', (e) => {
+            this.updateProgress('visit', { location: e.detail.location });
+        });
+
+        document.addEventListener('npc-interaction', (e) => {
+            this.updateProgress('talk', { npc: e.detail.npcType });
+        });
+
+        document.addEventListener('dungeon-room-explored', (e) => {
+            this.updateProgress('explore', { dungeon: e.detail.dungeon, rooms: 1 });
+        });
+
+        setInterval(() => this.checkExpiredQuests(), 60000);
+    },
+
+    checkExpiredQuests() {
+        const now = Date.now();
+        for (const questId in this.activeQuests) {
+            const quest = this.activeQuests[questId];
+            if (quest.expiresAt && now > quest.expiresAt) {
+                console.log(`📜 Quest expired: ${quest.name} - time's up, loser`);
+                this.failQuest(questId);
+            }
+        }
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🔧 UTILITIES - misc bullshit
+    // ═══════════════════════════════════════════════════════════════
+    getStatus() {
+        return {
+            active: Object.keys(this.activeQuests).length,
+            completed: this.completedQuests.length,
+            failed: this.failedQuests.length,
+            total: Object.keys(this.quests).length
+        };
+    },
+
+    getMainQuestProgress() {
+        const mainQuests = Object.values(this.quests).filter(q => q.type === 'main');
+        const completed = mainQuests.filter(q => this.completedQuests.includes(q.id));
+        return {
+            total: mainQuests.length,
+            completed: completed.length,
+            currentChapter: completed.length + 1
+        };
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 🌍 GLOBAL BINDING - infecting the window object
+// ═══════════════════════════════════════════════════════════════
+if (typeof window !== 'undefined') {
+    window.QuestSystem = QuestSystem;
+}
+
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => QuestSystem.init());
+    } else {
+        QuestSystem.init();
+    }
+}
+
+console.log('📜 QuestSystem loaded... your suffering awaits');
