@@ -434,47 +434,47 @@ body:has(#game-setup-panel:not(.hidden)) #overlay-container {
     font-weight: 500;
 }
 
-/* 🖤 Stats Section - tighter padding for compact display 💀 */
+/* 🖤 Stats Section - ultra compact 💀 */
 .stats-section {
-    padding: 0.5rem 0.8rem !important;
+    padding: 0.3rem 0.5rem !important;
 }
 
-/* 🖤 Stats Grid - compact horizontal layout for 5 attributes 💀 */
+.stats-section .section-title {
+    margin-bottom: 0.2rem;
+}
+
+/* 🖤 Stats Grid - single row, minimal spacing 💀 */
 .stats-grid {
     display: flex;
-    justify-content: space-between;
-    gap: 0.25rem;
+    justify-content: space-around;
+    gap: 0.1rem;
 }
 
 .stat-item {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 0.15rem;
-    padding: 0.25rem 0.4rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-    font-size: 0.75rem;
-    flex: 1;
-    min-width: 0;
+    gap: 0.2rem;
+    padding: 0.15rem 0.3rem;
+    background: none;
+    font-size: 0.8rem;
     cursor: help;
-    transition: background 0.2s ease, transform 0.15s ease;
 }
 
 .stat-item:hover {
-    background: rgba(79, 195, 247, 0.15);
-    transform: translateY(-1px);
+    background: rgba(79, 195, 247, 0.1);
+    border-radius: 3px;
 }
 
 .stat-icon {
-    font-size: 1rem;
+    font-size: 0.85rem;
     line-height: 1;
 }
 
 .stat-value {
     color: #ffd700;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
 }
 
 /* Vitals Section */
