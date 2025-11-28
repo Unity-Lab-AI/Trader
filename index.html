@@ -318,13 +318,13 @@
                 </div>
 
                 <div class="side-panel-section quick-actions">
-                    <button id="menu-btn" class="side-btn">📋 Menu</button>
-                    <button id="inventory-btn" class="side-btn">🎒 Inventory [I]</button>
-                    <button id="character-sheet-btn" class="side-btn" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openCharacterSheet();">👤 Character [C]</button>
-                    <button id="financial-sheet-btn" class="side-btn" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openFinancialSheet();">💰 Finances [F]</button>
-                    <button id="quests-btn" class="side-btn" onclick="if(typeof QuestSystem !== 'undefined') QuestSystem.toggleQuestLog();">📜 Quests [Q]</button>
-                    <button id="property-employee-btn" class="side-btn" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openProperties();">🏠 Properties [P]</button>
-                    <button id="ingame-settings-btn" class="side-btn" onclick="if(typeof SettingsPanel !== 'undefined' && SettingsPanel.show) SettingsPanel.show();">⚙️ Settings [,]</button>
+                    <button id="menu-btn" class="side-btn" onclick="KeyBindings.openMenu();">📋 Menu</button>
+                    <button id="inventory-btn" class="side-btn" onclick="KeyBindings.openInventory();">🎒 Inventory [I]</button>
+                    <button id="character-sheet-btn" class="side-btn" onclick="KeyBindings.openCharacterSheet();">👤 Character [C]</button>
+                    <button id="financial-sheet-btn" class="side-btn" onclick="KeyBindings.openFinancialSheet();">💰 Finances [F]</button>
+                    <button id="quests-btn" class="side-btn" onclick="KeyBindings.openQuests();">📜 Quests [Q]</button>
+                    <button id="property-employee-btn" class="side-btn" onclick="KeyBindings.openProperties();">🏠 Properties [P]</button>
+                    <button id="ingame-settings-btn" class="side-btn" onclick="KeyBindings.openSettings();">⚙️ Settings [,]</button>
                 </div>
 
                 <!-- 🎮 Game Controls Container - for dynamic UI elements -->
@@ -1132,18 +1132,18 @@
 
         <!-- 🎮 Bottom Action Bar - compact row of action buttons -->
         <footer id="bottom-action-bar">
-            <button id="bottom-market-btn" class="action-btn-bottom" title="Visit Market [M]" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openMarket();">🏪</button>
-            <button id="bottom-travel-btn" class="action-btn-bottom" title="Travel [T]" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openTravel();">🗺️</button>
-            <button id="bottom-transport-btn" class="action-btn-bottom" title="Transport [W]" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openTransportation();">🚗</button>
-            <button id="bottom-inventory-btn" class="action-btn-bottom" title="Inventory [I]" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openInventory();">🎒</button>
-            <button id="bottom-character-btn" class="action-btn-bottom" title="Character [C]" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openCharacterSheet();">👤</button>
-            <button id="bottom-people-btn" class="action-btn-bottom" title="People [O]" onclick="if(typeof PeoplePanel !== 'undefined') PeoplePanel.toggle();">👥</button>
-            <button id="bottom-financial-btn" class="action-btn-bottom" title="Finances [F]" onclick="if(typeof KeyBindings !== 'undefined') KeyBindings.openFinancialSheet();">💰</button>
-            <button id="bottom-quests-btn" class="action-btn-bottom" title="Quest Log [Q]" onclick="if(typeof QuestSystem !== 'undefined') QuestSystem.toggleQuestLog();">📜</button>
-            <button id="bottom-achievements-btn" class="action-btn-bottom" title="Achievements" onclick="if(typeof openAchievementPanel === 'function') openAchievementPanel();">🏆</button>
-            <button id="bottom-save-btn" class="action-btn-bottom" title="Save Game [F5]" onclick="if(typeof SaveUISystem !== 'undefined') SaveUISystem.openSaveAsDialog(); else if(typeof SaveLoadUI !== 'undefined') SaveLoadUI.show('saves');">💾</button>
-            <button id="bottom-load-btn" class="action-btn-bottom" title="Load Game [F9]" onclick="if(typeof SaveUISystem !== 'undefined') SaveUISystem.openLoadGameDialog(); else if(typeof SaveLoadUI !== 'undefined') SaveLoadUI.show('load');">📂</button>
-            <button id="bottom-settings-btn" class="action-btn-bottom" title="Settings [,]" onclick="if(typeof SettingsPanel !== 'undefined' && SettingsPanel.show) SettingsPanel.show();">⚙️</button>
+            <button id="bottom-market-btn" class="action-btn-bottom" title="Visit Market [M]" onclick="KeyBindings.openMarket();">🏪</button>
+            <button id="bottom-travel-btn" class="action-btn-bottom" title="Travel [T]" onclick="KeyBindings.openTravel();">🗺️</button>
+            <button id="bottom-transport-btn" class="action-btn-bottom" title="Transport [W]" onclick="KeyBindings.openTransportation();">🚗</button>
+            <button id="bottom-inventory-btn" class="action-btn-bottom" title="Inventory [I]" onclick="KeyBindings.openInventory();">🎒</button>
+            <button id="bottom-character-btn" class="action-btn-bottom" title="Character [C]" onclick="KeyBindings.openCharacterSheet();">👤</button>
+            <button id="bottom-people-btn" class="action-btn-bottom" title="People [O]" onclick="KeyBindings.openPeople();">👥</button>
+            <button id="bottom-financial-btn" class="action-btn-bottom" title="Finances [F]" onclick="KeyBindings.openFinancialSheet();">💰</button>
+            <button id="bottom-quests-btn" class="action-btn-bottom" title="Quest Log [Q]" onclick="KeyBindings.openQuests();">📜</button>
+            <button id="bottom-achievements-btn" class="action-btn-bottom" title="Achievements [A]" onclick="KeyBindings.openAchievements();">🏆</button>
+            <button id="bottom-save-btn" class="action-btn-bottom" title="Save Game [F5]" onclick="KeyBindings.openSave();">💾</button>
+            <button id="bottom-load-btn" class="action-btn-bottom" title="Load Game [F9]" onclick="KeyBindings.openLoad();">📂</button>
+            <button id="bottom-settings-btn" class="action-btn-bottom" title="Settings [,]" onclick="KeyBindings.openSettings();">⚙️</button>
         </footer>
     </div>
 

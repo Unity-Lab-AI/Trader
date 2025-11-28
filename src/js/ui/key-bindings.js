@@ -573,6 +573,16 @@ const KeyBindings = {
         `;
     },
 
+    // ═══════════════════════════════════════════════════════════════
+    // 🎮 UNIFIED PANEL OPENERS - All action bar buttons use these
+    // ═══════════════════════════════════════════════════════════════
+
+    // 📋 Open game menu
+    openMenu() {
+        if (typeof toggleMenu === 'function') toggleMenu();
+        else console.warn('toggleMenu function not found');
+    },
+
     // 🏪 Open market panel
     openMarket() {
         if (typeof openMarket === 'function') openMarket();
@@ -587,7 +597,7 @@ const KeyBindings = {
 
     // 🚗 Open transportation panel
     openTransportation() {
-        if (typeof openTravel === 'function') openTravel(); // Transport uses travel panel
+        if (typeof openTravel === 'function') openTravel();
         else console.warn('openTravel function not found');
     },
 
@@ -597,7 +607,57 @@ const KeyBindings = {
         else console.warn('openInventory function not found');
     },
 
-    // 💰 Open financial sheet 🦇
+    // 👥 Open people panel
+    openPeople() {
+        if (typeof PeoplePanel !== 'undefined' && PeoplePanel.toggle) PeoplePanel.toggle();
+        else console.warn('PeoplePanel not found');
+    },
+
+    // 📜 Open quests panel
+    openQuests() {
+        if (typeof QuestSystem !== 'undefined' && QuestSystem.toggleQuestLog) QuestSystem.toggleQuestLog();
+        else console.warn('QuestSystem not found');
+    },
+
+    // 🏆 Open achievements panel
+    openAchievements() {
+        if (typeof openAchievementPanel === 'function') openAchievementPanel();
+        else if (typeof AchievementSystem !== 'undefined' && AchievementSystem.showPanel) AchievementSystem.showPanel();
+        else console.warn('Achievement panel not found');
+    },
+
+    // 💾 Open save dialog
+    openSave() {
+        if (typeof SaveUISystem !== 'undefined' && SaveUISystem.openSaveAsDialog) SaveUISystem.openSaveAsDialog();
+        else if (typeof SaveLoadUI !== 'undefined' && SaveLoadUI.show) SaveLoadUI.show('saves');
+        else console.warn('Save system not found');
+    },
+
+    // 📂 Open load dialog
+    openLoad() {
+        if (typeof SaveUISystem !== 'undefined' && SaveUISystem.openLoadGameDialog) SaveUISystem.openLoadGameDialog();
+        else if (typeof SaveLoadUI !== 'undefined' && SaveLoadUI.show) SaveLoadUI.show('load');
+        else console.warn('Load system not found');
+    },
+
+    // ⚙️ Open settings panel
+    openSettings() {
+        if (typeof SettingsPanel !== 'undefined' && SettingsPanel.show) SettingsPanel.show();
+        else console.warn('SettingsPanel not found');
+    },
+
+    // 🏠 Open properties panel
+    openProperties() {
+        const panel = document.getElementById('property-employee-panel');
+        if (panel) {
+            panel.classList.remove('hidden');
+            panel.style.display = '';
+        } else {
+            console.warn('property-employee-panel not found');
+        }
+    },
+
+    // 💰 Open financial sheet
     openFinancialSheet() {
         this.createFinancialSheetOverlay();
         if (typeof addMessage === 'function') addMessage('💰 Financial sheet opened [F]');
