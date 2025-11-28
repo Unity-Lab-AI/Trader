@@ -221,7 +221,9 @@ const SaveManager = {
                     marketPrices: game.marketPrices || {},
                     marketPriceModifier: game.marketPriceModifier || 1
                 },
-                settings: game.settings || {}
+                settings: game.settings || {},
+                // 🖤 Panel positions - save player's custom panel layout
+                panelPositions: typeof DraggablePanels !== 'undefined' ? DraggablePanels.getAllPositions() : {}
             }
         };
     },
@@ -486,6 +488,19 @@ const SaveManager = {
                 GameWorldRenderer.resetView?.();
             }
         }, 150);
+
+        // 🖤 Restore panel positions from save
+        if (gameData.panelPositions && typeof DraggablePanels !== 'undefined') {
+            try {
+                // Save to localStorage so DraggablePanels can load them
+                localStorage.setItem(DraggablePanels.STORAGE_KEY, JSON.stringify(gameData.panelPositions));
+                // Apply positions immediately
+                DraggablePanels.loadPositions();
+                console.log('🖤 Panel positions restored from save');
+            } catch (e) {
+                console.warn('🖤 Failed to restore panel positions:', e.message);
+            }
+        }
     },
 
     // ═══════════════════════════════════════════════════════════════

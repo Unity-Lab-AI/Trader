@@ -7277,6 +7277,7 @@ button.secondary:hover {
 }
 
 .achievement-panel {
+    position: relative; /* Required for absolute positioned close button */
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     border: 2px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
@@ -8543,6 +8544,7 @@ button,
 }
 
 .leaderboard-panel {
+    position: relative; /* Required for absolute positioned close button */
     background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
     border: 2px solid #ffd700;
     border-radius: 16px;
