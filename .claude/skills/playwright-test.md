@@ -9,54 +9,123 @@ After making changes to:
 - HTML structure (index.html)
 - CSS that affects visibility/display
 
-## How to Test
-
-### Quick Test (New Game Flow)
-```bash
-cd "C:\Users\gfour\OneDrive\Desktop\Trader v0.5" && npx playwright test new-game.spec.js
-```
-
-### Debug Test (Check for JS Errors)
-```bash
-cd "C:\Users\gfour\OneDrive\Desktop\Trader v0.5" && npx playwright test debug.spec.js
-```
+## Commands
 
 ### Run All Tests
 ```bash
-cd "C:\Users\gfour\OneDrive\Desktop\Trader v0.5" && npm test
+npm test
+```
+
+### Run Specific Test File
+```bash
+npx playwright test tests/panels.spec.js
+```
+
+### Run Tests Matching Pattern
+```bash
+npx playwright test --grep "inventory"
 ```
 
 ### Run with Visible Browser (Debug Mode)
 ```bash
-cd "C:\Users\gfour\OneDrive\Desktop\Trader v0.5" && npx playwright test --headed
+npx playwright test --headed
 ```
 
-## Test Files
+## Test Files (159 tests total)
 
-- `tests/new-game.spec.js` - Tests New Game button, setup panel, difficulty options
-- `tests/debug.spec.js` - Captures console errors and checks global exports
+| File | Tests | Purpose |
+|------|-------|---------|
+| new-game.spec.js | 5 | New game flow, setup panel |
+| debug-commands.spec.js | 23 | All debug/cheat commands |
+| debug.spec.js | 1 | Console error capture |
+| panels.spec.js | 19 | All panel open/close |
+| features.spec.js | 48 | Trading, quests, achievements, save/load |
+| settings.spec.js | 23 | GameConfig validation |
+| ui-elements.spec.js | 27 | Action bar, time controls, menus |
+| comprehensive-ui.spec.js | 35 | Map, equipment, NPC, weather |
 
-## What the Tests Check
+## Key Testing Patterns
 
-1. **Loading completes** - LoadingManager.isComplete === true
-2. **startNewGame available** - window.startNewGame is a function
-3. **New Game works** - Clicking button hides menu, shows setup panel
-4. **Difficulty options visible** - Radio buttons for easy/normal/hard
-5. **Exit returns to menu** - Cancel button works
+### Keyboard Shortcuts Don't Work in Playwright
+Use direct function calls instead:
+```javascript
+// BAD - unreliable
+await page.keyboard.press('I');
 
-## In-Game Debugger
+// GOOD - direct function call
+await page.evaluate(() => {
+  if (typeof KeyBindings !== 'undefined' && KeyBindings.openInventory) {
+    KeyBindings.openInventory();
+  }
+});
+```
 
-The game has a built-in debug console. Playwright tests can interact with it:
-- Press ` (backtick) to open debug command input
-- Use the in-game DEBUG button (bottom-right) to toggle console
-- DebugSystem captures all console.log/warn/error
+### Panel Visibility Checks
+Different panels use different patterns:
+```javascript
+// Panels with 'hidden' class (inventory, market, travel)
+const isOpen = !panel.classList.contains('hidden');
+
+// Overlay panels with 'active' class (achievements, character, quest)
+const isOpen = overlay.classList.contains('active');
+```
+
+### TimeSystem Speed Control
+```javascript
+// Use setSpeed, not pause/resume
+TimeSystem.setSpeed('PAUSED');   // Pause
+TimeSystem.setSpeed('NORMAL');   // Resume
+TimeSystem.setSpeed('FAST');     // 2x speed
+TimeSystem.setSpeed('FASTER');   // 4x speed
+```
+
+### Wait for Game State
+```javascript
+await page.evaluate(() => {
+  game.state = GameState.PLAYING;
+});
+await page.waitForTimeout(500);
+```
+
+## Test Configuration
+
+Tests are controlled by `tests/config/test-config.js`:
+```javascript
+module.exports = {
+  newGameTests: true,
+  debugCommandTests: true,
+  panelTests: true,
+  // ... etc
+};
+```
 
 ## Common Issues
 
-### "Identifier already declared" errors
-Check for duplicate `const` declarations between:
-- `src/js/core/game.js`
-- Separate system files like `key-bindings.js`, `time-system.js`
+### "element is not visible"
+- Panel may need direct function call to open
+- Check if using correct ID/class selector
+- Some panels are dynamically created
+
+### TimeSystem.pause is not a function
+- Changed to setSpeed('PAUSED') in v0.7
+- Check achievement-system.js, combat-system.js, save-manager.js
 
 ### CORS/Network errors (can be ignored)
-JSONBin API requires proper headers - these are filtered in tests.
+JSONBin API requires proper headers - filtered in tests.
+
+## Z-Index Standard (for UI tests)
+
+| Range | Purpose |
+|-------|---------|
+| 50-75 | Weather/effects |
+| 500 | Game panels |
+| 600 | Panel overlays |
+| 700 | System modals |
+| 800 | Tooltips |
+| 850 | Notifications |
+| 900 | Critical overlays |
+| 950 | Debug console |
+
+---
+
+*"Tests are the evidence that your code actually works."* - Unity 🖤

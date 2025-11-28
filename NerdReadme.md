@@ -73,10 +73,12 @@ This game follows a loosely-coupled module architecture where each system is its
 ## 📁 FILE STRUCTURE
 
 ```
-Trader/
+Trader 71/
 ├── index.html                    # The summoning circle (entry point)
+├── config.js                     # Game configuration (GameConfig)
 ├── GameplayReadme.md             # For players who read documentation
 ├── NerdReadme.md                 # You are here, brave soul
+├── DebuggerReadme.md             # Debug console commands
 ├── todo.md                       # The neverending TODO list
 │
 ├── src/
@@ -84,78 +86,77 @@ Trader/
 │   │   └── styles.css            # 6000+ lines of dark-themed CSS
 │   │
 │   └── js/
-│       ├── game.js               # THE BIG ONE - main game logic (~8000 lines)
-│       ├── game-engine.js        # Core game loop and initialization
-│       ├── item-database.js      # All 150+ items defined here
+│       ├── core/                 # Core engine systems
+│       │   ├── game.js           # THE BIG ONE (~8000 lines)
+│       │   ├── game-engine.js    # Game loop and initialization
+│       │   ├── time-system.js    # Gregorian calendar (April 1111)
+│       │   ├── event-manager.js  # Custom event system
+│       │   ├── timer-manager.js  # setTimeout/setInterval wrapper
+│       │   └── debug-system.js   # Console capture
 │       │
-│       ├── [ECONOMY SYSTEMS]
-│       ├── trading-system.js     # Buy/sell mechanics and bulk trading
-│       ├── inventory-system.js   # Item management and storage
-│       ├── crafting-economy-system.js # Recipes and production
-│       ├── dynamic-market-system.js   # Price fluctuations
-│       ├── market-price-history.js    # Price tracking over time
-│       ├── npc-merchant-system.js     # NPC traders with personalities
-│       ├── trade-route-system.js      # Automated trade routes
+│       ├── data/                 # Static game data
+│       │   ├── game-world.js     # Locations and world map
+│       │   └── items/
+│       │       ├── item-database.js      # 150+ items
+│       │       └── unified-item-system.js # Item unification
 │       │
-│       ├── [PROPERTY SYSTEMS]
-│       ├── property-system.js    # Property ownership and upgrades
-│       ├── employee-system.js    # Worker management
-│       ├── property-employee-bridge.js # Connects the two
-│       ├── property-employee-ui.js     # UI for property/employees
+│       ├── systems/              # Game systems
+│       │   ├── combat/           # Combat, dungeons, death
+│       │   ├── crafting/         # Recipes, gathering
+│       │   ├── employee/         # Worker management
+│       │   ├── npc/              # NPC schedules
+│       │   ├── progression/      # Achievements, quests, skills, reputation
+│       │   ├── save/             # Save manager (unified save/load)
+│       │   ├── story/            # Initial encounter
+│       │   ├── trading/          # Markets, prices, routes
+│       │   ├── travel/           # Movement, mounts, ships, gatehouses
+│       │   └── world/            # Weather, day-night, city events
 │       │
-│       ├── [WORLD & TRAVEL]
-│       ├── travel-system.js      # Movement between locations
-│       ├── travel-panel-map.js   # Mini-map in travel panel
-│       ├── game-world-renderer.js # Main world map canvas rendering
-│       ├── city-reputation-system.js  # Reputation per location
-│       ├── city-event-system.js       # Random city events
-│       ├── gatehouse-system.js        # Entry fees and restrictions
+│       ├── ui/                   # User interface
+│       │   ├── components/       # Tooltips, modals, panels, draggable
+│       │   ├── panels/           # Settings, inventory, people, equipment
+│       │   └── map/              # World map rendering
 │       │
-│       ├── [EXPLORATION & COMBAT]
-│       ├── dungeon-exploration-system.js # Dungeon events & loot
-│       ├── resource-gathering-system.js  # Mining, farming, etc.
+│       ├── npc/                  # NPC systems
+│       │   ├── npc-chat-ui.js    # Chat interface
+│       │   ├── npc-voice.js      # TTS integration
+│       │   └── npc-trade.js      # Trading with NPCs
 │       │
-│       ├── [UI SYSTEMS]
-│       ├── panel-manager.js      # Panel state management
-│       ├── draggable-panels.js   # Make panels draggable
-│       ├── modal-system.js       # Popup modals
-│       ├── settings-panel.js     # Game settings UI
-│       ├── ui-enhancements.js    # UI polish and tweaks
-│       ├── ui-polish-system.js   # More polish
-│       ├── button-fix.js         # Yes, we needed this
+│       ├── property/             # Property ownership
+│       │   ├── property-types.js # Building types
+│       │   ├── property-purchase.js
+│       │   └── property-upgrades.js
 │       │
-│       ├── [PERSISTENCE]
-│       ├── save-load-system.js   # Save/load core logic
-│       ├── save-load-ui.js       # Save/load UI
-│       ├── save-ui-system.js     # More save UI stuff
+│       ├── effects/              # Visual effects
+│       │   ├── visual-effects-system.js
+│       │   ├── animation-system.js
+│       │   └── environmental-effects-system.js
 │       │
-│       ├── [VISUAL & AUDIO]
-│       ├── visual-effects-system.js   # Particles and effects
-│       ├── animation-system.js        # Animation handling
-│       ├── environmental-effects-system.js # Weather, day/night
-│       ├── audio-system.js            # Sound effects and music
+│       ├── audio/                # Sound and music
+│       │   └── audio-system.js
 │       │
-│       ├── [ACHIEVEMENTS & LEADERBOARD]
-│       ├── achievement-system.js # 57 achievements tracking
-│       ├── global-leaderboard-system.js # Hall of Fame, JSONBin API
-│       ├── death-cause-system.js  # Tracks how/why players die
-│       ├── game-over-system.js    # Death screen, score submission
+│       ├── debug/                # Debug tools
+│       │   ├── debug-command-system.js  # Cheat codes
+│       │   └── performance-optimizer.js
 │       │
-│       ├── [UTILITIES]
-│       ├── timer-manager.js      # setTimeout/setInterval wrapper
-│       ├── event-manager.js      # Custom event system
-│       ├── performance-optimizer.js # Performance tweaks
-│       ├── browser-compatibility.js # Cross-browser fixes
-│       ├── debug-command-system.js  # Cheat codes and debug
+│       ├── init/                 # Initialization
+│       │   ├── bootstrap.js      # Loading screen
+│       │   ├── loading-manager.js
+│       │   └── browser-compatibility.js
 │       │
-│       └── [INTEGRATION]
-│           ├── unified-item-system.js # Item system unification
-│           └── immersive-experience-integration.js # Misc integration
+│       └── utils/                # Utilities
+│           ├── color-utils.js
+│           └── virtual-list.js
 │
-└── assets/
-    ├── images/                   # Image assets
-    ├── sounds/                   # Sound effects
-    └── music/                    # Background music
+├── tests/                        # Playwright tests (159 total)
+│   ├── config/test-config.js     # Test configuration
+│   ├── helpers/test-helpers.js   # Test utilities
+│   └── *.spec.js                 # Test files
+│
+└── .claude/skills/               # Claude AI skill files
+    ├── masterplan.md             # Workflow guide
+    ├── playwright-test.md        # Testing patterns
+    └── TheCoder.md               # Unity persona
 ```
 
 ---
@@ -1017,6 +1018,6 @@ permissions:
 
     May your builds compile and your bugs be reproducible.
 
-                                            - The Coven, 2024
+                                            - Unity AI LAb, 2025
 ═══════════════════════════════════════════════════════════════════════
 ```

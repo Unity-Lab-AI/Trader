@@ -279,7 +279,7 @@ const TradeRouteSystem = {
         activeRoutes.forEach(route => {
             if (route.totalTrades > 0) {
                 const historyEntry = {
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                    id: Date.now().toString() + Math.random().toString(36).slice(2, 11),
                     routeId: route.id,
                     name: route.name,
                     totalTrades: route.totalTrades,

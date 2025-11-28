@@ -242,7 +242,7 @@ const Bootstrap = {
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 10000;
+            z-index: 999; /* Z-INDEX STANDARD: Bootstrap loading (highest) */
             font-family: 'Segoe UI', sans-serif;
         `;
 

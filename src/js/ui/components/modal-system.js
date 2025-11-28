@@ -136,7 +136,7 @@ const ModalSystem = {
                     display: none;
                     justify-content: center;
                     align-items: center;
-                    z-index: 1000;
+                    z-index: 700; /* Z-INDEX STANDARD: System modals */
                     padding: 20px;
                     box-sizing: border-box;
                 }

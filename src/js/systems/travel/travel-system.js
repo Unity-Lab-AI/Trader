@@ -1993,7 +1993,7 @@ const TravelSystem = {
             border: 2px solid #ffd700;
             border-radius: 12px;
             padding: 1.5rem 2rem;
-            z-index: 10000;
+            z-index: 850; /* Z-INDEX STANDARD: Notifications (arrival) */
             animation: arrivalSlideIn 0.5s ease-out, arrivalFadeOut 0.5s ease-in 3s forwards;
             box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
             text-align: center;
@@ -2942,7 +2942,7 @@ const TravelSystem = {
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
                     pointer-events: none;
-                    z-index: 10000;
+                    z-index: 800; /* Z-INDEX STANDARD: Tooltips (map) */
                     max-width: 300px;
                     opacity: 0;
                     transition: opacity 0.3s ease-in-out;

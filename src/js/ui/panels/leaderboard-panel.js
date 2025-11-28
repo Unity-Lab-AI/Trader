@@ -617,7 +617,7 @@ const GlobalLeaderboardSystem = {
     },
 
     generateId() {
-        return 'lb_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+        return 'lb_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 11);
     },
 
     // Calculate final score from game state
@@ -729,7 +729,8 @@ const GlobalLeaderboardSystem = {
             this.leaderboard.slice(0, this.config.maxEntries) :
             this.leaderboard.slice(0, this.config.displayEntries);
 
-        container.innerHTML = entriesToShow.map((entry, index) => {
+        // 🖤 Build complete HTML string to avoid multiple reflows
+        let html = entriesToShow.map((entry, index) => {
             const rank = index + 1;
             const rankIcon = rank === 1 ? '👑' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
             const difficultyBadge = this.getDifficultyBadge(entry.difficulty);
@@ -758,12 +759,14 @@ const GlobalLeaderboardSystem = {
 
         // Add total count indicator if showing compact view
         if (!showAll && this.leaderboard.length > this.config.displayEntries) {
-            container.innerHTML += `
+            html += `
                 <div class="leaderboard-more-indicator">
                     <span>...and ${this.leaderboard.length - this.config.displayEntries} more champions</span>
                 </div>
             `;
         }
+
+        container.innerHTML = html;
     },
 
     // Render full Hall of Champions with all 100 entries

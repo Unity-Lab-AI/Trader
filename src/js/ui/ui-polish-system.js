@@ -41,7 +41,8 @@ const UIPolishSystem = {
             try {
                 this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
             } catch (error) {
-                console.error('Failed to load UI polish settings:', error);
+                // 🖤 Silent fallback - corrupt data just means we use defaults
+                localStorage.removeItem('tradingGameUIPolishSettings');
             }
         }
         this.applySettings();
@@ -143,7 +144,7 @@ const UIPolishSystem = {
                 border-radius: 4px;
                 font-size: 14px;
                 pointer-events: none;
-                z-index: 10000;
+                z-index: 800; /* Z-INDEX STANDARD: Tooltips */
                 opacity: 0;
                 transition: opacity 0.2s ease-in-out;
                 max-width: 200px;
@@ -169,7 +170,7 @@ const UIPolishSystem = {
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                z-index: 10001;
+                z-index: 850; /* Z-INDEX STANDARD: Notifications */
                 pointer-events: none;
             }
             

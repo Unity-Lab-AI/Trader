@@ -557,7 +557,7 @@ const ReputationSystem = {
                 background: ${colors[type] || colors.info};
                 color: ${type === 'warning' ? '#000' : '#fff'};
                 border-radius: 8px;
-                z-index: 10001;
+                z-index: 850; /* Z-INDEX STANDARD: Notifications (reputation) */
                 animation: repSlideIn 0.3s ease;
                 font-family: 'Crimson Text', serif;
                 max-width: 300px;
@@ -730,7 +730,7 @@ const ReputationSystem = {
                 background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
                 border: 2px solid #ffd700;
                 border-radius: 12px;
-                z-index: 10000;
+                z-index: 600; /* Z-INDEX STANDARD: Panel overlays (reputation) */
                 opacity: 0;
                 transition: all 0.3s ease;
                 display: flex;
@@ -956,7 +956,7 @@ const ReputationSystem = {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                z-index: 10001;
+                z-index: 700; /* Z-INDEX STANDARD: System modals (bounty) */
             }
 
             .bounty-dialog-content {

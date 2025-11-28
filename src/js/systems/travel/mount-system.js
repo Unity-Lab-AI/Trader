@@ -823,7 +823,7 @@ const MountSystem = {
                 background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
                 border: 2px solid #8b4513;
                 border-radius: 12px;
-                z-index: 10000;
+                z-index: 600; /* Z-INDEX STANDARD: Panel overlays (mount) */
                 opacity: 0;
                 transition: all 0.3s ease;
                 display: flex;
@@ -1130,7 +1130,7 @@ const MountSystem = {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                z-index: 10001;
+                z-index: 700; /* Z-INDEX STANDARD: System modals (mount details) */
             }
 
             .mount-details-content {

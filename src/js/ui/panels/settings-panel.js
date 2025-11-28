@@ -55,8 +55,9 @@ const SettingsPanel = {
                 try {
                     this.currentSettings[category] = { ...this.defaultSettings[category], ...JSON.parse(savedSettings) };
                 } catch (error) {
-                    console.error(`Failed to load ${category} settings:`, error);
+                    // 🖤 Silent fallback - corrupt data just means we use defaults
                     this.currentSettings[category] = { ...this.defaultSettings[category] };
+                    localStorage.removeItem(`tradingGame${category.charAt(0).toUpperCase() + category.slice(1)}Settings`);
                 }
             } else {
                 this.currentSettings[category] = { ...this.defaultSettings[category] };
@@ -659,7 +660,7 @@ const SettingsPanel = {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                z-index: 99999;
+                z-index: 700; /* Z-INDEX STANDARD: System modals (settings) */
                 display: none;
             }
             

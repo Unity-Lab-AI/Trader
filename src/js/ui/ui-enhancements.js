@@ -1191,7 +1191,10 @@ const KeyboardShortcuts = {
     // Initialize all enhancements
     initialize() {
         this.init();
-        this.loadSettings();
+        // loadSettings was moved to SettingsPanel - load via that instead
+        if (typeof SettingsPanel !== 'undefined' && SettingsPanel.loadSettings) {
+            SettingsPanel.loadSettings();
+        }
         this.enhanceButtonInteractions();
         this.createTooltips();
         this.createParticleEffects();

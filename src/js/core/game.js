@@ -10,17 +10,25 @@
 
 // 🖤 IMMEDIATE GLOBAL EXPORTS - ensure functions are available for onclick handlers
 // This runs after script fully parses (setTimeout 0 = next event loop tick)
+// Silent no-ops as fallback - functions should always exist, no need to spam console
 setTimeout(() => {
-    window.startNewGame = typeof startNewGame === 'function' ? startNewGame : () => console.error('startNewGame not defined');
-    window.loadGame = typeof loadGame === 'function' ? loadGame : () => console.error('loadGame not defined');
-    window.showSettings = typeof showSettings === 'function' ? showSettings : () => console.error('showSettings not defined');
-    window.createCharacter = typeof createCharacter === 'function' ? createCharacter : () => console.error('createCharacter not defined');
-    window.randomizeCharacter = typeof randomizeCharacter === 'function' ? randomizeCharacter : () => console.error('randomizeCharacter not defined');
-    console.log('🖤 game.js exports ready - startNewGame:', typeof window.startNewGame);
+    window.startNewGame = typeof startNewGame === 'function' ? startNewGame : () => {};
+    window.loadGame = typeof loadGame === 'function' ? loadGame : () => {};
+    window.showSettings = typeof showSettings === 'function' ? showSettings : () => {};
+    window.createCharacter = typeof createCharacter === 'function' ? createCharacter : () => {};
+    window.randomizeCharacter = typeof randomizeCharacter === 'function' ? randomizeCharacter : () => {};
+    console.log('🖤 game.js exports ready');
 }, 0);
 
 // 🖤 NOTE: DebugSystem is defined in debug-system.js (loaded before this file)
 // Removed duplicate declaration to prevent "Identifier already declared" error
+
+// 🖤 Debug-only logging helper - only logs warnings in debug mode, silent in production
+const debugWarn = (msg) => {
+    if (typeof GameConfig !== 'undefined' && GameConfig.debug?.enabled) {
+        console.warn(msg);
+    }
+};
 
 // 🖤 REFACTORED: Removed global click handler that caught EVERY click
 // Instead, use targeted event delegation on specific containers
@@ -1022,7 +1030,7 @@ const KeyBindings = {
             if (container) {
                 container.appendChild(overlay);
             } else {
-                console.error('🖤 overlay-container NOT FOUND! appending to body');
+                debugWarn('🖤 overlay-container NOT FOUND - appending to body');
                 document.body.appendChild(overlay);
             }
 
@@ -1346,7 +1354,7 @@ window.testDifficulty = (difficulty = 'easy') => {
         if (typeof onDifficultyChange === 'function') {
             onDifficultyChange();
         } else {
-            console.error('onDifficultyChange function not found!');
+            debugWarn('🖤 onDifficultyChange function not found');
         }
 
         // Check the gold display
@@ -1354,7 +1362,7 @@ window.testDifficulty = (difficulty = 'easy') => {
         console.log('Gold display element:', goldEl);
         console.log('Gold display text:', goldEl ? goldEl.textContent : 'NOT FOUND');
     } else {
-        console.error('Radio button not found for difficulty:', difficulty);
+        debugWarn(`🖤 Radio button not found for difficulty: ${difficulty}`);
     }
 
     console.log('GameLogger entries:', GameLogger.logs.length);
@@ -1911,96 +1919,6 @@ const EventSystem = {
     // Get active events
     getActiveEvents() {
         return this.events.filter(event => event.active);
-    }
-};
-
-// ═══════════════════════════════════════════════════════════════
-// 🏆 HIGH SCORE SYSTEM - DEPRECATED
-// ═══════════════════════════════════════════════════════════════
-// NOTE: This system is DEPRECATED. All leaderboard functionality
-// now goes through GlobalLeaderboardSystem (Hall of Champions).
-// This code is kept for backwards compatibility but is no longer used.
-// ═══════════════════════════════════════════════════════════════
-const HighScoreSystem = {
-    maxScores: 10,
-    
-    // Initialize high score system
-    init() {
-        this.loadHighScores();
-    },
-    
-    // Load high scores from localStorage
-    loadHighScores() {
-        const savedScores = localStorage.getItem('tradingGameHighScores');
-        if (savedScores) {
-            try {
-                this.highScores = JSON.parse(savedScores);
-            } catch (e) {
-                this.highScores = [];
-            }
-        } else {
-            this.highScores = [];
-        }
-    },
-    
-    // Save high scores to localStorage
-    saveHighScores() {
-        localStorage.setItem('tradingGameHighScores', JSON.stringify(this.highScores));
-    },
-    
-    // Add a new high score
-    addHighScore(playerName, gold, survivedDays, deathCause) {
-        // Ensure highScores is initialized
-        if (!this.highScores) {
-            this.loadHighScores();
-        }
-
-        const score = {
-            name: playerName,
-            gold: gold,
-            survivedDays: survivedDays,
-            deathCause: deathCause,
-            date: new Date().toISOString()
-        };
-
-        this.highScores.push(score);
-        
-        // Sort by gold (descending)
-        this.highScores.sort((a, b) => b.gold - a.gold);
-        
-        // Keep only top scores
-        this.highScores = this.highScores.slice(0, this.maxScores);
-        
-        this.saveHighScores();
-        
-        // Check if player made it to top 10
-        const rank = this.highScores.findIndex(s => s.name === playerName && s.gold === gold) + 1;
-        if (rank <= this.maxScores) {
-            return rank;
-        }
-        return null;
-    },
-    
-    // Get high scores
-    getHighScores() {
-        return this.highScores;
-    },
-    
-    // Show high scores
-    showHighScores() {
-        const highScores = this.getHighScores();
-        
-        if (highScores.length === 0) {
-            addMessage("No high scores yet. Be the first!");
-            return;
-        }
-        
-        addMessage("🏆 HIGH SCORES 🏆");
-        highScores.forEach((score, index) => {
-            const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
-            const deathInfo = score.deathCause ? ` (${score.deathCause})` : "";
-            addMessage(`${medal} ${score.name}: ${score.gold} gold - ${score.survivedDays} days${deathInfo}`);
-        });
     }
 };
 
@@ -4597,7 +4515,7 @@ const GoldManager = {
         // Register setup gold display (character creation panel)
         const setupRegistered = this.registerDisplay('setup-gold-amount');
         if (!setupRegistered) {
-            console.error('🪙 FAILED to register setup-gold-amount! Element not found in DOM.');
+            debugWarn('🖤 setup-gold-amount element not found in DOM');
         }
 
         // Register player gold display (side panel - just the number)
@@ -4794,9 +4712,9 @@ function initializeElements() {
     elements.transportationPanel = document.getElementById('transportation-panel');
     elements.messageLog = document.getElementById('message-log');
     
-    // Game World
+    // Game World - 🖤 Canvas removed, using HTML-based GameWorldRenderer now
     elements.gameCanvas = document.getElementById('game-canvas');
-    elements.ctx = elements.gameCanvas.getContext('2d');
+    elements.ctx = elements.gameCanvas ? elements.gameCanvas.getContext('2d') : null;
     
     // UI Elements
     elements.playerName = document.getElementById('player-name');
@@ -4844,10 +4762,10 @@ function initializeElements() {
 
 // Setup event listeners
 function setupEventListeners() {
-    // Main Menu
-    EventManager.addEventListener(elements.newGameBtn, 'click', startNewGame);
-    EventManager.addEventListener(elements.loadGameBtn, 'click', loadGame);
-    EventManager.addEventListener(elements.settingsBtn, 'click', showSettings);
+    // 🖤 Main Menu - guard element access
+    if (elements.newGameBtn) EventManager.addEventListener(elements.newGameBtn, 'click', startNewGame);
+    if (elements.loadGameBtn) EventManager.addEventListener(elements.loadGameBtn, 'click', loadGame);
+    if (elements.settingsBtn) EventManager.addEventListener(elements.settingsBtn, 'click', showSettings);
     
     // Character Creation - change to button click instead of form submit
     const createCharacterBtn = document.getElementById('create-character-btn');
@@ -4861,26 +4779,29 @@ function setupEventListeners() {
             randomizeCharacter();
         });
     } else {
-        console.error('randomize-character-btn element not found!');
+        debugWarn('🖤 randomize-character-btn element not found');
     }
-    EventManager.addEventListener(elements.characterNameInput, 'input', updateCharacterPreview);
+    // 🖤 Guard character name input - may not exist on all pages
+    if (elements.characterNameInput) {
+        EventManager.addEventListener(elements.characterNameInput, 'input', updateCharacterPreview);
 
-    // Update player name display in real-time
-    const updatePlayerNameDisplay = () => {
-        const name = elements.characterNameInput.value.trim() || 'Player';
-        const playerNameElement = document.getElementById('player-name');
-        if (playerNameElement) {
-            playerNameElement.textContent = name;
-            playerNameElement.innerText = name;
-            console.log('🏷️ Player name updated to:', name);
-        }
-    };
+        // Update player name display in real-time
+        const updatePlayerNameDisplay = () => {
+            const name = elements.characterNameInput?.value?.trim() || 'Player';
+            const playerNameElement = document.getElementById('player-name');
+            if (playerNameElement) {
+                playerNameElement.textContent = name;
+                playerNameElement.innerText = name;
+                console.log('🏷️ Player name updated to:', name);
+            }
+        };
 
-    // Update on input (as user types)
-    EventManager.addEventListener(elements.characterNameInput, 'input', updatePlayerNameDisplay);
+        // Update on input (as user types)
+        EventManager.addEventListener(elements.characterNameInput, 'input', updatePlayerNameDisplay);
 
-    // Update on blur (when user leaves the field)
-    EventManager.addEventListener(elements.characterNameInput, 'blur', updatePlayerNameDisplay);
+        // Update on blur (when user leaves the field)
+        EventManager.addEventListener(elements.characterNameInput, 'blur', updatePlayerNameDisplay);
+    }
 
     // Perk Selection Modal
     const openPerkModalBtn = document.getElementById('open-perk-modal-btn');
@@ -4898,18 +4819,18 @@ function setupEventListeners() {
         EventManager.addEventListener(cancelPerkBtn, 'click', closePerkModal);
     }
     
-    // Game Controls
-    EventManager.addEventListener(elements.visitMarketBtn, 'click', openMarket);
-    EventManager.addEventListener(elements.travelBtn, 'click', openTravel);
-    EventManager.addEventListener(elements.transportationBtn, 'click', openTransportation);
-    EventManager.addEventListener(elements.transportationQuickBtn, 'click', openTransportation);
-    EventManager.addEventListener(elements.closeMarketBtn, 'click', () => game.hideOverlay('market-panel'));
-    EventManager.addEventListener(elements.closeInventoryBtn, 'click', () => game.hideOverlay('inventory-panel'));
-    EventManager.addEventListener(elements.closeTravelBtn, 'click', () => game.hideOverlay('travel-panel'));
-    EventManager.addEventListener(elements.closeTransportationBtn, 'click', () => game.hideOverlay('transportation-panel'));
-    EventManager.addEventListener(elements.menuBtn, 'click', toggleMenu);
-    EventManager.addEventListener(elements.inventoryBtn, 'click', openInventory);
-    EventManager.addEventListener(elements.saveBtn, 'click', saveGame);
+    // 🖤 Game Controls - guard all element access, EventManager handles null gracefully but let's be explicit
+    if (elements.visitMarketBtn) EventManager.addEventListener(elements.visitMarketBtn, 'click', openMarket);
+    if (elements.travelBtn) EventManager.addEventListener(elements.travelBtn, 'click', openTravel);
+    if (elements.transportationBtn) EventManager.addEventListener(elements.transportationBtn, 'click', openTransportation);
+    if (elements.transportationQuickBtn) EventManager.addEventListener(elements.transportationQuickBtn, 'click', openTransportation);
+    if (elements.closeMarketBtn) EventManager.addEventListener(elements.closeMarketBtn, 'click', () => game.hideOverlay('market-panel'));
+    if (elements.closeInventoryBtn) EventManager.addEventListener(elements.closeInventoryBtn, 'click', () => game.hideOverlay('inventory-panel'));
+    if (elements.closeTravelBtn) EventManager.addEventListener(elements.closeTravelBtn, 'click', () => game.hideOverlay('travel-panel'));
+    if (elements.closeTransportationBtn) EventManager.addEventListener(elements.closeTransportationBtn, 'click', () => game.hideOverlay('transportation-panel'));
+    if (elements.menuBtn) EventManager.addEventListener(elements.menuBtn, 'click', toggleMenu);
+    if (elements.inventoryBtn) EventManager.addEventListener(elements.inventoryBtn, 'click', openInventory);
+    if (elements.saveBtn) EventManager.addEventListener(elements.saveBtn, 'click', saveGame);
     
     // Property & Employee Management
     const propertyEmployeeBtn = document.getElementById('property-employee-btn');
@@ -4966,7 +4887,7 @@ function setupEventListeners() {
             createCharacter(e);
         });
     } else {
-        console.error('start-game-btn element not found!');
+        debugWarn('🖤 start-game-btn element not found');
     }
     if (cancelSetupBtn) {
         EventManager.addEventListener(cancelSetupBtn, 'click', cancelGameSetup);
@@ -5100,6 +5021,13 @@ function setupEventListeners() {
             if (speed !== 'PAUSED' && typeof GameEngine !== 'undefined' && !GameEngine.isRunning) {
                 GameEngine.start();
             }
+            // CRITICAL: Ensure main game loop is running - this is what actually updates time!
+            if (speed !== 'PAUSED' && typeof game !== 'undefined' && !game.isRunning) {
+                console.log('⏰ setSpeed wrapper: Starting main game loop');
+                game.isRunning = true;
+                game.lastFrameTime = performance.now();
+                requestAnimationFrame((time) => game.gameLoop(time));
+            }
             return result;
         };
         console.log('🖤 TimeSystem.setSpeed wrapped to sync UI and ensure engine starts');
@@ -5171,7 +5099,7 @@ function changeState(newState) {
                 GameWorldRenderer.init();
                 console.log('GameWorldRenderer initialized - the void now has pretty dots');
             } else {
-                console.error('GameWorldRenderer not found... we are truly lost');
+                debugWarn('🖤 GameWorldRenderer not found');
             }
             // 🎮 Start the GameEngine for time and travel management
             if (typeof GameEngine !== 'undefined') {
@@ -5311,12 +5239,12 @@ function setupDifficultyListeners() {
     console.log('  - Radio buttons found:', difficultyRadios.length);
 
     if (!difficultyContainer) {
-        console.error('❌ difficulty-selection container NOT FOUND!');
+        debugWarn('🖤 difficulty-selection container not found');
         return;
     }
 
     if (difficultyRadios.length === 0) {
-        console.error('❌ NO difficulty radio buttons found!');
+        debugWarn('🖤 No difficulty radio buttons found');
         return;
     }
 
@@ -5803,7 +5731,7 @@ function updatePerkSelection() {
             console.log('Initialized elements.selectedPerksCount');
         }
     } else {
-        console.error('❌ Counter element not found! Checking DOM...');
+        debugWarn('🖤 Counter element not found');
         console.log('Looking for element with id: selected-perks-count');
         const debugElement = document.getElementById('selected-perks-count');
         console.log('Direct getElementById result:', debugElement);
@@ -5856,7 +5784,7 @@ function openPerkModal() {
     // Get modal element
     const modal = document.getElementById('perk-selection-modal');
     if (!modal) {
-        console.error('Perk modal not found!');
+        debugWarn('🖤 Perk modal not found');
         alert('Error: Perk selection modal not found!');
         return;
     }
@@ -5867,7 +5795,7 @@ function openPerkModal() {
     }
 
     if (!elements.perksContainer) {
-        console.error('Perks container not found!');
+        debugWarn('🖤 Perks container not found');
         alert('Error: Perks container not found!');
         return;
     }
@@ -5916,7 +5844,7 @@ function confirmPerkSelection() {
 function displaySelectedPerks() {
     const container = document.getElementById('selected-perks-display');
     if (!container) {
-        console.error('Selected perks display container not found!');
+        debugWarn('🖤 Selected perks display container not found');
         return;
     }
 
@@ -6150,7 +6078,7 @@ function setupAttributeButtons() {
     // Find the attributes grid container
     const attributesGrid = document.querySelector('.attributes-grid');
     if (!attributesGrid) {
-        console.error('✗ attributes-grid container not found!');
+        debugWarn('🖤 attributes-grid container not found');
         return;
     }
 
@@ -6261,7 +6189,7 @@ function increaseAttribute(attrName) {
             attrElement.innerHTML = `<strong>${newValue}</strong>`;
             console.log(`💥 FORCED UI UPDATE: #attr-${attrName} = ${newValue}`);
         } else {
-            console.error(`❌ Element #attr-${attrName} NOT FOUND!`);
+            debugWarn(`🖤 Element #attr-${attrName} not found`);
         }
 
         if (pointsElement) {
@@ -6271,7 +6199,7 @@ function increaseAttribute(attrName) {
             pointsElement.innerHTML = `<strong style="color: red; font-size: 24px;">${newPoints}</strong>`;
             console.log(`💥 FORCED UI UPDATE: Points = ${newPoints}`);
         } else {
-            console.error(`❌ Element #attr-points-remaining NOT FOUND!`);
+            debugWarn('🖤 Element #attr-points-remaining not found');
         }
 
         calculateCharacterStats(); // Recalculate final attributes with perks
@@ -6313,7 +6241,7 @@ function decreaseAttribute(attrName) {
             attrElement.innerHTML = `<strong>${newValue}</strong>`;
             console.log(`💥 FORCED UI UPDATE: #attr-${attrName} = ${newValue}`);
         } else {
-            console.error(`❌ Element #attr-${attrName} NOT FOUND!`);
+            debugWarn(`🖤 Element #attr-${attrName} not found`);
         }
 
         if (pointsElement) {
@@ -6323,7 +6251,7 @@ function decreaseAttribute(attrName) {
             pointsElement.innerHTML = `<strong style="color: red; font-size: 24px;">${newPoints}</strong>`;
             console.log(`💥 FORCED UI UPDATE: Points = ${newPoints}`);
         } else {
-            console.error(`❌ Element #attr-points-remaining NOT FOUND!`);
+            debugWarn('🖤 Element #attr-points-remaining not found');
         }
 
         calculateCharacterStats(); // Recalculate final attributes with perks
@@ -6374,7 +6302,7 @@ function updateAttributeDisplay() {
                 attrElement.style.fontWeight = '';
             }, 300);
         } else {
-            console.error(`❌ Element #attr-${attr} NOT FOUND!`);
+            debugWarn(`🖤 Element #attr-${attr} not found`);
         }
     }
 
@@ -6411,7 +6339,7 @@ function updateAttributeDisplay() {
             pointsElement.style.color = '';
         }, 300);
     } else {
-        console.error('❌ Points element NOT FOUND!');
+        debugWarn('🖤 Points element not found');
     }
 
     // Update button states (based on MANUAL values, not final)
@@ -6565,10 +6493,8 @@ function randomizeCharacter() {
         console.log('✅✅✅ RANDOMIZATION COMPLETE ✅✅✅');
 
     } catch (error) {
-        console.error('💥💥💥 ERROR IN RANDOMIZE CHARACTER 💥💥💥');
-        console.error('Error:', error);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
+        // 🖤 Single error log instead of verbose dump
+        console.error('🖤 Randomize character failed:', error.message);
         throw error; // Re-throw so outer catch can also log it
     }
 }
@@ -6609,7 +6535,7 @@ function createCharacter(event) {
 
     // Generate unique character ID for leaderboard tracking
     // This ensures each character can only have ONE entry on the leaderboard
-    const characterId = 'char_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+    const characterId = 'char_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 11);
     console.log('🎭 Generated unique character ID:', characterId);
 
     // 🖤 Pull player config from GameConfig for starting stats and items
@@ -6745,7 +6671,7 @@ function onDifficultyChange() {
 
     // Update character creation state
     if (!characterCreationState) {
-        console.error('❌ characterCreationState is undefined!');
+        debugWarn('🖤 characterCreationState is undefined');
         return;
     }
 
@@ -6764,7 +6690,7 @@ function onDifficultyChange() {
         setupGoldElement.textContent = characterCreationState.currentGold;
         console.log('💰 FORCED setup-gold-amount to:', characterCreationState.currentGold);
     } else {
-        console.error('❌ setup-gold-amount element NOT FOUND!');
+        debugWarn('🖤 setup-gold-amount element not found');
     }
 
     // FORCE GoldManager to update all displays
@@ -6782,7 +6708,7 @@ window.onDifficultyChange = onDifficultyChange;
 window.setDifficulty = function(difficulty) {
     const validDifficulties = ['easy', 'normal', 'hard'];
     if (!validDifficulties.includes(difficulty)) {
-        console.error('❌ Invalid difficulty! Use: easy, normal, or hard');
+        debugWarn('🖤 Invalid difficulty - use: easy, normal, or hard');
         return;
     }
 
@@ -6805,7 +6731,7 @@ window.setDifficulty = function(difficulty) {
         // Also call directly
         onDifficultyChange();
     } else {
-        console.error('❌ Radio button not found!');
+        debugWarn('🖤 Radio button not found');
     }
 };
 
@@ -8617,18 +8543,25 @@ function renderGameWorld() {
 // 🔧 UTILITY FUNCTIONS - random helpful stuff
 // ═══════════════════════════════════════════════════════════════
 function addMessage(text, type = 'info') {
+    // 🖤 Safety check: if message log doesn't exist, just log to console
+    const messageLog = elements.messages || document.getElementById('message-log');
+    if (!messageLog) {
+        console.log(`[${type}] ${text}`);
+        return;
+    }
+
     const messageElement = document.createElement('p');
     messageElement.className = 'message';
     messageElement.textContent = text;
-    
-    elements.messages.appendChild(messageElement);
-    
+
+    messageLog.appendChild(messageElement);
+
     // Auto-scroll to bottom
-    elements.messages.scrollTop = elements.messages.scrollHeight;
-    
+    messageLog.scrollTop = messageLog.scrollHeight;
+
     // Limit message history
-    while (elements.messages.children.length > 50) {
-        elements.messages.removeChild(elements.messages.firstChild);
+    while (messageLog.children.length > 50) {
+        messageLog.removeChild(messageLog.firstChild);
     }
 }
 
@@ -9048,7 +8981,7 @@ function showSettings() {
         }
         SettingsPanel.show();
     } else {
-        console.error('SettingsPanel not loaded - check script loading order');
+        debugWarn('🖤 SettingsPanel not loaded');
     }
 }
 

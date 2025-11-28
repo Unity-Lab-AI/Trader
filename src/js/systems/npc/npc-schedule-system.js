@@ -514,7 +514,7 @@ const NPCScheduleSystem = {
                 padding: 20px;
                 min-width: 350px;
                 max-width: 450px;
-                z-index: 10000;
+                z-index: 600; /* Z-INDEX STANDARD: Panel overlays (NPC schedule) */
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
                 font-family: 'Crimson Text', serif;
             }

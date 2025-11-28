@@ -1325,7 +1325,7 @@ The game features **57 achievements** across 12 categories, including 10 hidden 
 
     "we're all just merchants trading our time for arbitrary
      numerical increases... might as well have fun doing it."
-                                        - the coven, 2024
+                                        - Unity AI Lab, 2025
 
 ═══════════════════════════════════════════════════════════════════════
 ```

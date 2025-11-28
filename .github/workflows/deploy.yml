@@ -49,15 +49,13 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # Read test config from config.js
+  # Read test config from tests/config/test-config.js
   read-config:
     runs-on: ubuntu-latest
     needs: deploy
     outputs:
-      run_all: ${{ steps.parse.outputs.run_all }}
       new_game: ${{ steps.parse.outputs.new_game }}
       debug_commands: ${{ steps.parse.outputs.debug_commands }}
-      debug: ${{ steps.parse.outputs.debug }}
       panels: ${{ steps.parse.outputs.panels }}
       features: ${{ steps.parse.outputs.features }}
       settings: ${{ steps.parse.outputs.settings }}
@@ -72,44 +70,29 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Parse config.js
+      - name: Parse tests/config/test-config.js
         id: parse
         run: |
           node -e "
-            const fs = require('fs');
-            const content = fs.readFileSync('config.js', 'utf8');
-            const runAllMatch = content.match(/runAllTests:\s*(true|false)/);
-            const runAll = runAllMatch ? runAllMatch[1] : 'false';
-            const suites = {
-              newGame: content.match(/newGame:\s*(true|false)/),
-              debugCommands: content.match(/debugCommands:\s*(true|false)/),
-              debug: content.match(/debug:\s*(true|false)/),
-              panels: content.match(/panels:\s*(true|false)/),
-              features: content.match(/features:\s*(true|false)/),
-              settings: content.match(/settings:\s*(true|false)/),
-              uiElements: content.match(/uiElements:\s*(true|false)/),
-              comprehensiveUi: content.match(/comprehensiveUi:\s*(true|false)/)
-            };
-            console.log('run_all=' + runAll);
-            console.log('new_game=' + (suites.newGame ? suites.newGame[1] : 'false'));
-            console.log('debug_commands=' + (suites.debugCommands ? suites.debugCommands[1] : 'false'));
-            console.log('debug=' + (suites.debug ? suites.debug[1] : 'false'));
-            console.log('panels=' + (suites.panels ? suites.panels[1] : 'false'));
-            console.log('features=' + (suites.features ? suites.features[1] : 'false'));
-            console.log('settings=' + (suites.settings ? suites.settings[1] : 'false'));
-            console.log('ui_elements=' + (suites.uiElements ? suites.uiElements[1] : 'false'));
-            console.log('comprehensive_ui=' + (suites.comprehensiveUi ? suites.comprehensiveUi[1] : 'false'));
+            const config = require('./tests/config/test-config.js');
+            // Map test-config settings to workflow outputs
+            // All tests disabled by default in production - enable in config.js to run
+            console.log('new_game=' + (config.newGameTests ? 'true' : 'false'));
+            console.log('debug_commands=' + (config.debugCommandTests ? 'true' : 'false'));
+            console.log('panels=' + (config.panelTests ? 'true' : 'false'));
+            console.log('features=' + (config.tradingTests || config.travelTests || config.saveLoadTests || config.characterCreationTests || config.timeSystemTests ? 'true' : 'false'));
+            console.log('settings=' + (config.settingsTests ? 'true' : 'false'));
+            console.log('ui_elements=' + (config.uiElementsTests ? 'true' : 'false'));
+            console.log('comprehensive_ui=' + (config.comprehensiveUiTests ? 'true' : 'false'));
           " >> $GITHUB_OUTPUT
 
       - name: Display Config
         run: |
-          echo "## Test Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Configuration (from tests/config/test-config.js)" >> $GITHUB_STEP_SUMMARY
           echo "| Suite | Enabled |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|---------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Run All Override | ${{ steps.parse.outputs.run_all }} |" >> $GITHUB_STEP_SUMMARY
           echo "| New Game | ${{ steps.parse.outputs.new_game }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Debug Commands | ${{ steps.parse.outputs.debug_commands }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Debug | ${{ steps.parse.outputs.debug }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Panels | ${{ steps.parse.outputs.panels }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Features | ${{ steps.parse.outputs.features }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Settings | ${{ steps.parse.outputs.settings }} |" >> $GITHUB_STEP_SUMMARY
@@ -120,7 +103,7 @@ jobs:
   test-setup:
     runs-on: ubuntu-latest
     needs: [deploy, read-config]
-    if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.new_game == 'true' || needs.read-config.outputs.debug_commands == 'true' || needs.read-config.outputs.debug == 'true' || needs.read-config.outputs.panels == 'true' || needs.read-config.outputs.features == 'true' || needs.read-config.outputs.settings == 'true' || needs.read-config.outputs.ui_elements == 'true' || needs.read-config.outputs.comprehensive_ui == 'true'
+    if: needs.read-config.outputs.new_game == 'true' || needs.read-config.outputs.debug_commands == 'true' || needs.read-config.outputs.panels == 'true' || needs.read-config.outputs.features == 'true' || needs.read-config.outputs.settings == 'true' || needs.read-config.outputs.ui_elements == 'true' || needs.read-config.outputs.comprehensive_ui == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -149,7 +132,7 @@ jobs:
   test-new-game:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
-    if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.new_game == 'true'
+    if: needs.read-config.outputs.new_game == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -182,7 +165,7 @@ jobs:
   test-debug-commands:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
-    if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.debug_commands == 'true'
+    if: needs.read-config.outputs.debug_commands == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -211,11 +194,11 @@ jobs:
           BASE_URL: ${{ needs.deploy.outputs.page_url }}
         run: npx playwright test tests/debug-commands.spec.js --reporter=line
 
-  # Test: Debug
+  # Test: Debug (console error checks - always run if any tests run)
   test-debug:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
-    if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.debug == 'true'
+    if: needs.read-config.outputs.new_game == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -248,7 +231,7 @@ jobs:
   test-panels:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
-    if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.panels == 'true'
+    if: needs.read-config.outputs.panels == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -281,7 +264,7 @@ jobs:
   test-features:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
-    if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.features == 'true'
+    if: needs.read-config.outputs.features == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -314,7 +297,7 @@ jobs:
   test-settings:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
-    if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.settings == 'true'
+    if: needs.read-config.outputs.settings == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -347,7 +330,7 @@ jobs:
   test-ui-elements:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
-    if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.ui_elements == 'true'
+    if: needs.read-config.outputs.ui_elements == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -380,7 +363,7 @@ jobs:
   test-comprehensive-ui:
     runs-on: ubuntu-latest
     needs: [deploy, read-config, test-setup]
-    if: needs.read-config.outputs.run_all == 'true' || needs.read-config.outputs.comprehensive_ui == 'true'
+    if: needs.read-config.outputs.comprehensive_ui == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

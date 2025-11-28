@@ -3,6 +3,7 @@
  * Toggle which test suites run with simple true/false flags
  *
  * Set any to false to skip those tests
+ * ALL DISABLED FOR PRODUCTION - enable to debug/test
  */
 
 module.exports = {
@@ -57,7 +58,7 @@ module.exports = {
   // Test all game panels open/close correctly
   panelTests: false,
 
-  // Individual panel toggles - 🖤 All passing as of 2025-11-27
+  // Individual panel toggles - ALL DISABLED FOR PRODUCTION
   panels: {
     inventory: false,
     character: false,
@@ -105,6 +106,19 @@ module.exports = {
 
   // Test time system (pause, speed controls)
   timeSystemTests: false,
+
+  // ═══════════════════════════════════════════════════════════════
+  // 🔧 ADDITIONAL TEST SUITES (CI/CD workflow)
+  // ═══════════════════════════════════════════════════════════════
+
+  // Test settings panel - DISABLED FOR PRODUCTION
+  settingsTests: false,
+
+  // Test UI elements - DISABLED FOR PRODUCTION
+  uiElementsTests: false,
+
+  // Test comprehensive UI - DISABLED FOR PRODUCTION
+  comprehensiveUiTests: false,
 
   // ═══════════════════════════════════════════════════════════════
   // 🔧 TEST SETTINGS

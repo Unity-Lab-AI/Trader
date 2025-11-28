@@ -52,14 +52,15 @@ const AnimationSystem = {
         console.log('Animation system initialized');
     },
     
-    // Load settings from localStorage
+    // Load settings from localStorage - silent fallback to defaults on error
     loadSettings() {
         const savedSettings = localStorage.getItem('tradingGameAnimationSettings');
         if (savedSettings) {
             try {
                 this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
             } catch (error) {
-                console.error('Failed to load animation settings:', error);
+                // 🖤 Silent fallback - corrupt data just means we use defaults
+                localStorage.removeItem('tradingGameAnimationSettings');
             }
         }
     },
@@ -79,6 +80,9 @@ const AnimationSystem = {
         EventManager.addEventListener(document, 'marketStallAction', (e) => this.animateMarketStall(e.detail));
         EventManager.addEventListener(document, 'loadingStart', (e) => this.animateLoadingStart(e.detail));
         EventManager.addEventListener(document, 'loadingComplete', (e) => this.animateLoadingComplete(e.detail));
+
+        // 🖤 Cleanup on page unload to prevent memory leak
+        window.addEventListener('beforeunload', () => this.cleanup());
     },
     
     // Start animation loop
@@ -256,7 +260,7 @@ const AnimationSystem = {
             background: ${this.getItemColor(item, type)};
             border-radius: 50%;
             pointer-events: none;
-            z-index: 10000;
+            z-index: 850; /* Z-INDEX STANDARD: UI animations (particles) */
             box-shadow: 0 0 10px ${this.getItemColor(item, type)};
         `;
         
@@ -300,7 +304,7 @@ const AnimationSystem = {
             border: 2px solid ${this.getItemColor(null, type)};
             border-radius: 50%;
             pointer-events: none;
-            z-index: 10000;
+            z-index: 850; /* Z-INDEX STANDARD: UI animations (impact) */
             transform: translate(-50%, -50%) scale(0);
         `;
         
@@ -418,7 +422,7 @@ const AnimationSystem = {
             background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%);
             border-radius: 50%;
             pointer-events: none;
-            z-index: 9999;
+            z-index: 850; /* Z-INDEX STANDARD: UI animations (character effect) */
             transform: translate(-50%, -50%) scale(0);
         `;
         
@@ -443,7 +447,7 @@ const AnimationSystem = {
             background: radial-gradient(circle, rgba(100,200,255,0.6) 0%, transparent 70%);
             border-radius: 50%;
             pointer-events: none;
-            z-index: 9999;
+            z-index: 850; /* Z-INDEX STANDARD: UI animations (arrival effect) */
             transform: translate(-50%, -50%) scale(2);
         `;
         
@@ -539,7 +543,7 @@ const AnimationSystem = {
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 10000;
+            z-index: 900; /* Z-INDEX STANDARD: Loading overlay */
             opacity: 0;
             transition: opacity 0.3s ease-in-out;
         `;

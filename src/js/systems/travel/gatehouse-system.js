@@ -532,7 +532,7 @@ const GatehouseSystem = {
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 10000;
+            z-index: 700; /* Z-INDEX STANDARD: System modals (gatehouse) */
         `;
 
         modal.innerHTML = `

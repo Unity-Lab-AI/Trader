@@ -520,7 +520,7 @@ const FactionSystem = {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                z-index: 100000;
+                z-index: 700; /* Z-INDEX STANDARD: System modals */
             }
             .faction-panel {
                 background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);

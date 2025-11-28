@@ -9,6 +9,13 @@
 
 console.log('🔧 Summoning button repair spirits...');
 
+// 🖤 Debug-only logging helper - silent in production
+const debugWarn = (msg) => {
+    if (typeof GameConfig !== 'undefined' && GameConfig.debug?.enabled) {
+        console.warn(msg);
+    }
+};
+
 // Function to safely add event listeners - prevents duplicate handlers
 // Now silently skips missing optional elements instead of spamming console errors
 function safeAddEventListener(elementId, eventType, handler, optional = false) {
@@ -48,7 +55,7 @@ function initializeButtonListeners() {
         if (typeof openMarket === 'function') {
             openMarket();
         } else {
-            console.error('openMarket function not found');
+            debugWarn('🔧 openMarket function not found');
         }
     });
     
@@ -57,7 +64,7 @@ function initializeButtonListeners() {
         if (typeof openTravel === 'function') {
             openTravel();
         } else {
-            console.error('openTravel function not found');
+            debugWarn('🔧 openTravel function not found');
         }
     });
     
@@ -66,17 +73,17 @@ function initializeButtonListeners() {
         if (typeof openTransportation === 'function') {
             openTransportation();
         } else {
-            console.error('openTransportation function not found');
+            debugWarn('🔧 openTransportation function not found');
         }
     });
-    
+
     // Optional button - may not exist in all UI configurations
     safeAddEventListener('transportation-quick-btn', 'click', function() {
         console.log('Quick Transportation button clicked');
         if (typeof openTransportation === 'function') {
             openTransportation();
         } else {
-            console.error('openTransportation function not found');
+            debugWarn('🔧 openTransportation function not found');
         }
     }, true); // true = optional
     
@@ -85,7 +92,7 @@ function initializeButtonListeners() {
         if (typeof openInventory === 'function') {
             openInventory();
         } else {
-            console.error('openInventory function not found');
+            debugWarn('🔧 openInventory function not found');
         }
     });
     
@@ -95,7 +102,7 @@ function initializeButtonListeners() {
         if (typeof saveGame === 'function') {
             saveGame();
         } else {
-            console.error('saveGame function not found');
+            debugWarn('🔧 saveGame function not found');
         }
     }, true); // true = optional
     
@@ -104,7 +111,7 @@ function initializeButtonListeners() {
         if (typeof toggleMenu === 'function') {
             toggleMenu();
         } else {
-            console.error('toggleMenu function not found');
+            debugWarn('🔧 toggleMenu function not found');
         }
     });
     
@@ -115,16 +122,16 @@ function initializeButtonListeners() {
         if (typeof createCharacter === 'function') {
             createCharacter(e);
         } else {
-            console.error('createCharacter function not found');
+            debugWarn('🔧 createCharacter function not found');
         }
     }, true); // true = optional, form submit handles this
-    
+
     safeAddEventListener('randomize-character-btn', 'click', function() {
         console.log('Randomize Character button clicked');
         if (typeof randomizeCharacter === 'function') {
             randomizeCharacter();
         } else {
-            console.error('randomizeCharacter function not found');
+            debugWarn('🔧 randomizeCharacter function not found');
         }
     });
     
@@ -134,7 +141,7 @@ function initializeButtonListeners() {
         if (typeof closeMarket === 'function') {
             closeMarket();
         } else {
-            console.error('closeMarket function not found');
+            debugWarn('🔧 closeMarket function not found');
         }
     });
     
@@ -143,7 +150,7 @@ function initializeButtonListeners() {
         if (typeof closeInventory === 'function') {
             closeInventory();
         } else {
-            console.error('closeInventory function not found');
+            debugWarn('🔧 closeInventory function not found');
         }
     });
     
@@ -152,7 +159,7 @@ function initializeButtonListeners() {
         if (typeof closeTravel === 'function') {
             closeTravel();
         } else {
-            console.error('closeTravel function not found');
+            debugWarn('🔧 closeTravel function not found');
         }
     });
     
@@ -161,7 +168,7 @@ function initializeButtonListeners() {
         if (typeof closeTransportation === 'function') {
             closeTransportation();
         } else {
-            console.error('closeTransportation function not found');
+            debugWarn('🔧 closeTransportation function not found');
         }
     });
     
@@ -171,34 +178,34 @@ function initializeButtonListeners() {
         if (typeof TimeSystem !== 'undefined' && TimeSystem.setSpeed) {
             TimeSystem.setSpeed('PAUSED');
         } else {
-            console.error('TimeSystem.setSpeed not found');
+            debugWarn('🔧 TimeSystem.setSpeed not found');
         }
     });
-    
+
     safeAddEventListener('normal-speed-btn', 'click', function() {
         console.log('Normal Speed button clicked');
         if (typeof TimeSystem !== 'undefined' && TimeSystem.setSpeed) {
             TimeSystem.setSpeed('NORMAL');
         } else {
-            console.error('TimeSystem.setSpeed not found');
+            debugWarn('🔧 TimeSystem.setSpeed not found');
         }
     });
-    
+
     safeAddEventListener('fast-speed-btn', 'click', function() {
         console.log('Fast Speed button clicked');
         if (typeof TimeSystem !== 'undefined' && TimeSystem.setSpeed) {
             TimeSystem.setSpeed('FAST');
         } else {
-            console.error('TimeSystem.setSpeed not found');
+            debugWarn('🔧 TimeSystem.setSpeed not found');
         }
     });
-    
+
     safeAddEventListener('very-fast-speed-btn', 'click', function() {
         console.log('Very Fast Speed button clicked');
         if (typeof TimeSystem !== 'undefined' && TimeSystem.setSpeed) {
             TimeSystem.setSpeed('VERY_FAST');
         } else {
-            console.error('TimeSystem.setSpeed not found');
+            debugWarn('🔧 TimeSystem.setSpeed not found');
         }
     });
     
@@ -208,7 +215,7 @@ function initializeButtonListeners() {
         if (typeof GameWorldRenderer !== 'undefined' && GameWorldRenderer.centerOnPlayer) {
             GameWorldRenderer.centerOnPlayer();
         } else {
-            console.error('GameWorldRenderer.centerOnPlayer not found');
+            debugWarn('🔧 GameWorldRenderer.centerOnPlayer not found');
         }
     });
     
@@ -239,7 +246,7 @@ function fixFormSubmissions() {
             if (typeof createCharacter === 'function') {
                 createCharacter(e);
             } else {
-                console.error('createCharacter function not found');
+                debugWarn('🔧 createCharacter function not found');
             }
         });
         console.log('✓ Fixed character form submission');
@@ -256,7 +263,7 @@ function fixTabSwitching() {
             if (typeof switchTab === 'function') {
                 switchTab(tabName);
             } else {
-                console.error('switchTab function not found');
+                debugWarn('🔧 switchTab function not found');
             }
         });
     });

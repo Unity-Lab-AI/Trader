@@ -232,7 +232,8 @@ const EnvironmentalEffectsSystem = {
             try {
                 this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
             } catch (error) {
-                console.error('💀 Failed to resurrect environmental settings:', error);
+                // 🖤 Silent fallback - corrupt data just means we use defaults
+                localStorage.removeItem('tradingGameEnvironmentalSettings');
             }
         }
     },
@@ -254,7 +255,7 @@ const EnvironmentalEffectsSystem = {
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 9998;
+            z-index: 70; /* Z-INDEX STANDARD: Weather effects */
             overflow: hidden;
         `;
         document.body.appendChild(this.weatherContainer);
@@ -269,7 +270,7 @@ const EnvironmentalEffectsSystem = {
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 9997;
+            z-index: 65; /* Z-INDEX STANDARD: Lighting effects */
             mix-blend-mode: multiply;
             opacity: 0.8;
         `;
@@ -285,7 +286,7 @@ const EnvironmentalEffectsSystem = {
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 9996;
+            z-index: 60; /* Z-INDEX STANDARD: Atmosphere effects */
             mix-blend-mode: screen;
             opacity: 0.3;
         `;

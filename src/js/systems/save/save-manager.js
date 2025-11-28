@@ -444,16 +444,40 @@ const SaveManager = {
             QuestSystem.completedQuests = gameData.questState.completedQuests || [];
         }
 
-        // Show game UI
-        if (typeof showGameUI === 'function') showGameUI();
-        if (typeof changeState === 'function') changeState(GameState.PLAYING);
+        // Show game UI (wrap in try-catch for robustness)
+        try {
+            if (typeof showGameUI === 'function') showGameUI();
+        } catch (e) {
+            console.warn('showGameUI failed:', e.message);
+        }
 
-        // Refresh displays
-        if (typeof updatePlayerInfo === 'function') updatePlayerInfo();
-        if (typeof updateLocationInfo === 'function') updateLocationInfo();
+        try {
+            if (typeof changeState === 'function') changeState(GameState.PLAYING);
+        } catch (e) {
+            console.warn('changeState failed:', e.message);
+            // Fallback: just set state directly
+            game.state = GameState.PLAYING;
+        }
+
+        // Refresh displays (wrap in try-catch - UI elements may not exist)
+        try {
+            if (typeof updatePlayerInfo === 'function') updatePlayerInfo();
+        } catch (e) {
+            console.warn('updatePlayerInfo failed:', e.message);
+        }
+
+        try {
+            if (typeof updateLocationInfo === 'function') updateLocationInfo();
+        } catch (e) {
+            console.warn('updateLocationInfo failed:', e.message);
+        }
 
         // Start game
-        game.start();
+        try {
+            game.start();
+        } catch (e) {
+            console.warn('game.start failed:', e.message);
+        }
 
         // Deferred map render
         setTimeout(() => {
@@ -691,7 +715,7 @@ const SaveManager = {
                 height: 100%;
                 background: rgba(0, 0, 0, 0.85);
                 backdrop-filter: blur(5px);
-                z-index: 100000;
+                z-index: 700; /* Z-INDEX STANDARD: System modals */
                 display: none;
                 align-items: center;
                 justify-content: center;
@@ -1007,7 +1031,7 @@ const SaveManager = {
 
         if (typeof TimeSystem !== 'undefined' && !TimeSystem.isPaused) {
             this._wasGamePaused = false;
-            TimeSystem.pause();
+            TimeSystem.setSpeed('PAUSED');
         } else {
             this._wasGamePaused = true;
         }
@@ -1016,7 +1040,7 @@ const SaveManager = {
     closeSaveDialog() {
         document.getElementById('save-manager-save-overlay').style.display = 'none';
         if (!this._wasGamePaused && typeof TimeSystem !== 'undefined') {
-            TimeSystem.resume();
+            TimeSystem.setSpeed('NORMAL');
         }
     },
 

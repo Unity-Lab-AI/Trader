@@ -119,7 +119,7 @@ const NPCChatUI = {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                z-index: 10001;
+                z-index: 600; /* Z-INDEX STANDARD: Panel overlays */
                 display: none;
             }
 
@@ -1053,10 +1053,17 @@ const NPCChatUI = {
         if (indicator) {
             indicator.style.display = 'inline-flex';
 
-            // hide when voice stops
+            // 🖤 hide when voice stops - with safety timeout to prevent memory leak
+            let checkCount = 0;
+            const maxChecks = 120; // 60 seconds max (120 * 500ms)
             const checkVoice = setInterval(() => {
-                if (typeof NPCVoiceChatSystem === 'undefined' || !NPCVoiceChatSystem.isVoicePlaying()) {
-                    indicator.style.display = 'none';
+                checkCount++;
+                // Clear if voice stopped, element removed, or safety timeout hit
+                if (typeof NPCVoiceChatSystem === 'undefined' ||
+                    !NPCVoiceChatSystem.isVoicePlaying() ||
+                    !document.getElementById('npc-voice-indicator') ||
+                    checkCount >= maxChecks) {
+                    if (indicator) indicator.style.display = 'none';
                     clearInterval(checkVoice);
                 }
             }, 500);

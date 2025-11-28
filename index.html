@@ -237,9 +237,6 @@
 
                     <!-- 📍 Location Details Panel -->
                     <div id="location-details" class="location-details-panel hidden"></div>
-
-                    <!-- Legacy canvas -->
-                    <canvas id="game-canvas" width="800" height="600" class="hidden"></canvas>
                 </section>
             </main>
 
@@ -1203,8 +1200,8 @@
         </div>
     </div>
 
-    <!-- 🐛 DEBUG CONSOLE - ON-SCREEN CONSOLE LOG (z-index higher than settings panel) -->
-    <div id="debug-console" style="position: fixed; bottom: 0; right: 0; width: 600px; height: 80vh; max-height: 800px; background: rgba(0,0,0,0.95); color: #0f0; font-family: monospace; font-size: 11px; z-index: 999999; border: 2px solid #0f0; display: none; flex-direction: column;">
+    <!-- 🐛 DEBUG CONSOLE - ON-SCREEN CONSOLE LOG (z-index above main menu) -->
+    <div id="debug-console" style="position: fixed; bottom: 0; right: 0; width: 600px; height: 80vh; max-height: 800px; background: rgba(0,0,0,0.95); color: #0f0; font-family: monospace; font-size: 11px; z-index: 9998; /* Z-INDEX STANDARD: Debug console - above main menu (3001) */ border: 2px solid #0f0; display: none; flex-direction: column;">
         <!-- Header -->
         <div style="display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #0f0; background: rgba(0,0,0,0.98); flex-shrink: 0;">
             <strong style="color: #0ff;">🐛 DEBUG CONSOLE (Press ` for commands)</strong>
@@ -1226,7 +1223,7 @@
             <button id="debug-command-help" style="background: #005; border: 1px solid #0ff; color: #0ff; padding: 8px 12px; cursor: pointer; font-family: monospace; font-size: 12px; border-radius: 4px;">?</button>
         </div>
     </div>
-    <button id="toggle-debug-console" onclick="var dc = document.getElementById('debug-console'); dc.style.display = dc.style.display === 'none' ? 'flex' : 'none'" style="position: fixed; bottom: 10px; right: 10px; z-index: 999998; background: #000; color: #0f0; border: 2px solid #0f0; padding: 10px; cursor: pointer; font-family: monospace;">
+    <button id="toggle-debug-console" onclick="var dc = document.getElementById('debug-console'); dc.style.display = dc.style.display === 'none' ? 'flex' : 'none'" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; /* Z-INDEX STANDARD: Debug toggle button - above main menu (3001) */ background: #000; color: #0f0; border: 2px solid #0f0; padding: 10px; cursor: pointer; font-family: monospace;">
         🐛 Debooger
     </button>
 

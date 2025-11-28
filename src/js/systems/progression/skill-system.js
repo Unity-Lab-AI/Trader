@@ -885,7 +885,7 @@ const SkillSystem = {
                 background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : '#17a2b8'};
                 color: ${type === 'warning' ? '#000' : '#fff'};
                 border-radius: 8px;
-                z-index: 10001;
+                z-index: 850; /* Z-INDEX STANDARD: Notifications (skill) */
                 animation: slideIn 0.3s ease;
                 font-family: 'Crimson Text', serif;
             `;
@@ -933,7 +933,7 @@ const SkillSystem = {
                 background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
                 border: 2px solid #ffd700;
                 border-radius: 12px;
-                z-index: 10000;
+                z-index: 600; /* Z-INDEX STANDARD: Panel overlays (skill) */
                 opacity: 0;
                 transition: all 0.3s ease;
                 display: flex;

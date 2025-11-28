@@ -536,7 +536,7 @@ const TooltipSystem = {
         style.textContent = `
             .game-tooltip {
                 position: fixed;
-                z-index: 99999;
+                z-index: 800; /* Z-INDEX STANDARD: Tooltips */
                 background: linear-gradient(135deg, rgba(20, 20, 30, 0.98) 0%, rgba(30, 30, 45, 0.98) 100%);
                 border: 1px solid rgba(255, 215, 0, 0.3);
                 border-radius: 8px;

@@ -71,7 +71,7 @@ const PanelManager = {
             background: rgba(20, 20, 30, 0.95);
             border: 1px solid rgba(79, 195, 247, 0.3);
             border-radius: 8px;
-            z-index: 9999;
+            z-index: 500; /* Z-INDEX STANDARD: Game panels */
             min-width: 50px;
             backdrop-filter: blur(10px);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);

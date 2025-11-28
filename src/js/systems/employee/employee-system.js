@@ -608,7 +608,7 @@ const EmployeeSystem = {
         const surname = surnames[Math.floor(Math.random() * surnames.length)];
         
         return {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            id: Date.now().toString() + Math.random().toString(36).slice(2, 11),
             type: employeeId,
             name: `${firstName} ${surname}`,
             level: 1,

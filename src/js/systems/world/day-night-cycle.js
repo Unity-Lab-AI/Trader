@@ -413,7 +413,7 @@ const DayNightCycle = {
                 width: 100%;
                 height: 100%;
                 pointer-events: none;
-                z-index: 8999;
+                z-index: 55; /* Z-INDEX STANDARD: Day/night overlay (below weather) */
                 transition: background 5s ease, opacity 5s ease;
             }
             .stars-container {

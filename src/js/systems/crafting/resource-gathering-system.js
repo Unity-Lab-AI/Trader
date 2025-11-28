@@ -830,7 +830,7 @@ const ResourceGatheringSystem = {
                 border: 2px solid #4fc3f7;
                 border-radius: 12px;
                 padding: 16px 24px;
-                z-index: 200;
+                z-index: 600; /* Z-INDEX STANDARD: Panel overlays (gathering) */
                 display: none;
                 min-width: 300px;
                 text-align: center;

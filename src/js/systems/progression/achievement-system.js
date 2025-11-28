@@ -1222,7 +1222,7 @@ const AchievementSystem = {
             this.isShowingPopup = false;
             // Resume game if we paused it
             if (!this.wasGamePaused && typeof TimeSystem !== 'undefined') {
-                TimeSystem.resume();
+                TimeSystem.setSpeed('NORMAL');
             }
             return;
         }
@@ -1233,7 +1233,7 @@ const AchievementSystem = {
         if (typeof TimeSystem !== 'undefined') {
             this.wasGamePaused = TimeSystem.isPaused;
             if (!this.wasGamePaused) {
-                TimeSystem.pause();
+                TimeSystem.setSpeed('PAUSED');
             }
         }
 
@@ -1304,7 +1304,7 @@ const AchievementSystem = {
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 100000;
+            z-index: 900; /* Z-INDEX STANDARD: Critical overlays (achievements) */
             display: flex;
             align-items: center;
             justify-content: center;

@@ -70,7 +70,8 @@ const PerformanceOptimizer = {
             try {
                 this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
             } catch (error) {
-                console.error('Failed to load performance settings:', error);
+                // 🖤 Silent fallback - corrupt data just means we use defaults
+                localStorage.removeItem('tradingGamePerformanceSettings');
             }
         }
     },
@@ -501,7 +502,7 @@ const PerformanceOptimizer = {
                 border-radius: 5px;
                 font-family: monospace;
                 font-size: 12px;
-                z-index: 10001;
+                z-index: 950; /* Z-INDEX STANDARD: Debug UI */
                 pointer-events: none;
                 transition: all 0.3s ease-in-out;
             `;
@@ -702,7 +703,7 @@ const PerformanceOptimizer = {
                 color: white;
                 padding: 20px;
                 border-radius: 10px;
-                z-index: 10002;
+                z-index: 951; /* Z-INDEX STANDARD: Debug panel */
                 min-width: 300px;
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             `;
@@ -821,7 +822,7 @@ const PerformanceOptimizer = {
     // Create particle object
     createParticle() {
         return {
-            id: Math.random().toString(36).substr(2, 9),
+            id: Math.random().toString(36).slice(2, 11),
             x: 0,
             y: 0,
             vx: 0,
@@ -838,7 +839,7 @@ const PerformanceOptimizer = {
     // Create animation object
     createAnimation() {
         return {
-            id: Math.random().toString(36).substr(2, 9),
+            id: Math.random().toString(36).slice(2, 11),
             element: null,
             property: '',
             startValue: 0,
@@ -877,7 +878,7 @@ const PerformanceOptimizer = {
     // Create timer object
     createTimer() {
         return {
-            id: Math.random().toString(36).substr(2, 9),
+            id: Math.random().toString(36).slice(2, 11),
             callback: null,
             delay: 0,
             startTime: 0,

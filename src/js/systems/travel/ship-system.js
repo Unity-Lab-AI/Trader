@@ -1065,7 +1065,7 @@ const ShipSystem = {
                 background: linear-gradient(180deg, #1a2a3a 0%, #0d1520 100%);
                 border: 2px solid #4a90d9;
                 border-radius: 12px;
-                z-index: 10000;
+                z-index: 600; /* Z-INDEX STANDARD: Panel overlays (ship) */
                 opacity: 0;
                 transition: all 0.3s ease;
                 display: flex;

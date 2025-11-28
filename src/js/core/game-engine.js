@@ -270,6 +270,14 @@ const GameEngine = {
                 if (speed !== 'PAUSED' && !self.isRunning) {
                     self.start();
                 }
+                // CRITICAL: Also ensure the main game loop is running
+                // game.gameLoop() is what actually calls TimeSystem.update()
+                if (speed !== 'PAUSED' && typeof game !== 'undefined' && !game.isRunning) {
+                    console.log('🎮 Starting main game loop...');
+                    game.isRunning = true;
+                    game.lastFrameTime = performance.now();
+                    requestAnimationFrame((time) => game.gameLoop(time));
+                }
                 self.updateTimeControlButtons();
                 // Also update game.updateTimeControls if it exists
                 if (typeof game !== 'undefined' && game.updateTimeControls) {

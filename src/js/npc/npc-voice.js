@@ -179,8 +179,9 @@ const NPCVoiceChatSystem = {
                 this.settings = { ...this.config.defaults };
             }
         } catch (error) {
-            console.error('🎙️ Failed to load settings, using defaults:', error);
+            // 🖤 Silent fallback - corrupt data just means we use defaults
             this.settings = { ...this.config.defaults };
+            localStorage.removeItem('npcVoiceChatSettings');
         }
     },
 

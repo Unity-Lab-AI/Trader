@@ -66,7 +66,7 @@ const VisualEffectsSystem = {
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 9999;
+            z-index: 75; /* Z-INDEX STANDARD: Visual effects (below UI) */
             overflow: hidden;
         `;
         document.body.appendChild(this.particleSystem.container);
@@ -79,7 +79,8 @@ const VisualEffectsSystem = {
             try {
                 this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
             } catch (error) {
-                console.error('Failed to load visual settings:', error);
+                // 🖤 Silent fallback - corrupt data just means we use defaults
+                localStorage.removeItem('tradingGameVisualSettings');
             }
         }
     },
@@ -137,7 +138,7 @@ const VisualEffectsSystem = {
             background: ${config.image ? `url(${config.image})` : config.color};
             border-radius: 50%;
             pointer-events: none;
-            z-index: 9999;
+            z-index: 75; /* Z-INDEX STANDARD: Visual effects (particles) */
             transform: translate(-50%, -50%) scale(${config.scale}) rotate(${config.rotation}deg);
             ${config.image ? 'background-size: contain; background-repeat: no-repeat;' : ''}
         `;
@@ -567,7 +568,7 @@ const VisualEffectsSystem = {
                 rgba(200, 200, 200, 0.3) 0%, 
                 rgba(200, 200, 200, 0.6) 100%);
             pointer-events: none;
-            z-index: 9998;
+            z-index: 70; /* Z-INDEX STANDARD: Weather effects (fog) */
             animation: fogMove 20s infinite alternate;
         `;
         
@@ -597,7 +598,7 @@ const VisualEffectsSystem = {
                 rgba(222, 184, 135, 0.2) 50%, 
                 rgba(194, 154, 108, 0.3) 100%);
             pointer-events: none;
-            z-index: 9998;
+            z-index: 70; /* Z-INDEX STANDARD: Weather effects (sandstorm) */
             animation: sandstormMove 10s infinite linear;
         `;
         
@@ -671,7 +672,7 @@ const VisualEffectsSystem = {
                 rgba(0, 0, 50, 0.2) 0%, 
                 rgba(0, 0, 30, 0.6) 100%);
             pointer-events: none;
-            z-index: 9997;
+            z-index: 60; /* Z-INDEX STANDARD: Day/night effects */
             transition: opacity 2s ease-in-out;
         `;
         document.body.appendChild(overlay);
@@ -701,7 +702,7 @@ const VisualEffectsSystem = {
                 rgba(255, 200, 100, 0.1) 0%, 
                 rgba(255, 150, 50, 0.2) 100%);
             pointer-events: none;
-            z-index: 9996;
+            z-index: 60; /* Z-INDEX STANDARD: Day/night effects (golden hour) */
             transition: opacity 1s ease-in-out;
         `;
         document.body.appendChild(overlay);

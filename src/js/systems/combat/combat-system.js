@@ -623,7 +623,7 @@ const CombatSystem = {
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 100000;
+            z-index: 900; /* Z-INDEX STANDARD: Critical overlays (combat) */
         `;
 
         // Inject component styles
@@ -633,7 +633,7 @@ const CombatSystem = {
 
         // Pause game
         if (typeof TimeSystem !== 'undefined') {
-            TimeSystem.pause();
+            TimeSystem.setSpeed('PAUSED');
         }
     },
 

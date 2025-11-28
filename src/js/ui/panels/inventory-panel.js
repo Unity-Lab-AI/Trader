@@ -254,7 +254,7 @@ const InventorySystem = {
             position: fixed;
             top: ${rect.bottom + 5}px;
             left: ${rect.left}px;
-            z-index: 10000;
+            z-index: 600; /* Z-INDEX STANDARD: Panel overlays (dropdowns) */
             background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
             border: 1px solid rgba(79, 195, 247, 0.5);
             border-radius: 8px;
@@ -403,7 +403,7 @@ const InventorySystem = {
             position: fixed;
             top: ${rect.bottom + 5}px;
             left: ${rect.left}px;
-            z-index: 10000;
+            z-index: 600; /* Z-INDEX STANDARD: Panel overlays (dropdowns) */
             background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
             border: 1px solid rgba(79, 195, 247, 0.5);
             border-radius: 8px;

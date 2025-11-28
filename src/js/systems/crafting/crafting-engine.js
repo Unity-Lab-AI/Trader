@@ -151,7 +151,7 @@ const CraftingEngine = {
 
         // Create crafting job
         const job = {
-            id: `craft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            id: `craft_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
             recipeId,
             quantity,
             startTime: currentTime,

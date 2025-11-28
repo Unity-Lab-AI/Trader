@@ -143,7 +143,7 @@ const GameWorldRenderer = {
             border: 2px solid #4fc3f7;
             font-size: 14px;
             max-width: 300px;
-            z-index: 10000;
+            z-index: 800; /* Z-INDEX STANDARD: Tooltips (world map) */
             pointer-events: none;
             display: none;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);

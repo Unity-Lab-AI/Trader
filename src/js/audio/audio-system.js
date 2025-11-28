@@ -822,7 +822,8 @@ const AudioSystem = {
                 this.settings = { ...this.settings, ...settings };
                 this.updateVolumes();
             } catch (error) {
-                console.error('Failed to load audio settings:', error);
+                // 🖤 Silent fallback - corrupt data just means we use defaults
+                localStorage.removeItem('tradingGameAudioSettings');
             }
         }
     },

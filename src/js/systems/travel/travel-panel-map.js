@@ -121,7 +121,7 @@ const TravelPanelMap = {
             border: 2px solid #4fc3f7;
             font-size: 13px;
             max-width: 280px;
-            z-index: 10001;
+            z-index: 800; /* Z-INDEX STANDARD: Tooltips (map hover) */
             pointer-events: none;
             display: none;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
