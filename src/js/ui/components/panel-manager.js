@@ -25,8 +25,9 @@ const PanelManager = {
         'location-panel': { name: 'Location', icon: '📍', shortcut: '' },
         'side-panel': { name: 'Player Info', icon: '👤', shortcut: '' },
         'message-log': { name: 'Messages', icon: '💬', shortcut: '' },
-        'game-menu-overlay': { name: 'Menu', icon: '📋', shortcut: 'Escape', useActiveClass: true },
-        'help-overlay': { name: 'Help', icon: '❓', shortcut: '', useActiveClass: true }
+        'game-menu-overlay': { name: 'Menu', icon: '📋', shortcut: 'Escape', useActiveClass: true, customToggle: 'KeyBindings.openMenu()' },
+        'help-overlay': { name: 'Help', icon: '❓', shortcut: '', useActiveClass: true },
+        'quest-tracker': { name: 'Quest Tracker', icon: '📋', shortcut: '', customToggle: 'QuestSystem.toggleQuestTracker()' }
     },
 
     // Initialize panel manager
@@ -67,7 +68,7 @@ const PanelManager = {
         toolbar.style.cssText = `
             position: fixed;
             top: 70px;
-            right: 220px;
+            right: 10px;
             background: rgba(20, 20, 30, 0.95);
             border: 1px solid rgba(79, 195, 247, 0.3);
             border-radius: 8px;
@@ -128,6 +129,7 @@ const PanelManager = {
 
         // Add buttons for main panels
         const mainPanels = [
+            'game-menu-overlay',  // 🖤 Menu button at top - opens fullscreen menu
             'market-panel',
             'inventory-panel',
             'travel-panel',
@@ -138,7 +140,8 @@ const PanelManager = {
             'achievement-overlay',
             'settings-panel',
             'side-panel',
-            'message-log'
+            'message-log',
+            'quest-tracker'  // 🖤 Added quest tracker widget toggle
         ];
 
         mainPanels.forEach(panelId => {
@@ -177,7 +180,18 @@ const PanelManager = {
                 btn.style.borderColor = isOpen ? 'rgba(76, 175, 80, 0.5)' : 'rgba(79, 195, 247, 0.2)';
             };
 
-            btn.onclick = () => this.togglePanel(panelId);
+            // 🖤 Handle custom toggle functions (like QuestSystem.toggleQuestTracker)
+            if (info.customToggle) {
+                btn.onclick = () => {
+                    try {
+                        eval(info.customToggle);
+                    } catch (e) {
+                        console.warn('🖤 Custom toggle failed:', e);
+                    }
+                };
+            } else {
+                btn.onclick = () => this.togglePanel(panelId);
+            }
 
             buttonsContainer.appendChild(btn);
         });

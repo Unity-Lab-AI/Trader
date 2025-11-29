@@ -19,14 +19,18 @@ const QuestSystem = {
     questCompletionTimes: {}, // when quests were completed (for cooldowns and display)
     questLogOpen: false,
 
+    // 🖤 TRACKED QUEST - the one quest to rule them all (only one at a time)
+    trackedQuestId: null,
+    questMarkerElement: null,
+
     // ═══════════════════════════════════════════════════════════════
     // 🎒 QUEST ITEMS - special items that exist only for quests
     // ═══════════════════════════════════════════════════════════════
     // these weigh nothing and can't be dropped because we're not monsters
     questItems: {
         // delivery packages
-        greendale_package: { name: 'Package for Ironhaven', description: 'Sealed merchant goods', quest: 'delivery_ironhaven', icon: '📦' },
-        ironhaven_ore_sample: { name: 'Ore Sample', description: 'High quality iron ore sample', quest: 'ore_quality_check', icon: '�ite' },
+        greendale_package: { name: 'Package for Ironforge', description: 'Sealed merchant goods', quest: 'delivery_ironforge', icon: '📦' },
+        ironforge_ore_sample: { name: 'Ore Sample', description: 'High quality iron ore sample', quest: 'ore_quality_check', icon: '⛏️' },
         silk_shipment: { name: 'Silk Shipment', description: 'Delicate silk fabric from Jade Harbor', quest: 'silk_delivery', icon: '🧵' },
         medicine_bundle: { name: 'Medicine Bundle', description: 'Urgently needed medical supplies', quest: 'urgent_medicine', icon: '💊' },
         secret_letter: { name: 'Sealed Letter', description: 'A letter with a wax seal - do not open', quest: 'secret_message', icon: '✉️' },
@@ -49,6 +53,119 @@ const QuestSystem = {
         shadow_key: { name: 'Shadow Key', description: 'Opens the inner sanctum', quest: 'shadow_tower_chain', icon: '🗝️' },
         mine_pass: { name: 'Mining Pass', description: 'Authorization to enter deep mines', quest: 'deep_mine_access', icon: '🎫' },
         guild_token: { name: 'Guild Token', description: 'Proof of guild membership', quest: 'join_guild', icon: '🏅' }
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 💰 REWARD BALANCING TIERS - so players don't get rich too fast
+    // ═══════════════════════════════════════════════════════════════
+    // These define acceptable reward ranges by difficulty tier
+    // Quests should stay within these bounds for balanced progression
+    rewardTiers: {
+        easy: {
+            gold: { min: 20, max: 80 },
+            experience: { min: 15, max: 40 },
+            reputation: { min: 5, max: 15 },
+            maxItemValue: 100,        // don't give items worth more than this
+            maxItemQuantity: 5,       // don't give more than this many of any item
+            description: 'Starter quests, simple tasks'
+        },
+        medium: {
+            gold: { min: 50, max: 200 },
+            experience: { min: 30, max: 100 },
+            reputation: { min: 10, max: 30 },
+            maxItemValue: 500,
+            maxItemQuantity: 5,
+            description: 'Standard quests requiring travel or moderate challenge'
+        },
+        hard: {
+            gold: { min: 150, max: 400 },
+            experience: { min: 75, max: 200 },
+            reputation: { min: 20, max: 50 },
+            maxItemValue: 1500,
+            maxItemQuantity: 3,
+            description: 'Challenging quests with combat or dungeon exploration'
+        },
+        legendary: {
+            gold: { min: 500, max: 2000 },
+            experience: { min: 300, max: 750 },
+            reputation: { min: 50, max: 100 },
+            maxItemValue: 10000,      // legendary items allowed
+            maxItemQuantity: 2,
+            description: 'Epic boss fights and story finales'
+        }
+    },
+
+    // Chain order multipliers - earlier quests in a chain give less
+    // to prevent rushing through early quests for big rewards
+    chainOrderMultiplier: {
+        1: 0.8,   // First quest in chain gives 80% rewards
+        2: 0.9,   // Second gives 90%
+        3: 1.0,   // Third gives full rewards
+        4: 1.0,
+        5: 1.1,   // Fifth and later give 110% (building to climax)
+        6: 1.2    // Final quests give 120%
+    },
+
+    // Validate quest rewards against tier limits
+    validateRewards(questId) {
+        const quest = this.quests[questId];
+        if (!quest) return { valid: false, error: 'Quest not found' };
+
+        const tier = this.rewardTiers[quest.difficulty] || this.rewardTiers.medium;
+        const rewards = quest.rewards || {};
+        const warnings = [];
+
+        // Check gold
+        if (rewards.gold) {
+            if (rewards.gold < tier.gold.min) {
+                warnings.push(`Gold (${rewards.gold}) below tier minimum (${tier.gold.min})`);
+            }
+            if (rewards.gold > tier.gold.max) {
+                warnings.push(`Gold (${rewards.gold}) exceeds tier maximum (${tier.gold.max})`);
+            }
+        }
+
+        // Check experience
+        if (rewards.experience) {
+            if (rewards.experience < tier.experience.min) {
+                warnings.push(`XP (${rewards.experience}) below tier minimum (${tier.experience.min})`);
+            }
+            if (rewards.experience > tier.experience.max) {
+                warnings.push(`XP (${rewards.experience}) exceeds tier maximum (${tier.experience.max})`);
+            }
+        }
+
+        // Check reputation
+        if (rewards.reputation) {
+            if (rewards.reputation > tier.reputation.max) {
+                warnings.push(`Reputation (${rewards.reputation}) exceeds tier maximum (${tier.reputation.max})`);
+            }
+        }
+
+        return {
+            valid: warnings.length === 0,
+            questId,
+            difficulty: quest.difficulty,
+            tier,
+            warnings,
+            rewards
+        };
+    },
+
+    // Get scaled rewards based on chain position
+    getScaledRewards(questId) {
+        const quest = this.quests[questId];
+        if (!quest || !quest.rewards) return quest?.rewards || {};
+
+        const chainOrder = quest.chainOrder || 3; // default to no scaling
+        const multiplier = this.chainOrderMultiplier[Math.min(chainOrder, 6)] || 1.0;
+
+        const scaled = { ...quest.rewards };
+        if (scaled.gold) scaled.gold = Math.round(scaled.gold * multiplier);
+        if (scaled.experience) scaled.experience = Math.round(scaled.experience * multiplier);
+        // Don't scale reputation or items - those are fixed
+
+        return scaled;
     },
 
     // ═══════════════════════════════════════════════════════════════
@@ -88,7 +205,7 @@ const QuestSystem = {
         main_rumors: {
             id: 'main_rumors',
             name: 'Whispers of Darkness',
-            description: 'Strange rumors speak of darkness gathering in the north. Travel to Ironhaven and speak with the guard captain.',
+            description: 'Strange rumors speak of darkness gathering in the north. Travel to Ironforge City and speak with the guard captain.',
             giver: 'elder',
             giverName: 'Elder Morin',
             location: 'greendale',
@@ -97,7 +214,7 @@ const QuestSystem = {
             chainOrder: 2,
             difficulty: 'easy',
             objectives: [
-                { type: 'visit', location: 'ironhaven', completed: false, description: 'Travel to Ironhaven' },
+                { type: 'visit', location: 'ironforge_city', completed: false, description: 'Travel to Ironforge City' },
                 { type: 'talk', npc: 'guard', completed: false, description: 'Speak with Guard Captain' }
             ],
             rewards: { gold: 50, reputation: 15, experience: 40 },
@@ -106,8 +223,8 @@ const QuestSystem = {
             prerequisite: 'main_prologue',
             nextQuest: 'main_investigation',
             dialogue: {
-                offer: "Dark rumors reach my ears. Something stirs in the Shadow Tower to the north. Travel to Ironhaven - their guard captain may know more.",
-                progress: "Have you reached Ironhaven yet? Time may be running short.",
+                offer: "Dark rumors reach my ears. Something stirs in the Shadow Tower to the north. Travel to Ironforge City - their guard captain may know more.",
+                progress: "Have you reached Ironforge City yet? Time may be running short.",
                 complete: "What did the captain say? The darkness grows... we must act."
             }
         },
@@ -115,10 +232,10 @@ const QuestSystem = {
         main_investigation: {
             id: 'main_investigation',
             name: 'Into the Shadows',
-            description: 'Investigate the abandoned mines near Ironhaven. Find evidence of dark activity.',
+            description: 'Investigate the abandoned mines near Ironforge City. Find evidence of dark activity.',
             giver: 'guard',
             giverName: 'Captain Aldric',
-            location: 'ironhaven',
+            location: 'ironforge_city',
             type: 'main',
             chain: 'shadow_rising',
             chainOrder: 3,
@@ -146,14 +263,14 @@ const QuestSystem = {
             description: 'Gather supplies for the assault on the Shadow Tower. The blacksmith needs iron ore, the apothecary needs herbs.',
             giver: 'guard',
             giverName: 'Captain Aldric',
-            location: 'ironhaven',
+            location: 'ironforge_city',
             type: 'main',
             chain: 'shadow_rising',
             chainOrder: 4,
             difficulty: 'medium',
             objectives: [
                 { type: 'collect', item: 'iron_ore', count: 15, current: 0, description: 'Gather 15 iron ore' },
-                { type: 'collect', item: 'herb', count: 10, current: 0, description: 'Gather 10 healing herbs' },
+                { type: 'collect', item: 'herbs', count: 10, current: 0, description: 'Gather 10 healing herbs' },
                 { type: 'talk', npc: 'blacksmith', completed: false, description: 'Deliver ore to blacksmith' },
                 { type: 'talk', npc: 'apothecary', completed: false, description: 'Deliver herbs to apothecary' }
             ],
@@ -241,7 +358,7 @@ const QuestSystem = {
             type: 'collect',
             difficulty: 'easy',
             objectives: [
-                { type: 'collect', item: 'herb', count: 5, current: 0, description: 'Gather 5 healing herbs' }
+                { type: 'collect', item: 'herbs', count: 5, current: 0, description: 'Gather 5 healing herbs' }
             ],
             rewards: { gold: 40, items: { potion: 2 }, reputation: 10, experience: 20 },
             timeLimit: null,
@@ -268,7 +385,7 @@ const QuestSystem = {
                 { type: 'collect', item: 'wheat', count: 20, current: 0, description: 'Gather 20 wheat' }
             ],
             rewards: { gold: 60, items: { bread: 5 }, reputation: 10, experience: 25 },
-            timeLimit: 3,
+            timeLimit: null, // No time limits - complete at your own pace
             repeatable: true,
             repeatCooldown: 2,
             prerequisite: null,
@@ -279,10 +396,10 @@ const QuestSystem = {
             }
         },
 
-        greendale_delivery_ironhaven: {
-            id: 'greendale_delivery_ironhaven',
-            name: 'Package to Ironhaven',
-            description: 'Deliver a merchant package to the blacksmith in Ironhaven.',
+        greendale_delivery_ironforge: {
+            id: 'greendale_delivery_ironforge',
+            name: 'Package to Ironforge',
+            description: 'Deliver a merchant package to the blacksmith in Ironforge City.',
             giver: 'merchant',
             giverName: 'Merchant Giles',
             location: 'greendale',
@@ -290,17 +407,17 @@ const QuestSystem = {
             difficulty: 'medium',
             objectives: [
                 { type: 'carry', item: 'greendale_package', count: 1, current: 0, description: 'Carry the package' },
-                { type: 'visit', location: 'ironhaven', completed: false, description: 'Travel to Ironhaven' },
+                { type: 'visit', location: 'ironforge_city', completed: false, description: 'Travel to Ironforge City' },
                 { type: 'talk', npc: 'blacksmith', completed: false, description: 'Deliver to blacksmith' }
             ],
             rewards: { gold: 80, reputation: 15, experience: 40 },
             givesQuestItem: 'greendale_package',
-            timeLimit: 2,
+            timeLimit: null, // No time limits - complete at your own pace
             repeatable: true,
             repeatCooldown: 1,
             prerequisite: null,
             dialogue: {
-                offer: "I've got a package that needs to reach the blacksmith in Ironhaven. Time-sensitive goods. Can you make the delivery?",
+                offer: "I've got a package that needs to reach the blacksmith in Ironforge City. Time-sensitive goods. Can you make the delivery?",
                 progress: "The blacksmith's name is Grimjaw. Surly fellow, but he pays well.",
                 complete: "Delivered on time! You're reliable. Here's your cut."
             }
@@ -331,15 +448,15 @@ const QuestSystem = {
         },
 
         // ═══════════════════════════════════════════════════════════
-        // ⚒️ IRONHAVEN QUESTS - mining/smithing hub
+        // ⚒️ IRONFORGE CITY QUESTS - mining/smithing hub
         // ═══════════════════════════════════════════════════════════
-        ironhaven_ore: {
-            id: 'ironhaven_ore',
+        ironforge_ore: {
+            id: 'ironforge_ore',
             name: 'Iron in the Fire',
             description: 'The blacksmith needs iron ore for a special commission.',
             giver: 'blacksmith',
             giverName: 'Grimjaw the Smith',
-            location: 'ironhaven',
+            location: 'ironforge_city',
             type: 'collect',
             difficulty: 'medium',
             objectives: [
@@ -357,13 +474,13 @@ const QuestSystem = {
             }
         },
 
-        ironhaven_bandit_hunt: {
-            id: 'ironhaven_bandit_hunt',
+        ironforge_bandit_hunt: {
+            id: 'ironforge_bandit_hunt',
             name: 'Bandit Bounty',
             description: 'Bandits raid the trade routes. Eliminate them.',
             giver: 'guard',
             giverName: 'Captain Aldric',
-            location: 'ironhaven',
+            location: 'ironforge_city',
             type: 'combat',
             difficulty: 'hard',
             objectives: [
@@ -371,7 +488,7 @@ const QuestSystem = {
                 { type: 'collect', item: 'bandit_insignia', count: 3, current: 0, description: 'Collect 3 insignias as proof' }
             ],
             rewards: { gold: 200, reputation: 30, experience: 100 },
-            timeLimit: 5,
+            timeLimit: null, // No time limits - complete at your own pace
             repeatable: true,
             repeatCooldown: 3,
             prerequisite: null,
@@ -382,13 +499,13 @@ const QuestSystem = {
             }
         },
 
-        ironhaven_coal_run: {
-            id: 'ironhaven_coal_run',
+        ironforge_coal_run: {
+            id: 'ironforge_coal_run',
             name: 'Coal for the Forge',
             description: 'The forge is running low on coal.',
             giver: 'blacksmith',
             giverName: 'Grimjaw the Smith',
-            location: 'ironhaven',
+            location: 'ironforge_city',
             type: 'collect',
             difficulty: 'easy',
             objectives: [
@@ -425,7 +542,7 @@ const QuestSystem = {
             ],
             rewards: { gold: 150, items: { silk: 2 }, reputation: 20, experience: 60 },
             givesQuestItem: 'silk_shipment',
-            timeLimit: 4,
+            timeLimit: null, // No time limits - complete at your own pace
             repeatable: true,
             repeatCooldown: 2,
             prerequisite: null,
@@ -449,7 +566,7 @@ const QuestSystem = {
                 { type: 'collect', item: 'fish', count: 15, current: 0, description: 'Catch 15 fish' }
             ],
             rewards: { gold: 45, items: { ale: 3 }, reputation: 10, experience: 25 },
-            timeLimit: 1,
+            timeLimit: null, // No time limits - complete at your own pace
             repeatable: true,
             repeatCooldown: 1,
             prerequisite: null,
@@ -504,7 +621,7 @@ const QuestSystem = {
             ],
             rewards: { gold: 100, reputation: 25, experience: 50 },
             givesQuestItem: 'royal_decree',
-            timeLimit: 3,
+            timeLimit: null, // No time limits - complete at your own pace
             repeatable: false,
             prerequisite: null,
             dialogue: {
@@ -529,7 +646,7 @@ const QuestSystem = {
                 { type: 'talk', npc: 'merchant', completed: false, description: 'Return to the Steward' }
             ],
             rewards: { gold: 180, reputation: 20, experience: 70 },
-            timeLimit: 5,
+            timeLimit: null, // No time limits - complete at your own pace
             repeatable: true,
             repeatCooldown: 3,
             prerequisite: null,
@@ -556,7 +673,7 @@ const QuestSystem = {
                 { type: 'collect', item: 'grapes', count: 30, current: 0, description: 'Harvest 30 bunches of grapes' }
             ],
             rewards: { gold: 50, items: { wine: 2 }, reputation: 15, experience: 35 },
-            timeLimit: 2,
+            timeLimit: null, // No time limits - complete at your own pace
             repeatable: true,
             repeatCooldown: 5,
             prerequisite: null,
@@ -604,7 +721,7 @@ const QuestSystem = {
             type: 'collect',
             difficulty: 'medium',
             objectives: [
-                { type: 'collect', item: 'fur', count: 8, current: 0, description: 'Collect 8 quality furs' }
+                { type: 'collect', item: 'furs', count: 8, current: 0, description: 'Collect 8 quality furs' }
             ],
             rewards: { gold: 100, items: { warm_cloak: 1 }, reputation: 15, experience: 50 },
             timeLimit: null,
@@ -632,7 +749,7 @@ const QuestSystem = {
                 { type: 'defeat', enemy: 'alpha_wolf', count: 1, current: 0, description: 'Kill the alpha' }
             ],
             rewards: { gold: 180, items: { wolf_pelts: 3 }, reputation: 25, experience: 90 },
-            timeLimit: 5,
+            timeLimit: null, // No time limits - complete at your own pace
             repeatable: true,
             repeatCooldown: 5,
             prerequisite: null,
@@ -711,7 +828,7 @@ const QuestSystem = {
                 { type: 'collect', item: 'goblin_ears', count: 5, current: 0, description: 'Collect proof (ears)' }
             ],
             rewards: { gold: 150, reputation: 25, experience: 80 },
-            timeLimit: 7,
+            timeLimit: null, // No time limits - complete at your own pace
             repeatable: true,
             repeatCooldown: 4,
             prerequisite: null,
@@ -794,7 +911,7 @@ const QuestSystem = {
                 { type: 'trade', count: 1, current: 0, description: 'Complete a trade of 100g or more' }
             ],
             rewards: { gold: 25, reputation: 5, experience: 15 },
-            timeLimit: 1,
+            timeLimit: null, // No time limits - complete at your own pace
             repeatable: true,
             repeatCooldown: 1,
             prerequisite: null,
@@ -818,7 +935,7 @@ const QuestSystem = {
                 { type: 'defeat', enemy: 'any', count: 15, current: 0, description: 'Defeat 15 enemies' }
             ],
             rewards: { gold: 100, reputation: 20, experience: 75 },
-            timeLimit: 7,
+            timeLimit: null, // No time limits - complete at your own pace
             repeatable: true,
             repeatCooldown: 7,
             prerequisite: null,
@@ -972,11 +1089,12 @@ const QuestSystem = {
             }
         }
 
+        // 🖤 Clone the quest into existence - it lives in your log now, forever
         const activeQuest = {
             ...JSON.parse(JSON.stringify(quest)),
             assignedAt: Date.now(),
-            assignedBy: giverNPC?.name || quest.giverName || quest.giver,
-            expiresAt: quest.timeLimit ? Date.now() + (quest.timeLimit * 24 * 60 * 60 * 1000) : null
+            assignedBy: giverNPC?.name || quest.giverName || quest.giver
+            // 💀 No expiresAt - quests don't expire, take your sweet time loser
         };
 
         activeQuest.objectives.forEach(obj => {
@@ -1134,7 +1252,29 @@ const QuestSystem = {
             return { success: false, error: 'Objectives not complete', progress };
         }
 
-        const rewards = quest.rewards;
+        // Validate all collection objectives have items BEFORE completing
+        // This prevents NPCs from completing quests when player doesn't have items
+        for (const obj of quest.objectives || []) {
+            if (obj.type === 'collect' && obj.item) {
+                const playerHas = game?.player?.inventory?.[obj.item] || 0;
+                if (playerHas < obj.count) {
+                    return {
+                        success: false,
+                        error: 'missing_collection_items',
+                        item: obj.item,
+                        required: obj.count,
+                        playerHas: playerHas,
+                        message: `Player needs ${obj.count}x ${obj.item} but only has ${playerHas}`
+                    };
+                }
+            }
+        }
+
+        // Use scaled rewards based on chain position for balanced progression
+        const baseRewards = quest.rewards || {};
+        const scaledRewards = this.getScaledRewards(questId);
+        const rewards = { ...baseRewards, ...scaledRewards };
+
         const rewardsGiven = { gold: 0, items: {}, reputation: 0, experience: 0 };
 
         if (typeof game !== 'undefined' && game.player) {
@@ -1181,6 +1321,7 @@ const QuestSystem = {
         if (typeof addMessage === 'function') {
             addMessage(`Quest Complete: ${quest.name}!`, 'success');
             if (rewardsGiven.gold) addMessage(`+${rewardsGiven.gold} gold`, 'success');
+            if (rewardsGiven.experience) addMessage(`+${rewardsGiven.experience} XP`, 'success');
             for (const [item, qty] of Object.entries(rewardsGiven.items)) {
                 addMessage(`+${qty}x ${item}`, 'success');
             }
@@ -1219,22 +1360,8 @@ const QuestSystem = {
         return { success: true, quest };
     },
 
-    abandonQuest(questId) {
-        if (this.activeQuests[questId]) {
-            const quest = this.activeQuests[questId];
-            this.removeQuestItem(questId);
-            delete this.activeQuests[questId];
-            this.saveQuestProgress();
-
-            if (typeof addMessage === 'function') {
-                addMessage(`Abandoned: ${quest.name}`, 'warning');
-            }
-
-            this.updateQuestLogUI();
-            return { success: true };
-        }
-        return { success: false, error: 'Quest not active' };
-    },
+    // ⚰️ abandonQuest() RIP - quests are ETERNAL, no backing out now
+    // 🖤 you signed up for this shit, now finish it... eventually
 
     // cooldown tracking - stores in both localStorage and questCompletionTimes
     getLastCompletionTime(questId) {
@@ -1438,7 +1565,7 @@ const QuestSystem = {
                 if (q.rewards.items) context += `, items: ${Object.entries(q.rewards.items).map(([k,v]) => `${v}x ${k}`).join(', ')}`;
                 context += '\n';
 
-                if (q.timeLimit) context += `⏰ Time limit: ${q.timeLimit} days\n`;
+                // 🦇 timeLimit is DEAD - take your damn time
                 if (q.prerequisite) {
                     const prereq = this.quests[q.prerequisite];
                     context += `⚠️ Requires completing "${prereq?.name || q.prerequisite}" first\n`;
@@ -1496,7 +1623,7 @@ const QuestSystem = {
         const chainNames = {
             'shadow_rising': '⭐ The Shadow Rising',
             'greendale': '🌾 Greendale Tales',
-            'ironhaven': '⚒️ Ironhaven Duties',
+            'ironforge': '⚒️ Ironforge Duties',
             'jade_harbor': '🚢 Jade Harbor Intrigue',
             'royal_capital': '👑 Royal Affairs',
             'sunhaven': '☀️ Sunhaven Stories',
@@ -1531,7 +1658,7 @@ const QuestSystem = {
         overlay.innerHTML = `
             <div class="quest-panel">
                 <div class="quest-panel-header">
-                    <h2 class="quest-panel-title">📜 Quest Log</h2>
+                    <h2 class="quest-panel-title">📋 Quest Log</h2>
                     <button class="close-quest-panel" onclick="QuestSystem.hideQuestLog()">×</button>
                 </div>
 
@@ -1545,6 +1672,7 @@ const QuestSystem = {
                 <div class="quest-categories">
                     <button class="quest-category-btn active" onclick="QuestSystem.filterQuests(this, 'all')">All</button>
                     <button class="quest-category-btn" onclick="QuestSystem.filterQuests(this, 'active')">Active</button>
+                    <button class="quest-category-btn" onclick="QuestSystem.filterQuests(this, 'available')">Available</button>
                     <button class="quest-category-btn" onclick="QuestSystem.filterQuests(this, 'main')">Main Story</button>
                     <button class="quest-category-btn" onclick="QuestSystem.filterQuests(this, 'side')">Side Quests</button>
                     <button class="quest-category-btn" onclick="QuestSystem.filterQuests(this, 'completed')">Completed</button>
@@ -1608,14 +1736,21 @@ const QuestSystem = {
                 const isDiscovered = this.discoveredQuests.includes(quest.id) || isActive || isCompleted;
                 const isMain = quest.type === 'main';
 
-                // filter logic
+                // 🖤 filter logic - sorting through the chaos
                 let show = false;
+                const hasMetGiver = this.hasMetNPC(quest.giver);
+                const isAvailable = !isActive && !isCompleted && !isFailed && hasMetGiver && this.canStartQuest(quest.id);
+
                 switch (category) {
                     case 'all':
                         show = true;
                         break;
                     case 'active':
                         show = isActive;
+                        break;
+                    case 'available':
+                        // 🦇 only show quests from NPCs we've actually met, you antisocial loser
+                        show = isAvailable;
                         break;
                     case 'main':
                         show = isMain;
@@ -1637,7 +1772,8 @@ const QuestSystem = {
                         isCompleted,
                         isFailed,
                         isDiscovered,
-                        isMain
+                        isMain,
+                        isAvailable // 🖤 track if quest is actually available from a met NPC
                     });
                 }
             });
@@ -1656,9 +1792,9 @@ const QuestSystem = {
             return (a.quest.chainOrder || 999) - (b.quest.chainOrder || 999);
         });
 
-        // render cards
-        questsToShow.forEach(({ quest, chainName, isActive, isCompleted, isFailed, isDiscovered, isMain }) => {
-            const card = this.createQuestCard(quest, chainName, isActive, isCompleted, isFailed, isDiscovered, isMain);
+        // 🖤 render cards - birthing quest UI into existence
+        questsToShow.forEach(({ quest, chainName, isActive, isCompleted, isFailed, isDiscovered, isMain, isAvailable }) => {
+            const card = this.createQuestCard(quest, chainName, isActive, isCompleted, isFailed, isDiscovered, isMain, isAvailable);
             grid.appendChild(card);
         });
 
@@ -1667,15 +1803,16 @@ const QuestSystem = {
         }
     },
 
-    createQuestCard(quest, chainName, isActive, isCompleted, isFailed, isDiscovered, isMain) {
+    createQuestCard(quest, chainName, isActive, isCompleted, isFailed, isDiscovered, isMain, isAvailable) {
         const card = document.createElement('div');
 
-        // determine card state class
+        // 🦇 determine card state class - what sad state is this quest in?
         let stateClass = 'undiscovered';
         if (isActive) stateClass = 'active';
         else if (isCompleted) stateClass = 'completed';
         else if (isFailed) stateClass = 'failed';
-        else if (isDiscovered) stateClass = 'available';
+        else if (isAvailable) stateClass = 'available'; // 🖤 actually available from a met NPC
+        else if (isDiscovered) stateClass = 'discovered'; // 💀 discovered but not available yet
 
         card.className = `quest-card ${stateClass} ${isMain ? 'main-quest' : ''} ${quest.difficulty || ''}`;
 
@@ -1814,7 +1951,7 @@ const QuestSystem = {
     getLocationDisplayName(locationId) {
         const names = {
             'greendale': 'Greendale',
-            'ironhaven': 'Ironhaven',
+            'ironforge_city': 'Ironforge City',
             'jade_harbor': 'Jade Harbor',
             'royal_capital': 'Royal Capital',
             'sunhaven': 'Sunhaven',
@@ -1860,29 +1997,222 @@ const QuestSystem = {
             document.body.appendChild(tracker);
         }
 
-        const activeQuestsList = Object.values(this.activeQuests).slice(0, 3);
-        if (activeQuestsList.length === 0) {
+        const activeQuestCount = Object.keys(this.activeQuests).length;
+
+        // 🖤 Don't show if user manually hid it or no active quests
+        if (activeQuestCount === 0 || this.trackerHidden) {
             tracker.classList.add('hidden');
             return;
         }
 
         tracker.classList.remove('hidden');
-        tracker.innerHTML = `
-            <div class="tracker-header" onclick="QuestSystem.showQuestLog()">
-                📜 Quests (${Object.keys(this.activeQuests).length})
-            </div>
-            <div class="tracker-quests">
-                ${activeQuestsList.map(quest => {
-                    const progress = this.checkProgress(quest.id);
-                    return `
-                        <div class="tracker-quest ${progress.status === 'ready_to_complete' ? 'ready' : ''}">
-                            <span class="tracker-quest-name">${quest.name}</span>
-                            <span class="tracker-quest-progress">${progress.progress}</span>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
+
+        // 🖤 Position quest tracker below player info panel (side-panel)
+        const sidePanel = document.getElementById('side-panel');
+        if (sidePanel && !tracker.dataset.draggable) {
+            const sidePanelRect = sidePanel.getBoundingClientRect();
+            tracker.style.top = (sidePanelRect.bottom + 10) + 'px'; // 10px gap below side panel
+        }
+
+        // 🎯 If a quest is tracked, show only that quest prominently
+        if (this.trackedQuestId && this.activeQuests[this.trackedQuestId]) {
+            const quest = this.activeQuests[this.trackedQuestId];
+            const progress = this.checkProgress(quest.id);
+            const targetLocation = this.getTrackedQuestLocation();
+            const locationName = targetLocation ? this.getLocationDisplayName(targetLocation) : '';
+
+            // 🖤 Build quest selector dropdown options
+            const otherQuests = Object.values(this.activeQuests).filter(q => q.id !== this.trackedQuestId);
+            const questSelectorOptions = otherQuests.map(q =>
+                `<option value="${q.id}">${this.getQuestTypeIcon(q.type)} ${q.name}</option>`
+            ).join('');
+
+            tracker.innerHTML = `
+                <div class="tracker-header">
+                    <span class="drag-grip" style="opacity:0.5;pointer-events:none;">⋮⋮</span>
+                    <span style="flex:1;pointer-events:none;">🎯 Tracked Quest</span>
+                    <button class="tracker-expand" onclick="QuestSystem.showQuestLog()" title="Open Quest Log" style="background:rgba(79,195,247,0.3);border:none;border-radius:4px;padding:2px 8px;color:white;cursor:pointer;font-size:12px;">📋</button>
+                    <button class="tracker-close" onclick="QuestSystem.hideQuestTracker()" title="Close" style="background:rgba(244,67,54,0.8);border:none;border-radius:50%;width:20px;height:20px;color:white;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;margin-left:4px;">×</button>
+                </div>
+                <div class="tracker-tracked-quest" onclick="QuestSystem.showQuestInfoPanel('${quest.id}')">
+                    <div class="tracker-quest-title">
+                        <span class="tracker-quest-icon">${this.getQuestTypeIcon(quest.type)}</span>
+                        <span class="tracker-quest-name">${quest.name}</span>
+                    </div>
+                    ${locationName ? `<div class="tracker-quest-location">📍 ${locationName}</div>` : ''}
+                    <div class="tracker-quest-objectives">
+                        ${quest.objectives.filter(o => !o.completed).slice(0, 2).map(obj => `
+                            <div class="tracker-objective">
+                                ⬜ ${obj.description}${obj.count ? ` (${obj.current || 0}/${obj.count})` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="tracker-quest-footer">
+                        <span class="tracker-quest-progress ${progress.status}">${progress.progress}</span>
+                        <button class="tracker-untrack-btn" onclick="event.stopPropagation(); QuestSystem.untrackQuest();" title="Untrack">🚫</button>
+                    </div>
+                </div>
+                ${activeQuestCount > 1 ? `
+                    <div class="tracker-quest-selector">
+                        <select id="tracker-quest-select" onchange="QuestSystem.trackQuest(this.value)">
+                            <option value="" disabled selected>🔄 Switch quest (${activeQuestCount - 1} more)...</option>
+                            ${questSelectorOptions}
+                        </select>
+                    </div>
+                ` : ''}
+            `;
+        } else {
+            // 💀 No tracked quest - show list of quests with track buttons
+            const activeQuestsList = Object.values(this.activeQuests).slice(0, 3);
+
+            tracker.innerHTML = `
+                <div class="tracker-header">
+                    <span class="drag-grip" style="opacity:0.5;pointer-events:none;">⋮⋮</span>
+                    <span style="flex:1;pointer-events:none;" onclick="QuestSystem.showQuestLog()">📋 Quests (${activeQuestCount})</span>
+                    <button class="tracker-expand" onclick="QuestSystem.showQuestLog()" title="Open Quest Log" style="background:rgba(79,195,247,0.3);border:none;border-radius:4px;padding:2px 8px;color:white;cursor:pointer;font-size:12px;">▼</button>
+                    <button class="tracker-close" onclick="QuestSystem.hideQuestTracker()" title="Close" style="background:rgba(244,67,54,0.8);border:none;border-radius:50%;width:20px;height:20px;color:white;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;margin-left:4px;">×</button>
+                </div>
+                <div class="tracker-quests">
+                    ${activeQuestsList.map(quest => {
+                        const progress = this.checkProgress(quest.id);
+                        return `
+                            <div class="tracker-quest ${progress.status === 'ready_to_complete' ? 'ready' : ''}" onclick="QuestSystem.showQuestInfoPanel('${quest.id}')">
+                                <button class="tracker-track-btn" onclick="event.stopPropagation(); QuestSystem.trackQuest('${quest.id}');" title="Track this quest">🎯</button>
+                                <span class="tracker-quest-name">${quest.name}</span>
+                                <span class="tracker-quest-progress">${progress.progress}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                ${activeQuestCount > 3 ? `<div class="tracker-more" onclick="QuestSystem.showQuestLog()">+${activeQuestCount - 3} more...</div>` : ''}
+            `;
+        }
+
+        // 🖤 Setup dragging - must re-attach after innerHTML changes
+        if (typeof DraggablePanels !== 'undefined') {
+            this.setupTrackerDragging(tracker);
+        }
+
+        // 🎯 Add tracker styles
+        this.addTrackerStyles();
+    },
+
+    // 🖤 Add styles for the improved tracker
+    addTrackerStyles() {
+        if (document.getElementById('quest-tracker-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'quest-tracker-styles';
+        style.textContent = `
+            .tracker-tracked-quest {
+                padding: 10px;
+                background: rgba(255, 215, 0, 0.1);
+                border: 1px solid rgba(255, 215, 0, 0.3);
+                border-radius: 6px;
+                margin: 8px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .tracker-tracked-quest:hover {
+                background: rgba(255, 215, 0, 0.2);
+                border-color: rgba(255, 215, 0, 0.5);
+            }
+            .tracker-quest-title {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-weight: bold;
+                color: #ffd700;
+                margin-bottom: 6px;
+            }
+            .tracker-quest-icon { font-size: 16px; }
+            .tracker-quest-location {
+                font-size: 11px;
+                color: #4fc3f7;
+                margin-bottom: 6px;
+            }
+            .tracker-quest-objectives {
+                font-size: 11px;
+                color: #ccc;
+            }
+            .tracker-objective {
+                padding: 2px 0;
+            }
+            .tracker-quest-footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 8px;
+                padding-top: 6px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .tracker-quest-progress {
+                font-size: 11px;
+                color: #888;
+            }
+            .tracker-quest-progress.ready_to_complete {
+                color: #81c784;
+                font-weight: bold;
+            }
+            .tracker-untrack-btn, .tracker-track-btn {
+                background: rgba(100, 100, 100, 0.3);
+                border: none;
+                border-radius: 4px;
+                padding: 2px 6px;
+                cursor: pointer;
+                font-size: 12px;
+                transition: all 0.2s;
+            }
+            .tracker-untrack-btn:hover {
+                background: rgba(244, 67, 54, 0.5);
+            }
+            .tracker-track-btn:hover {
+                background: rgba(255, 215, 0, 0.5);
+            }
+            .tracker-more {
+                text-align: center;
+                font-size: 11px;
+                color: #4fc3f7;
+                padding: 6px;
+                cursor: pointer;
+            }
+            .tracker-more:hover {
+                text-decoration: underline;
+            }
+            .tracker-quest {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            /* 🖤 Quest selector dropdown */
+            .tracker-quest-selector {
+                padding: 6px 8px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .tracker-quest-selector select {
+                width: 100%;
+                padding: 6px 8px;
+                background: rgba(30, 30, 50, 0.9);
+                border: 1px solid rgba(79, 195, 247, 0.3);
+                border-radius: 4px;
+                color: #ccc;
+                font-size: 11px;
+                cursor: pointer;
+            }
+            .tracker-quest-selector select:hover {
+                border-color: rgba(79, 195, 247, 0.6);
+            }
+            .tracker-quest-selector select:focus {
+                outline: none;
+                border-color: #4fc3f7;
+            }
+            .tracker-quest-selector select option {
+                background: #1a1a2e;
+                color: #fff;
+                padding: 8px;
+            }
         `;
+        document.head.appendChild(style);
     },
 
     showQuestLog() {
@@ -1905,6 +2235,33 @@ const QuestSystem = {
         }
     },
 
+    // 🖤 Hide the quest tracker widget (user can reopen via panel toolbar or Q key)
+    hideQuestTracker() {
+        const tracker = document.getElementById('quest-tracker');
+        if (tracker) {
+            tracker.classList.add('hidden');
+            this.trackerHidden = true;
+            console.log('🖤 Quest tracker hidden - find it in the Panels toolbar or press Q');
+        }
+    },
+
+    // 🖤 Show the quest tracker widget
+    showQuestTracker() {
+        this.trackerHidden = false;
+        this.updateQuestTracker(); // This will recreate/show it
+        console.log('🖤 Quest tracker revealed from the shadows');
+    },
+
+    // 🖤 Toggle quest tracker visibility
+    toggleQuestTracker() {
+        const tracker = document.getElementById('quest-tracker');
+        if (tracker && !tracker.classList.contains('hidden') && !this.trackerHidden) {
+            this.hideQuestTracker();
+        } else {
+            this.showQuestTracker();
+        }
+    },
+
     toggleQuestLog() {
         const overlay = document.getElementById('quest-overlay');
         if (overlay && overlay.classList.contains('active')) {
@@ -1912,6 +2269,411 @@ const QuestSystem = {
         } else {
             this.showQuestLog();
         }
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎯 QUEST TRACKING - one quest to rule them all
+    // ═══════════════════════════════════════════════════════════════
+
+    // 🖤 Track a quest - shows it in the widget and on the map
+    trackQuest(questId) {
+        if (!this.activeQuests[questId]) {
+            console.warn(`🖤 Can't track quest ${questId} - not active`);
+            return false;
+        }
+
+        // 💀 Untrack current quest first
+        if (this.trackedQuestId && this.trackedQuestId !== questId) {
+            this.untrackQuest();
+        }
+
+        this.trackedQuestId = questId;
+        console.log(`🎯 Now tracking quest: ${this.activeQuests[questId].name}`);
+
+        // 🦇 Update the tracker widget to show only this quest
+        this.updateQuestTracker();
+
+        // 🖤 Add glowing marker on map for quest destination
+        this.updateQuestMapMarker();
+
+        // 💀 Fire event for other systems
+        document.dispatchEvent(new CustomEvent('quest-tracked', {
+            detail: { questId, quest: this.activeQuests[questId] }
+        }));
+
+        return true;
+    },
+
+    // 🖤 Untrack current quest
+    untrackQuest() {
+        if (!this.trackedQuestId) return;
+
+        const oldQuestId = this.trackedQuestId;
+        this.trackedQuestId = null;
+
+        // 💀 Remove the map marker
+        this.removeQuestMapMarker();
+
+        // 🦇 Update tracker widget
+        this.updateQuestTracker();
+
+        console.log(`🎯 Stopped tracking quest`);
+
+        document.dispatchEvent(new CustomEvent('quest-untracked', {
+            detail: { questId: oldQuestId }
+        }));
+    },
+
+    // 🖤 Toggle tracking for a quest
+    toggleTrackQuest(questId) {
+        if (this.trackedQuestId === questId) {
+            this.untrackQuest();
+        } else {
+            this.trackQuest(questId);
+        }
+    },
+
+    // 🎯 Get the target location for the tracked quest
+    getTrackedQuestLocation() {
+        if (!this.trackedQuestId) return null;
+
+        const quest = this.activeQuests[this.trackedQuestId];
+        if (!quest || !quest.objectives) return null;
+
+        // 🖤 Find the first incomplete objective with a location
+        for (const obj of quest.objectives) {
+            if (obj.completed) continue;
+
+            // 💀 Visit objective has direct location
+            if (obj.type === 'visit' && obj.location) {
+                return obj.location;
+            }
+
+            // 🦇 Talk objective - need to find where that NPC is
+            if (obj.type === 'talk' && obj.npc) {
+                // NPCs are typically at the quest giver location or specific spots
+                // For now, use the quest's location as fallback
+                return quest.location;
+            }
+
+            // 💀 Explore dungeon - return the dungeon location
+            if (obj.type === 'explore' && obj.dungeon) {
+                return obj.dungeon;
+            }
+
+            // 🖤 Collect items - player needs to find them, maybe at quest location
+            if (obj.type === 'collect') {
+                return quest.location;
+            }
+        }
+
+        // 💀 Fallback to quest giver location for turn-in
+        return quest.location;
+    },
+
+    // 🖤 Update the glowing quest marker on the map
+    updateQuestMapMarker() {
+        // 💀 Remove old marker first
+        this.removeQuestMapMarker();
+
+        const targetLocation = this.getTrackedQuestLocation();
+        if (!targetLocation) return;
+
+        // 🦇 Get the location element on the map
+        const locationEl = document.querySelector(`.map-location[data-location-id="${targetLocation}"]`);
+        if (!locationEl) {
+            console.log(`🎯 Quest target location "${targetLocation}" not visible on map yet`);
+            return;
+        }
+
+        // 🖤 Create the quest marker overlay
+        this.questMarkerElement = document.createElement('div');
+        this.questMarkerElement.className = 'quest-target-marker';
+        this.questMarkerElement.innerHTML = '🎯';
+        this.questMarkerElement.style.cssText = `
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            filter: drop-shadow(0 0 8px gold) drop-shadow(0 0 15px gold);
+            animation: quest-marker-bounce 1s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 100;
+        `;
+
+        // 🦇 Add glow effect to the location itself
+        locationEl.classList.add('quest-target-glow');
+        locationEl.style.boxShadow = '0 0 20px 10px rgba(255, 215, 0, 0.6), 0 0 40px 20px rgba(255, 215, 0, 0.3)';
+        locationEl.style.animation = 'quest-location-pulse 2s ease-in-out infinite';
+
+        // 💀 Append marker to the location
+        locationEl.style.position = 'absolute'; // ensure positioning context
+        locationEl.appendChild(this.questMarkerElement);
+
+        // 🖤 Add animation styles if not exists
+        this.addQuestMarkerStyles();
+
+        console.log(`🎯 Quest marker placed at ${targetLocation}`);
+    },
+
+    // 💀 Remove the quest map marker
+    removeQuestMapMarker() {
+        // 🦇 Remove the marker element
+        if (this.questMarkerElement && this.questMarkerElement.parentNode) {
+            this.questMarkerElement.remove();
+        }
+        this.questMarkerElement = null;
+
+        // 🖤 Remove glow from all locations
+        document.querySelectorAll('.quest-target-glow').forEach(el => {
+            el.classList.remove('quest-target-glow');
+            el.style.boxShadow = '';
+            el.style.animation = '';
+        });
+    },
+
+    // 🖤 Add CSS for quest marker animations
+    addQuestMarkerStyles() {
+        if (document.getElementById('quest-marker-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'quest-marker-styles';
+        style.textContent = `
+            @keyframes quest-marker-bounce {
+                0%, 100% { transform: translateX(-50%) translateY(0); }
+                50% { transform: translateX(-50%) translateY(-8px); }
+            }
+            @keyframes quest-location-pulse {
+                0%, 100% {
+                    box-shadow: 0 0 20px 10px rgba(255, 215, 0, 0.6), 0 0 40px 20px rgba(255, 215, 0, 0.3);
+                }
+                50% {
+                    box-shadow: 0 0 30px 15px rgba(255, 215, 0, 0.8), 0 0 60px 30px rgba(255, 215, 0, 0.4);
+                }
+            }
+            .quest-target-glow {
+                z-index: 15 !important;
+            }
+        `;
+        document.head.appendChild(style);
+    },
+
+    // 🎯 Show quest info panel for tracked quest
+    showQuestInfoPanel(questId = null) {
+        const qId = questId || this.trackedQuestId;
+        if (!qId) return;
+
+        const quest = this.activeQuests[qId] || this.quests[qId];
+        if (!quest) return;
+
+        // 💀 Remove existing panel
+        const existing = document.getElementById('quest-info-panel');
+        if (existing) existing.remove();
+
+        const progress = this.checkProgress(qId);
+        const targetLocation = this.getTrackedQuestLocation();
+        const locationName = targetLocation ? this.getLocationDisplayName(targetLocation) : 'Unknown';
+
+        // 🖤 Create the info panel
+        const panel = document.createElement('div');
+        panel.id = 'quest-info-panel';
+        panel.className = 'quest-info-panel';
+        panel.innerHTML = `
+            <div class="quest-info-header">
+                <span class="quest-info-icon">${this.getQuestTypeIcon(quest.type)}</span>
+                <h3>${quest.name}</h3>
+                <button class="quest-info-close" onclick="QuestSystem.hideQuestInfoPanel()">×</button>
+            </div>
+            <div class="quest-info-body">
+                <p class="quest-info-desc">${quest.description}</p>
+                <div class="quest-info-section">
+                    <strong>🎯 Go to:</strong> ${locationName}
+                </div>
+                <div class="quest-info-section">
+                    <strong>📋 Objectives:</strong>
+                    <ul class="quest-info-objectives">
+                        ${quest.objectives.map(obj => `
+                            <li class="${obj.completed ? 'completed' : ''}">
+                                ${obj.completed ? '✅' : '⬜'} ${obj.description}
+                                ${obj.count ? ` (${obj.current || 0}/${obj.count})` : ''}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                <div class="quest-info-section">
+                    <strong>💰 Rewards:</strong>
+                    <span class="quest-rewards">
+                        ${quest.rewards.gold ? `${quest.rewards.gold}g` : ''}
+                        ${quest.rewards.experience ? ` ${quest.rewards.experience}xp` : ''}
+                        ${quest.rewards.reputation ? ` +${quest.rewards.reputation} rep` : ''}
+                    </span>
+                </div>
+                <div class="quest-info-status">
+                    Status: <span class="${progress.status}">${progress.status.replace(/_/g, ' ')}</span>
+                </div>
+            </div>
+            <div class="quest-info-actions">
+                ${this.trackedQuestId === qId
+                    ? `<button onclick="QuestSystem.untrackQuest()">🚫 Untrack</button>`
+                    : `<button onclick="QuestSystem.trackQuest('${qId}')">🎯 Track Quest</button>`
+                }
+                <button onclick="QuestSystem.centerMapOnQuestTarget()">🗺️ Show on Map</button>
+            </div>
+        `;
+
+        // 🦇 Style the panel
+        panel.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 350px;
+            max-width: 90vw;
+            background: linear-gradient(180deg, rgba(40, 40, 70, 0.98) 0%, rgba(25, 25, 45, 0.98) 100%);
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            padding: 0;
+            z-index: 1500;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3), 0 10px 40px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            color: #fff;
+            font-size: 14px;
+        `;
+
+        document.body.appendChild(panel);
+
+        // 🖤 Add panel styles
+        this.addQuestInfoPanelStyles();
+    },
+
+    // 💀 Hide the quest info panel
+    hideQuestInfoPanel() {
+        const panel = document.getElementById('quest-info-panel');
+        if (panel) panel.remove();
+    },
+
+    // 🖤 Center the map on the quest target location
+    centerMapOnQuestTarget() {
+        const targetLocation = this.getTrackedQuestLocation();
+        if (!targetLocation) {
+            console.log('🎯 No quest target to center on');
+            return;
+        }
+
+        if (typeof GameWorldRenderer !== 'undefined' && GameWorldRenderer.centerOnLocation) {
+            GameWorldRenderer.centerOnLocation(targetLocation);
+            console.log(`🎯 Centered map on ${targetLocation}`);
+        }
+    },
+
+    // 🦇 Get display name for a location
+    getLocationDisplayName(locationId) {
+        if (typeof GameWorld !== 'undefined' && GameWorld.locations) {
+            const loc = GameWorld.locations[locationId];
+            if (loc) return loc.name;
+        }
+        // 💀 Fallback: prettify the ID
+        return locationId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    },
+
+    // 🖤 Add styles for quest info panel
+    addQuestInfoPanelStyles() {
+        if (document.getElementById('quest-info-panel-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'quest-info-panel-styles';
+        style.textContent = `
+            .quest-info-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 15px;
+                background: linear-gradient(90deg, rgba(255, 215, 0, 0.2) 0%, transparent 100%);
+                border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+                border-radius: 10px 10px 0 0;
+            }
+            .quest-info-header h3 {
+                flex: 1;
+                margin: 0;
+                font-size: 16px;
+                color: #ffd700;
+            }
+            .quest-info-icon { font-size: 24px; }
+            .quest-info-close {
+                background: rgba(244, 67, 54, 0.8);
+                border: none;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                color: white;
+                cursor: pointer;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .quest-info-close:hover { background: #f44336; }
+            .quest-info-body { padding: 15px; }
+            .quest-info-desc {
+                color: #ccc;
+                margin-bottom: 15px;
+                line-height: 1.4;
+                font-style: italic;
+            }
+            .quest-info-section {
+                margin-bottom: 12px;
+            }
+            .quest-info-section strong {
+                color: #4fc3f7;
+                display: block;
+                margin-bottom: 5px;
+            }
+            .quest-info-objectives {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            .quest-info-objectives li {
+                padding: 4px 0;
+                color: #ddd;
+            }
+            .quest-info-objectives li.completed {
+                color: #81c784;
+                text-decoration: line-through;
+            }
+            .quest-rewards { color: #ffd700; }
+            .quest-info-status {
+                padding: 8px;
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 6px;
+                text-align: center;
+            }
+            .quest-info-status .ready_to_complete { color: #81c784; font-weight: bold; }
+            .quest-info-status .in_progress { color: #ffc107; }
+            .quest-info-actions {
+                display: flex;
+                gap: 10px;
+                padding: 12px 15px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .quest-info-actions button {
+                flex: 1;
+                padding: 8px 12px;
+                border: 1px solid rgba(79, 195, 247, 0.5);
+                border-radius: 6px;
+                background: rgba(79, 195, 247, 0.2);
+                color: white;
+                cursor: pointer;
+                font-size: 12px;
+                transition: all 0.2s;
+            }
+            .quest-info-actions button:hover {
+                background: rgba(79, 195, 247, 0.4);
+                border-color: #4fc3f7;
+            }
+        `;
+        document.head.appendChild(style);
     },
 
     // ═══════════════════════════════════════════════════════════════
@@ -1946,17 +2708,43 @@ const QuestSystem = {
             this.updateProgress('explore', { dungeon: e.detail.dungeon, rooms: 1 });
         });
 
-        setInterval(() => this.checkExpiredQuests(), 60000);
+        // 💀 No expiration check - quests are IMMORTAL, unlike my sleep schedule
     },
 
-    checkExpiredQuests() {
-        const now = Date.now();
-        for (const questId in this.activeQuests) {
-            const quest = this.activeQuests[questId];
-            if (quest.expiresAt && now > quest.expiresAt) {
-                console.log(`📜 Quest expired: ${quest.name} - time's up, loser`);
-                this.failQuest(questId);
+    // 🖤 Setup dragging for the quest tracker panel
+    setupTrackerDragging(tracker) {
+        const header = tracker.querySelector('.tracker-header');
+        if (!header) return;
+
+        // 🦇 Always re-attach listeners since innerHTML destroys them
+        header.onmousedown = (e) => {
+            // Don't drag if clicking buttons
+            if (e.target.tagName === 'BUTTON' || e.target.classList.contains('tracker-expand') || e.target.classList.contains('tracker-close')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            DraggablePanels.startDrag(e, tracker);
+        };
+
+        header.ontouchstart = (e) => {
+            if (e.target.tagName === 'BUTTON' || e.target.classList.contains('tracker-expand') || e.target.classList.contains('tracker-close')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            DraggablePanels.startDrag(e, tracker);
+        };
+
+        // 💀 Load saved position ONLY on first setup
+        if (!tracker.dataset.draggable) {
+            tracker.dataset.draggable = 'true';
+            const positions = DraggablePanels.getAllPositions();
+            if (positions['quest-tracker']) {
+                const pos = positions['quest-tracker'];
+                tracker.style.position = 'fixed';
+                tracker.style.left = pos.left;
+                tracker.style.top = pos.top;
+                tracker.style.right = 'auto';
+                tracker.style.bottom = 'auto';
             }
+            console.log('🖤 Quest tracker drag setup complete');
         }
     },
 
@@ -1980,6 +2768,56 @@ const QuestSystem = {
             completed: completed.length,
             currentChapter: completed.length + 1
         };
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🦇 NPC MET CHECK - have you even talked to this person, you hermit?
+    // ═══════════════════════════════════════════════════════════════
+    hasMetNPC(npcId) {
+        // 🖤 Check if player has interacted with this NPC via relationships
+        if (typeof NPCRelationshipSystem !== 'undefined') {
+            const rel = NPCRelationshipSystem.relationships?.[npcId];
+            if (rel) return true;
+        }
+
+        // 🦇 fallback - check if we've discovered any quests from this NPC
+        // (means we must have talked to them at some point)
+        for (const questId of this.discoveredQuests) {
+            const quest = this.quests[questId];
+            if (quest && quest.giver === npcId) return true;
+        }
+
+        // 💀 also check active and completed quests
+        for (const questId of [...Object.keys(this.activeQuests), ...this.completedQuests]) {
+            const quest = this.quests[questId] || this.activeQuests[questId];
+            if (quest && quest.giver === npcId) return true;
+        }
+
+        return false;
+    },
+
+    // 🔮 Check if player can actually start this quest (prereqs met, not already done)
+    canStartQuest(questId) {
+        const quest = this.quests[questId];
+        if (!quest) return false;
+
+        // 💀 already active or completed? nope
+        if (this.activeQuests[questId]) return false;
+        if (this.completedQuests.includes(questId) && !quest.repeatable) return false;
+
+        // 🖤 check prerequisites - did you do the homework?
+        if (quest.prerequisite) {
+            if (!this.completedQuests.includes(quest.prerequisite)) return false;
+        }
+
+        // 🦇 check required quests array
+        if (quest.requiredQuests) {
+            for (const reqId of quest.requiredQuests) {
+                if (!this.completedQuests.includes(reqId)) return false;
+            }
+        }
+
+        return true;
     }
 };
 

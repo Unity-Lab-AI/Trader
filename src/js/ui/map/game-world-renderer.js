@@ -15,18 +15,40 @@ const GameWorldRenderer = {
     tooltipElement: null,
 
     // 📍 map state - where we are in this digital purgatory
+    // 🖤 Map is now 2400x1800 - massive infinite scroll vibes
     mapState: {
-        zoom: 3,             // Start at max zoom (zoomed in to fill screen)
+        zoom: 1,             // Start at 1:1 scale (natural size)
         offsetX: 0,
         offsetY: 0,
-        minZoom: 0.5,        // Max zoomed out - shows entire world
-        maxZoom: 3,          // Max zoomed in - fills screen
-        defaultZoom: 3,      // Default zoom for reset (max zoom - fills screen)
+        minZoom: 0.3,        // Max zoomed out - see the whole world
+        maxZoom: 2,          // Max zoomed in - close up detail
+        defaultZoom: 1,      // Default zoom for reset (1:1 natural)
         isDragging: false,
         dragStartX: 0,
         dragStartY: 0,
         lastOffsetX: 0,
         lastOffsetY: 0
+    },
+
+    // 🖤 Map dimensions - the size of our suffering
+    MAP_WIDTH: 2400,
+    MAP_HEIGHT: 1800,
+
+    // 🖤 Original map scale - locations were designed for 800x600
+    // We scale them up to fill the larger map with padding
+    ORIGINAL_WIDTH: 800,
+    ORIGINAL_HEIGHT: 600,
+    MAP_PADDING: 200, // padding around edges
+
+    // Scale location position from original 800x600 to new larger map
+    scalePosition(pos) {
+        if (!pos) return null;
+        const scaleX = (this.MAP_WIDTH - this.MAP_PADDING * 2) / this.ORIGINAL_WIDTH;
+        const scaleY = (this.MAP_HEIGHT - this.MAP_PADDING * 2) / this.ORIGINAL_HEIGHT;
+        return {
+            x: pos.x * scaleX + this.MAP_PADDING,
+            y: pos.y * scaleY + this.MAP_PADDING
+        };
     },
 
     // 📜 location visit history - breadcrumbs of everywhere you've been and regretted
@@ -92,6 +114,29 @@ const GameWorldRenderer = {
         return true;
     },
 
+    // 🖤 Seasonal backdrop images - one for each season, they fade into each other
+    // 🦇 Place your AI-generated map images at:
+    //    assets/images/world-map-spring.png
+    //    assets/images/world-map-summer.png
+    //    assets/images/world-map-autumn.png
+    //    assets/images/world-map-winter.png
+    SEASONAL_BACKDROPS: {
+        spring: './assets/images/world-map-spring.png',
+        summer: './assets/images/world-map-summer.png',
+        autumn: './assets/images/world-map-autumn.png',
+        fall: './assets/images/world-map-autumn.png', // 🖤 alias for autumn
+        winter: './assets/images/world-map-winter.png'
+    },
+    // 💀 Fallback for legacy single-image setup
+    BACKDROP_IMAGE: './assets/images/world-map-backdrop.png',
+    // 🦇 Fade transition duration in milliseconds
+    // 🖤 60 seconds real time = ~2 in-game hours at normal speed for a nice slow crossfade
+    SEASON_FADE_DURATION: 60000,
+    // 🖤 Current and previous backdrop elements for crossfade
+    currentBackdrop: null,
+    previousBackdrop: null,
+    currentSeason: null,
+
     // 📦 conjure the map container from the html void
     createMapElement() {
         // Remove old canvas if exists
@@ -109,19 +154,208 @@ const GameWorldRenderer = {
             this.container.appendChild(this.mapElement);
         }
 
-        // Style the map element
+        // 🖤 Check if backdrop image exists, use it if available
+        const backdropUrl = this.BACKDROP_IMAGE;
+        const fallbackGradient = `
+            radial-gradient(ellipse at 30% 20%, rgba(22, 33, 62, 0.8) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 80%, rgba(15, 52, 96, 0.6) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, rgba(26, 26, 46, 0.9) 0%, transparent 70%),
+            linear-gradient(135deg, #0a0a1a 0%, #0d1117 25%, #161b22 50%, #0d1117 75%, #0a0a1a 100%)
+        `;
+
+        // Style the map element - 🖤 MASSIVE map for infinite scroll feel
         this.mapElement.style.cssText = `
             position: absolute;
             top: 0;
             left: 0;
-            width: 800px;
-            height: 600px;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            width: ${this.MAP_WIDTH}px;
+            height: ${this.MAP_HEIGHT}px;
+            background: ${fallbackGradient};
+            background-size: cover;
+            background-position: center;
             transform-origin: 0 0;
             cursor: grab;
             user-select: none;
-            border-radius: 8px;
+            border-radius: 0;
         `;
+
+        // 🦇 Try to load the backdrop image - if it exists, use it
+        this.loadBackdropImage(backdropUrl);
+    },
+
+    // 🖤 Load backdrop image - tries seasonal first, then falls back to single image
+    loadBackdropImage(fallbackUrl) {
+        // 🦇 First, setup backdrop container for seasonal crossfades
+        this.setupBackdropContainer();
+
+        // 🖤 Try to detect current season from TimeSystem
+        let currentSeason = 'summer'; // default
+        if (typeof TimeSystem !== 'undefined' && TimeSystem.getSeason) {
+            currentSeason = TimeSystem.getSeason().toLowerCase();
+        }
+
+        // 🦇 Try seasonal image first
+        const seasonalUrl = this.SEASONAL_BACKDROPS[currentSeason];
+        if (seasonalUrl) {
+            this.loadSeasonalBackdrop(currentSeason);
+        } else {
+            // 💀 Fallback to single backdrop image
+            this.loadSingleBackdrop(fallbackUrl);
+        }
+
+        // 🖤 Listen for season changes
+        this.setupSeasonListener();
+    },
+
+    // 🦇 Setup the backdrop container for crossfade transitions
+    setupBackdropContainer() {
+        // 💀 Create a container for backdrop layers (for crossfade effect)
+        let backdropContainer = this.mapElement.querySelector('.backdrop-container');
+        if (!backdropContainer) {
+            backdropContainer = document.createElement('div');
+            backdropContainer.className = 'backdrop-container';
+            // 🖤 Use explicit dimensions to match map size - 100% doesn't work with transforms
+            backdropContainer.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: ${this.MAP_WIDTH}px;
+                height: ${this.MAP_HEIGHT}px;
+                z-index: 0;
+                pointer-events: none;
+                overflow: hidden;
+            `;
+            this.mapElement.insertBefore(backdropContainer, this.mapElement.firstChild);
+        }
+        this.backdropContainer = backdropContainer;
+    },
+
+    // 🖤 Load and display a seasonal backdrop with crossfade
+    loadSeasonalBackdrop(season) {
+        const seasonKey = season.toLowerCase();
+        const imageUrl = this.SEASONAL_BACKDROPS[seasonKey];
+
+        if (!imageUrl) {
+            console.warn('🗺️ No backdrop for season:', season);
+            return;
+        }
+
+        // 🦇 Don't reload if same season
+        if (this.currentSeason === seasonKey) return;
+
+        console.log(`🗺️ Loading ${seasonKey} backdrop...`);
+
+        const img = new Image();
+        img.onload = () => {
+            console.log(`🗺️ ${seasonKey} backdrop loaded - transitioning seasons...`);
+            this.transitionToBackdrop(imageUrl, seasonKey);
+        };
+        img.onerror = () => {
+            console.log(`🗺️ No ${seasonKey} backdrop found, trying fallback...`);
+            this.loadSingleBackdrop(this.BACKDROP_IMAGE);
+        };
+        img.src = imageUrl;
+    },
+
+    // 🖤 Crossfade transition to new backdrop
+    transitionToBackdrop(imageUrl, season) {
+        if (!this.backdropContainer) {
+            this.setupBackdropContainer();
+        }
+
+        // 🦇 Move current to previous (if exists)
+        if (this.currentBackdrop) {
+            this.previousBackdrop = this.currentBackdrop;
+            this.previousBackdrop.style.zIndex = '1';
+        }
+
+        // 💀 Create new backdrop layer
+        const newBackdrop = document.createElement('div');
+        newBackdrop.className = 'backdrop-layer';
+        // 🖤 Use explicit dimensions and separate background-image for reliability
+        newBackdrop.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: ${this.MAP_WIDTH}px;
+            height: ${this.MAP_HEIGHT}px;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.1)), url('${imageUrl}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;
+            transition: opacity ${this.SEASON_FADE_DURATION}ms ease-in-out;
+            z-index: 2;
+        `;
+
+        this.backdropContainer.appendChild(newBackdrop);
+        this.currentBackdrop = newBackdrop;
+        this.currentSeason = season;
+
+        // 🖤 Trigger the fade in
+        requestAnimationFrame(() => {
+            newBackdrop.style.opacity = '1';
+            // 💀 Remove the gradient background from mapElement so backdrop shows through
+            if (this.mapElement) {
+                this.mapElement.style.background = 'transparent';
+            }
+        });
+
+        // 💀 Remove old backdrop after transition
+        if (this.previousBackdrop) {
+            const oldBackdrop = this.previousBackdrop;
+            setTimeout(() => {
+                oldBackdrop.style.opacity = '0';
+                setTimeout(() => {
+                    if (oldBackdrop.parentNode) {
+                        oldBackdrop.remove();
+                    }
+                }, this.SEASON_FADE_DURATION);
+            }, 100);
+        }
+
+        console.log(`🗺️ Season transition to ${season} complete`);
+    },
+
+    // 💀 Fallback: load single backdrop image
+    loadSingleBackdrop(imageUrl) {
+        const img = new Image();
+        img.onload = () => {
+            console.log('🗺️ Backdrop image loaded - painting the realm with style');
+            this.transitionToBackdrop(imageUrl, 'default');
+        };
+        img.onerror = () => {
+            console.log('🗺️ No backdrop image found at ' + imageUrl + ' - using gradient fallback');
+            console.log('🗺️ To use seasonal backdrops, place images at: assets/images/world-map-[season].png');
+            // 💀 Keep the gradient fallback - already applied to mapElement
+        };
+        img.src = imageUrl;
+    },
+
+    // 🖤 Listen for season changes from TimeSystem
+    setupSeasonListener() {
+        // 🦇 Poll for season changes every minute (in-game time moves fast)
+        if (this.seasonCheckInterval) {
+            clearInterval(this.seasonCheckInterval);
+        }
+
+        this.seasonCheckInterval = setInterval(() => {
+            if (typeof TimeSystem !== 'undefined' && TimeSystem.getSeason) {
+                const newSeason = TimeSystem.getSeason().toLowerCase();
+                if (newSeason !== this.currentSeason) {
+                    console.log(`🗺️ Season changed: ${this.currentSeason} → ${newSeason}`);
+                    this.loadSeasonalBackdrop(newSeason);
+                }
+            }
+        }, 10000); // 🖤 Check every 10 seconds real-time
+
+        console.log('🗺️ Season listener active - watching for seasonal transitions');
+    },
+
+    // 🦇 Force a season change (for testing or manual control)
+    setSeason(season) {
+        console.log(`🗺️ Manually setting season to: ${season}`);
+        this.loadSeasonalBackdrop(season);
     },
 
     // 💬 create tooltip - hover over things to learn about your mistakes
@@ -175,8 +409,16 @@ const GameWorldRenderer = {
             return;
         }
 
-        // Clear existing locations
+        // 🖤 Clear existing locations BUT preserve the backdrop container!
+        // The backdrop is precious - don't destroy it on every render
+        const backdrop = this.mapElement.querySelector('.backdrop-container');
         this.mapElement.innerHTML = '';
+        if (backdrop) {
+            this.mapElement.appendChild(backdrop);
+        } else if (this.backdropContainer) {
+            // Re-attach saved backdrop container if it exists
+            this.mapElement.appendChild(this.backdropContainer);
+        }
 
         // Calculate which locations are visible/explored
         const visibilityMap = this.calculateLocationVisibility();
@@ -243,6 +485,10 @@ const GameWorldRenderer = {
     createPropertyMarker(location, properties) {
         if (!location.mapPosition) return;
 
+        // 🖤 Scale position for larger map
+        const scaledPos = this.scalePosition(location.mapPosition);
+        if (!scaledPos) return;
+
         const style = this.locationStyles[location.type] || this.locationStyles.town;
 
         // Count different property states
@@ -274,8 +520,8 @@ const GameWorldRenderer = {
 
         marker.style.cssText = `
             position: absolute;
-            left: ${location.mapPosition.x + offsetX}px;
-            top: ${location.mapPosition.y + offsetY}px;
+            left: ${scaledPos.x + offsetX}px;
+            top: ${scaledPos.y + offsetY}px;
             transform: translate(-50%, -50%);
             background: ${badgeColor};
             border: 2px solid ${this.lightenColor(badgeColor, 20)};
@@ -499,8 +745,8 @@ const GameWorldRenderer = {
     // 🔗 draw the threads of fate connecting your doom to various destinations
     drawConnections(visibilityMap = {}) {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '800');
-        svg.setAttribute('height', '600');
+        svg.setAttribute('width', this.MAP_WIDTH.toString());
+        svg.setAttribute('height', this.MAP_HEIGHT.toString());
         svg.style.cssText = `
             position: absolute;
             top: 0;
@@ -532,6 +778,11 @@ const GameWorldRenderer = {
                 if (drawnConnections.has(connectionKey)) return;
                 drawnConnections.add(connectionKey);
 
+                // 🖤 Scale positions for larger map
+                const scaledFrom = this.scalePosition(location.mapPosition);
+                const scaledTo = this.scalePosition(target.mapPosition);
+                if (!scaledFrom || !scaledTo) return;
+
                 // Create a group for the path (visible line + invisible hitbox)
                 const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                 group.style.cursor = 'help';
@@ -541,20 +792,20 @@ const GameWorldRenderer = {
 
                 // Invisible wider line for easier hovering
                 const hitbox = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                hitbox.setAttribute('x1', location.mapPosition.x);
-                hitbox.setAttribute('y1', location.mapPosition.y);
-                hitbox.setAttribute('x2', target.mapPosition.x);
-                hitbox.setAttribute('y2', target.mapPosition.y);
+                hitbox.setAttribute('x1', scaledFrom.x);
+                hitbox.setAttribute('y1', scaledFrom.y);
+                hitbox.setAttribute('x2', scaledTo.x);
+                hitbox.setAttribute('y2', scaledTo.y);
                 hitbox.setAttribute('stroke', 'transparent');
-                hitbox.setAttribute('stroke-width', '15');
+                hitbox.setAttribute('stroke-width', '20');
                 hitbox.style.pointerEvents = 'stroke';
 
                 // Visible path line
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', location.mapPosition.x);
-                line.setAttribute('y1', location.mapPosition.y);
-                line.setAttribute('x2', target.mapPosition.x);
-                line.setAttribute('y2', target.mapPosition.y);
+                line.setAttribute('x1', scaledFrom.x);
+                line.setAttribute('y1', scaledFrom.y);
+                line.setAttribute('x2', scaledTo.x);
+                line.setAttribute('y2', scaledTo.y);
                 line.style.pointerEvents = 'none';
 
                 // Color based on exploration status
@@ -784,6 +1035,10 @@ const GameWorldRenderer = {
         if (!location.mapPosition) return;
         if (visibility === 'hidden') return;
 
+        // 🖤 Scale position for the larger map
+        const scaledPos = this.scalePosition(location.mapPosition);
+        if (!scaledPos) return;
+
         const style = this.locationStyles[location.type] || this.locationStyles.town;
         const isDiscovered = visibility === 'discovered';
         const el = document.createElement('div');
@@ -799,8 +1054,8 @@ const GameWorldRenderer = {
 
         el.style.cssText = `
             position: absolute;
-            left: ${location.mapPosition.x}px;
-            top: ${location.mapPosition.y}px;
+            left: ${scaledPos.x}px;
+            top: ${scaledPos.y}px;
             transform: translate(-50%, -50%);
             width: ${style.size}px;
             height: ${style.size}px;
@@ -837,13 +1092,13 @@ const GameWorldRenderer = {
         const labelColor = isDiscovered ? '#888' : '#fff';
         label.style.cssText = `
             position: absolute;
-            left: ${location.mapPosition.x}px;
-            top: ${location.mapPosition.y + style.size / 2 + 8 + labelOffset}px;
+            left: ${scaledPos.x}px;
+            top: ${scaledPos.y + style.size / 2 + 8 + labelOffset}px;
             transform: translateX(-50%);
             color: ${labelColor};
-            font-size: 11px;
+            font-size: 12px;
             font-style: ${isDiscovered ? 'italic' : 'normal'};
-            text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 0 0 4px #000;
+            text-shadow: 1px 1px 3px #000, -1px -1px 3px #000, 0 0 6px #000;
             white-space: nowrap;
             pointer-events: none;
             z-index: 5;
@@ -927,7 +1182,8 @@ const GameWorldRenderer = {
     travelAnimation: null,
 
     // 📍 create/update the player marker - that little red pin screaming "here i am"
-    updatePlayerMarker(x = null, y = null) {
+    // 🖤 x/y can be passed as scaled coords (for animation) or null to use current location
+    updatePlayerMarker(x = null, y = null, alreadyScaled = false) {
         // Get position from current location if not provided
         if (x === null || y === null) {
             const locationId = game?.currentLocation?.id;
@@ -936,8 +1192,18 @@ const GameWorldRenderer = {
             const location = typeof GameWorld !== 'undefined' ? GameWorld.locations[locationId] : null;
             if (!location || !location.mapPosition) return;
 
-            x = location.mapPosition.x;
-            y = location.mapPosition.y;
+            // Scale the position for the larger map
+            const scaledPos = this.scalePosition(location.mapPosition);
+            if (!scaledPos) return;
+            x = scaledPos.x;
+            y = scaledPos.y;
+        } else if (!alreadyScaled) {
+            // If x/y provided but not scaled, scale them
+            const scaledPos = this.scalePosition({ x, y });
+            if (scaledPos) {
+                x = scaledPos.x;
+                y = scaledPos.y;
+            }
         }
 
         // Create marker if it doesn't exist
@@ -1041,19 +1307,24 @@ const GameWorldRenderer = {
             return;
         }
 
+        // 🖤 Scale positions for the larger map
+        const scaledFrom = this.scalePosition(fromLoc.mapPosition);
+        const scaledTo = this.scalePosition(toLoc.mapPosition);
+        if (!scaledFrom || !scaledTo) return;
+
         // Cancel any existing animation
         if (this.travelAnimation) {
             cancelAnimationFrame(this.travelAnimation);
         }
 
-        // Store travel info for time-synced animation
+        // Store travel info for time-synced animation (using scaled positions)
         this.currentTravel = {
             fromId: fromLocationId,
             toId: toLocationId,
-            startX: fromLoc.mapPosition.x,
-            startY: fromLoc.mapPosition.y,
-            endX: toLoc.mapPosition.x,
-            endY: toLoc.mapPosition.y,
+            startX: scaledFrom.x,
+            startY: scaledFrom.y,
+            endX: scaledTo.x,
+            endY: scaledTo.y,
             durationMinutes: travelTimeMinutes,
             startGameTime: typeof TimeSystem !== 'undefined' ? TimeSystem.getTotalMinutes() : 0
         };
@@ -1105,12 +1376,12 @@ const GameWorldRenderer = {
             ? 2 * progress * progress
             : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
-        // Calculate current position
+        // Calculate current position (already scaled in animateTravel)
         const currentX = travel.startX + (travel.endX - travel.startX) * easeProgress;
         const currentY = travel.startY + (travel.endY - travel.startY) * easeProgress;
 
-        // Update marker position
-        this.updatePlayerMarker(currentX, currentY);
+        // Update marker position (pass alreadyScaled=true since travel coords are pre-scaled)
+        this.updatePlayerMarker(currentX, currentY, true);
 
         // Update travel progress display if paused (so player sees where they are)
         if (isPaused && this.playerMarker) {
@@ -1242,6 +1513,7 @@ const GameWorldRenderer = {
     },
 
     // 🚧 don't let the map escape the container (we've all wanted to escape)
+    // 🖤 TRUE INFINITE SCROLL - let the user drag freely!
     constrainToBounds() {
         if (!this.container) return;
 
@@ -1249,23 +1521,37 @@ const GameWorldRenderer = {
         const containerWidth = containerRect.width;
         const containerHeight = containerRect.height;
 
-        // Scaled map dimensions - match the CSS size of #world-map-html (1200x900)
-        const mapWidth = 1200 * this.mapState.zoom;
-        const mapHeight = 900 * this.mapState.zoom;
+        // Scaled map dimensions - use our massive map size
+        const mapWidth = this.MAP_WIDTH * this.mapState.zoom;
+        const mapHeight = this.MAP_HEIGHT * this.mapState.zoom;
 
-        // Always allow scrolling - constrain to keep map visible
-        // Allow scrolling from (container - map - padding) to (padding)
-        const padding = 100; // Allow some padding beyond edges for smoother UX
+        // 🖤 VERY generous scrolling - keep at least 100px of map visible
+        // This lets you center ANY location on screen
+        const visibleMin = 100;
 
-        // Horizontal constraints
-        const minX = Math.min(containerWidth - mapWidth - padding, -padding);
-        const maxX = Math.max(padding, containerWidth - mapWidth + padding);
-        this.mapState.offsetX = Math.max(minX, Math.min(maxX, this.mapState.offsetX));
+        // 🦇 Calculate proper bounds that allow centering any part of the map
+        // Can scroll left until right edge is at visibleMin from right of container
+        // Can scroll right until left edge is at (containerWidth - visibleMin) from left
+        const minX = -(mapWidth - visibleMin);  // Scroll all the way left
+        const maxX = containerWidth - visibleMin;  // Scroll all the way right
 
-        // Vertical constraints
-        const minY = Math.min(containerHeight - mapHeight - padding, -padding);
-        const maxY = Math.max(padding, containerHeight - mapHeight + padding);
-        this.mapState.offsetY = Math.max(minY, Math.min(maxY, this.mapState.offsetY));
+        // 🖤 Only apply constraints if they make sense (minX < maxX)
+        if (minX < maxX) {
+            this.mapState.offsetX = Math.max(minX, Math.min(maxX, this.mapState.offsetX));
+        }
+        // If map is smaller than container, center it instead of constraining
+        else {
+            // Map fits in container - allow free movement or center it
+            // Don't constrain at all - let user place it wherever
+        }
+
+        // 🦇 Vertical constraints - same logic
+        const minY = -(mapHeight - visibleMin);
+        const maxY = containerHeight - visibleMin;
+
+        if (minY < maxY) {
+            this.mapState.offsetY = Math.max(minY, Math.min(maxY, this.mapState.offsetY));
+        }
     },
 
     // 🖱️ mouse events - translating human frustration into map movement
@@ -1301,23 +1587,65 @@ const GameWorldRenderer = {
     },
 
     // 🔍 zoom handlers - for when you need to see your problems closer or further away
+    // 🖤 Zoom towards cursor position, not the corner like some amateur hour nonsense
     onWheel(e) {
         e.preventDefault();
 
-        const delta = e.deltaY > 0 ? -0.1 : 0.1;
-        const newZoom = Math.max(this.mapState.minZoom, Math.min(this.mapState.maxZoom, this.mapState.zoom + delta));
+        const delta = e.deltaY > 0 ? -0.15 : 0.15;
+        const oldZoom = this.mapState.zoom;
+        const newZoom = Math.max(this.mapState.minZoom, Math.min(this.mapState.maxZoom, oldZoom + delta));
 
+        if (newZoom === oldZoom) return; // No change, bail
+
+        // Get cursor position relative to the container
+        const containerRect = this.container.getBoundingClientRect();
+        const cursorX = e.clientX - containerRect.left;
+        const cursorY = e.clientY - containerRect.top;
+
+        // Calculate the map position under the cursor before zoom
+        // mapPos = (cursorPos - offset) / zoom
+        const mapX = (cursorX - this.mapState.offsetX) / oldZoom;
+        const mapY = (cursorY - this.mapState.offsetY) / oldZoom;
+
+        // Apply new zoom
         this.mapState.zoom = newZoom;
+
+        // Adjust offset so the same map position stays under the cursor
+        // cursorPos = mapPos * newZoom + newOffset
+        // newOffset = cursorPos - mapPos * newZoom
+        this.mapState.offsetX = cursorX - mapX * newZoom;
+        this.mapState.offsetY = cursorY - mapY * newZoom;
+
         this.updateTransform();
     },
 
+    // 🖤 Zoom in/out buttons zoom towards center of viewport
     zoomIn() {
-        this.mapState.zoom = Math.min(this.mapState.maxZoom, this.mapState.zoom + 0.2);
-        this.updateTransform();
+        this.zoomToCenter(0.2);
     },
 
     zoomOut() {
-        this.mapState.zoom = Math.max(this.mapState.minZoom, this.mapState.zoom - 0.2);
+        this.zoomToCenter(-0.2);
+    },
+
+    zoomToCenter(delta) {
+        const oldZoom = this.mapState.zoom;
+        const newZoom = Math.max(this.mapState.minZoom, Math.min(this.mapState.maxZoom, oldZoom + delta));
+
+        if (newZoom === oldZoom) return;
+
+        const containerRect = this.container.getBoundingClientRect();
+        const centerX = containerRect.width / 2;
+        const centerY = containerRect.height / 2;
+
+        // Same math as onWheel but using center of viewport
+        const mapX = (centerX - this.mapState.offsetX) / oldZoom;
+        const mapY = (centerY - this.mapState.offsetY) / oldZoom;
+
+        this.mapState.zoom = newZoom;
+        this.mapState.offsetX = centerX - mapX * newZoom;
+        this.mapState.offsetY = centerY - mapY * newZoom;
+
         this.updateTransform();
     },
 
@@ -1338,13 +1666,13 @@ const GameWorldRenderer = {
 
         // First try game.currentLocation.mapPosition
         if (typeof game !== 'undefined' && game.currentLocation && game.currentLocation.mapPosition) {
-            pos = game.currentLocation.mapPosition;
+            pos = this.scalePosition(game.currentLocation.mapPosition);
         }
         // If not found, look up from GameWorld using location ID
         else if (typeof game !== 'undefined' && game.currentLocation && game.currentLocation.id && typeof GameWorld !== 'undefined') {
             const location = GameWorld.locations[game.currentLocation.id];
             if (location && location.mapPosition) {
-                pos = location.mapPosition;
+                pos = this.scalePosition(location.mapPosition);
             }
         }
         // Fallback: try to find any location from GameWorld
@@ -1354,14 +1682,14 @@ const GameWorldRenderer = {
                               GameWorld.locations['greendale'] ||
                               Object.values(GameWorld.locations)[0];
             if (defaultLoc && defaultLoc.mapPosition) {
-                pos = defaultLoc.mapPosition;
+                pos = this.scalePosition(defaultLoc.mapPosition);
             }
         }
 
         // If still no position, center the map itself
         if (!pos) {
             console.warn('🗺️ No location position found, centering map');
-            pos = { x: 600, y: 450 }; // Default center of 1200x900 map
+            pos = { x: this.MAP_WIDTH / 2, y: this.MAP_HEIGHT / 2 }; // Default center of map (already scaled)
         }
 
         const containerRect = this.container.getBoundingClientRect();

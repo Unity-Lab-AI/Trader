@@ -1966,7 +1966,10 @@ const game = {
     
     // Initialize game engine
     init() {
-        TimeSystem.init();
+        // 🖤 TIME MACHINE handles its own init - just ensure it's ready
+        if (typeof TimeMachine !== 'undefined' && !TimeMachine.isRunning) {
+            TimeMachine.init();
+        }
         EventSystem.init();
         this.isRunning = true;
         this.lastFrameTime = performance.now();
@@ -2024,72 +2027,52 @@ const game = {
     },
     
     // Update game state
+    // 🖤 NOTE: TIME MACHINE now handles time updates via TimeMachine.tick()
+    // This function only updates game-specific logic, not time progression
     update(deltaTime) {
         if (this.state !== GameState.PLAYING) return;
 
-        // Update time system
-        const timeAdvanced = TimeSystem.update(deltaTime);
+        // 🖤 TIME MACHINE handles TimeSystem.update() in its own tick() loop
+        // We just update the EventSystem and check for scheduled events here
+        EventSystem.update();
+        this.updateMarketPrices();
+        this.checkScheduledEvents();
 
-        // Update event system if time advanced
-        if (timeAdvanced) {
-            EventSystem.update();
-            this.updateMarketPrices();
-            this.checkScheduledEvents();
+        // 🖤 NOTE: The following are now handled by TimeMachine.onTimeAdvance():
+        // - CityEventSystem.updateEvents()
+        // - DynamicMarketSystem.updateMarketPrices()
+        // - PropertySystem.processWorkQueues()
+        // - PropertySystem.processDailyIncome()
+        // - TradeRouteSystem.processDailyTrade()
+        // - EmployeeSystem.processWeeklyWages()
 
-            // Update new systems (with safety checks)
-            if (typeof CityEventSystem !== 'undefined') CityEventSystem.updateEvents();
-            if (typeof DynamicMarketSystem !== 'undefined') DynamicMarketSystem.updateMarketPrices();
-
-            // Process property work queues every update
-            if (typeof PropertySystem !== 'undefined') PropertySystem.processWorkQueues();
-
-            // Process daily income/trade only at midnight (hour=0, minute=0)
-            if (TimeSystem.currentTime.hour === 0 && TimeSystem.currentTime.minute === 0) {
-                if (typeof PropertySystem !== 'undefined') PropertySystem.processDailyIncome();
-                TradeRouteSystem.processDailyTrade();
+        // 💸 Check for bankruptcy after financial operations
+        if (typeof GameOverSystem !== 'undefined' && GameOverSystem.checkBankruptcy) {
+            if (GameOverSystem.checkBankruptcy()) {
+                return; // Game over - stop processing
             }
-
-            // Process weekly wages every 7 days (with tracking to prevent double-processing)
-            if (typeof EmployeeSystem !== 'undefined' && TimeSystem.currentTime.day % 7 === 0) {
-                if (this.lastWageProcessedDay !== TimeSystem.currentTime.day) {
-                    this.lastWageProcessedDay = TimeSystem.currentTime.day;
-                    EmployeeSystem.processWeeklyWages();
-                }
-            }
-
-            // 💸 Check for bankruptcy after financial operations
-            if (typeof GameOverSystem !== 'undefined' && GameOverSystem.checkBankruptcy) {
-                if (GameOverSystem.checkBankruptcy()) {
-                    return; // Game over - stop processing
-                }
-            }
-
-            // Update travel system
-            if (typeof TravelSystem !== 'undefined') {
-                TravelSystem.update();
-            }
-            
-            // Check for city events
-            if (this.currentLocation && typeof CityEventSystem !== 'undefined') {
-                CityEventSystem.checkRandomEvents(this.currentLocation.id);
-            }
-            
-            // Check price alerts
-            if (typeof TradingSystem !== 'undefined') {
-                TradingSystem.checkPriceAlerts();
-            }
-
-            // 💰 Update merchant economy (NPC purchases, gold tracking)
-            if (typeof NPCMerchantSystem !== 'undefined') {
-                NPCMerchantSystem.updateEconomy();
-            }
-
-            // Update death timer
-            this.updateDeathTimer();
-            
-            // 🖤 Process player stats over time - the body's slow decay (and recovery)
-            this.processPlayerStatsOverTime();
         }
+
+        // Update travel system (handled by TimeMachine but we keep this for UI updates)
+        if (typeof TravelSystem !== 'undefined') {
+            TravelSystem.update();
+        }
+
+        // Check for city events
+        if (this.currentLocation && typeof CityEventSystem !== 'undefined') {
+            CityEventSystem.checkRandomEvents(this.currentLocation.id);
+        }
+
+        // 💰 Update merchant economy (NPC purchases, gold tracking)
+        if (typeof NPCMerchantSystem !== 'undefined') {
+            NPCMerchantSystem.updateEconomy();
+        }
+
+        // Update death timer
+        this.updateDeathTimer();
+
+        // 🖤 Process player stats over time - the body's slow decay (and recovery)
+        this.processPlayerStatsOverTime();
 
         // Update UI
         this.updateUI();
@@ -5007,31 +4990,25 @@ function setupEventListeners() {
     // ⏰ TIME CONTROL BUTTONS - REMOVED: GameEngine.setupTimeControls() handles these now
     // 🖤 Keeping this comment as a grave marker for the duplicate handlers that once lived here
     // ⚰️ RIP redundant event listeners - you caused the time freeze bug
-    // GameEngine handles time buttons via onclick, starts the engine properly when unpausing
-    console.log('⏰ Time control buttons now handled by GameEngine.setupTimeControls()');
+    // TIME MACHINE handles time buttons via onclick, starts the engine properly when unpausing
+    console.log('⏰ Time control buttons now handled by TimeMachine.setupTimeControls()');
 
-    // 🖤 Just ensure GameEngine updates our UI when speed changes
-    if (typeof GameEngine !== 'undefined') {
-        const originalSetSpeed = TimeSystem.setSpeed.bind(TimeSystem);
-        TimeSystem.setSpeed = function(speed) {
+    // 🖤 TIME MACHINE handles setSpeed internally now - just update game UI when speed changes
+    if (typeof TimeMachine !== 'undefined') {
+        const originalSetSpeed = TimeMachine.setSpeed.bind(TimeMachine);
+        TimeMachine.setSpeed = function(speed) {
             const result = originalSetSpeed(speed);
+            // Update game.js UI controls
             if (typeof game !== 'undefined' && game.updateTimeControls) {
                 game.updateTimeControls();
             }
-            // 🖤 Also start GameEngine if we're unpausing (safety net)
-            if (speed !== 'PAUSED' && typeof GameEngine !== 'undefined' && !GameEngine.isRunning) {
-                GameEngine.start();
-            }
-            // CRITICAL: Ensure main game loop is running - this is what actually updates time!
-            if (speed !== 'PAUSED' && typeof game !== 'undefined' && !game.isRunning) {
-                console.log('⏰ setSpeed wrapper: Starting main game loop');
+            // Ensure game.isRunning is synced with TimeMachine
+            if (speed !== 'PAUSED' && typeof game !== 'undefined') {
                 game.isRunning = true;
-                game.lastFrameTime = performance.now();
-                requestAnimationFrame((time) => game.gameLoop(time));
             }
             return result;
         };
-        console.log('🖤 TimeSystem.setSpeed wrapped to sync UI and ensure engine starts');
+        console.log('⏰ TimeMachine.setSpeed wrapped to sync game UI');
     }
 
     // 🖤 Verify time buttons exist in DOM for debugging
@@ -5429,22 +5406,35 @@ function startNewGame() {
     console.log('=== Starting new game ===');
     console.log('🖤 startNewGame called - lets see if this void swallows us whole...');
 
-    // 🌦️ Stop menu weather effects - no more rain on our parade
-    if (typeof MenuWeatherSystem !== 'undefined' && MenuWeatherSystem.stop) {
-        MenuWeatherSystem.stop();
-        console.log('🌦️ Menu weather stopped');
-    }
+    // 🌦️ Keep menu weather running during setup - it looks cool behind the setup panel
+    // We'll transfer and stop it when createCharacter() actually starts the game
+    console.log('🌦️ Menu weather continues during setup');
 
     // Reset death cause tracking for new game
     if (typeof DeathCauseSystem !== 'undefined') {
         DeathCauseSystem.reset();
     }
 
-    // 🖤 Explicitly hide main menu first - belt AND suspenders approach
+    // 🖤 Hide main menu content but keep weather effects visible behind setup
     const mainMenu = document.getElementById('main-menu');
+    const menuContent = mainMenu?.querySelector('.menu-content');
+    const weatherContainer = document.getElementById('menu-weather-container');
+
+    if (menuContent) {
+        menuContent.style.display = 'none'; // Hide buttons/title but keep weather
+        console.log('🖤 Main menu content hidden, weather effects continue');
+    }
+
+    // 🌦️ Move weather container to body temporarily so it shows behind setup
+    // CSS in z-index-system.css handles the positioning and z-index
+    if (weatherContainer && mainMenu) {
+        document.body.appendChild(weatherContainer);
+        console.log('🌦️ Weather container moved to body for setup screen');
+    }
+
+    // Now hide the main menu (weather container is no longer inside)
     if (mainMenu) {
         mainMenu.classList.add('hidden');
-        console.log('🖤 Main menu forcefully hidden');
     }
 
     // Show game setup panel with difficulty selection first
@@ -6509,6 +6499,9 @@ function createCharacter(event) {
         event.preventDefault();
     }
 
+    // 🌦️ Weather transfer moved to AFTER game-setup-panel is hidden (see line ~6642)
+    // This prevents CSS from hiding the weather overlay while we're creating particles
+
     const characterNameInput = document.getElementById('character-name-input');
     const name = characterNameInput ? characterNameInput.value.trim() : '';
 
@@ -6628,6 +6621,28 @@ function createCharacter(event) {
     hidePanel('game-setup-panel');
     showGameUI();  // Reveal all game UI elements that were hidden during setup
     changeState(GameState.PLAYING);
+
+    // 🌦️ NOW we transfer menu weather to game weather (AFTER setup panel is hidden!)
+    // This must happen after game-setup-panel has .hidden class, otherwise CSS will hide the overlay
+    if (typeof MenuWeatherSystem !== 'undefined') {
+        const menuWeather = MenuWeatherSystem.currentSeason;
+        if (menuWeather && typeof WeatherSystem !== 'undefined' && WeatherSystem.setInitialWeatherFromMenu) {
+            WeatherSystem.setInitialWeatherFromMenu(menuWeather);
+            console.log(`🌦️ Transferring menu weather: ${menuWeather}`);
+        }
+        if (MenuWeatherSystem.stop) {
+            MenuWeatherSystem.stop();
+            console.log('🌦️ Menu weather stopped - game weather takes over');
+        }
+    }
+
+    // 🌦️ Clean up - remove weather container from body (it was moved there during setup)
+    const weatherContainer = document.getElementById('menu-weather-container');
+    if (weatherContainer && weatherContainer.parentNode === document.body) {
+        weatherContainer.remove();
+        console.log('🌦️ Menu weather container cleaned up');
+    }
+
     addMessage(`Welcome, ${name}! Starting on ${difficulty} difficulty.`);
     addMessage('You start with some basic supplies for your journey.');
 
@@ -6815,6 +6830,21 @@ function cancelGameSetup() {
     const gameContainer = document.getElementById('game-container');
     if (gameContainer) {
         gameContainer.classList.add('hidden');
+    }
+
+    // 🌦️ Move weather container back to main menu and restore menu content
+    const weatherContainer = document.getElementById('menu-weather-container');
+    const mainMenu = document.getElementById('main-menu');
+    const menuContent = mainMenu?.querySelector('.menu-content');
+
+    if (weatherContainer && mainMenu) {
+        // Move it back to main menu as first child (CSS handles positioning)
+        mainMenu.insertBefore(weatherContainer, mainMenu.firstChild);
+        console.log('🌦️ Weather container restored to main menu');
+    }
+
+    if (menuContent) {
+        menuContent.style.display = ''; // Restore menu content visibility
     }
 
     // Show main menu screen
@@ -8651,16 +8681,16 @@ function handleKeyPress(event) {
 }
 
 function toggleMenu() {
-    // Create and show the game menu overlay
+    // 🖤 Create and show the game menu overlay - FULLSCREEN BLACKOUT
     let menuOverlay = document.getElementById('game-menu-overlay');
 
     if (!menuOverlay) {
-        // Create the menu overlay
+        // 💀 Create the menu overlay with full-screen blackout
         menuOverlay = document.createElement('div');
         menuOverlay.id = 'game-menu-overlay';
-        menuOverlay.className = 'overlay';
+        menuOverlay.className = 'game-menu-fullscreen';
         menuOverlay.innerHTML = `
-            <div class="overlay-content game-menu-content">
+            <div class="game-menu-content">
                 <h2>📋 Game Menu</h2>
                 <div class="game-menu-buttons">
                     <button class="menu-btn" id="menu-resume-btn">▶️ Resume Game</button>
@@ -8677,9 +8707,27 @@ function toggleMenu() {
             </div>
         `;
 
-        // Style the menu
+        // 🖤 Style the fullscreen menu overlay
         const style = document.createElement('style');
+        style.id = 'game-menu-styles';
         style.textContent = `
+            /* 🖤 Fullscreen blackout overlay - horse blinders mode */
+            .game-menu-fullscreen {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.95);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                backdrop-filter: blur(10px);
+            }
+            .game-menu-fullscreen.active {
+                display: flex;
+            }
             .game-menu-content {
                 background: linear-gradient(135deg, rgba(20, 20, 40, 0.98) 0%, rgba(30, 30, 60, 0.98) 100%);
                 border: 2px solid #4fc3f7;
@@ -8687,7 +8735,7 @@ function toggleMenu() {
                 padding: 2rem;
                 min-width: 320px;
                 max-width: 400px;
-                box-shadow: 0 0 40px rgba(79, 195, 247, 0.3);
+                box-shadow: 0 0 60px rgba(79, 195, 247, 0.4), 0 0 120px rgba(79, 195, 247, 0.2);
             }
             .game-menu-content h2 {
                 text-align: center;
@@ -8730,10 +8778,18 @@ function toggleMenu() {
                 color: #888;
                 font-size: 0.9rem;
             }
+            /* 🖤 Menu button highlight in action bar */
+            .menu-btn-highlight {
+                background: linear-gradient(135deg, rgba(79, 195, 247, 0.3) 0%, rgba(79, 195, 247, 0.15) 100%) !important;
+                border: 1px solid rgba(79, 195, 247, 0.5) !important;
+            }
         `;
-        document.head.appendChild(style);
+        if (!document.getElementById('game-menu-styles')) {
+            document.head.appendChild(style);
+        }
 
-        document.getElementById('overlay-container').appendChild(menuOverlay);
+        // 🖤 Append to body for true fullscreen coverage
+        document.body.appendChild(menuOverlay);
 
         // Add event listeners
         document.getElementById('menu-resume-btn').addEventListener('click', () => {

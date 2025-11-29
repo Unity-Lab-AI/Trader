@@ -1,0 +1,220 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖤 Z-INDEX SYSTEM - The Dark Tower of Stacking Contexts
+   ═══════════════════════════════════════════════════════════════════════════
+   MASTER Z-INDEX REFERENCE - All z-index values in one place
+
+   Layer 0    : Background effects (menu weather during setup)
+   Layer 1-9  : Game world elements (map, locations)
+   Layer 10-49: Game overlays (weather overlay in-game)
+   Layer 50-99: UI Panels (side panel, location panel, message log)
+   Layer 100-199: Floating panels (setup panel, quest tracker, draggable panels)
+   Layer 200-499: Dropdowns, tooltips, popovers
+   Layer 500-999: Modal backdrops
+   Layer 1000-1999: Modals and overlays
+   Layer 2000+: Critical UI (loading screen, error messages)
+
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+    /* 🖤 LAYER 0: Background Effects */
+    --z-background-effects: 1;
+
+    /* 🗺️ LAYER 1-9: Game World */
+    --z-game-map: 2;
+    --z-map-locations: 5;
+    --z-map-connections: 3;
+    --z-player-marker: 8;
+
+    /* 🌧️ LAYER 10-49: Game Overlays */
+    --z-weather-overlay: 15;
+    --z-day-night-overlay: 12;
+
+    /* 📦 LAYER 50-99: Core UI Panels */
+    --z-side-panel: 50;
+    --z-location-panel: 55;
+    --z-message-log: 60;
+    --z-top-bar: 70;
+    --z-bottom-bar: 70;
+
+    /* 🎛️ LAYER 100-199: Floating/Draggable Panels */
+    --z-quest-tracker: 100;
+    --z-people-panel: 110;
+    --z-draggable-panel: 120;
+    --z-setup-panel: 150;
+
+    /* 💬 LAYER 200-499: Tooltips & Dropdowns */
+    --z-tooltip: 200;
+    --z-dropdown: 250;
+    --z-popover: 300;
+    --z-context-menu: 350;
+
+    /* 🎭 LAYER 500-999: Modal Backdrops */
+    --z-modal-backdrop: 500;
+    --z-overlay-container: 600;
+
+    /* 📋 LAYER 1000-1999: Modals */
+    --z-modal: 1000;
+    --z-modal-content: 1001;
+    --z-perk-modal: 1100;
+    --z-npc-chat: 1200;
+
+    /* ⚠️ LAYER 2000+: Critical/System UI */
+    --z-loading-screen: 2000;
+    --z-error-modal: 2500;
+    --z-debug-console: 3000;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🌦️ MENU WEATHER - Shows behind setup panel
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* When menu weather container is moved to body during setup */
+body > #menu-weather-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: var(--z-background-effects) !important;
+    pointer-events: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎮 GAME CONTAINER STATES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* During setup - transparent background to show weather through */
+#game-container:has(#game-setup-panel:not(.hidden)) {
+    background: transparent !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   📦 SETUP PANEL - Above weather, centered
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#game-setup-panel {
+    z-index: var(--z-setup-panel) !important;
+    position: relative;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🙈 HIDE GAME UI DURING SETUP/MENU/LOADING
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Hide quest tracker */
+body:has(#game-setup-panel:not(.hidden)) .quest-tracker,
+body:has(#main-menu:not(.hidden)) .quest-tracker,
+body:has(#loading-screen:not(.hidden)) .quest-tracker {
+    display: none !important;
+}
+
+/* Hide game weather overlay (not menu weather) during setup */
+body:has(#game-setup-panel:not(.hidden)) #weather-overlay,
+body:has(#game-setup-panel:not(.hidden)) .weather-overlay,
+body:has(#main-menu:not(.hidden)) #weather-overlay,
+body:has(#main-menu:not(.hidden)) .weather-overlay,
+body:has(#loading-screen:not(.hidden)) #weather-overlay,
+body:has(#loading-screen:not(.hidden)) .weather-overlay {
+    display: none !important;
+}
+
+/* Hide weather/time indicators during setup/menu */
+body:has(#game-setup-panel:not(.hidden)) #weather-indicator,
+body:has(#game-setup-panel:not(.hidden)) #time-phase-indicator,
+body:has(#main-menu:not(.hidden)) #weather-indicator,
+body:has(#main-menu:not(.hidden)) #time-phase-indicator,
+body:has(#loading-screen:not(.hidden)) #weather-indicator,
+body:has(#loading-screen:not(.hidden)) #time-phase-indicator {
+    display: none !important;
+}
+
+/* Hide message log during setup */
+body:has(#game-setup-panel:not(.hidden)) #message-log {
+    display: none !important;
+}
+
+/* Hide top bar during setup */
+body:has(#game-setup-panel:not(.hidden)) #top-bar {
+    display: none !important;
+}
+
+/* Hide bottom bar during setup */
+body:has(#game-setup-panel:not(.hidden)) #bottom-action-bar {
+    display: none !important;
+}
+
+/* Hide side panel during setup */
+body:has(#game-setup-panel:not(.hidden)) #side-panel {
+    display: none !important;
+}
+
+/* Hide game world during setup */
+body:has(#game-setup-panel:not(.hidden)) #game-world {
+    display: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🔧 APPLY Z-INDEX VALUES TO ELEMENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Weather overlay in-game - MUST be below all panels */
+.weather-overlay,
+#weather-overlay {
+    z-index: var(--z-weather-overlay) !important;
+    isolation: isolate; /* 🖤 Prevent backdrop-filter from affecting panels */
+}
+
+/* UI Panels container - ABOVE weather overlay */
+#ui-panels {
+    position: relative;
+    z-index: var(--z-side-panel) !important; /* At least 50, above weather's 15 */
+}
+
+/* All panels should be above weather */
+.panel,
+#game-setup-panel,
+#travel-panel,
+#character-panel,
+#inventory-panel,
+#financial-panel,
+#achievements-panel,
+#settings-panel,
+#properties-panel {
+    z-index: var(--z-draggable-panel) !important; /* 120 - well above weather */
+}
+
+/* Quest tracker */
+.quest-tracker {
+    z-index: var(--z-quest-tracker) !important;
+}
+
+/* Message log */
+#message-log {
+    z-index: var(--z-message-log) !important;
+}
+
+/* Location panel - fixed bottom-left, above weather */
+#location-panel {
+    z-index: var(--z-location-panel) !important;
+}
+
+/* Top bar */
+#top-bar {
+    z-index: var(--z-top-bar) !important;
+}
+
+/* Overlay container for modals */
+#overlay-container {
+    z-index: var(--z-overlay-container) !important;
+}
+
+/* Loading screen - always on top */
+#loading-screen {
+    z-index: var(--z-loading-screen) !important;
+}
+
+/* Debug console - absolute top */
+#debug-console,
+.debug-console {
+    z-index: var(--z-debug-console) !important;
+}

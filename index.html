@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="src/css/styles.css?v=0.7">
     <link rel="stylesheet" href="src/css/ui-enhancements.css?v=0.7">
     <link rel="stylesheet" href="src/css/npc-systems.css?v=0.7">
+    <!-- 🖤 Z-Index System - MUST be last to override everything -->
+    <link rel="stylesheet" href="src/css/z-index-system.css?v=0.7">
     <!-- ⚙️ CONFIG MUST LOAD FIRST - All other scripts depend on it -->
     <script src="config.js?v=0.7"></script>
     <script>
@@ -243,41 +245,33 @@
             <!-- 📊 RIGHT SIDE PANEL - Player info, stats, gold, time -->
             <aside id="side-panel">
                 <div class="side-panel-section player-section">
-                    <div class="player-name-display">
+                    <div class="player-name-gold-row">
                         <span id="player-name">Player</span>
+                        <div class="gold-display">
+                            <span class="gold-icon">💰</span>
+                            <span id="player-gold">100</span>
+                        </div>
                     </div>
-                    <div class="gold-display">
-                        <span class="gold-icon">💰</span>
-                        <span id="player-gold">100</span>
-                    </div>
-                    <div class="time-display-box">
-                        <span class="time-icon">🕐</span>
-                        <span id="game-time">Day 1, 08:00</span>
-                    </div>
+                    <!-- 🖤 Time moved to top-bar widgets - no longer needed here -->
                 </div>
 
                 <div class="side-panel-section stats-section">
                     <div class="section-title">Stats</div>
-                    <div class="stats-grid">
-                        <div class="stat-item" title="Strength">
-                            <span class="stat-icon">💪</span>
-                            <span class="stat-value" id="player-strength">5</span>
+                    <!-- 🖤 Two-row layout: icons on top, values below -->
+                    <div class="stats-two-row">
+                        <div class="stats-icons-row">
+                            <span class="stat-icon" title="Strength">💪</span>
+                            <span class="stat-icon" title="Intelligence">🧠</span>
+                            <span class="stat-icon" title="Charisma">😊</span>
+                            <span class="stat-icon" title="Endurance">🏃</span>
+                            <span class="stat-icon" title="Luck">🍀</span>
                         </div>
-                        <div class="stat-item" title="Intelligence">
-                            <span class="stat-icon">🧠</span>
-                            <span class="stat-value" id="player-intelligence">5</span>
-                        </div>
-                        <div class="stat-item" title="Charisma">
-                            <span class="stat-icon">😊</span>
-                            <span class="stat-value" id="player-charisma">5</span>
-                        </div>
-                        <div class="stat-item" title="Endurance">
-                            <span class="stat-icon">🏃</span>
-                            <span class="stat-value" id="player-endurance">5</span>
-                        </div>
-                        <div class="stat-item" title="Luck">
-                            <span class="stat-icon">🍀</span>
-                            <span class="stat-value" id="player-luck">5</span>
+                        <div class="stats-values-row">
+                            <span class="stat-value" id="player-strength" title="Strength">5</span>
+                            <span class="stat-value" id="player-intelligence" title="Intelligence">5</span>
+                            <span class="stat-value" id="player-charisma" title="Charisma">5</span>
+                            <span class="stat-value" id="player-endurance" title="Endurance">5</span>
+                            <span class="stat-value" id="player-luck" title="Luck">5</span>
                         </div>
                     </div>
                 </div>
@@ -314,20 +308,7 @@
                     </div>
                 </div>
 
-                <div class="side-panel-section quick-actions">
-                    <button id="menu-btn" class="side-btn" onclick="KeyBindings.openMenu();">📋 Menu</button>
-                    <button id="inventory-btn" class="side-btn" onclick="KeyBindings.openInventory();">🎒 Inventory [I]</button>
-                    <button id="character-sheet-btn" class="side-btn" onclick="KeyBindings.openCharacterSheet();">👤 Character [C]</button>
-                    <button id="financial-sheet-btn" class="side-btn" onclick="KeyBindings.openFinancialSheet();">💰 Finances [F]</button>
-                    <button id="quests-btn" class="side-btn" onclick="KeyBindings.openQuests();">📜 Quests [Q]</button>
-                    <button id="property-employee-btn" class="side-btn" onclick="KeyBindings.openProperties();">🏠 Properties [P]</button>
-                    <button id="ingame-settings-btn" class="side-btn" onclick="KeyBindings.openSettings();">⚙️ Settings [,]</button>
-                </div>
-
-                <!-- 🎮 Game Controls Container - for dynamic UI elements -->
-                <div id="game-controls" class="side-panel-section game-controls-section">
-                    <!-- Quick actions and game stats will be dynamically added here -->
-                </div>
+                <!-- 🖤 Buttons removed - use bottom action bar or ESC for menu -->
             </aside>
 
             <!-- UI Panels Container - FLOATING over map -->
@@ -336,16 +317,17 @@
                 <section id="game-setup-panel" class="panel hidden">
                     <div class="setup-header">
                         <h2>New Game Setup</h2>
-                        <div class="setup-gold-display">
-                            <span class="gold-icon">💰</span>
-                            <span class="gold-label">Starting Gold:</span>
-                            <span id="setup-gold-amount" class="gold-value">100</span>
-                        </div>
                     </div>
                     <form id="game-setup-form">
-                        <div class="form-group">
+                        <div class="form-group character-name-row">
                             <label for="character-name-input">Character Name:</label>
-                            <input type="text" id="character-name-input" required placeholder="Enter your character name">
+                            <div class="name-gold-inputs">
+                                <input type="text" id="character-name-input" required placeholder="Enter your character name">
+                                <div class="setup-gold-display">
+                                    <span class="gold-icon">💰</span>
+                                    <span id="setup-gold-amount" class="gold-value">100</span>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- ⚔️ Difficulty Selection - how much do you want to suffer? -->
@@ -502,11 +484,7 @@
                                 <div id="merchant-gold-bar" class="merchant-gold-bar" style="width: 100%"></div>
                             </div>
                         </div>
-                        <div class="merchant-actions">
-                            <button id="talk-to-merchant-btn" class="talk-merchant-btn" onclick="NPCChatUI.openMerchantChat()">
-                                🗨️ Talk to Merchant
-                            </button>
-                        </div>
+                        <!-- 🖤 Talk to Merchant button removed - NPC conversations auto-trigger -->
                     </div>
 
                     <!-- Trading Controls -->
@@ -1129,6 +1107,7 @@
 
         <!-- 🎮 Bottom Action Bar - compact row of action buttons -->
         <footer id="bottom-action-bar">
+            <button id="bottom-menu-btn" class="action-btn-bottom menu-btn-highlight" title="Menu [ESC]" onclick="KeyBindings.openMenu();">📋</button>
             <button id="bottom-market-btn" class="action-btn-bottom" title="Visit Market [M]" onclick="KeyBindings.openMarket();">🏪</button>
             <button id="bottom-travel-btn" class="action-btn-bottom" title="Travel [T]" onclick="KeyBindings.openTravel();">🗺️</button>
             <button id="bottom-transport-btn" class="action-btn-bottom" title="Transport [W]" onclick="KeyBindings.openTransportation();">🚗</button>
@@ -1200,11 +1179,11 @@
         </div>
     </div>
 
-    <!-- 🐛 DEBUG CONSOLE - ON-SCREEN CONSOLE LOG (z-index above main menu) -->
-    <div id="debug-console" style="position: fixed; bottom: 0; right: 0; width: 600px; height: 80vh; max-height: 800px; background: rgba(0,0,0,0.95); color: #0f0; font-family: monospace; font-size: 11px; z-index: 9998; /* Z-INDEX STANDARD: Debug console - above main menu (3001) */ border: 2px solid #0f0; display: none; flex-direction: column;">
+    <!-- 🐛 DEBOOGER CONSOLE - ON-SCREEN CONSOLE LOG (z-index above main menu) -->
+    <div id="debug-console" style="position: fixed; bottom: 0; right: 0; width: 600px; height: 80vh; max-height: 800px; background: rgba(0,0,0,0.95); color: #0f0; font-family: monospace; font-size: 11px; z-index: 9998; /* Z-INDEX STANDARD: Debooger console - above main menu (3001) */ border: 2px solid #0f0; display: none; flex-direction: column;">
         <!-- Header -->
         <div style="display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #0f0; background: rgba(0,0,0,0.98); flex-shrink: 0;">
-            <strong style="color: #0ff;">🐛 DEBUG CONSOLE (Press ` for commands)</strong>
+            <strong style="color: #0ff;">🐛 DEBOOGER CONSOLE</strong>
             <button onclick="document.getElementById('debug-console').style.display='none'" style="background: #f00; color: #fff; border: none; padding: 2px 8px; cursor: pointer;">Close</button>
         </div>
         <!-- Scrollable Log Content -->
@@ -1214,7 +1193,7 @@
             <span style="color: #0ff; font-weight: bold; font-size: 14px;">></span>
             <input type="text"
                    id="debug-command-input"
-                   placeholder="Type command... (` to focus, Enter to run, Tab to autocomplete)"
+                   placeholder="Type command... (Enter to run, Tab to autocomplete)"
                    style="flex: 1; background: rgba(0,40,0,0.8); border: 1px solid #0f0; color: #0f0; font-family: monospace; font-size: 12px; padding: 8px 10px; outline: none; border-radius: 4px;"
                    autocomplete="off"
                    spellcheck="false"
@@ -1244,7 +1223,8 @@
     <script src="src/js/core/event-bus.js?v=0.7"></script>
     <script src="src/js/utils/color-utils.js?v=0.7"></script>
     <script src="src/js/utils/virtual-list.js?v=0.7"></script>
-    <script src="src/js/core/time-system.js?v=0.7"></script>
+    <!-- ⏰ THE TIME MACHINE - Unified time engine (replaces time-system.js + game-engine.js) -->
+    <script src="src/js/core/time-machine.js?v=0.7"></script>
     <script src="src/js/data/game-world.js?v=0.7"></script>
 
     <!-- 🛠️ Browser Utilities (depend on EventManager) -->
@@ -1380,7 +1360,7 @@
     <!-- ⚡ Performance Optimizer -->
     <script src="src/js/debug/performance-optimizer.js?v=0.7"></script>
 
-    <!-- 🐛 Debug System - ON by default for Super Hacker achievement 🖤 -->
+    <!-- 🐛 Debooger System - ON by default for Super Hacker achievement 🖤 -->
     <script src="src/js/core/debug-system.js?v=0.7"></script>
 
     <!-- 🎯 Current Task System - tracks player activity 💀 -->
@@ -1392,10 +1372,9 @@
     <!-- 🎮 CORE GAME - Must load LAST (depends on all systems above) -->
     <script src="src/js/core/game.js?v=0.7"></script>
 
-    <!-- 🎮 GAME ENGINE - Orchestrates time, travel, and game loop -->
-    <script src="src/js/core/game-engine.js?v=0.7"></script>
+    <!-- 🎮 GAME ENGINE - NOW HANDLED BY TIME MACHINE (time-machine.js loaded earlier) -->
 
-    <!-- 🎮 DEBUG COMMAND SYSTEM - Cheat codes and developer tools -->
+    <!-- 🎮 DEBOOGER COMMAND SYSTEM - Cheat codes and developer tools -->
     <script src="src/js/debug/debug-command-system.js?v=0.7"></script>
 
     <!-- 🖤 BOOTSTRAP - Coordinates initialization of all systems (loads last) -->

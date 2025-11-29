@@ -75,7 +75,11 @@ body {
     width: 100%;
     background: #1a1a2e;
     overflow: hidden;
+    position: relative;
+    z-index: 10;
 }
+
+/* 🖤 During setup - see z-index-system.css for full rules */
 
 #game-container.hidden {
     display: none !important;
@@ -99,37 +103,7 @@ body:has(#main-menu:not(.hidden)) #game-container {
     visibility: hidden !important;
 }
 
-/* 🖤 Hide dynamically created game elements when on menu/loading/setup screens */
-/* These elements are appended to document.body, not inside #game-container */
-body:has(#loading-screen:not(.hidden)) #weather-indicator,
-body:has(#loading-screen:not(.hidden)) #weather-overlay,
-body:has(#loading-screen:not(.hidden)) .weather-indicator,
-body:has(#loading-screen:not(.hidden)) .weather-overlay,
-body:has(#loading-screen:not(.hidden)) #time-phase-indicator,
-body:has(#loading-screen:not(.hidden)) .time-phase-indicator,
-body:has(#main-menu:not(.hidden)) #weather-indicator,
-body:has(#main-menu:not(.hidden)) #weather-overlay,
-body:has(#main-menu:not(.hidden)) .weather-indicator,
-body:has(#main-menu:not(.hidden)) .weather-overlay,
-body:has(#main-menu:not(.hidden)) #time-phase-indicator,
-body:has(#main-menu:not(.hidden)) .time-phase-indicator,
-body:has(#game-setup-panel:not(.hidden)) #weather-indicator,
-body:has(#game-setup-panel:not(.hidden)) #weather-overlay,
-body:has(#game-setup-panel:not(.hidden)) .weather-indicator,
-body:has(#game-setup-panel:not(.hidden)) .weather-overlay,
-body:has(#game-setup-panel:not(.hidden)) #time-phase-indicator,
-body:has(#game-setup-panel:not(.hidden)) .time-phase-indicator {
-    display: none !important;
-    visibility: hidden !important;
-}
-
-/* 🖤 Hide overlay-container when on menu/loading screens */
-body:has(#loading-screen:not(.hidden)) #overlay-container,
-body:has(#main-menu:not(.hidden)) #overlay-container,
-body:has(#game-setup-panel:not(.hidden)) #overlay-container {
-    display: none !important;
-    visibility: hidden !important;
-}
+/* 🖤 Hide rules moved to z-index-system.css for centralized management */
 
 
 /* ═══════════════════════════════════════════════════════════
@@ -263,10 +237,12 @@ body:has(#game-setup-panel:not(.hidden)) #overlay-container {
     flex: 1;
     display: flex;
     position: relative;
-    background: linear-gradient(135deg, #0a0a1a 0%, #0d1117 50%, #161b22 100%);
+    background: #0a0a1a;
     overflow: hidden;
     pointer-events: auto !important;
     z-index: 1;
+    width: 100%;
+    height: 100%;
 }
 
 #map-container {
@@ -275,23 +251,29 @@ body:has(#game-setup-panel:not(.hidden)) #overlay-container {
     left: 0;
     right: 0;
     bottom: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: auto !important;
     z-index: 2;
     overflow: hidden;
     background: transparent;
 }
 
-/* New HTML-based world map - FULL SIZE */
+/* New HTML-based world map - MASSIVE INFINITE SCROLL */
 #world-map-html {
     position: absolute;
     top: 0;
     left: 0;
-    width: 1200px;
-    height: 900px;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    width: 2400px;
+    height: 1800px;
+    background:
+        radial-gradient(ellipse at 30% 20%, rgba(22, 33, 62, 0.8) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(15, 52, 96, 0.6) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(26, 26, 46, 0.9) 0%, transparent 70%),
+        linear-gradient(135deg, #0a0a1a 0%, #0d1117 25%, #161b22 50%, #0d1117 75%, #0a0a1a 100%);
     cursor: grab;
     user-select: none;
-    border-radius: 8px;
+    border-radius: 0;
     overflow: visible;
     transform-origin: 0 0;
 }
@@ -344,12 +326,13 @@ body:has(#game-setup-panel:not(.hidden)) #overlay-container {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   📊 SIDE PANEL - FLOATING over map, right side
+   📊 SIDE PANEL - FLOATING over map, LEFT of panels toolbar
+   🖤 Swapped positions: Panels toolbar now on far right, player info left of it
    ═══════════════════════════════════════════════════════════ */
 #side-panel {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 70px;
+    right: 160px; /* 🖤 Left of panel toolbar (which is at right: 10px) */
     width: 200px;
     max-height: calc(100vh - 80px);
     background: linear-gradient(180deg, rgba(37, 37, 64, 0.95) 0%, rgba(26, 26, 46, 0.95) 100%);
@@ -366,8 +349,9 @@ body:has(#game-setup-panel:not(.hidden)) #overlay-container {
     pointer-events: auto !important;
 }
 
+/* 🖤 Side panel sections - compact as my will to live */
 .side-panel-section {
-    padding: 0.8rem;
+    padding: 0.4rem 0.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -385,7 +369,12 @@ body:has(#game-setup-panel:not(.hidden)) #overlay-container {
     padding: 1rem 0.8rem;
 }
 
-.player-name-display {
+/* 🖤 Player name and gold on same row */
+.player-name-gold-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
     margin-bottom: 0.5rem;
 }
 
@@ -398,10 +387,8 @@ body:has(#game-setup-panel:not(.hidden)) #overlay-container {
 .gold-display {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    font-size: 1.2rem;
-    margin-bottom: 0.5rem;
+    gap: 0.3rem;
+    font-size: 1rem;
 }
 
 .gold-display .gold-icon {
@@ -443,35 +430,76 @@ body:has(#game-setup-panel:not(.hidden)) #overlay-container {
     margin-bottom: 0.2rem;
 }
 
-/* 🖤 Stats Grid - single row, minimal spacing 💀 */
-.stats-grid {
+/* 🖤 NEW: Two-row stats layout - icons above, values below */
+.stats-two-row {
     display: flex;
-    justify-content: space-around;
-    gap: 0.1rem;
+    flex-direction: column;
+    gap: 0.2rem;
 }
 
-.stat-item {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.2rem;
-    padding: 0.15rem 0.3rem;
-    background: none;
-    font-size: 0.8rem;
+.stats-icons-row,
+.stats-values-row {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    width: 100%;
+}
+
+.stats-icons-row .stat-icon {
+    font-size: 1rem !important;
     cursor: help;
 }
 
-.stat-item:hover {
-    background: rgba(79, 195, 247, 0.1);
-    border-radius: 3px;
+.stats-values-row .stat-value {
+    color: #ffd700;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-align: center;
+    min-width: 20px;
+    cursor: help;
 }
 
-.stat-icon {
-    font-size: 0.85rem;
+/* 🖤 OLD: Side Panel Stats Grid - kept for backwards compatibility */
+#side-panel .stats-grid,
+.stats-section .stats-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important; /* 💀 Allow wrapping if needed */
+    justify-content: center !important;
+    gap: 0.2rem 0.4rem !important;
+    grid-template-columns: unset !important;
+}
+
+#side-panel .stat-item,
+.stats-section .stat-item {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.15rem !important;
+    padding: 0.1rem 0.2rem !important;
+    background: none !important;
+    font-size: 0.75rem !important;
+    cursor: help;
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+#side-panel .stat-item:hover,
+.stats-section .stat-item:hover {
+    background: rgba(79, 195, 247, 0.1) !important;
+    border-radius: 3px !important;
+}
+
+#side-panel .stat-icon,
+.stats-section .stat-icon {
+    font-size: 0.8rem !important;
     line-height: 1;
+    margin-bottom: 0 !important;
 }
 
-.stat-value {
+#side-panel .stat-value,
+.stats-section .stat-value {
     color: #ffd700;
     font-weight: 600;
     font-size: 0.75rem;
@@ -2417,9 +2445,9 @@ button.secondary:hover {
     position: absolute;
     width: 2px;
     height: 15px;
-    background: linear-gradient(180deg, transparent 0%, rgba(174, 194, 224, 0.3) 50%, rgba(174, 194, 224, 0.6) 100%);
-    animation: rain-fall linear infinite;
-    opacity: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(174, 194, 224, 0.5) 50%, rgba(174, 194, 224, 0.8) 100%);
+    animation: rain-fall 1s linear infinite;
+    top: -20px;
 }
 
 .rain-drop::after {
@@ -3190,8 +3218,8 @@ button.secondary:hover {
 
     #side-panel {
         width: 160px;
-        right: 5px;
-        top: 5px;
+        right: 120px; /* 🖤 Left of panel toolbar on smaller screens */
+        top: 60px;
         max-height: calc(100vh - 60px);
     }
 
@@ -4791,15 +4819,29 @@ button.secondary:hover {
     overflow-y: auto;
     overflow-x: hidden;
     max-height: 85vh;
+    /* z-index set in z-index-system.css */
+    background: rgba(30, 30, 50, 0.92); /* 🖤 Slightly transparent to see weather */
+    backdrop-filter: blur(10px);
 }
 
 .setup-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid #4fc3f7;
+}
+
+/* 🖤 Character name input with gold display inline */
+.character-name-row .name-gold-inputs {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.character-name-row #character-name-input {
+    flex: 1;
 }
 
 #game-setup-panel h2 {
@@ -4810,12 +4852,13 @@ button.secondary:hover {
 .setup-gold-display {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%);
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 193, 7, 0.1) 100%);
     border: 2px solid #ffd700;
-    border-radius: 8px;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+    white-space: nowrap;
 }
 
 .gold-icon {
