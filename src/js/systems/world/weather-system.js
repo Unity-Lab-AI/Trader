@@ -255,6 +255,7 @@ const WeatherSystem = {
     },
 
     // 🖤 Called from startNewGame to transfer menu weather into the game
+    // Weather persists for the entire first in-game day before normal weather kicks in
     setInitialWeatherFromMenu(menuWeatherType) {
         const gameWeather = this.menuToGameWeatherMap[menuWeatherType] || 'clear';
         console.log(`🌦️ Menu weather '${menuWeatherType}' → Game weather '${gameWeather}'`);
@@ -264,14 +265,29 @@ const WeatherSystem = {
         // Recreate overlay if needed (in case it's in wrong container or missing)
         this.ensureOverlayReady();
 
-        // Apply the weather directly
-        this.changeWeather(gameWeather);
-        console.log(`🌦️ Game weather applied: ${gameWeather}`);
+        // 🖤 Lock weather for the first in-game day (24 game hours = 1440 game minutes)
+        // This ensures the menu weather persists until the next day
+        if (typeof TimeSystem !== 'undefined') {
+            const currentMinutes = TimeSystem.getTotalMinutes();
+            // Calculate minutes until end of current day (midnight)
+            const minutesInDay = 24 * 60; // 1440 minutes
+            const currentDayMinutes = currentMinutes % minutesInDay;
+            const minutesUntilMidnight = minutesInDay - currentDayMinutes;
+            // Lock until end of day (at least 12 hours, up to 24 hours depending on start time)
+            const lockDuration = Math.max(minutesUntilMidnight, 12 * 60); // At least 12 game hours
+            this.lockWeatherUntil = currentMinutes + lockDuration;
+            console.log(`🌦️ Weather locked for first day: ${lockDuration} game minutes (until minute ${this.lockWeatherUntil})`);
+        }
+
+        // Apply the weather with a very long real-time duration (10 real minutes minimum)
+        // The lockWeatherUntil will prevent normal weather changes anyway
+        this.changeWeather(gameWeather, 600); // 10 minutes real time
+        console.log(`🌦️ Game weather applied: ${gameWeather} (locked for first day)`);
     },
 
     // 🖤 Ensure the overlay is in the right place and ready for visuals
     ensureOverlayReady() {
-        const overlay = document.getElementById('weather-overlay');
+        const overlay = document.getElementById('game-weather-overlay');
         // 🖤 Weather overlay should be in map-container (not game-container)
         const mapContainer = document.getElementById('map-container');
 
@@ -562,17 +578,21 @@ const WeatherSystem = {
         if (now - this.lastWeatherCheck < 1000) return;
         this.lastWeatherCheck = now;
 
-        // 🦇 Check if weather is locked (seasonal transition in progress)
+        // 🦇 Check if weather is locked (first day / seasonal transition)
         if (this.lockWeatherUntil > 0 && typeof TimeSystem !== 'undefined') {
             const currentMinutes = TimeSystem.getTotalMinutes();
             if (currentMinutes < this.lockWeatherUntil) {
-                // 🖤 Weather locked - just update visuals, don't change weather
+                // 🖤 Weather locked - extend real-time duration to prevent changes
+                // Keep pushing the end time forward while locked
+                this.weatherEndTime = now + 60000; // Always 1 minute in the future while locked
                 this.updateVisuals();
                 return;
             } else {
-                // 💀 Lock expired
+                // 💀 Lock expired - now allow normal weather changes
                 this.lockWeatherUntil = 0;
-                console.log('🌦️ Seasonal weather lock expired - resuming normal weather');
+                // Set a reasonable end time for the current weather to change soon
+                this.weatherEndTime = now + (this.MIN_WEATHER_DURATION_SECONDS * 1000);
+                console.log('🌦️ First day weather lock expired - normal weather changes resume');
             }
         }
 
@@ -841,7 +861,7 @@ const WeatherSystem = {
     // ═══════════════════════════════════════════════════════════════
     createWeatherOverlay() {
         // 🖤 Remove any existing overlay first (might be in wrong location)
-        const existing = document.getElementById('weather-overlay');
+        const existing = document.getElementById('game-weather-overlay');
         if (existing) {
             existing.remove();
             console.log('🌦️ Removed existing weather overlay to recreate');
@@ -863,7 +883,7 @@ const WeatherSystem = {
         }
 
         const overlay = document.createElement('div');
-        overlay.id = 'weather-overlay';
+        overlay.id = 'game-weather-overlay'; // 🖤 Unique ID to avoid conflicts with VisualEffectsSystem
         overlay.className = 'weather-overlay';
         // 🖤 Append to map-container so particles fall over the map
         mapContainer.appendChild(overlay);
@@ -921,7 +941,7 @@ const WeatherSystem = {
         const weather = this.weatherTypes[this.currentWeather];
         if (!weather) return;
 
-        const overlay = document.getElementById('weather-overlay');
+        const overlay = document.getElementById('game-weather-overlay');
         const weatherIcon = document.getElementById('weather-icon');
         const weatherDisplay = document.getElementById('weather-display');
         const particles = document.getElementById('weather-particles');
@@ -980,28 +1000,44 @@ const WeatherSystem = {
         }
 
         const particleCount = Math.floor(60 * this.currentIntensity);
-        const particleChar = weather.id === 'snow' || weather.id === 'blizzard' || weather.id === 'thundersnow' ? '❄️' :
-                            weather.id === 'rain' || weather.id === 'storm' ? '💧' : '•';
+        const isRain = weather.id === 'rain' || weather.id === 'storm';
+        const isSnow = weather.id === 'snow' || weather.id === 'blizzard' || weather.id === 'thundersnow';
 
-        console.log(`🌦️ Creating ${particleCount} ${particleChar} particles for ${weather.id}`);
+        console.log(`🌦️ Creating ${particleCount} particles for ${weather.id}`);
 
         for (let i = 0; i < particleCount; i++) {
             const particle = document.createElement('div');
-            particle.className = 'weather-particle';
-            particle.textContent = particleChar;
+
+            // 🌧️ Use line-style rain drops (like main menu) instead of emoji
+            if (isRain) {
+                particle.className = 'game-rain-drop';
+                // No text content - it's a styled line
+            } else {
+                particle.className = 'weather-particle';
+                particle.textContent = isSnow ? '❄️' : '•';
+            }
+
             particle.style.left = `${Math.random() * 100}%`;
             particle.style.animationDelay = `${Math.random() * 2}s`;
-            particle.style.animationDuration = `${1 + Math.random() * 2}s`;
-            particle.style.animationIterationCount = 'infinite';  // 🖤 Keep looping!
-            particle.style.animationTimingFunction = 'linear';
+            particle.style.animationIterationCount = 'infinite';
 
-            // 🖤 Use prefixed animation names
-            if (weather.id === 'blizzard' || weather.id === 'thundersnow') {
-                particle.style.animationName = 'game-blizzard-fall';
-            } else if (weather.id === 'snow') {
-                particle.style.animationName = 'game-snow-fall';
-            } else {
+            // 🔥 Random landing height - particles land on the game world, not just the bottom!
+            const landHeight = 50 + Math.random() * 50; // 50-100vh
+            particle.style.setProperty('--land-height', `${landHeight}vh`);
+
+            if (isRain) {
+                // Rain uses faster animation like menu
+                particle.style.animationDuration = `${0.6 + Math.random() * 0.6}s`;
                 particle.style.animationName = 'game-rain-fall';
+                particle.style.animationTimingFunction = 'linear';
+            } else if (weather.id === 'blizzard' || weather.id === 'thundersnow') {
+                particle.style.animationDuration = `${1.2 + Math.random() * 2.4}s`;
+                particle.style.animationName = 'game-blizzard-fall';
+                particle.style.animationTimingFunction = 'linear';
+            } else if (weather.id === 'snow') {
+                particle.style.animationDuration = `${1.2 + Math.random() * 2.4}s`;
+                particle.style.animationName = 'game-snow-fall';
+                particle.style.animationTimingFunction = 'linear';
             }
 
             particles.appendChild(particle);
@@ -1029,18 +1065,151 @@ const WeatherSystem = {
     },
 
     flashLightning() {
-        const overlay = document.getElementById('weather-overlay');
+        const overlay = document.getElementById('game-weather-overlay');
         if (!overlay) return;
 
         overlay.classList.add('lightning-flash');
         setTimeout(() => {
             overlay.classList.remove('lightning-flash');
-        }, 100);
+        }, 150); // 🖤 Longer flash to match bolt animation
+
+        // ⚡ Create lightning bolt that strikes the ground at random position
+        const particles = document.getElementById('weather-particles');
+        if (particles && Math.random() < 0.8) { // 80% chance to show visible bolt - make them more visible!
+            this.createLightningBolt(particles);
+        }
 
         // Thunder sound would go here if AudioSystem is available
         if (typeof AudioSystem !== 'undefined' && AudioSystem.playSound) {
             AudioSystem.playSound('thunder');
         }
+    },
+
+    // ⚡ Create a visible lightning bolt - vertical column that strikes down and leaves a small fire
+    createLightningBolt(container) {
+        // Random position where lightning will strike
+        const strikeX = 10 + Math.random() * 80; // 10-90% from left
+        const strikeY = 40 + Math.random() * 50; // 40-90vh - lands on the game world
+
+        // Create the vertical bolt column
+        const bolt = document.createElement('div');
+        bolt.className = 'lightning-bolt-column';
+
+        // Calculate bolt height based on where it lands
+        const boltHeight = strikeY;
+
+        bolt.style.cssText = `
+            position: absolute;
+            left: ${strikeX}%;
+            top: 0;
+            width: 4px;
+            height: 0;
+            background: linear-gradient(to bottom,
+                rgba(255,255,255,0.9) 0%,
+                rgba(200,220,255,1) 50%,
+                rgba(100,150,255,1) 100%);
+            box-shadow: 0 0 10px #fff, 0 0 20px #88ccff, 0 0 40px #4488ff, 0 0 60px #0044ff;
+            z-index: 100;
+            animation: bolt-strike-down 0.15s ease-out forwards;
+            --bolt-height: ${boltHeight}vh;
+            transform-origin: top center;
+        `;
+
+        // Add some jagged branches to the bolt
+        const branchCount = 2 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < branchCount; i++) {
+            const branch = document.createElement('div');
+            branch.className = 'lightning-branch';
+            const branchY = 20 + Math.random() * 60; // Branch at 20-80% down the bolt
+            const branchDir = Math.random() > 0.5 ? 1 : -1;
+            const branchLen = 15 + Math.random() * 25;
+            branch.style.cssText = `
+                position: absolute;
+                top: ${branchY}%;
+                left: 50%;
+                width: ${branchLen}px;
+                height: 2px;
+                background: linear-gradient(to ${branchDir > 0 ? 'right' : 'left'}, rgba(200,220,255,1), transparent);
+                box-shadow: 0 0 5px #88ccff, 0 0 10px #4488ff;
+                transform: rotate(${branchDir * (30 + Math.random() * 30)}deg);
+                transform-origin: ${branchDir > 0 ? 'left' : 'right'} center;
+            `;
+            bolt.appendChild(branch);
+        }
+
+        container.appendChild(bolt);
+
+        // After bolt strikes down, create the fire/spark at impact point
+        setTimeout(() => {
+            // Remove the bolt
+            bolt.remove();
+
+            // Create the small fire/spark that persists
+            this.createLightningFire(container, strikeX, strikeY);
+        }, 150);
+    },
+
+    // 🔥 Create a small fire effect where lightning struck - persists for a few seconds
+    createLightningFire(container, x, y) {
+        const fire = document.createElement('div');
+        fire.className = 'lightning-fire';
+        fire.style.cssText = `
+            position: absolute;
+            left: ${x}%;
+            top: ${y}vh;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+        `;
+
+        // Create the fire glow - white/blue core fading to orange edges
+        fire.innerHTML = `
+            <div class="fire-glow"></div>
+            <div class="fire-sparks">✦</div>
+        `;
+
+        container.appendChild(fire);
+
+        // Fire burns for 2-4 seconds then fades out
+        const burnDuration = 2000 + Math.random() * 2000;
+        setTimeout(() => {
+            fire.classList.add('fire-fade-out');
+            setTimeout(() => fire.remove(), 1000);
+        }, burnDuration);
+    },
+
+    // 🔥 Create off-screen impact effect at bottom edge
+    createOffScreenImpact(container, impactX, type) {
+        const edgeEffect = document.createElement('div');
+        edgeEffect.className = 'offscreen-impact';
+
+        if (type === 'lightning') {
+            edgeEffect.innerHTML = '⚡';
+            edgeEffect.style.cssText = `
+                position: absolute;
+                left: ${impactX}%;
+                bottom: 0;
+                font-size: 40px;
+                color: #ffffff;
+                animation: offscreen-flash 0.4s ease-out forwards;
+                filter: drop-shadow(0 0 20px #88ccff) drop-shadow(0 0 40px #4488ff);
+                transform-origin: bottom center;
+            `;
+        } else {
+            // Meteor
+            edgeEffect.innerHTML = '🔥';
+            edgeEffect.style.cssText = `
+                position: absolute;
+                left: ${impactX}%;
+                bottom: 0;
+                font-size: 50px;
+                animation: offscreen-burn 0.8s ease-out forwards;
+                filter: drop-shadow(0 0 20px #ff6600) drop-shadow(0 0 40px #ff3300);
+                transform-origin: bottom center;
+            `;
+        }
+
+        container.appendChild(edgeEffect);
+        setTimeout(() => edgeEffect.remove(), type === 'lightning' ? 400 : 800);
     },
 
     // 💀 METEOR SHOWER SYSTEM - Apocalyptic dungeon weather
@@ -1084,12 +1253,23 @@ const WeatherSystem = {
         const meteor = document.createElement('div');
         meteor.className = 'meteor';
 
-        // 💀 Random position - start from top, streak diagonally
-        const startX = 10 + Math.random() * 80; // 10-90% from left
+        // 🔥 80% land on screen (like lightning), 20% go off screen
+        const goesOffScreen = Math.random() < 0.2;
+
+        // 💀 Pick the LANDING position first - this is where the burn effect will appear
+        const landX = 20 + Math.random() * 60; // Land at 20-80% from left
+        const landY = goesOffScreen ? (100 + Math.random() * 20) : (40 + Math.random() * 50);
+
+        // 💀 Calculate START position - meteors come from upper-left, streak diagonally
+        // Start 20-40% to the left and above the landing point
+        const travelDistX = 15 + Math.random() * 25; // 15-40% horizontal travel
+        const startX = landX - travelDistX;
         const startY = -10; // Start above viewport
 
         // 🖤 Random size for variety
         const size = 0.8 + Math.random() * 0.6; // 0.8x to 1.4x size
+        const duration = 1.5 + Math.random() * 1; // 1.5-2.5 seconds
+        const durationMs = duration * 1000;
 
         meteor.style.cssText = `
             position: absolute;
@@ -1099,39 +1279,126 @@ const WeatherSystem = {
             opacity: 0;
             z-index: 10;
             filter: drop-shadow(0 0 10px #ff6600) drop-shadow(0 0 20px #ff3300);
-            animation: meteor-fall ${1.5 + Math.random() * 1}s ease-in forwards;
+            transform: rotate(-45deg) scale(0.5);
+            transition: none;
         `;
         meteor.innerHTML = '☄️';
 
         particles.appendChild(meteor);
 
-        // 💀 Flash effect when meteor "hits"
-        setTimeout(() => {
-            this.meteorImpact();
-        }, 1200 + Math.random() * 500);
+        // 💀 Animate meteor using JavaScript for precise control
+        const startTime = performance.now();
+        const animateMeteor = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / durationMs, 1);
 
-        // 🦇 Remove meteor after animation
+            // Ease-in function for acceleration
+            const eased = progress * progress;
+
+            // Calculate current position
+            const currentX = startX + (landX - startX) * eased;
+            const currentY = startY + (landY - startY) * eased;
+
+            // Calculate opacity (fade in at start, fade out at end)
+            let opacity;
+            if (progress < 0.1) {
+                opacity = progress / 0.1; // Fade in
+            } else if (progress > 0.9) {
+                opacity = (1 - progress) / 0.1; // Fade out
+            } else {
+                opacity = 1;
+            }
+
+            // Calculate scale (grow as it falls)
+            const scale = 0.5 + 0.7 * eased;
+
+            meteor.style.left = `${currentX}%`;
+            meteor.style.top = `${currentY}vh`;
+            meteor.style.opacity = opacity;
+            meteor.style.transform = `rotate(-45deg) scale(${scale})`;
+
+            if (progress < 1) {
+                requestAnimationFrame(animateMeteor);
+            }
+        };
+
+        requestAnimationFrame(animateMeteor);
+
+        // 💀 Create burn effect where meteor ACTUALLY lands - at end of animation
+        setTimeout(() => {
+            this.meteorImpact(landX, landY, goesOffScreen);
+        }, durationMs);
+
+        // 🦇 Remove meteor after animation + small buffer
         setTimeout(() => {
             if (meteor.parentNode) {
                 meteor.remove();
             }
-        }, 3000);
+        }, durationMs + 100);
     },
 
-    meteorImpact() {
-        // 💀 Brief red flash for meteor impact
-        const overlay = document.getElementById('weather-overlay');
-        if (!overlay) return;
+    meteorImpact(impactX, impactY, goesOffScreen) {
+        const particles = document.getElementById('weather-particles');
+        if (!particles) return;
 
-        overlay.classList.add('meteor-impact');
-        setTimeout(() => {
-            overlay.classList.remove('meteor-impact');
-        }, 150);
+        const clampedX = Math.min(90, Math.max(10, impactX));
+
+        if (goesOffScreen) {
+            // Meteor went off screen - no visual effect, just disappears
+            return;
+        } else {
+            // 🔥 Meteor hit on screen - show explosion then fire
+            const burn = document.createElement('div');
+            burn.className = 'meteor-burn';
+            burn.innerHTML = '💥';
+            burn.style.cssText = `
+                position: absolute;
+                left: ${clampedX}%;
+                top: ${impactY}vh;
+            `;
+            particles.appendChild(burn);
+
+            // Remove burn mark after animation
+            setTimeout(() => {
+                if (burn.parentNode) burn.remove();
+            }, 1500);
+
+            // 🔥 Create persistent fire at impact location
+            this.createMeteorFire(particles, clampedX, impactY);
+        }
 
         // 🦇 Optional: play impact sound
         if (typeof AudioSystem !== 'undefined' && AudioSystem.playSound) {
             AudioSystem.playSound('explosion');
         }
+    },
+
+    // 🔥 Create a persistent fire effect where meteor struck - orange/red flames
+    createMeteorFire(container, x, y) {
+        const fire = document.createElement('div');
+        fire.className = 'meteor-fire';
+        fire.style.cssText = `
+            position: absolute;
+            left: ${x}%;
+            top: ${y}vh;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+        `;
+
+        // Create the fire glow - orange/red core with flickering flames
+        fire.innerHTML = `
+            <div class="meteor-fire-glow"></div>
+            <div class="meteor-fire-sparks">✦</div>
+        `;
+
+        container.appendChild(fire);
+
+        // Fire burns for 3-6 seconds then fades out (longer than lightning)
+        const burnDuration = 3000 + Math.random() * 3000;
+        setTimeout(() => {
+            fire.classList.add('fire-fade-out');
+            setTimeout(() => fire.remove(), 1000);
+        }, burnDuration);
     },
 
     injectStyles() {
@@ -1170,41 +1437,270 @@ const WeatherSystem = {
                 animation: game-rain-fall 1.5s linear infinite;
                 z-index: 5;
             }
-            /* 🖤 Game weather animations - prefixed to avoid conflicts */
+            /* 🌧️ Line-style rain drops (like main menu) */
+            .game-rain-drop {
+                position: absolute;
+                top: -20px;
+                width: 2px;
+                height: 15px;
+                background: linear-gradient(180deg, transparent 0%, rgba(174, 194, 224, 0.5) 50%, rgba(174, 194, 224, 0.8) 100%);
+                opacity: 0.8;
+                z-index: 5;
+                pointer-events: none;
+            }
+            /* 🖤 Game weather animations - particles land at varying heights! */
+            /* Rain lands between 60-100% of screen height */
             @keyframes game-rain-fall {
                 0% {
                     transform: translateY(0) translateX(0);
                     opacity: 0.8;
                 }
+                85% {
+                    opacity: 0.7;
+                }
                 100% {
-                    transform: translateY(100vh) translateX(20px);
-                    opacity: 0.2;
+                    transform: translateY(var(--land-height, 100vh)) translateX(20px);
+                    opacity: 0;
                 }
             }
+            /* Snow drifts and lands at varying heights */
             @keyframes game-snow-fall {
                 0% {
                     transform: translateY(0) translateX(0) rotate(0deg);
                     opacity: 0.9;
                 }
+                90% {
+                    opacity: 0.6;
+                }
                 100% {
-                    transform: translateY(100vh) translateX(50px) rotate(360deg);
-                    opacity: 0.3;
+                    transform: translateY(var(--land-height, 100vh)) translateX(50px) rotate(360deg);
+                    opacity: 0;
                 }
             }
+            /* Blizzard - wild horizontal movement, lands at random heights */
             @keyframes game-blizzard-fall {
                 0% {
                     transform: translateY(0) translateX(0) rotate(0deg);
                     opacity: 0.9;
                 }
+                85% {
+                    opacity: 0.5;
+                }
                 100% {
-                    transform: translateY(100vh) translateX(150px) rotate(720deg);
-                    opacity: 0.2;
+                    transform: translateY(var(--land-height, 100vh)) translateX(150px) rotate(720deg);
+                    opacity: 0;
                 }
             }
-            .lightning-flash {
-                background: rgba(255, 255, 255, 0.8) !important;
-                transition: none !important;
+            /* 💀 Rain splash effect when landing */
+            @keyframes rain-splash {
+                0% {
+                    transform: scale(1);
+                    opacity: 0.8;
+                }
+                100% {
+                    transform: scale(2);
+                    opacity: 0;
+                }
             }
+            .rain-splash {
+                position: absolute;
+                font-size: 8px;
+                animation: rain-splash 0.3s ease-out forwards;
+                pointer-events: none;
+            }
+            .lightning-flash {
+                background: rgba(255, 255, 255, 0.9) !important;
+                transition: none !important;
+                box-shadow: inset 0 0 100px rgba(150, 200, 255, 0.5) !important;
+            }
+
+            /* ⚡ Lightning bolt column - strikes DOWN from top to landing point */
+            @keyframes bolt-strike-down {
+                0% {
+                    height: 0;
+                    opacity: 1;
+                }
+                100% {
+                    height: var(--bolt-height, 60vh);
+                    opacity: 1;
+                }
+            }
+            .lightning-bolt-column {
+                pointer-events: none;
+                transform-origin: top center;
+            }
+            .lightning-branch {
+                pointer-events: none;
+            }
+
+            /* 🔥 Lightning fire effect - white/blue core that persists after strike */
+            .lightning-fire {
+                pointer-events: none;
+                width: 40px;
+                height: 40px;
+            }
+            .lightning-fire .fire-glow {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                background: radial-gradient(circle,
+                    rgba(255,255,255,0.9) 0%,
+                    rgba(200,220,255,0.7) 30%,
+                    rgba(100,150,255,0.4) 60%,
+                    rgba(255,150,50,0.2) 80%,
+                    transparent 100%);
+                box-shadow: 0 0 20px rgba(200,220,255,0.8),
+                            0 0 40px rgba(100,150,255,0.5),
+                            0 0 60px rgba(255,150,50,0.3);
+                animation: fire-flicker 0.15s ease-in-out infinite alternate;
+            }
+            .lightning-fire .fire-sparks {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 20px;
+                color: #fff;
+                text-shadow: 0 0 10px #88ccff, 0 0 20px #fff;
+                animation: spark-pulse 0.3s ease-in-out infinite alternate;
+            }
+            @keyframes fire-flicker {
+                0% {
+                    transform: scale(1);
+                    opacity: 0.9;
+                }
+                100% {
+                    transform: scale(1.1);
+                    opacity: 1;
+                }
+            }
+            @keyframes spark-pulse {
+                0% {
+                    transform: translate(-50%, -50%) scale(0.8);
+                    opacity: 0.7;
+                }
+                100% {
+                    transform: translate(-50%, -50%) scale(1.2);
+                    opacity: 1;
+                }
+            }
+            .lightning-fire.fire-fade-out {
+                animation: fire-fade 1s ease-out forwards;
+            }
+            .lightning-fire.fire-fade-out .fire-glow {
+                animation: fire-fade 1s ease-out forwards;
+            }
+            .lightning-fire.fire-fade-out .fire-sparks {
+                animation: fire-fade 0.5s ease-out forwards;
+            }
+            @keyframes fire-fade {
+                0% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+                100% {
+                    opacity: 0;
+                    transform: scale(0.5);
+                }
+            }
+
+            /* ☄️ Meteor fire effect - orange/red flames that persist after impact */
+            .meteor-fire {
+                pointer-events: none;
+                width: 50px;
+                height: 50px;
+            }
+            .meteor-fire .meteor-fire-glow {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                background: radial-gradient(circle,
+                    rgba(255,200,100,1) 0%,
+                    rgba(255,120,30,0.8) 30%,
+                    rgba(255,60,0,0.5) 60%,
+                    rgba(180,0,0,0.3) 80%,
+                    transparent 100%);
+                box-shadow: 0 0 25px rgba(255,150,50,0.9),
+                            0 0 50px rgba(255,80,0,0.6),
+                            0 0 80px rgba(200,0,0,0.4);
+                animation: meteor-fire-flicker 0.12s ease-in-out infinite alternate;
+            }
+            .meteor-fire .meteor-fire-sparks {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 24px;
+                color: #ffcc00;
+                text-shadow: 0 0 10px #ff6600, 0 0 20px #ff3300, 0 0 30px #ff0000;
+                animation: meteor-spark-pulse 0.25s ease-in-out infinite alternate;
+            }
+            @keyframes meteor-fire-flicker {
+                0% {
+                    transform: scale(1) rotate(0deg);
+                    opacity: 0.85;
+                }
+                100% {
+                    transform: scale(1.15) rotate(5deg);
+                    opacity: 1;
+                }
+            }
+            @keyframes meteor-spark-pulse {
+                0% {
+                    transform: translate(-50%, -50%) scale(0.9);
+                    opacity: 0.8;
+                }
+                100% {
+                    transform: translate(-50%, -50%) scale(1.3);
+                    opacity: 1;
+                }
+            }
+            .meteor-fire.fire-fade-out {
+                animation: fire-fade 1s ease-out forwards;
+            }
+            .meteor-fire.fire-fade-out .meteor-fire-glow {
+                animation: fire-fade 1s ease-out forwards;
+            }
+            .meteor-fire.fire-fade-out .meteor-fire-sparks {
+                animation: fire-fade 0.5s ease-out forwards;
+            }
+
+            /* 🔥 Off-screen impact effects - shows at bottom edge when strikes go off screen */
+            @keyframes offscreen-flash {
+                0% {
+                    transform: scaleY(0.5) scaleX(1);
+                    opacity: 1;
+                }
+                30% {
+                    transform: scaleY(2) scaleX(1.5);
+                    opacity: 1;
+                }
+                100% {
+                    transform: scaleY(3) scaleX(2);
+                    opacity: 0;
+                }
+            }
+            @keyframes offscreen-burn {
+                0% {
+                    transform: scaleY(0.5) scaleX(1);
+                    opacity: 1;
+                }
+                20% {
+                    transform: scaleY(2) scaleX(2);
+                    opacity: 1;
+                }
+                100% {
+                    transform: scaleY(4) scaleX(3);
+                    opacity: 0;
+                }
+            }
+            .offscreen-impact {
+                pointer-events: none;
+                z-index: 50;
+            }
+
             /* Weather/date indicators styled in top-bar via styles.css */
 
             /* Weather-specific overlay styles */
@@ -1260,24 +1756,6 @@ const WeatherSystem = {
                 }
             }
 
-            /* ☄️ Meteor animation - diagonal streak */
-            @keyframes meteor-fall {
-                0% {
-                    opacity: 0;
-                    transform: translateX(0) translateY(0) rotate(-45deg) scale(0.5);
-                }
-                10% {
-                    opacity: 1;
-                }
-                80% {
-                    opacity: 1;
-                }
-                100% {
-                    opacity: 0;
-                    transform: translateX(200px) translateY(120vh) rotate(-45deg) scale(1.2);
-                }
-            }
-
             /* 🦇 Meteor trail effect */
             .meteor::after {
                 content: '';
@@ -1292,10 +1770,27 @@ const WeatherSystem = {
                 filter: blur(2px);
             }
 
-            /* 💀 Meteor impact flash */
-            .meteor-impact {
-                background: rgba(255, 100, 50, 0.6) !important;
-                transition: none !important;
+            /* 🔥 Meteor burn/scorch mark where it lands */
+            @keyframes meteor-burn {
+                0% {
+                    transform: scale(0.5);
+                    opacity: 1;
+                }
+                30% {
+                    transform: scale(1.5);
+                    opacity: 0.9;
+                }
+                100% {
+                    transform: scale(2);
+                    opacity: 0;
+                }
+            }
+            .meteor-burn {
+                position: absolute;
+                font-size: 30px;
+                animation: meteor-burn 1.5s ease-out forwards;
+                pointer-events: none;
+                filter: drop-shadow(0 0 15px #ff4400) drop-shadow(0 0 30px #ff2200);
             }
 
             /* 🖤 Apocalypse particles - ember/ash */
