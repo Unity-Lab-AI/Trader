@@ -1941,6 +1941,10 @@ const TravelSystem = {
         // Trigger location-specific events
         this.triggerLocationEvents(destination);
 
+        // 🖤 DISPATCH LOCATION CHANGE EVENT - let ALL panels know we've moved 💀
+        // Market, People, Location panel - everyone needs to update their souls
+        this.dispatchLocationChangeEvent(destination);
+
         // Update UI
         this.updateTravelUI();
         this.render();
@@ -2416,6 +2420,67 @@ const TravelSystem = {
         if (employees.length > 0) {
             addMessage(`${employees.length} employee${employees.length === 1 ? '' : 's'} working in this location.`);
         }
+    },
+
+    // 🖤 Dispatch location change event to update ALL relevant panels 💀
+    // When you arrive somewhere new, everything must know about it
+    dispatchLocationChangeEvent(destination) {
+        // Dispatch custom event for any listeners
+        document.dispatchEvent(new CustomEvent('player-location-changed', {
+            detail: {
+                locationId: destination.id,
+                locationName: destination.name,
+                locationType: destination.type
+            }
+        }));
+
+        // 🏪 Update Market Panel - new location = new prices
+        if (typeof MarketSystem !== 'undefined' && MarketSystem.updateMarketDisplay) {
+            MarketSystem.updateMarketDisplay();
+        }
+        // Also try the global function
+        if (typeof updateMarketDisplay === 'function') {
+            updateMarketDisplay();
+        }
+
+        // 👥 Update People Panel - new faces in new places
+        if (typeof PeoplePanel !== 'undefined' && PeoplePanel.refresh) {
+            PeoplePanel.refresh();
+        }
+        if (typeof NPCSystem !== 'undefined' && NPCSystem.updateNPCsForLocation) {
+            NPCSystem.updateNPCsForLocation(destination.id);
+        }
+
+        // 📍 Update Location Panel - show the new location info
+        if (typeof LocationPanel !== 'undefined' && LocationPanel.update) {
+            LocationPanel.update();
+        }
+        const locationNameEl = document.getElementById('current-location-name');
+        if (locationNameEl) {
+            locationNameEl.textContent = destination.name;
+        }
+        const locationTypeEl = document.getElementById('current-location-type');
+        if (locationTypeEl) {
+            locationTypeEl.textContent = destination.type.charAt(0).toUpperCase() + destination.type.slice(1);
+        }
+
+        // 🎯 Update Travel Panel Map - sync the destination display
+        if (typeof TravelPanelMap !== 'undefined') {
+            TravelPanelMap.onTravelComplete();
+            TravelPanelMap.render();
+        }
+
+        // 🏠 Update Property Panel if player owns property here
+        if (typeof PropertyUI !== 'undefined' && PropertyUI.refresh) {
+            PropertyUI.refresh();
+        }
+
+        // 📜 Update Quest Tracker if quests are location-specific
+        if (typeof QuestSystem !== 'undefined' && QuestSystem.checkLocationQuests) {
+            QuestSystem.checkLocationQuests(destination.id);
+        }
+
+        console.log(`🖤 Location change event dispatched: ${destination.name}`);
     },
 
     // Update travel UI

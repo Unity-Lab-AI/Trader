@@ -18,37 +18,52 @@ Each entry follows this format:
 
 ## Current Session
 
-### 2025-11-29 - GO Workflow Session #2
+### 2025-11-29 - Travel System Overhaul
 
-**Request:** GO - Full workflow triggered (user command)
-
-**Context:** Previous session fixed lightning flash. Now running fresh full codebase audit to find bugs, missing features, dead code, performance issues, security concerns.
+**Request:** Streamline travel - click destination = instant travel, no "Begin Travel" button. Destination stays visible until arrival then grays out with learned info. Floating pin/tack marker above player location.
 
 **Status:** Completed ✅
 
 **Fixed This Session:**
-1. **CRITICAL: eval() removal** - panel-manager.js:338
-   - Replaced `eval(info.customToggle)` with safe `toggleHandlers` registry
-   - No more arbitrary code execution from config strings
+1. **Instant Travel on Destination Click**
+   - travel-panel-map.js: New `setDestinationAndTravel()` method
+   - game-world-renderer.js: `onLocationClick()` now triggers instant travel
+   - No more "Begin Travel" button - click and you're going
 
-2. **CRITICAL: XSS vulnerabilities** - npc-trade.js (5 locations)
-   - Converted all inline onclick handlers to data attributes
-   - Added event delegation in setupEventListeners()
-   - Escaped all user-facing data (quest names, NPC names, event options)
+2. **Destination Tab Stays Until Arrival**
+   - Destination remains visible during travel
+   - Grays out with "✅ Arrived" badge on completion
+   - New path discoveries show "✅ Arrived - New Path Discovered!"
+   - `learnedInfo` object stores path details (distance, time, safety, type)
 
-3. **CRITICAL: XSS vulnerabilities** - game.js:7505, 7568
-   - Added escapeHtml() to market event names
-   - Added escapeHtml() to market news content
+3. **All Panels Update on Arrival**
+   - travel-system.js: New `dispatchLocationChangeEvent()` method
+   - Updates: Market, People, Location, Property, Quest panels
+   - Custom event 'player-location-changed' for listeners
 
-4. **HIGH: Performance** - draggable-panels.js
-   - Cached getBoundingClientRect() values in startDrag()
-   - onDrag() now uses cached width/height instead of re-querying DOM
+4. **Floating Pin/Tack Marker**
+   - 📌 tack floats above player location with gentle bob animation
+   - Shadow pulses below to show it's floating
+   - Changes to 🚶 walking person during travel
+   - Returns to 📌 tack on arrival with celebration animation
 
-**Left for Later:**
-- :has() CSS selectors (16+ instances)
-- backdrop-filter:blur() optimization
-- Quest system Set conversion
-- Global mousemove listener optimization
+5. **CSS Styles Added**
+   - `.destination-reached` - grayed out state
+   - `.arrived-badge` and `.new-discovery` - arrival indicators
+   - `.learned-travel-info` - path info display after arrival
+
+---
+
+### 2025-11-29 - GO Workflow Session #2
+
+**Request:** GO - Full workflow triggered (user command)
+
+**Status:** Completed ✅
+
+**Fixed:**
+- CRITICAL: eval() removal from panel-manager.js
+- CRITICAL: XSS vulnerabilities in npc-trade.js and game.js
+- HIGH: Performance - draggable-panels.js getBoundingClientRect() caching
 
 ---
 

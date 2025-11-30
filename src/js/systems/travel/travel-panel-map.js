@@ -548,7 +548,7 @@ const TravelPanelMap = {
         this.updatePlayerMarker();
     },
 
-    // 📍 Player marker
+    // 📍 Player marker - floating tack above location 🖤
     playerMarker: null,
 
     updatePlayerMarker() {
@@ -558,11 +558,15 @@ const TravelPanelMap = {
         const location = typeof GameWorld !== 'undefined' ? GameWorld.locations[locationId] : null;
         if (!location || !location.mapPosition) return;
 
+        // 🖤 Check if currently traveling - show walking person instead of tack
+        const isTraveling = typeof TravelSystem !== 'undefined' && TravelSystem.playerPosition?.isTraveling;
+
         if (!this.playerMarker) {
             this.playerMarker = document.createElement('div');
             this.playerMarker.id = 'travel-player-marker';
             this.playerMarker.innerHTML = `
-                <div class="marker-pin">📍</div>
+                <div class="marker-tack">${isTraveling ? '🚶' : '📌'}</div>
+                <div class="marker-shadow"></div>
                 <div class="marker-pulse"></div>
             `;
             this.playerMarker.style.cssText = `
@@ -575,31 +579,72 @@ const TravelPanelMap = {
                 align-items: center;
             `;
 
-            const pin = this.playerMarker.querySelector('.marker-pin');
-            pin.style.cssText = `
-                font-size: 28px;
-                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-                animation: marker-bounce 2s ease-in-out infinite;
+            // 🖤 Floating tack style
+            const tack = this.playerMarker.querySelector('.marker-tack');
+            tack.style.cssText = `
+                font-size: 32px;
+                filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
+                animation: tack-float-mini 2.5s ease-in-out infinite;
                 z-index: 102;
+            `;
+
+            // Shadow below tack
+            const shadow = this.playerMarker.querySelector('.marker-shadow');
+            shadow.style.cssText = `
+                position: absolute;
+                bottom: -3px;
+                width: 18px;
+                height: 6px;
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 50%;
+                animation: shadow-pulse-mini 2.5s ease-in-out infinite;
+                z-index: 99;
             `;
 
             const pulse = this.playerMarker.querySelector('.marker-pulse');
             pulse.style.cssText = `
                 position: absolute;
-                bottom: 4px;
-                width: 16px;
-                height: 16px;
-                background: rgba(255, 0, 0, 0.4);
+                bottom: 0px;
+                width: 12px;
+                height: 12px;
+                background: rgba(220, 20, 60, 0.5);
                 border-radius: 50%;
                 animation: marker-pulse 2s ease-out infinite;
-                z-index: 99;
+                z-index: 100;
             `;
 
+            // Add mini-map specific animations
+            this.addMiniMapMarkerStyles();
+
             this.mapElement.appendChild(this.playerMarker);
+        } else {
+            // Update tack icon based on travel state
+            const tack = this.playerMarker.querySelector('.marker-tack');
+            if (tack) {
+                tack.textContent = isTraveling ? '🚶' : '📌';
+            }
         }
 
         this.playerMarker.style.left = location.mapPosition.x + 'px';
         this.playerMarker.style.top = location.mapPosition.y + 'px';
+    },
+
+    // 🖤 Add mini-map marker animation styles
+    addMiniMapMarkerStyles() {
+        if (document.getElementById('mini-map-marker-styles')) return;
+        const styleSheet = document.createElement('style');
+        styleSheet.id = 'mini-map-marker-styles';
+        styleSheet.textContent = `
+            @keyframes tack-float-mini {
+                0%, 100% { transform: translateY(0) rotate(-2deg); }
+                50% { transform: translateY(-10px) rotate(2deg); }
+            }
+            @keyframes shadow-pulse-mini {
+                0%, 100% { transform: scale(1); opacity: 0.3; }
+                50% { transform: scale(0.7); opacity: 0.4; }
+            }
+        `;
+        document.head.appendChild(styleSheet);
     },
 
     // 🎯 Destination marker
@@ -925,7 +970,8 @@ const TravelPanelMap = {
         }
     },
 
-    // 🖱️ Location click handler - sets destination instead of traveling
+    // 🖱️ Location click handler - sets destination AND starts travel instantly 🖤
+    // No more "Begin Travel" button nonsense - click means GO
     onLocationClick(e, location, isDiscovered = false) {
         e.stopPropagation();
 
@@ -938,13 +984,16 @@ const TravelPanelMap = {
             return;
         }
 
-        // Set as destination
-        this.setDestination(location.id);
-
-        // Show confirmation
-        if (typeof addMessage === 'function') {
-            addMessage(`🎯 Destination set: ${isDiscovered ? 'Unknown Location' : location.name}`);
+        // 🖤 Check if already traveling - can't change destination mid-journey
+        if (typeof TravelSystem !== 'undefined' && TravelSystem.playerPosition?.isTraveling) {
+            if (typeof addMessage === 'function') {
+                addMessage(`⚠️ Already traveling! Arrive first or cancel current journey.`);
+            }
+            return;
         }
+
+        // Set destination AND start travel immediately - no extra clicks needed 💀
+        this.setDestinationAndTravel(location.id, isDiscovered);
     },
 
     // 🎯 Set a destination
@@ -974,6 +1023,64 @@ const TravelPanelMap = {
         // Update displays
         this.updateDestinationDisplay();
         this.render();
+    },
+
+    // 🖤 Set destination AND start travel in one go - the way it should be 💀
+    // Click destination = you're going there, no questions asked
+    setDestinationAndTravel(locationId, isDiscovered = false) {
+        const locations = typeof GameWorld !== 'undefined' ? GameWorld.locations : {};
+        const location = locations[locationId];
+
+        if (!location) {
+            if (typeof addMessage === 'function') {
+                addMessage(`❌ Unknown location`);
+            }
+            return;
+        }
+
+        // Set the destination first
+        const style = this.locationStyles[location.type] || this.locationStyles.town;
+        this.currentDestination = {
+            id: locationId,
+            name: location.name,
+            type: location.type,
+            icon: style.icon,
+            region: location.region || 'Unknown',
+            description: location.description || '',
+            reached: false,
+            isNewPath: !this.hasVisitedBefore(locationId)  // Track if this is a new path
+        };
+
+        // Sync with GameWorldRenderer
+        if (typeof GameWorldRenderer !== 'undefined' && GameWorldRenderer.setDestination) {
+            GameWorldRenderer.setDestination(locationId);
+        }
+
+        // Update display before travel starts
+        this.updateDestinationDisplay();
+        this.render();
+
+        // 🚀 NOW START TRAVEL IMMEDIATELY - no waiting for button clicks
+        if (typeof addMessage === 'function') {
+            const destName = isDiscovered ? 'Unknown Location' : location.name;
+            addMessage(`🚶 Setting off for ${destName}...`);
+        }
+
+        // Start the actual travel
+        this.travelToDestination();
+    },
+
+    // 🖤 Check if player has visited a location before
+    hasVisitedBefore(locationId) {
+        // Check TravelSystem history
+        if (typeof TravelSystem !== 'undefined' && TravelSystem.playerPosition?.visitedLocations) {
+            return TravelSystem.playerPosition.visitedLocations.includes(locationId);
+        }
+        // Check GameWorldRenderer history
+        if (typeof GameWorldRenderer !== 'undefined' && GameWorldRenderer.visitedLocations) {
+            return GameWorldRenderer.visitedLocations.has(locationId);
+        }
+        return false;
     },
 
     // ❌ Clear the destination
@@ -1076,9 +1183,43 @@ const TravelPanelMap = {
             // Check if destination was reached (grayed out state)
             const isReached = dest.reached === true;
             const reachedClass = isReached ? 'destination-reached' : '';
-            const statusBadge = isReached
-                ? '<span class="arrived-badge">✅ Arrived</span>'
-                : '';
+            const isNewPath = dest.isNewPath === true && isReached;
+
+            // 🖤 Status badge shows arrival + new path discovery
+            let statusBadge = '';
+            if (isReached) {
+                statusBadge = isNewPath
+                    ? '<span class="arrived-badge new-discovery">✅ Arrived - New Path Discovered!</span>'
+                    : '<span class="arrived-badge">✅ Arrived</span>';
+            }
+
+            // 🖤 Learned info section - shows travel details after arriving on new path
+            let learnedInfoHtml = '';
+            if (isReached && dest.learnedInfo) {
+                learnedInfoHtml = `
+                    <div class="learned-travel-info">
+                        <h4>📜 Path Information Learned:</h4>
+                        <div class="learned-stats">
+                            <div class="learned-stat">
+                                <span class="stat-icon">📏</span>
+                                <span>Distance: ${dest.learnedInfo.distance} miles</span>
+                            </div>
+                            <div class="learned-stat">
+                                <span class="stat-icon">⏱️</span>
+                                <span>Travel Time: ${dest.learnedInfo.timeDisplay}</span>
+                            </div>
+                            <div class="learned-stat">
+                                <span class="stat-icon">🛤️</span>
+                                <span>Path Type: ${dest.learnedInfo.pathTypeName || dest.learnedInfo.pathType}</span>
+                            </div>
+                            <div class="learned-stat">
+                                <span class="stat-icon">⚠️</span>
+                                <span>Safety: ${dest.learnedInfo.safety}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
 
             displayEl.innerHTML = `
                 <div class="destination-info ${reachedClass}">
@@ -1092,7 +1233,7 @@ const TravelPanelMap = {
                     <div class="dest-description">
                         ${dest.description || 'No description available.'}
                     </div>
-                    ${isReached ? '' : travelInfoHtml}
+                    ${isReached ? learnedInfoHtml : travelInfoHtml}
                     ${isReached ? '' : routeInfoHtml}
                 </div>
             `;
@@ -1318,7 +1459,7 @@ const TravelPanelMap = {
         this.onTravelComplete();
     },
 
-    // ✅ Handle travel completion
+    // ✅ Handle travel completion - mark destination as reached with learned info 🖤
     onTravelComplete() {
         // Clear interval
         if (this.travelState.countdownInterval) {
@@ -1331,6 +1472,23 @@ const TravelPanelMap = {
             this.travelMarker.style.display = 'none';
         }
 
+        // 🖤 Save the travel info before resetting - this is what we "learned" 💀
+        let learnedInfo = null;
+        if (this.currentDestination && typeof TravelSystem !== 'undefined') {
+            const destLocation = TravelSystem.locations[this.currentDestination.id];
+            if (destLocation && TravelSystem.calculateTravelInfo) {
+                const travelInfo = TravelSystem.calculateTravelInfo(destLocation);
+                learnedInfo = {
+                    distance: travelInfo.distance,
+                    timeDisplay: travelInfo.timeDisplay,
+                    pathType: travelInfo.pathType,
+                    pathTypeName: travelInfo.pathTypeName,
+                    safety: travelInfo.safety,
+                    hops: travelInfo.hops
+                };
+            }
+        }
+
         // Reset travel state
         this.travelState.isActive = false;
         this.travelState.destination = null;
@@ -1338,10 +1496,13 @@ const TravelPanelMap = {
         this.travelState.startTime = null;
         this.travelState.duration = null;
 
-        // Mark destination as reached instead of clearing
-        // This keeps it visible (grayed out) so players can retrace their paths
+        // Mark destination as reached with learned info (grayed out but informative)
+        // 🖤 This keeps it visible so players can see what they learned from the journey
         if (this.currentDestination) {
             this.currentDestination.reached = true;
+            if (learnedInfo) {
+                this.currentDestination.learnedInfo = learnedInfo;
+            }
         }
 
         // Update display back to normal

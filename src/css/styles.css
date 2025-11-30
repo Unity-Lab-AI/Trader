@@ -3465,6 +3465,90 @@ button.secondary:hover {
     color: #81c784;
 }
 
+/* 🖤 Destination Reached State - grayed out but informative */
+.destination-info.destination-reached {
+    opacity: 0.7;
+    background: linear-gradient(135deg, rgba(40, 40, 50, 0.8) 0%, rgba(30, 30, 40, 0.9) 100%);
+    border: 1px solid rgba(100, 100, 120, 0.4);
+    position: relative;
+}
+
+.destination-info.destination-reached::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(100, 100, 100, 0.05) 10px,
+        rgba(100, 100, 100, 0.05) 20px
+    );
+    pointer-events: none;
+}
+
+/* Arrived Badge */
+.arrived-badge {
+    display: inline-block;
+    background: linear-gradient(180deg, #4caf50 0%, #388e3c 100%);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.arrived-badge.new-discovery {
+    background: linear-gradient(180deg, #ff9800 0%, #f57c00 100%);
+    animation: discovery-glow 2s ease-in-out infinite;
+}
+
+@keyframes discovery-glow {
+    0%, 100% { box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3); }
+    50% { box-shadow: 0 2px 12px rgba(255, 152, 0, 0.6); }
+}
+
+/* Learned Travel Info Section */
+.learned-travel-info {
+    background: linear-gradient(135deg, rgba(50, 50, 70, 0.6) 0%, rgba(40, 40, 55, 0.8) 100%);
+    border: 1px solid rgba(100, 180, 100, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.learned-travel-info h4 {
+    color: #a5d6a7;
+    font-size: 0.85rem;
+    margin: 0 0 8px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(100, 180, 100, 0.2);
+}
+
+.learned-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+}
+
+.learned-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #c0c0c0;
+}
+
+.learned-stat .stat-icon {
+    font-size: 1rem;
+}
+
 /* Enhanced Item Styles */
 .item-demand {
     font-size: 0.75rem;

@@ -1347,19 +1347,21 @@ const GameWorldRenderer = {
             }
         }
 
-        // Create marker if it doesn't exist
+        // 🖤 Create marker if it doesn't exist - a floating tack/pin above the location icon
         if (!this.playerMarker) {
             this.playerMarker = document.createElement('div');
             this.playerMarker.id = 'player-marker';
             this.playerMarker.className = 'player-marker';
+            // 🖤 Using a tack/pin emoji that floats above the location
             this.playerMarker.innerHTML = `
-                <div class="marker-pin">📍</div>
+                <div class="marker-tack">📌</div>
+                <div class="marker-shadow"></div>
                 <div class="marker-pulse"></div>
                 <div class="marker-label">YOU ARE HERE</div>
             `;
             this.playerMarker.style.cssText = `
                 position: absolute;
-                z-index: 100;
+                z-index: 150;
                 pointer-events: none;
                 transform: translate(-50%, -100%);
                 display: flex;
@@ -1367,62 +1369,90 @@ const GameWorldRenderer = {
                 align-items: center;
             `;
 
-            // Style the pin
-            const pin = this.playerMarker.querySelector('.marker-pin');
-            pin.style.cssText = `
-                font-size: 36px;
-                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-                animation: marker-bounce 2s ease-in-out infinite;
-                z-index: 102;
+            // 🖤 Style the tack/pin - floating above with gentle bob 💀
+            const tack = this.playerMarker.querySelector('.marker-tack');
+            tack.style.cssText = `
+                font-size: 42px;
+                filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+                animation: tack-float 3s ease-in-out infinite;
+                z-index: 152;
+                transform-origin: bottom center;
             `;
 
-            // Style the pulse effect
-            const pulse = this.playerMarker.querySelector('.marker-pulse');
-            pulse.style.cssText = `
+            // 🖤 Shadow below the floating tack
+            const shadow = this.playerMarker.querySelector('.marker-shadow');
+            shadow.style.cssText = `
                 position: absolute;
-                bottom: 4px;
-                width: 20px;
-                height: 20px;
-                background: rgba(255, 0, 0, 0.4);
+                bottom: -5px;
+                width: 24px;
+                height: 8px;
+                background: rgba(0, 0, 0, 0.3);
                 border-radius: 50%;
-                animation: marker-pulse 2s ease-out infinite;
+                animation: shadow-pulse 3s ease-in-out infinite;
                 z-index: 99;
             `;
 
-            // Style the label
-            const label = this.playerMarker.querySelector('.marker-label');
-            label.style.cssText = `
-                background: linear-gradient(180deg, #ff4444 0%, #cc0000 100%);
-                color: white;
-                font-size: 10px;
-                font-weight: bold;
-                padding: 3px 8px;
-                border-radius: 10px;
-                white-space: nowrap;
-                margin-top: -8px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-                border: 2px solid #fff;
-                z-index: 101;
-                letter-spacing: 1px;
+            // Style the pulse effect - ripple from the pin point
+            const pulse = this.playerMarker.querySelector('.marker-pulse');
+            pulse.style.cssText = `
+                position: absolute;
+                bottom: 0px;
+                width: 16px;
+                height: 16px;
+                background: rgba(220, 20, 60, 0.5);
+                border-radius: 50%;
+                animation: marker-pulse 2s ease-out infinite;
+                z-index: 100;
             `;
 
-            // Add CSS animations
+            // Style the label - sleek banner below
+            const label = this.playerMarker.querySelector('.marker-label');
+            label.style.cssText = `
+                background: linear-gradient(180deg, #dc143c 0%, #8b0000 100%);
+                color: white;
+                font-size: 9px;
+                font-weight: bold;
+                padding: 4px 10px;
+                border-radius: 12px;
+                white-space: nowrap;
+                margin-top: 2px;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+                border: 2px solid rgba(255,255,255,0.8);
+                z-index: 151;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
+            `;
+
+            // 🖤 Add CSS animations for floating tack effect
             if (!document.getElementById('player-marker-styles')) {
                 const styleSheet = document.createElement('style');
                 styleSheet.id = 'player-marker-styles';
                 styleSheet.textContent = `
-                    @keyframes marker-bounce {
-                        0%, 100% { transform: translateY(0); }
-                        50% { transform: translateY(-8px); }
+                    @keyframes tack-float {
+                        0%, 100% { transform: translateY(0) rotate(-2deg); }
+                        25% { transform: translateY(-12px) rotate(0deg); }
+                        50% { transform: translateY(-15px) rotate(2deg); }
+                        75% { transform: translateY(-12px) rotate(0deg); }
+                    }
+                    @keyframes shadow-pulse {
+                        0%, 100% { transform: scale(1); opacity: 0.3; }
+                        50% { transform: scale(0.6); opacity: 0.5; }
                     }
                     @keyframes marker-pulse {
                         0% { transform: scale(1); opacity: 0.6; }
-                        100% { transform: scale(3); opacity: 0; }
+                        100% { transform: scale(4); opacity: 0; }
                     }
                     @keyframes marker-travel {
                         0% { transform: translate(-50%, -100%) scale(1); }
-                        50% { transform: translate(-50%, -100%) scale(1.2); }
+                        50% { transform: translate(-50%, -100%) scale(1.1); }
                         100% { transform: translate(-50%, -100%) scale(1); }
+                    }
+                    .player-marker.traveling .marker-tack {
+                        animation: tack-walk 0.4s ease-in-out infinite !important;
+                    }
+                    @keyframes tack-walk {
+                        0%, 100% { transform: translateY(-8px) rotate(-5deg); }
+                        50% { transform: translateY(-12px) rotate(5deg); }
                     }
                 `;
                 document.head.appendChild(styleSheet);
@@ -1470,12 +1500,13 @@ const GameWorldRenderer = {
             startGameTime: typeof TimeSystem !== 'undefined' ? TimeSystem.getTotalMinutes() : 0
         };
 
-        // Add traveling class to marker
+        // 🖤 Add traveling class to marker - the tack walks along the path 💀
         if (this.playerMarker) {
             this.playerMarker.classList.add('traveling');
-            const pin = this.playerMarker.querySelector('.marker-pin');
-            if (pin) {
-                pin.style.animation = 'marker-travel 0.5s ease-in-out infinite';
+            // Switch to walking animation (defined in CSS above)
+            const tack = this.playerMarker.querySelector('.marker-tack');
+            if (tack) {
+                tack.textContent = '🚶'; // Walking person while traveling
             }
             // Update label to show "TRAVELING..."
             const label = this.playerMarker.querySelector('.marker-label');
@@ -1551,7 +1582,7 @@ const GameWorldRenderer = {
         }
     },
 
-    // ✅ the journey is over... for now
+    // ✅ the journey is over... for now 🖤
     completeTravelAnimation() {
         this.travelAnimation = null;
         this.currentTravel = null;
@@ -1560,12 +1591,14 @@ const GameWorldRenderer = {
             this.playerMarker.classList.remove('traveling');
             this.playerMarker.classList.add('arrived');
 
-            const pin = this.playerMarker.querySelector('.marker-pin');
-            if (pin) {
-                // Play arrival animation then settle into hover bounce
-                pin.style.animation = 'marker-arrive 0.6s ease-out forwards';
+            // 🖤 Switch back from walking person to tack/pin
+            const tack = this.playerMarker.querySelector('.marker-tack');
+            if (tack) {
+                tack.textContent = '📌'; // Back to tack after arriving
+                // Play arrival animation then settle into float
+                tack.style.animation = 'marker-arrive 0.6s ease-out forwards';
                 setTimeout(() => {
-                    pin.style.animation = 'marker-hover 3s ease-in-out infinite';
+                    tack.style.animation = 'tack-float 3s ease-in-out infinite';
                 }, 600);
             }
 
@@ -1586,7 +1619,7 @@ const GameWorldRenderer = {
                 // After 2 seconds, show normal "YOU ARE HERE"
                 setTimeout(() => {
                     label.textContent = 'YOU ARE HERE';
-                    label.style.background = 'linear-gradient(180deg, #ff4444 0%, #cc0000 100%)';
+                    label.style.background = 'linear-gradient(180deg, #dc143c 0%, #8b0000 100%)';
                     this.playerMarker.classList.remove('arrived');
                 }, 2000);
             }
@@ -2096,7 +2129,8 @@ const GameWorldRenderer = {
         this.tooltipElement.style.display = 'none';
     },
 
-    // 🚶 Location click handler - sets destination first, lets player choose to travel
+    // 🚶 Location click handler - INSTANT TRAVEL - click and you're going 🖤
+    // No more setting destinations and waiting - click means GO, mortal
     onLocationClick(e, location, isDiscovered = false) {
         e.stopPropagation();
 
@@ -2105,27 +2139,22 @@ const GameWorldRenderer = {
             return;
         }
 
-        // Check if location is connected to current location
-        const currentLoc = typeof GameWorld !== 'undefined' ? GameWorld.locations[game.currentLocation?.id] : null;
-        if (currentLoc && currentLoc.connections) {
-            if (!currentLoc.connections.includes(location.id)) {
-                addMessage(`❌ ${location.name} is not directly connected. you cant teleport, mortal.`);
-                return;
-            }
+        // 🖤 Check if already traveling - can't change destination mid-journey
+        if (typeof TravelSystem !== 'undefined' && TravelSystem.playerPosition?.isTraveling) {
+            addMessage(`⚠️ Already traveling! Arrive first or cancel your current journey, impatient one.`);
+            return;
         }
 
-        // 🎯 SET DESTINATION instead of immediately traveling
-        // the player should see where theyre going before committing their soul to the journey
-        this.setDestination(location.id);
-
-        // Sync with TravelPanelMap if it exists
-        if (typeof TravelPanelMap !== 'undefined' && TravelPanelMap.setDestination) {
-            TravelPanelMap.setDestination(location.id);
+        // 🎯 Set destination AND start travel immediately via TravelPanelMap
+        // This handles all the complexity - we just delegate to the expert 💀
+        if (typeof TravelPanelMap !== 'undefined' && TravelPanelMap.setDestinationAndTravel) {
+            TravelPanelMap.setDestinationAndTravel(location.id, isDiscovered);
+        } else {
+            // Fallback: just set destination if TravelPanelMap not available
+            this.setDestination(location.id);
+            const destName = isDiscovered ? 'mysterious unknown location' : location.name;
+            addMessage(`🎯 Destination set: ${destName}. Open travel panel to begin.`);
         }
-
-        // Show helpful message about what to do next
-        const destName = isDiscovered ? 'mysterious unknown location' : location.name;
-        addMessage(`🎯 Destination set: ${destName}. hit play or use the travel panel to begin your pilgrimage.`);
 
         this.render(); // Re-render to show destination highlight
     },
