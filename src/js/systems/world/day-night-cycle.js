@@ -1,11 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 🌅 DAY/NIGHT CYCLE - Time waits for no merchant
+// DAY/NIGHT CYCLE - time's cruel march continues
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
-// ═══════════════════════════════════════════════════════════════
-// Visual day/night cycle that affects the game's atmosphere,
-// shop availability, NPC schedules, and danger levels.
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const DayNightCycle = {

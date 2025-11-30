@@ -1,11 +1,11 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   🖤 MEDIEVAL TRADING GAME - MAIN STYLESHEET
-   ═══════════════════════════════════════════════════════════════════════════
-   File: styles.css
-   Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
-
-   🖤 Dead code purged 2025-11-27 - clean and mean
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   MEDIEVAL TRADING GAME - main stylesheet of darkness
+   ═══════════════════════════════════════════════════════════════
+   Version: 0.88 | Unity AI Lab
+   Creators: Hackall360, Sponge, GFourteen
+   www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+   unityailabcontact@gmail.com
+   ═══════════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════════
    🖤 CSS RESET - wiping the slate clean (like my soul)
@@ -343,7 +343,6 @@ body:has(#main-menu:not(.hidden)) #game-container {
     overflow-y: auto;
     overflow-x: hidden;
     z-index: 100;
-    backdrop-filter: blur(10px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     flex-shrink: 0;
     pointer-events: auto !important;
@@ -604,7 +603,6 @@ body:has(#main-menu:not(.hidden)) #game-container {
     background: linear-gradient(180deg, rgba(26, 26, 46, 0.95) 0%, rgba(15, 15, 26, 0.95) 100%);
     border: 1px solid rgba(79, 195, 247, 0.3);
     border-radius: 12px;
-    backdrop-filter: blur(10px);
     z-index: 55;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
@@ -619,7 +617,6 @@ body:has(#main-menu:not(.hidden)) #game-container {
     border: 1px solid rgba(79, 195, 247, 0.3);
     border-radius: 12px;
     padding: 1rem;
-    backdrop-filter: blur(10px);
     z-index: 54;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
@@ -875,7 +872,6 @@ body:has(#main-menu:not(.hidden)) #game-container {
     align-items: center;
     justify-content: center;
     z-index: 10000;
-    backdrop-filter: blur(5px);
 }
 
 .leaderboard-modal {
@@ -1514,7 +1510,6 @@ body:has(#main-menu:not(.hidden)) #game-container {
     border-radius: 12px;
     padding: 1rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(15px);
     pointer-events: auto;
     max-width: 700px;
     width: fit-content;
@@ -1599,7 +1594,6 @@ body:has(#main-menu:not(.hidden)) #game-container {
     display: none;
     justify-content: center;
     align-items: center;
-    backdrop-filter: blur(8px);
     animation: fadeIn 0.3s ease-out;
 }
 
@@ -1658,7 +1652,6 @@ body:has(#main-menu:not(.hidden)) #game-container {
     display: none;
     justify-content: center;
     align-items: center;
-    backdrop-filter: blur(10px);
 }
 
 #world-map-overlay.active {
@@ -2273,7 +2266,6 @@ body:has(#main-menu:not(.hidden)) #game-container {
     max-height: 220px;
     overflow: hidden;
     z-index: 150;
-    backdrop-filter: blur(10px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;
@@ -5094,8 +5086,7 @@ button.secondary:hover {
     overflow-x: hidden;
     max-height: 95vh;
     /* z-index set in z-index-system.css */
-    background: rgba(30, 30, 50, 0.92); /* 🖤 Slightly transparent to see weather */
-    backdrop-filter: blur(10px);
+    background: rgba(30, 30, 50, 0.95);
 }
 
 .setup-header {
@@ -7503,7 +7494,6 @@ button.secondary:hover {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     z-index: 10000;
     transition: right 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    backdrop-filter: blur(10px);
 }
 
 .achievement-notification.show {
@@ -8388,7 +8378,6 @@ button,
     z-index: 10000;
     justify-content: center;
     align-items: center;
-    backdrop-filter: blur(5px);
 }
 
 #exploration-overlay.active {

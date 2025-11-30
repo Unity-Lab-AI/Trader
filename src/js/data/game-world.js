@@ -1,12 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 🗺️ GAME WORLD SYSTEM - The Realm Where Dreams Die and Gold Lives
+// GAME WORLD SYSTEM - where dreams die and gold lives in darkness
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.81
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
-// ═══════════════════════════════════════════════════════════════
-// 🖤 Extracted from game.js - now the world has its own dark domain
-// 🦇 Contains: regions, locations, travel, markets, tools
-// ⚰️ ~1500 lines of medieval world-building glory
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const GameWorld = {

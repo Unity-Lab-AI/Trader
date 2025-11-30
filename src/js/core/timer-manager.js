@@ -1,17 +1,20 @@
 // ═══════════════════════════════════════════════════════════════
-// ⏰ TIMER MANAGER - time waits for no one (but we track it anyway)
+// TIMER MANAGER - time waits for no one (but we track it anyway)
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// 💀 Centralized timer management - because memory leaks are scarier than ghosts
-// ⏰ Tick tock goes the existential clock - we document every scheduled doom
+// centralized timer management - because memory leaks are scarier than ghosts
+// tick tock goes the existential clock - we document every scheduled doom
 
 const TimerManager = {
-    // ⏱️ Store all active timers - time bombs of scheduled chaos ticking in the shadows
+    // store all active timers - time bombs of scheduled chaos ticking in the shadows
     timers: new Map(),
 
-    // 🖤 Set a timeout with tracking - schedule the inevitable
+    // set a timeout with tracking - schedule the inevitable
+    // because untracked timers are how memory leaks happen and i'm tired of hunting them
     setTimeout(callback, delay, ...args) {
         const timerId = setTimeout(callback, delay, ...args);
         const key = `timer_${Date.now()}_${Math.random()}`;
@@ -64,7 +67,8 @@ const TimerManager = {
         return true;
     },
     
-    // ⚰️ Clear all timers - silence every ticking clock, total void
+    // clear all timers - silence every ticking clock, total void
+    // the heat death of the timer universe
     clearAllTimers() {
         const count = this.timers.size;
         

@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🪟 PANEL MANAGER - herding cats but the cats are floating windows
+// PANEL MANAGER - window state orchestration
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// handles panel open/close order, ESC key navigation, and reopen buttons
-// keeping track of all the chaos you've opened
 
 const PanelManager = {
     // Stack of currently open panels (most recent last)
@@ -594,9 +594,17 @@ const PanelManager = {
         }, true); // Use capture to handle before other handlers
     },
 
+    // 🖤 Store observer for cleanup 💀
+    _panelObserver: null,
+
     // Observe panel changes to keep track of what's open
     observePanelChanges() {
-        const observer = new MutationObserver((mutations) => {
+        // 🦇 Disconnect existing observer before creating new one - no duplicates
+        if (this._panelObserver) {
+            this._panelObserver.disconnect();
+        }
+
+        this._panelObserver = new MutationObserver((mutations) => {
             let needsUpdate = false;
 
             mutations.forEach((mutation) => {
@@ -621,12 +629,20 @@ const PanelManager = {
         Object.keys(this.panelInfo).forEach(panelId => {
             const panel = document.getElementById(panelId);
             if (panel) {
-                observer.observe(panel, {
+                this._panelObserver.observe(panel, {
                     attributes: true,
                     attributeFilter: ['class', 'style']
                 });
             }
         });
+    },
+
+    // 🖤 Cleanup observer - call on destroy 💀
+    disconnectObserver() {
+        if (this._panelObserver) {
+            this._panelObserver.disconnect();
+            this._panelObserver = null;
+        }
     },
 
     // Sync openPanels array with actual DOM state

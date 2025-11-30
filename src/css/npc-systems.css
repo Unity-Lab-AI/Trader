@@ -1,9 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════
-   🎨 NPC SYSTEMS STYLES - trade windows, quests, and relationships
+   NPC SYSTEMS STYLES - trade windows in the shadows
    ═══════════════════════════════════════════════════════════════
-   File Version: 0.5
-   Styles for the NPC trade window, quest log, and relationship UI
-   Because even medieval capitalism needs good UX
+   Version: 0.88 | Unity AI Lab
+   Creators: Hackall360, Sponge, GFourteen
+   www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+   unityailabcontact@gmail.com
    ═══════════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════════════
@@ -875,7 +876,6 @@
     z-index: var(--z-quest-tracker, 100);
     font-size: 0.85rem;
     overflow: hidden;
-    backdrop-filter: blur(10px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;

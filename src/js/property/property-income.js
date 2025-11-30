@@ -1,8 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 💰 PROPERTY INCOME - making money while you sleep 🖤
+// PROPERTY INCOME - making money while you sleep in darkness
 // ═══════════════════════════════════════════════════════════════
-// passive income, maintenance, and the harsh reality of taxes 💀
-// File Version: GameConfig.version.file | Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 const PropertyIncome = {
     // 💵 Calculate income for a single property ⚰️

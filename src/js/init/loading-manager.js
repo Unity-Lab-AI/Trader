@@ -1,8 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 🖤 LOADING MANAGER - watching the void slowly fill with code
+// LOADING MANAGER - watching darkness fill with dark code
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - *yawns* another loading screen...
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const LoadingManager = {

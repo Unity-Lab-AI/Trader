@@ -1,11 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 🌟 INITIAL ENCOUNTER SYSTEM - the mysterious stranger at dawn
+// INITIAL ENCOUNTER - where your nightmare begins
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - every story needs a beginning...
-// ═══════════════════════════════════════════════════════════════
-// When a new trader enters this world, they meet a hooded figure
-// who speaks of shadows gathering and a destiny waiting to unfold
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const InitialEncounterSystem = {

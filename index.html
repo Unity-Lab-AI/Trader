@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medieval Trading Game</title>
     <!-- 🖤 CSS Variables (must load first) -->
-    <link rel="stylesheet" href="src/css/base/variables.css?v=0.81">
+    <link rel="stylesheet" href="src/css/base/variables.css?v=0.88">
     <!-- Main stylesheets 🖤 -->
-    <link rel="stylesheet" href="src/css/styles.css?v=0.81">
-    <link rel="stylesheet" href="src/css/ui-enhancements.css?v=0.81">
-    <link rel="stylesheet" href="src/css/npc-systems.css?v=0.81">
+    <link rel="stylesheet" href="src/css/styles.css?v=0.88">
+    <link rel="stylesheet" href="src/css/ui-enhancements.css?v=0.88">
+    <link rel="stylesheet" href="src/css/npc-systems.css?v=0.88">
     <!-- 🖤 Z-Index System - MUST be last to override everything -->
-    <link rel="stylesheet" href="src/css/z-index-system.css?v=0.81">
+    <link rel="stylesheet" href="src/css/z-index-system.css?v=0.88">
     <!-- ⚙️ CONFIG MUST LOAD FIRST - All other scripts depend on it -->
-    <script src="config.js?v=0.81"></script>
+    <script src="config.js?v=0.88"></script>
     <script>
         // Update document title from config immediately
         if (typeof GameConfig !== 'undefined') {
@@ -1198,178 +1198,178 @@
     <!-- ═══════════════════════════════════════════════════════════
          🖤 LOADING MANAGER - tracks progress and shows loading bar
          ═══════════════════════════════════════════════════════ -->
-    <script src="src/js/init/loading-manager.js?v=0.81"></script>
+    <script src="src/js/init/loading-manager.js?v=0.88"></script>
 
     <!-- ═══════════════════════════════════════════════════════════
          ⚡⚡⚡ CRITICAL: CORE DEPENDENCIES - MUST LOAD FIRST ⚡⚡⚡
          EventManager and TimerManager are used by ALL other systems
          ═══════════════════════════════════════════════════════ -->
-    <script src="src/js/core/event-manager.js?v=0.81"></script>
-    <script src="src/js/core/timer-manager.js?v=0.81"></script>
+    <script src="src/js/core/event-manager.js?v=0.88"></script>
+    <script src="src/js/core/timer-manager.js?v=0.88"></script>
 
     <!-- 🖤 NEW: Core utilities from refactor -->
-    <script src="src/js/core/system-registry.js?v=0.81"></script>
-    <script src="src/js/core/event-bus.js?v=0.81"></script>
-    <script src="src/js/utils/color-utils.js?v=0.81"></script>
-    <script src="src/js/utils/virtual-list.js?v=0.81"></script>
+    <script src="src/js/core/system-registry.js?v=0.88"></script>
+    <script src="src/js/core/event-bus.js?v=0.88"></script>
+    <script src="src/js/utils/color-utils.js?v=0.88"></script>
+    <script src="src/js/utils/virtual-list.js?v=0.88"></script>
     <!-- ⏰ THE TIME MACHINE - Unified time engine (replaces time-system.js + game-engine.js) -->
-    <script src="src/js/core/time-machine.js?v=0.81"></script>
-    <script src="src/js/data/game-world.js?v=0.81"></script>
+    <script src="src/js/core/time-machine.js?v=0.88"></script>
+    <script src="src/js/data/game-world.js?v=0.88"></script>
 
     <!-- 🛠️ Browser Utilities (depend on EventManager) -->
-    <script src="src/js/init/browser-compatibility.js?v=0.81"></script>
-    <script src="src/js/ui/components/modal-system.js?v=0.81"></script>
+    <script src="src/js/init/browser-compatibility.js?v=0.88"></script>
+    <script src="src/js/ui/components/modal-system.js?v=0.88"></script>
 
     <!-- 📊 Data Systems (depend on EventManager + TimerManager) -->
-    <script src="src/js/data/items/item-database.js?v=0.81"></script>
-    <script src="src/js/data/items/unified-item-system.js?v=0.81"></script>
-    <script src="src/js/systems/crafting/crafting-economy-system.js?v=0.81"></script>
+    <script src="src/js/data/items/item-database.js?v=0.88"></script>
+    <script src="src/js/data/items/unified-item-system.js?v=0.88"></script>
+    <script src="src/js/systems/crafting/crafting-economy-system.js?v=0.88"></script>
 
     <!-- 🔨 NEW: Crafting Engine (implements actual crafting logic) -->
-    <script src="src/js/systems/crafting/crafting-engine.js?v=0.81"></script>
+    <script src="src/js/systems/crafting/crafting-engine.js?v=0.88"></script>
 
     <!-- ⚔️ NEW: Combat System (full combat resolution) -->
-    <script src="src/js/systems/combat/combat-system.js?v=0.81"></script>
-    <script src="src/js/systems/trading/market-price-history.js?v=0.81"></script>
-    <script src="src/js/systems/trading/dynamic-market-system.js?v=0.81"></script>
+    <script src="src/js/systems/combat/combat-system.js?v=0.88"></script>
+    <script src="src/js/systems/trading/market-price-history.js?v=0.88"></script>
+    <script src="src/js/systems/trading/dynamic-market-system.js?v=0.88"></script>
 
     <!-- 🏛️ City Systems -->
-    <script src="src/js/systems/world/city-reputation-system.js?v=0.81"></script>
-    <script src="src/js/systems/world/city-event-system.js?v=0.81"></script>
-    <script src="src/js/systems/world/dungeon-bonanza-system.js?v=0.81"></script>
+    <script src="src/js/systems/world/city-reputation-system.js?v=0.88"></script>
+    <script src="src/js/systems/world/city-event-system.js?v=0.88"></script>
+    <script src="src/js/systems/world/dungeon-bonanza-system.js?v=0.88"></script>
 
     <!-- 💼 Business Systems -->
-    <script src="src/js/systems/trading/trading-system.js?v=0.81"></script>
-    <script src="src/js/ui/panels/inventory-panel.js?v=0.81"></script>
+    <script src="src/js/systems/trading/trading-system.js?v=0.88"></script>
+    <script src="src/js/ui/panels/inventory-panel.js?v=0.88"></script>
 
     <!-- 👤 NPC System - consolidated into npc/ folder 🖤 -->
-    <script src="src/js/npc/npc-manager.js?v=0.81"></script>
-    <script src="src/js/npc/npc-merchants.js?v=0.81"></script>
-    <script src="src/js/npc/npc-dialogue.js?v=0.81"></script>
-    <script src="src/js/npc/npc-workflow.js?v=0.81"></script>
-    <script src="src/js/npc/npc-voice.js?v=0.81"></script>
-    <script src="src/js/npc/npc-chat-ui.js?v=0.81"></script>
-    <script src="src/js/npc/npc-encounters.js?v=0.81"></script>
-    <script src="src/js/systems/story/initial-encounter.js?v=0.81"></script>
-    <script src="src/js/npc/npc-relationships.js?v=0.81"></script>
-    <script src="src/js/npc/npc-trade.js?v=0.81"></script>
-    <script src="src/js/ui/panels/trade-cart-panel.js?v=0.81"></script>
+    <script src="src/js/npc/npc-manager.js?v=0.88"></script>
+    <script src="src/js/npc/npc-merchants.js?v=0.88"></script>
+    <script src="src/js/npc/npc-dialogue.js?v=0.88"></script>
+    <script src="src/js/npc/npc-workflow.js?v=0.88"></script>
+    <script src="src/js/npc/npc-voice.js?v=0.88"></script>
+    <script src="src/js/npc/npc-chat-ui.js?v=0.88"></script>
+    <script src="src/js/npc/npc-encounters.js?v=0.88"></script>
+    <script src="src/js/systems/story/initial-encounter.js?v=0.88"></script>
+    <script src="src/js/npc/npc-relationships.js?v=0.88"></script>
+    <script src="src/js/npc/npc-trade.js?v=0.88"></script>
+    <script src="src/js/ui/panels/trade-cart-panel.js?v=0.88"></script>
 
     <!-- 🤖 Command & Quest Systems (v0.7) -->
-    <script src="src/js/debooger/api-command-system.js?v=0.81"></script>
-    <script src="src/js/systems/progression/quest-system.js?v=0.81"></script>
+    <script src="src/js/debooger/api-command-system.js?v=0.88"></script>
+    <script src="src/js/systems/progression/quest-system.js?v=0.88"></script>
 
     <!-- 👑 Merchant Rank System - defines property/employee limits -->
-    <script src="src/js/systems/trading/merchant-rank-system.js?v=0.81"></script>
+    <script src="src/js/systems/trading/merchant-rank-system.js?v=0.88"></script>
 
     <!-- ⚔️ Equipment System - gear up for adventure -->
-    <script src="src/js/ui/panels/equipment-panel.js?v=0.81"></script>
+    <script src="src/js/ui/panels/equipment-panel.js?v=0.88"></script>
 
     <!-- 🏗️ Property System - modular architecture 🖤 -->
-    <script src="src/js/property/property-types.js?v=0.81"></script>
-    <script src="src/js/property/property-storage.js?v=0.81"></script>
-    <script src="src/js/property/property-purchase.js?v=0.81"></script>
-    <script src="src/js/property/property-income.js?v=0.81"></script>
-    <script src="src/js/property/property-upgrades.js?v=0.81"></script>
-    <script src="src/js/property/property-ui.js?v=0.81"></script>
-    <script src="src/js/property/property-system-facade.js?v=0.81"></script>
+    <script src="src/js/property/property-types.js?v=0.88"></script>
+    <script src="src/js/property/property-storage.js?v=0.88"></script>
+    <script src="src/js/property/property-purchase.js?v=0.88"></script>
+    <script src="src/js/property/property-income.js?v=0.88"></script>
+    <script src="src/js/property/property-upgrades.js?v=0.88"></script>
+    <script src="src/js/property/property-ui.js?v=0.88"></script>
+    <script src="src/js/property/property-system-facade.js?v=0.88"></script>
     <!-- 👥 Employee Systems -->
-    <script src="src/js/systems/employee/employee-system.js?v=0.81"></script>
-    <script src="src/js/systems/employee/property-employee-bridge.js?v=0.81"></script>
-    <script src="src/js/systems/employee/property-employee-ui.js?v=0.81"></script>
+    <script src="src/js/systems/employee/employee-system.js?v=0.88"></script>
+    <script src="src/js/systems/employee/property-employee-bridge.js?v=0.88"></script>
+    <script src="src/js/systems/employee/property-employee-ui.js?v=0.88"></script>
 
     <!-- 🗺️ Travel & Routes -->
-    <script src="src/js/systems/travel/travel-system.js?v=0.81"></script>
-    <script src="src/js/systems/trading/trade-route-system.js?v=0.81"></script>
+    <script src="src/js/systems/travel/travel-system.js?v=0.88"></script>
+    <script src="src/js/systems/trading/trade-route-system.js?v=0.88"></script>
 
     <!-- 🏰 Gatehouse & Resource Gathering Systems -->
-    <script src="src/js/systems/travel/gatehouse-system.js?v=0.81"></script>
-    <script src="src/js/systems/crafting/resource-gathering-system.js?v=0.81"></script>
-    <script src="src/js/systems/combat/dungeon-exploration-system.js?v=0.81"></script>
+    <script src="src/js/systems/travel/gatehouse-system.js?v=0.88"></script>
+    <script src="src/js/systems/crafting/resource-gathering-system.js?v=0.88"></script>
+    <script src="src/js/systems/combat/dungeon-exploration-system.js?v=0.88"></script>
 
     <!-- 🖤 Game World Renderer - where the map magic happens -->
     <!-- 🗺️ Map rendering - base class + implementations -->
-    <script src="src/js/ui/map/map-renderer-base.js?v=0.81"></script>
-    <script src="src/js/ui/map/game-world-renderer.js?v=0.81"></script>
-    <script src="src/js/systems/travel/travel-panel-map.js?v=0.81"></script>
+    <script src="src/js/ui/map/map-renderer-base.js?v=0.88"></script>
+    <script src="src/js/ui/map/game-world-renderer.js?v=0.88"></script>
+    <script src="src/js/systems/travel/travel-panel-map.js?v=0.88"></script>
 
     <!-- 🎯 Achievement System -->
-    <script src="src/js/systems/progression/achievement-system.js?v=0.81"></script>
+    <script src="src/js/systems/progression/achievement-system.js?v=0.88"></script>
 
     <!-- 🏆 Global Leaderboard System -->
-    <script src="src/js/ui/panels/leaderboard-panel.js?v=0.81"></script>
+    <script src="src/js/ui/panels/leaderboard-panel.js?v=0.88"></script>
 
     <!-- 💀 Death Cause System - tracks how your journey ends -->
-    <script src="src/js/systems/combat/death-cause-system.js?v=0.81"></script>
+    <script src="src/js/systems/combat/death-cause-system.js?v=0.88"></script>
 
     <!-- 💀 Game Over System -->
-    <script src="src/js/systems/combat/game-over-system.js?v=0.81"></script>
+    <script src="src/js/systems/combat/game-over-system.js?v=0.88"></script>
 
     <!-- 🎨 UI & Polish Systems -->
-    <script src="src/js/ui/ui-enhancements.js?v=0.81"></script>
-    <script src="src/js/ui/ui-polish-system.js?v=0.81"></script>
-    <script src="src/js/ui/button-fix.js?v=0.81"></script>
-    <script src="src/js/ui/panels/settings-panel.js?v=0.81"></script>
-    <script src="src/js/ui/panels/people-panel.js?v=0.81"></script>
-    <script src="src/js/ui/components/tooltip-system.js?v=0.81"></script>
-    <script src="src/js/ui/components/draggable-panels.js?v=0.81"></script>
-    <script src="src/js/ui/components/panel-manager.js?v=0.81"></script>
+    <script src="src/js/ui/ui-enhancements.js?v=0.88"></script>
+    <script src="src/js/ui/ui-polish-system.js?v=0.88"></script>
+    <script src="src/js/ui/button-fix.js?v=0.88"></script>
+    <script src="src/js/ui/panels/settings-panel.js?v=0.88"></script>
+    <script src="src/js/ui/panels/people-panel.js?v=0.88"></script>
+    <script src="src/js/ui/components/tooltip-system.js?v=0.88"></script>
+    <script src="src/js/ui/components/draggable-panels.js?v=0.88"></script>
+    <script src="src/js/ui/components/panel-manager.js?v=0.88"></script>
 
     <!-- 💾 UNIFIED Save/Load System 🖤 -->
-    <script src="src/js/systems/save/save-manager.js?v=0.81"></script>
+    <script src="src/js/systems/save/save-manager.js?v=0.88"></script>
 
     <!-- 🌦️ NEW: Weather & Day/Night Systems -->
-    <script src="src/js/systems/world/weather-system.js?v=0.81"></script>
-    <script src="src/js/systems/world/day-night-cycle.js?v=0.81"></script>
+    <script src="src/js/systems/world/weather-system.js?v=0.88"></script>
+    <script src="src/js/systems/world/day-night-cycle.js?v=0.88"></script>
 
     <!-- 🏛️ NEW: Faction System -->
-    <script src="src/js/systems/progression/faction-system.js?v=0.81"></script>
+    <script src="src/js/systems/progression/faction-system.js?v=0.88"></script>
 
     <!-- 🎓 NEW: Skill System (full skill tree UI) -->
-    <script src="src/js/systems/progression/skill-system.js?v=0.81"></script>
+    <script src="src/js/systems/progression/skill-system.js?v=0.88"></script>
 
     <!-- 🏆 NEW: Reputation Consequences (reputation now affects gameplay) -->
-    <script src="src/js/systems/progression/reputation-system.js?v=0.81"></script>
+    <script src="src/js/systems/progression/reputation-system.js?v=0.88"></script>
 
     <!-- 📅 NEW: NPC Schedule System (NPCs follow daily routines) -->
-    <script src="src/js/systems/npc/npc-schedule-system.js?v=0.81"></script>
+    <script src="src/js/systems/npc/npc-schedule-system.js?v=0.88"></script>
 
     <!-- 🐴 NEW: Mount System (mounts for travel and cargo) -->
-    <script src="src/js/systems/travel/mount-system.js?v=0.81"></script>
+    <script src="src/js/systems/travel/mount-system.js?v=0.88"></script>
 
     <!-- ⛵ NEW: Ship Trading System (sea routes and maritime trade) -->
-    <script src="src/js/systems/travel/ship-system.js?v=0.81"></script>
+    <script src="src/js/systems/travel/ship-system.js?v=0.88"></script>
 
     <!-- 🎬 Immersive Experience Systems -->
-    <script src="src/js/effects/visual-effects-system.js?v=0.81"></script>
-    <script src="src/js/audio/audio-system.js?v=0.81"></script>
-    <script src="src/js/effects/animation-system.js?v=0.81"></script>
-    <script src="src/js/effects/environmental-effects-system.js?v=0.81"></script>
-    <script src="src/js/effects/immersive-experience-integration.js?v=0.81"></script>
-    <script src="src/js/effects/menu-weather-system.js?v=0.81"></script>
+    <script src="src/js/effects/visual-effects-system.js?v=0.88"></script>
+    <script src="src/js/audio/audio-system.js?v=0.88"></script>
+    <script src="src/js/effects/animation-system.js?v=0.88"></script>
+    <script src="src/js/effects/environmental-effects-system.js?v=0.88"></script>
+    <script src="src/js/effects/immersive-experience-integration.js?v=0.88"></script>
+    <script src="src/js/effects/menu-weather-system.js?v=0.88"></script>
 
     <!-- ⚡ Performance Optimizer -->
-    <script src="src/js/debooger/performance-optimizer.js?v=0.81"></script>
+    <script src="src/js/debooger/performance-optimizer.js?v=0.88"></script>
 
     <!-- 🐛 Debooger System - ON by default for Super Hacker achievement 🖤 -->
-    <script src="src/js/core/debooger-system.js?v=0.81"></script>
+    <script src="src/js/core/debooger-system.js?v=0.88"></script>
 
     <!-- 🎯 Current Task System - tracks player activity 💀 -->
-    <script src="src/js/systems/current-task-system.js?v=0.81"></script>
+    <script src="src/js/systems/current-task-system.js?v=0.88"></script>
 
     <!-- ⌨️ Key Bindings - your keyboard is your weapon 🦇 -->
-    <script src="src/js/ui/key-bindings.js?v=0.81"></script>
+    <script src="src/js/ui/key-bindings.js?v=0.88"></script>
 
     <!-- 🎮 CORE GAME - Must load LAST (depends on all systems above) -->
-    <script src="src/js/core/game.js?v=0.81"></script>
+    <script src="src/js/core/game.js?v=0.88"></script>
 
     <!-- 🎮 GAME ENGINE - NOW HANDLED BY TIME MACHINE (time-machine.js loaded earlier) -->
 
     <!-- 🎮 DEBOOGER COMMAND SYSTEM - Cheat codes and developer tools -->
-    <script src="src/js/debooger/debooger-command-system.js?v=0.81"></script>
+    <script src="src/js/debooger/debooger-command-system.js?v=0.88"></script>
 
     <!-- 🖤 BOOTSTRAP - Coordinates initialization of all systems (loads last) -->
-    <script src="src/js/init/bootstrap.js?v=0.81"></script>
+    <script src="src/js/init/bootstrap.js?v=0.88"></script>
 
     <script>
         // Initialize the property-employee bridge after all systems are loaded

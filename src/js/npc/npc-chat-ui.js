@@ -1,15 +1,15 @@
 // ═══════════════════════════════════════════════════════════════
-// 🗨️ NPC CHAT UI - the interface for digital souls to speak
+// NPC CHAT UI - where digital souls judge your life choices
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// where pixels become conversations and NPCs judge your life choices
-// type your message, hear their voice, receive their wisdom (or insults)
 
 const NPCChatUI = {
     // ═══════════════════════════════════════════════════════════
-    // 🔧 STATE - tracking the digital dialogue
+    // STATE - tracking the digital dialogue (the void listens)
     // ═══════════════════════════════════════════════════════════
 
     isOpen: false,
@@ -19,7 +19,7 @@ const NPCChatUI = {
     isWaitingForResponse: false,
 
     // ═══════════════════════════════════════════════════════════
-    // 🚀 INITIALIZATION - summoning the chat interface
+    // INITIALIZATION - summoning the chat interface from shadow
     // ═══════════════════════════════════════════════════════════
 
     init() {
@@ -29,7 +29,7 @@ const NPCChatUI = {
     },
 
     // ═══════════════════════════════════════════════════════════
-    // 🎨 UI CREATION - building the cathedral of conversation
+    // UI CREATION - building the cathedral where pixels speak
     // ═══════════════════════════════════════════════════════════
 
     createPanel() {
@@ -786,11 +786,15 @@ const NPCChatUI = {
             // 🦇 API failed - NPC gives a graceful "distracted" response
             this.hideTypingIndicator();
             this.addNPCMessage('*seems distracted and doesn\'t respond*');
+        } finally {
+            // 🖤 ALWAYS reset state - no matter what chaos ensued above 💀
+            this.isWaitingForResponse = false;
+            try {
+                this.setInputEnabled(true);
+            } catch (e) {
+                // 🦇 DOM might be gone, that's fine
+            }
         }
-
-        // re-enable input
-        this.setInputEnabled(true);
-        this.isWaitingForResponse = false;
     },
 
     addPlayerMessage(text) {

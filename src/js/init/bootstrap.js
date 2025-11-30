@@ -1,12 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 🖤 BOOTSTRAP.JS - The birth of the game from the void
+// BOOTSTRAP.JS - birthing the game from the void into darkness
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
-// ═══════════════════════════════════════════════════════════════
-// This file orchestrates the initialization of all game systems
-// in the correct order to prevent race conditions and ensure
-// a smooth startup. The order matters - respect the dependencies.
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const Bootstrap = {

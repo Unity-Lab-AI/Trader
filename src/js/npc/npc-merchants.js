@@ -1,14 +1,14 @@
 // ═══════════════════════════════════════════════════════════════
-// 🧙 NPC MERCHANT SYSTEM - shopkeepers with actual personalities
+// NPC MERCHANT SYSTEM - shopkeepers with trauma and pricing
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// every merchant has their own quirks, trauma, and pricing strategies
-// just like real life, but pixelated
 
 const NPCMerchantSystem = {
-    // 🎭 Merchant personality types - their emotional damage defines prices
+    // merchant personality types - emotional damage defines their prices
     personalityTypes: {
         GREEDY: {
             id: 'greedy',

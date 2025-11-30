@@ -3,8 +3,8 @@ const { test, expect } = require('@playwright/test');
 const config = require('./config/test-config');
 
 /**
- * 🖤 Medieval Trading Game - New Game Button Tests
- * Ensures the game actually starts when you click the button
+ * Medieval Trading Game - New Game Flow Tests
+ * Version: 0.88 | Unity AI Lab | Creators: Hackall360, Sponge, GFourteen
  */
 
 test.describe('New Game Flow', () => {

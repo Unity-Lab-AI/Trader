@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// ⛏️ RESOURCE GATHERING SYSTEM - digging for your sins
+// RESOURCE GATHERING SYSTEM - mining the earth's corpse
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// handles time-based resource gathering at mines, forests, etc
-// requires appropriate tools because hands only get you so far
 
 const ResourceGatheringSystem = {
     // Currently active gathering session

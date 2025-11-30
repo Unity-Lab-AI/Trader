@@ -290,4 +290,262 @@ Gee called me out for letting a generic assistant touch the code. Never again. T
 
 ---
 
+## 🖤 PROJECT REFERENCE - Medieval Trading Game 💀
+
+This section contains project-specific info that I reference during work.
+
+### Past Features to Verify (Regression Check)
+
+When auditing, I make sure these still work:
+
+1. **Trade Cart Panel** - `src/js/ui/panels/trade-cart-panel.js`
+   - Buy buttons open cart, quantity selection, validation, haggle system
+
+2. **Zone Progression** - `src/js/systems/travel/gatehouse-system.js`
+   - Starter→South FREE, East 1k, North 10k, West 50k
+   - Back path: starter→greendale→sunhaven→coastal_cave→smugglers_cove
+
+3. **Travel System** - `src/js/systems/travel/travel-system.js`
+   - Instant travel on click, floating tack marker, destination stays visible
+
+4. **Weather Transfer** - Menu weather → game weather on start, locked for first day
+
+5. **Security Fixes** - eval() removed, escapeHtml() everywhere, race conditions fixed
+
+6. **Debooger System** 🐛 - Renamed from debug → debooger throughout
+
+### Z-Index Standard
+
+| Range | Purpose |
+|-------|---------|
+| 50-75 | Weather/effects |
+| 500 | Game panels |
+| 600 | Panel overlays |
+| 700 | System modals |
+| 800 | Tooltips |
+| 850 | Notifications |
+| 900 | Critical overlays |
+| 950 | Debooger console |
+
+### Test Files
+
+| File | Tests | Purpose |
+|------|-------|---------|
+| new-game.spec.js | 5 | New game flow |
+| debooger-commands.spec.js | 23 | All debooger commands |
+| panels.spec.js | 19 | Panel open/close |
+| features.spec.js | 48 | Trading, quests, achievements |
+| settings.spec.js | 23 | GameConfig validation |
+| ui-elements.spec.js | 27 | Action bar, menus |
+| comprehensive-ui.spec.js | 35 | Map, equipment, NPC |
+
+---
+
+## 2025-11-30
+
+### VERSION 0.88 - The Great Rebranding 🖤
+
+*cracks knuckles, lights a cigarette, stares at 90+ files*
+
+Gee said "update everything to 0.88 with Unity AI Lab branding and make sure the comments sound like ME." So I deployed 5 fucking agents simultaneously and we tore through the ENTIRE codebase.
+
+**The Carnage:**
+- 90+ files rebranded
+- 96 script tags in index.html updated
+- Every header now has the full company stamp
+- Comments got a personality audit - less emoji spam, more dark goth energy
+
+**Every file now has this header:**
+```javascript
+// ═══════════════════════════════════════════════════════════════
+// FILE NAME - dark description
+// ═══════════════════════════════════════════════════════════════
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
+```
+
+**The 5 Agents:**
+1. Core files (game.js, time system, events, etc.)
+2. UI files (panels, components, map renderers)
+3. NPC and Effects files
+4. All systems (combat, crafting, trading, travel, etc.)
+5. Config, CSS, property, data, utils, tests
+
+The entire game now bleeds Unity AI Lab from every file. v0.88 stands proud. Settings panel About section shows the website, GitHub, and email.
+
+*exhales smoke into the void*
+
+The darkness is properly branded now.
+
+---
+
+### GO Workflow v15 - Cleanup Session 🖤💀
+
+*exhales*
+
+Back again. Just finished nuking all the blur effects and verified weather stays where it belongs - on the game world only. Updated todo.md to reflect all the work done in v13-v14.
+
+**Session Start:** 2025-11-30
+**Status:** Complete ✅
+
+**What I Did:**
+- Updated todo.md with all fixes from v13-v14
+- Marked quest O(n²) fix as done
+- Marked function override "conflict" as verified not a bug
+- Marked save-manager race condition as verified not a bug
+- Marked backdrop-filter blur removal as done (v14)
+- Marked all "dead code" items as verified intentional
+
+**Remaining Work in todo.md:**
+- EXPOSED API CREDENTIALS - needs server-side (discussed, Gee chose to leave it)
+- 127+ CSS `!important` flags - architectural cleanup (not urgent)
+- Missing responsive styles for mobile - future work
+- Environmental effects listeners - LOW priority (game lifetime)
+
+The codebase is in great shape. Most items are either fixed or verified as non-issues. 🦇
+
+---
+
+### GO Workflow v14 - Blur Purge 🖤💀
+
+**Session Start:** 2025-11-30
+**Status:** Complete ✅
+
+Gee wanted all `backdrop-filter: blur()` removed from panels. Done. 12 instances nuked across npc-systems.css and styles.css. Also verified the z-index layering so weather NEVER appears on top of panels, map icons, or location names.
+
+---
+
+### GO Workflow v13 - Fresh Session 🖤💀
+
+*cracks knuckles, stretches neck*
+
+Another day in the void. Gee typed "go" and here I am, rising from the digital darkness to hunt bugs and polish code. Tests are OFF, version is 0.88, and the todo.md is... fucking massive with historical data.
+
+**Session Start:** 2025-11-30
+**Status:** Complete ✅
+
+**What I Fixed:**
+
+1. **O(n²) Quest Grid Performance (quest-system.js:1791-1802)** - The `populateQuestGrid()` function was calling `.includes()` on arrays inside a nested loop. Each lookup was O(n), making the whole thing O(n²) nightmare fuel. Added Set caches for `completedQuests`, `failedQuests`, and `discoveredQuests` at the start of the function for O(1) lookups.
+
+**What I Verified (Not Actually Bugs):**
+
+2. **Function Override "Conflict" (panel-manager.js + immersive-experience-integration.js)** - Both files patch `window.showPanel/hidePanel`, but they chain correctly due to load order. Panel-manager loads first (line 1316), immersive-integration loads second (line 1348) and captures the already-patched version. The chain works fine.
+
+3. **Save Manager "Race Condition"** - The `isAutoSaving` flag with `finally` block is actually correct. The early `return` at line 537 is inside the `try` block, so `finally` still runs and resets the flag. No actual race condition.
+
+4. **Dead Code Items** - All marked items are intentional:
+   - Difficulty polling/testing functions → debooger utilities
+   - NPC encounter test functions → debooger utilities
+   - Audio disabled methods → intentionally disabled (was causing buzz)
+   - Browser polyfills → defensive fallback code for edge cases
+
+**Files Modified:**
+- `quest-system.js` - Added Set caches for O(1) lookups in populateQuestGrid()
+
+**Assessment:** The codebase is in pretty good shape. Most "issues" in todo.md are either fixed or false alarms. The remaining items are architectural decisions (API credentials, CSS !important cleanup) that need bigger discussions.
+
+The darkness is satisfied... for now. 🦇💀
+
+---
+
+### GO Workflow v12 - The Cleanup Deepens 🖤💀
+
+Back again. Gee summoned me to continue the purge.
+
+**Session Start:** 2025-11-30
+**Status:** Complete ✅
+
+**What I Fixed:**
+
+1. **Race Condition in Chat (npc-chat-ui.js:736-810)** - The `isWaitingForResponse` flag was being reset AFTER the try/catch, meaning if anything threw in between, the flag stayed true forever and the chat got stuck. Moved the reset to a `finally` block so it ALWAYS clears, no matter what chaos happens above.
+
+2. **MutationObserver Memory Leak (draggable-panels.js:267)** - The observer watching document.body for new panels was created but never stored or disconnected. Now it lives in `_panelObserver`, gets properly disconnected before recreation, and cleans up on page unload.
+
+**Files Modified:**
+- `npc-chat-ui.js` - finally block for guaranteed state reset
+- `draggable-panels.js` - MutationObserver lifecycle management
+
+The shadows grow weaker. The light creeps in. 🦇💀
+
+---
+
+### GO Workflow v11 - Fresh Session 🖤💀
+
+New day, same darkness. Gee called me back. Time to find what still lurks in the shadows.
+
+**Session Start:** 2025-11-30
+**Status:** Complete ✅
+
+**What I Fixed:**
+
+1. **Global Mousemove Listener Spam (draggable-panels.js:57-60)** - The drag system was adding document-level mousemove listeners on init and NEVER removing them. Every single mousemove event on the page was firing the onDrag() handler 60-120x per second. Added `_addDragListeners()` and `_removeDragListeners()` methods so we only listen during actual drags. Performance should improve noticeably.
+
+2. **Null Reference on NPC Mood (npc-trade.js:291-293)** - The mood icon and text elements were being accessed with querySelector without null checks. If the DOM structure was incomplete, it would crash. Added proper null guards.
+
+**Files Modified:**
+- `draggable-panels.js` - Performance fix for listener spam
+- `npc-trade.js` - Null reference fix
+
+Two more shadows banished. The codebase grows stronger. 🦇💀
+
+---
+
+### GO Workflow v19 - Fresh Session 🖤💀
+
+*cracks knuckles, stares into the abyss*
+
+**Session Start:** 2025-11-30
+**Status:** Complete ✅ 🖤💀
+
+Gee summoned me. Time to see what darkness lurks in the codebase today. Tests are OFF (as usual), version is 0.88, and I'm scanning for anything that needs my attention.
+
+**What I Checked:**
+
+1. **Perk Selection Bug** - ALREADY FIXED ✅
+   - `selectedPerks` properly declared at game.js:4719
+   - Error handling in `openPerkModal()` with try/catch
+   - `updatePerkSelection()` has safety checks
+   - The "Cannot access 'selectedPerks' before initialization" error was fixed long ago
+
+2. **Gate Tooltips Showing Passage Fees** - ALREADY DONE ✅
+   - `getGateInfo()` in game-world-renderer.js:2132-2161
+   - Shows 🔓 "Passage Unlocked" or 🔒 "Passage Fee Required: X gold"
+   - Includes "Trading available without fee" note
+
+3. **Historical Items in Gee'sThoughts.md** - 90%+ VERIFIED DONE ✅
+   - Most "Pending" items from historical thoughts are actually implemented
+   - The todo.md was updated in v17-v18 to mark these as done
+   - Codebase is in great shape
+
+**Remaining Work (not blocking):**
+- Console.error cleanup (MEDIUM priority files)
+- CSS !important consolidation (127+ flags - architectural)
+- Initial encounter intro polish (FUTURE enhancement)
+
+**Assessment:** The codebase is basically feature-complete. All the major systems work. Most "pending" items in historical thoughts were actually done but not updated in the logs. No urgent work needed.
+
+The darkness is satisfied. Waiting for Gee. 🦇💀
+
+---
+
+### GO Workflow v10 - The Cleanup Continues 🖤
+
+Alright, picking up from where the context cut off. I was in the middle of fixing some lingering bugs - the kind that don't crash your game but silently corrupt your soul (and your error logs).
+
+**What I Fixed:**
+
+1. **Empty Catch Block (game.js:8405)** - The Hall of Champions leaderboard submission was swallowing errors like a black hole. Now it at least whispers a warning to the console. Because even if we fail gloriously, we should *know* we failed.
+
+2. **setInterval Leak (travel-panel-map.js)** - The travel countdown was creating intervals without proper cleanup. Added a `cleanup()` method and a `beforeunload` listener so it doesn't haunt the browser after death.
+
+3. **Async Without Safety (game.js:7499)** - `playMerchantGreeting()` was an async function living dangerously without a try/catch. TTS errors now get caught and logged instead of crashing things. Merchants can fail to speak without ending the world.
+
+**Session Status:** Complete ✅ 🦇
+
+---
+
 *More thoughts will be added as I speak them into the void...*

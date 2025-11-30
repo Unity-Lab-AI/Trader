@@ -1,6 +1,11 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   🖤 Z-INDEX SYSTEM - The Dark Tower of Stacking Contexts
-   ═══════════════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
+   Z-INDEX SYSTEM - the dark tower of stacking contexts
+   ═══════════════════════════════════════════════════════════════
+   Version: 0.88 | Unity AI Lab
+   Creators: Hackall360, Sponge, GFourteen
+   www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+   unityailabcontact@gmail.com
+   ═══════════════════════════════════════════════════════════════
    MASTER Z-INDEX REFERENCE - All z-index values in one place
 
    Layer 0    : Background effects (menu weather during setup)
@@ -84,10 +89,12 @@ body > #menu-weather-container {
 
 /* ═══════════════════════════════════════════════════════════════════════════
    🎮 GAME CONTAINER STATES
+   🖤 Using body classes instead of :has() for performance 💀
+   Classes managed by JS: .state-setup, .state-menu, .state-loading, .state-playing
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* During setup - transparent background to show weather through */
-#game-container:has(#game-setup-panel:not(.hidden)) {
+body.state-setup #game-container {
     background: transparent !important;
 }
 
@@ -102,57 +109,58 @@ body > #menu-weather-container {
 
 /* ═══════════════════════════════════════════════════════════════════════════
    🙈 HIDE GAME UI DURING SETUP/MENU/LOADING
+   🖤 Replaced :has() with body state classes for O(1) performance 💀
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Hide quest tracker */
-body:has(#game-setup-panel:not(.hidden)) .quest-tracker,
-body:has(#main-menu:not(.hidden)) .quest-tracker,
-body:has(#loading-screen:not(.hidden)) .quest-tracker {
+body.state-setup .quest-tracker,
+body.state-menu .quest-tracker,
+body.state-loading .quest-tracker {
     display: none !important;
 }
 
 /* Hide game weather overlay (not menu weather) during setup */
-body:has(#game-setup-panel:not(.hidden)) #game-weather-overlay,
-body:has(#game-setup-panel:not(.hidden)) .weather-overlay,
-body:has(#main-menu:not(.hidden)) #game-weather-overlay,
-body:has(#main-menu:not(.hidden)) .weather-overlay,
-body:has(#loading-screen:not(.hidden)) #game-weather-overlay,
-body:has(#loading-screen:not(.hidden)) .weather-overlay {
+body.state-setup #game-weather-overlay,
+body.state-setup .weather-overlay,
+body.state-menu #game-weather-overlay,
+body.state-menu .weather-overlay,
+body.state-loading #game-weather-overlay,
+body.state-loading .weather-overlay {
     display: none !important;
 }
 
 /* Hide weather/time indicators during setup/menu */
-body:has(#game-setup-panel:not(.hidden)) #weather-indicator,
-body:has(#game-setup-panel:not(.hidden)) #time-phase-indicator,
-body:has(#main-menu:not(.hidden)) #weather-indicator,
-body:has(#main-menu:not(.hidden)) #time-phase-indicator,
-body:has(#loading-screen:not(.hidden)) #weather-indicator,
-body:has(#loading-screen:not(.hidden)) #time-phase-indicator {
+body.state-setup #weather-indicator,
+body.state-setup #time-phase-indicator,
+body.state-menu #weather-indicator,
+body.state-menu #time-phase-indicator,
+body.state-loading #weather-indicator,
+body.state-loading #time-phase-indicator {
     display: none !important;
 }
 
 /* Hide message log during setup */
-body:has(#game-setup-panel:not(.hidden)) #message-log {
+body.state-setup #message-log {
     display: none !important;
 }
 
 /* Hide top bar during setup */
-body:has(#game-setup-panel:not(.hidden)) #top-bar {
+body.state-setup #top-bar {
     display: none !important;
 }
 
 /* Hide bottom bar during setup */
-body:has(#game-setup-panel:not(.hidden)) #bottom-action-bar {
+body.state-setup #bottom-action-bar {
     display: none !important;
 }
 
 /* Hide side panel during setup */
-body:has(#game-setup-panel:not(.hidden)) #side-panel {
+body.state-setup #side-panel {
     display: none !important;
 }
 
 /* Hide game world during setup */
-body:has(#game-setup-panel:not(.hidden)) #game-world {
+body.state-setup #game-world {
     display: none !important;
 }
 

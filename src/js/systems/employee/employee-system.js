@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 👥 EMPLOYEE SYSTEM - exploiting NPCs for profit (ethically questionable)
+// EMPLOYEE SYSTEM - medieval wage slavery simulator
 // ═══════════════════════════════════════════════════════════════
-// hire people, pay them wages, watch them generate revenue
-// basically playing god with medieval HR
-// File Version: GameConfig.version.file
-// Game Version: 0.2
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 const EmployeeSystem = {
     // 🧑‍💼 Employee types - varieties of exploitable labor

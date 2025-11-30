@@ -1,10 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎒 INVENTORY SYSTEM - hoarding simulator 3000
+// INVENTORY PANEL - item management interface
 // ═══════════════════════════════════════════════════════════════
-// where we store all the junk we cant let go of... i relate
-// File Version: GameConfig.version.file
-// Game Version: 0.2
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 const InventorySystem = {
     // ⚙️ Config - limits on our hoarding tendencies

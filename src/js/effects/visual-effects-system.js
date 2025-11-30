@@ -1,14 +1,14 @@
 // ═══════════════════════════════════════════════════════════════
-// ✨ VISUAL EFFECTS SYSTEM - dark enchantments for your retinas
+// VISUAL EFFECTS SYSTEM - dark enchantments for your retinas
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// 💫 Particles dance. Screens shake. Reality bends to my aesthetic will.
-// Because even mundane actions deserve theatrical sparkles... 🖤
 
 const VisualEffectsSystem = {
-    // 🎨 Visual settings - controlling the chaos with precision
+    // visual settings - controlling the beautiful chaos
     settings: {
         particlesEnabled: true,
         screenShakeEnabled: true,
@@ -19,13 +19,13 @@ const VisualEffectsSystem = {
         flashWarnings: true
     },
     
-    // 🌟 Active effects tracking - cataloging the magic currently manifesting
+    // active effects - cataloging magic manifesting right now
     activeParticles: [],
     activeAnimations: [],
     screenShakeActive: false,
     weatherActive: null,
     
-    // ✨ Particle system - my army of tiny, glowing minions
+    // particle system - tiny glowing minions doing my bidding
     particleSystem: {
         container: null,
         maxParticles: 100,

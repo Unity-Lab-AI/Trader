@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏆 GLOBAL LEADERBOARD SYSTEM - eternal glory for digital merchants
+// LEADERBOARD PANEL - global rankings and hall of fame
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// your shame and glory, broadcast to the world via free JSON storage
-// because everyone needs to know you died to starvation on day 3
 
 console.log('🏆 Global Leaderboard System awakening from the void...');
 

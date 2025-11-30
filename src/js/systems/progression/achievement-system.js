@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏆 ACHIEVEMENT SYSTEM - validation through virtual trophies
+// ACHIEVEMENT SYSTEM - hollow victories for hollow souls
 // ═══════════════════════════════════════════════════════════════
-// because real accomplishments are overrated, here's some pixel ones
-// at least these ones give dopamine hits
-// File Version: GameConfig.version.file
-// Game Version: 0.2
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 const AchievementSystem = {
     // 🎖️ Achievement data - every flex you can earn

@@ -1,11 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 🌦️ MENU WEATHER SYSTEM - seasonal magic on the main menu
+// MENU WEATHER SYSTEM - seasonal magic greets you differently
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
-// ═══════════════════════════════════════════════════════════════
-// Random seasonal effects that greet players differently each visit
-// Storm with lightning, winter snow, autumn leaves, spring petals, summer dust
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const MenuWeatherSystem = {

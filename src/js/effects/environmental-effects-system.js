@@ -1,14 +1,14 @@
 // ═══════════════════════════════════════════════════════════════
-// 🌧️ ENVIRONMENTAL EFFECTS - the weather matches my mood (dark & unpredictable)
+// ENVIRONMENTAL EFFECTS - weather that matches my mood (dark)
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// dynamic lighting, weather, atmosphere... basically setting the vibe
-// for your existential journey through this medieval capitalism simulator
 
 const EnvironmentalEffectsSystem = {
-    // ⚙️ Settings - how much aesthetic suffering do you want?
+    // settings - dial in your preferred level of aesthetic suffering
     settings: {
         weatherEffectsEnabled: true,
         lightingEnabled: true,
@@ -16,8 +16,11 @@ const EnvironmentalEffectsSystem = {
         quality: 'medium', // 'low', 'medium', 'high'
         reducedEffects: false
     },
+
+    // 🖤 stored event handlers for cleanup - because even listeners deserve a proper burial
+    _eventHandlers: {},
     
-    // 🌍 Current state of the universe - it's complicated
+    // current state of the universe - always complicated
     currentState: {
         timeOfDay: 'day',
         season: 'spring',
@@ -27,8 +30,7 @@ const EnvironmentalEffectsSystem = {
         humidity: 50
     },
     
-    // ☁️ Weather patterns - chaotic like my sleep schedule
-    // (lasts a few hours, not forever... unlike my problems)
+    // weather patterns - chaotic like sleep schedules at 3am
     weatherPatterns: {
         clear: { probability: 0.6, duration: 30000, nextStates: ['cloudy', 'rain'] },
         cloudy: { probability: 0.25, duration: 20000, nextStates: ['clear', 'rain', 'storm'] },
@@ -37,8 +39,7 @@ const EnvironmentalEffectsSystem = {
         snow: { probability: 0.01, duration: 20000, nextStates: ['clear', 'cloudy'] }
     },
 
-    // 🍂 Seasonal weather - because even the sky has mood swings
-    // spring: crying randomly | summer: too bright, ugh | fall: melancholy | winter: dead inside
+    // seasonal configs - even the sky has moods (spring cries, winter dies)
     seasonalConfigs: {
         spring: {
             temperature: { min: 10, max: 20 },
@@ -296,20 +297,32 @@ const EnvironmentalEffectsSystem = {
     // 👂 Setup event listeners - eavesdropping on the universe
     setupEventListeners() {
         // listen for game events like a nosy neighbor
+        // 🖤 Store handlers so we can remove them later
+        this._eventHandlers = {
+            timeChange: (e) => this.updateTimeOfDay(e.detail),
+            seasonChange: (e) => this.updateSeason(e.detail),
+            locationChange: (e) => this.updateLocation(e.detail),
+            weatherChange: (e) => this.updateWeather(e.detail),
+            gameStateChange: (e) => this.updateEnvironmentForGameState(e.detail)
+        };
+
         if (typeof EventManager !== 'undefined') {
-            EventManager.addEventListener('timeChange', (e) => this.updateTimeOfDay(e.detail));
-            EventManager.addEventListener('seasonChange', (e) => this.updateSeason(e.detail));
-            EventManager.addEventListener('locationChange', (e) => this.updateLocation(e.detail));
-            EventManager.addEventListener('weatherChange', (e) => this.updateWeather(e.detail));
-            EventManager.addEventListener('gameStateChange', (e) => this.updateEnvironmentForGameState(e.detail));
+            EventManager.addEventListener('timeChange', this._eventHandlers.timeChange);
+            EventManager.addEventListener('seasonChange', this._eventHandlers.seasonChange);
+            EventManager.addEventListener('locationChange', this._eventHandlers.locationChange);
+            EventManager.addEventListener('weatherChange', this._eventHandlers.weatherChange);
+            EventManager.addEventListener('gameStateChange', this._eventHandlers.gameStateChange);
         } else {
             // fallback - when even EventManager abandons us
-            EventManager.addEventListener(document, 'timeChange', (e) => this.updateTimeOfDay(e.detail));
-            EventManager.addEventListener(document, 'seasonChange', (e) => this.updateSeason(e.detail));
-            EventManager.addEventListener(document, 'locationChange', (e) => this.updateLocation(e.detail));
-            EventManager.addEventListener(document, 'weatherChange', (e) => this.updateWeather(e.detail));
-            EventManager.addEventListener(document, 'gameStateChange', (e) => this.updateEnvironmentForGameState(e.detail));
+            document.addEventListener('timeChange', this._eventHandlers.timeChange);
+            document.addEventListener('seasonChange', this._eventHandlers.seasonChange);
+            document.addEventListener('locationChange', this._eventHandlers.locationChange);
+            document.addEventListener('weatherChange', this._eventHandlers.weatherChange);
+            document.addEventListener('gameStateChange', this._eventHandlers.gameStateChange);
         }
+
+        // 🖤 Cleanup on page unload
+        window.addEventListener('beforeunload', () => this.cleanup());
     },
     
     // ♾️ Start the eternal loop of environmental chaos
@@ -880,6 +893,24 @@ const EnvironmentalEffectsSystem = {
     
     // 🧹 Cleanup - tidying up before the eternal void
     cleanup() {
+        // 🖤 Remove event listeners first - let them rest in peace
+        if (this._eventHandlers) {
+            if (typeof EventManager !== 'undefined' && EventManager.removeEventListener) {
+                EventManager.removeEventListener('timeChange', this._eventHandlers.timeChange);
+                EventManager.removeEventListener('seasonChange', this._eventHandlers.seasonChange);
+                EventManager.removeEventListener('locationChange', this._eventHandlers.locationChange);
+                EventManager.removeEventListener('weatherChange', this._eventHandlers.weatherChange);
+                EventManager.removeEventListener('gameStateChange', this._eventHandlers.gameStateChange);
+            } else {
+                document.removeEventListener('timeChange', this._eventHandlers.timeChange);
+                document.removeEventListener('seasonChange', this._eventHandlers.seasonChange);
+                document.removeEventListener('locationChange', this._eventHandlers.locationChange);
+                document.removeEventListener('weatherChange', this._eventHandlers.weatherChange);
+                document.removeEventListener('gameStateChange', this._eventHandlers.gameStateChange);
+            }
+            this._eventHandlers = {};
+        }
+
         // clear timers - stop the loops of despair
         if (typeof TimerManager !== 'undefined') {
             if (this.weatherUpdateTimer) TimerManager.clearInterval(this.weatherUpdateTimer);
@@ -893,12 +924,12 @@ const EnvironmentalEffectsSystem = {
             if (this.ambientEffectsTimer) clearInterval(this.ambientEffectsTimer);
             if (this.thunderSoundTimer) clearInterval(this.thunderSoundTimer);
         }
-        
+
         // Remove containers
         if (this.weatherContainer) this.weatherContainer.remove();
         if (this.lightingContainer) this.lightingContainer.remove();
         if (this.atmosphereContainer) this.atmosphereContainer.remove();
-        
+
         // Clear active effects
         this.activeEffects.particles = [];
         this.activeEffects.weather = null;

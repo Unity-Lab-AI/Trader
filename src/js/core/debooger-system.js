@@ -1,22 +1,27 @@
 // ═══════════════════════════════════════════════════════════════
-// 🐛 DEBOOGER SYSTEM - Opt-in deboogering for the dark souls of code 🖤
+// DEBOOGER SYSTEM - opt-in debugging for dark souls of code
 // ═══════════════════════════════════════════════════════════════
-// disabled by default for performance, enable when you need to suffer 💀
-// File Version: GameConfig.version.file | Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
+// disabled by default for performance, enable when you need to suffer
 
 const DeboogerSystem = {
-    enabled: true,  // 🔥 ON by default - for the Super Hacker achievement 🖤💀
-    maxEntries: 500, // prevent memory bloat like my todo list 🦇
+    enabled: true,  // ON by default - for the Super Hacker achievement
+    maxEntries: 500, // prevent memory bloat like my todo list at 3am
     _initialized: false,
     _originalLog: null,
     _originalWarn: null,
     _originalError: null,
 
-    // 🖤 Initialize Debooger system - ON by default for Super Hacker achievement ⚰️
+    // initialize Debooger system - ON by default for Super Hacker achievement
     init() {
-        // always setup console capture - Debooger is on by default now 🦇
+        // always setup console capture - Debooger is on by default now
+        // because watching console logs in a UI panel is fucking cool
         this.setupConsoleCapture();
-        console.log('🐛 Debooger system enabled by default - Super Hacker mode! 💀');
+        console.log('🐛 Debooger system enabled by default - Super Hacker mode!');
     },
 
     // 🔓 Enable Debooger manually 🗡️

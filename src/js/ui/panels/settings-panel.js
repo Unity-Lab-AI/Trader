@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🖤 SETTINGS PANEL - customizing your suffering experience 🖤
+// SETTINGS PANEL - game configuration interface
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// tweak audio, visuals, accessibility... make the darkness yours
-// because one size fits none and we all suffer differently
 
 const SettingsPanel = {
     // panel state - are we drowning in options or nah
@@ -2644,9 +2644,10 @@ const SettingsPanel = {
             const modelName = typeof model === 'string' ? model : model.name;
             const modelDesc = typeof model === 'object' ? (model.description || '') : '';
 
+            // 🖤 Sanitize model data - XSS is my enemy 💀
             item.innerHTML = `
-                <span class="model-name">${modelName}</span>
-                <span class="model-desc">${modelDesc}</span>
+                <span class="model-name">${this.escapeHtml(modelName)}</span>
+                <span class="model-desc">${this.escapeHtml(modelDesc)}</span>
             `;
             list.appendChild(item);
         });
@@ -2871,13 +2872,25 @@ const SettingsPanel = {
                 <div class="about-section">
                     <div class="about-logo">🏰</div>
                     <h2>Medieval Trading Game</h2>
-                    <p class="about-tagline">where capitalism meets the dark ages... literally</p>
-                    <div class="about-version">Version unknown (config not loaded)</div>
+                    <p class="about-tagline">trade, explore, survive in a medieval world</p>
+                    <div class="about-version">Version 0.88</div>
                     <div class="about-studio">
                         <span class="studio-label">Created by</span>
-                        <span class="studio-name">Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com</span>
+                        <span class="studio-name">Unity AI Lab</span>
                     </div>
-                    <div class="about-copyright">© 2025 Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com. all rights reserved.</div>
+                    <div class="about-team">
+                        <div class="team-member">
+                            <span class="dev-name">Hackall360</span>
+                            <span class="dev-name">Sponge</span>
+                            <span class="dev-name">GFourteen</span>
+                        </div>
+                    </div>
+                    <div class="about-links">
+                        <a href="https://www.unityailab.com" target="_blank" class="about-link-btn">🌐 Website</a>
+                        <a href="https://github.com/Unity-Lab-AI/Medieval-Trading-Game" target="_blank" class="about-link-btn">💻 GitHub</a>
+                        <a href="mailto:unityailabcontact@gmail.com" class="about-link-btn">📧 Contact</a>
+                    </div>
+                    <div class="about-copyright">© 2025 Unity AI Lab. All rights reserved.</div>
                 </div>
             `;
         }

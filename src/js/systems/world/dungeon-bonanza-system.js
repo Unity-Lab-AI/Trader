@@ -1,13 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 💀 DUNGEON BONANZA SYSTEM - July 18th Special Event
+// DUNGEON BONANZA - annual bloodbath celebration
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.81
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
-// ═══════════════════════════════════════════════════════════════
-// Every July 18th, the veil between worlds thins...
-// Dungeon travel takes only 30 minutes, cooldowns are lifted,
-// and adventurers can complete the 50 boss kills achievement
-// in a single glorious day of carnage.
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const DungeonBonanzaSystem = {

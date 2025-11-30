@@ -1,11 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 💱 NPC TRADE WINDOW - the universal interface for all NPC dealings
+// NPC TRADE WINDOW - portable capitalism in a popup storefront
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// Every NPC interaction flows through here - trading, hiring, quests,
-// random events, robberies, you name it. It's like a popup storefront
-// that follows you everywhere you go. Capitalism has never been more
-// portable or more intrusive.
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const NPCTradeWindow = {
@@ -288,8 +287,11 @@ const NPCTradeWindow = {
         const moodEl = document.getElementById('npc-mood');
         if (moodEl) {
             const mood = this.getNPCMood(npcData);
-            moodEl.querySelector('.mood-icon').textContent = mood.icon;
-            moodEl.querySelector('.mood-text').textContent = mood.text;
+            // 🖤 Null checks because DOM elements are fickle bitches 💀
+            const moodIcon = moodEl.querySelector('.mood-icon');
+            const moodText = moodEl.querySelector('.mood-text');
+            if (moodIcon) moodIcon.textContent = mood.icon;
+            if (moodText) moodText.textContent = mood.text;
             moodEl.className = `npc-mood mood-${mood.level}`;
         }
 

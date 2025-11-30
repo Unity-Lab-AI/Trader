@@ -1,11 +1,12 @@
 // ═══════════════════════════════════════════════════════════════
-// 🖤 MEDIEVAL TRADING GAME - where capitalism meets darkness 🖤
+// GAME - medieval trading where capitalism meets darkness
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// Game Version: 0.6
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// listen, this whole file is basically my 3am coding aesthetic
+// this whole file is basically my 3am coding aesthetic
 // if you're reading this during normal human hours, i'm judging you
 
 // 🖤 IMMEDIATE GLOBAL EXPORTS - ensure functions are available for onclick handlers
@@ -23,7 +24,8 @@ setTimeout(() => {
 // 🖤 NOTE: DeboogerSystem is defined in debooger-system.js (loaded before this file)
 // Removed duplicate declaration to prevent "Identifier already declared" error
 
-// 🖤 Escape HTML to prevent XSS attacks - dark magic for security
+// escape HTML to prevent XSS attacks - sanitize or die
+// the XSS demons are real and they're coming for your innerHTML
 function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/[&<>"']/g, char => ({
@@ -31,16 +33,18 @@ function escapeHtml(str) {
     })[char]);
 }
 
-// 🖤 Debooger-only logging helper - only logs warnings in debooger mode, silent in production 🦇
-// Note: Using gameDeboogerWarn to avoid conflict with button-fix.js deboogerWarn
+// debooger-only logging helper - only logs warnings in debooger mode, silent in production
+// using gameDeboogerWarn to avoid conflict with button-fix.js deboogerWarn
+// because naming collisions are how bugs breed in the dark
 const gameDeboogerWarn = (msg) => {
     if (typeof GameConfig !== 'undefined' && GameConfig.debooger?.enabled) {
         console.warn(msg);
     }
 };
 
-// 🦇 COMPACT GOLD FORMATTER - handles billions and trillions 💀
-// Use this for UI displays that need to fit large numbers
+// COMPACT GOLD FORMATTER - handles billions and trillions
+// use this for UI displays that need to fit large numbers
+// because 1000000000 looks ugly as fuck
 function formatGoldCompact(amount) {
     if (amount === undefined || amount === null) return '0';
     const num = Math.abs(amount);
@@ -51,10 +55,11 @@ function formatGoldCompact(amount) {
     if (num >= 10000) return `${sign}${(num / 1000).toFixed(1)}K`;
     return amount.toLocaleString();
 }
-window.formatGoldCompact = formatGoldCompact; // 🖤 Expose globally
+window.formatGoldCompact = formatGoldCompact; // expose globally
 
-// 🖤 DEDUPE LOGGER - prevents console spam from repetitive messages 💀
-// Only logs when the message changes or enough time has passed
+// DEDUPE LOGGER - prevents console spam from repetitive messages
+// only logs when the message changes or enough time has passed
+// because seeing the same error 1000 times doesn't make it more true
 const DedupeLogger = {
     // Store last message for each category
     lastMessages: {},
@@ -5301,6 +5306,19 @@ function changeState(newState) {
     console.log(`Game state changed from ${oldState} to ${newState}`);
 }
 
+// 🖤 BODY STATE MANAGEMENT - O(1) CSS state classes instead of :has() 💀
+// Classes: state-menu, state-setup, state-loading, state-playing
+function setBodyState(state) {
+    const body = document.body;
+    // 🦇 Remove all state classes
+    body.classList.remove('state-menu', 'state-setup', 'state-loading', 'state-playing');
+    // 🖤 Add the new state
+    if (state) {
+        body.classList.add(`state-${state}`);
+    }
+}
+window.setBodyState = setBodyState; // 🖤 Expose globally for other systems 💀
+
 // 📺 SCREEN MANAGEMENT - show/hide the suffering
 function showScreen(screenId) {
     // Hide all screens
@@ -5325,6 +5343,23 @@ function showScreen(screenId) {
         gameContainer.classList.remove('hidden');
     }
 
+    // 🖤 Update body state class for CSS targeting 💀
+    if (screenId === 'main-menu') {
+        setBodyState('menu');
+    } else if (screenId === 'game-setup-panel' || screenId === 'game-container') {
+        // Setup panel is inside game-container
+        const setupPanel = document.getElementById('game-setup-panel');
+        if (setupPanel && !setupPanel.classList.contains('hidden')) {
+            setBodyState('setup');
+        } else {
+            setBodyState('playing');
+        }
+    } else if (screenId === 'loading-screen') {
+        setBodyState('loading');
+    } else {
+        setBodyState('playing');
+    }
+
     // 🏆 Special case: refresh global leaderboard when showing main menu
     if (screenId === 'main-menu' && typeof GlobalLeaderboardSystem !== 'undefined') {
         GlobalLeaderboardSystem.refresh();
@@ -5344,6 +5379,10 @@ function hidePanel(panelId) {
     const panel = document.getElementById(panelId);
     if (panel) {
         panel.classList.add('hidden');
+    }
+    // 🖤 If hiding setup panel, switch to playing state 💀
+    if (panelId === 'game-setup-panel') {
+        setBodyState('playing');
     }
 }
 
@@ -7463,30 +7502,35 @@ function openMarket() {
 
 // 🎙️ Play merchant greeting with TTS
 async function playMerchantGreeting() {
-    if (typeof NPCMerchantSystem === 'undefined') return;
-    if (typeof NPCVoiceChatSystem === 'undefined') return;
+    try {
+        if (typeof NPCMerchantSystem === 'undefined') return;
+        if (typeof NPCVoiceChatSystem === 'undefined') return;
 
-    const merchant = NPCMerchantSystem.getCurrentMerchant();
-    if (!merchant) return;
+        const merchant = NPCMerchantSystem.getCurrentMerchant();
+        if (!merchant) return;
 
-    // Get a greeting from the merchant's personality
-    const greeting = NPCMerchantSystem.getGreeting(merchant.id);
-    const wealthDialogue = NPCMerchantSystem.getWealthDialogue(merchant);
-    const fullGreeting = wealthDialogue ? `${greeting} ${wealthDialogue}` : greeting;
+        // Get a greeting from the merchant's personality
+        const greeting = NPCMerchantSystem.getGreeting(merchant.id);
+        const wealthDialogue = NPCMerchantSystem.getWealthDialogue(merchant);
+        const fullGreeting = wealthDialogue ? `${greeting} ${wealthDialogue}` : greeting;
 
-    // Get voice for this merchant type
-    let voice = 'nova'; // default voice
-    if (typeof NPCPersonaDatabase !== 'undefined') {
-        const persona = NPCPersonaDatabase.getPersonaForMerchant(merchant);
-        if (persona?.voice) {
-            voice = persona.voice;
+        // Get voice for this merchant type
+        let voice = 'nova'; // default voice
+        if (typeof NPCPersonaDatabase !== 'undefined') {
+            const persona = NPCPersonaDatabase.getPersonaForMerchant(merchant);
+            if (persona?.voice) {
+                voice = persona.voice;
+            }
         }
-    }
 
-    // Play the greeting with TTS
-    if (NPCVoiceChatSystem.settings?.voiceEnabled) {
-        console.log(`🎙️ Playing merchant greeting: "${fullGreeting}" with voice: ${voice}`);
-        await NPCVoiceChatSystem.playVoice(fullGreeting, voice);
+        // Play the greeting with TTS
+        if (NPCVoiceChatSystem.settings?.voiceEnabled) {
+            console.log(`🎙️ Playing merchant greeting: "${fullGreeting}" with voice: ${voice}`);
+            await NPCVoiceChatSystem.playVoice(fullGreeting, voice);
+        }
+    } catch (err) {
+        // 🖤 TTS errors shouldn't crash the game - just log and continue 💀
+        console.warn('⚠️ Merchant greeting TTS failed:', err?.message || err);
     }
 }
 
@@ -8368,7 +8412,10 @@ function handlePlayerDeath(deathCause = 'Unknown causes') {
     if (typeof GlobalLeaderboardSystem !== 'undefined') {
         GlobalLeaderboardSystem.onPlayerDeath(deathCause).then(() => {
             addMessage('🏆 your tale has been inscribed in the Hall of Champions...');
-        }).catch(() => {});
+        }).catch(err => {
+            // 🖤 Don't swallow errors silently - log them 💀
+            console.warn('⚠️ Failed to submit to Hall of Champions:', err?.message || err);
+        });
     }
 
     if (typeof SaveUISystem !== 'undefined') {

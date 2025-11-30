@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🗺️ TRAVEL PANEL MAP - your portable window to the void
+// TRAVEL PANEL MAP - choosing your next destination
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// mirrors GameWorldRenderer for the travel panel
-// click where you want to suffer next
 
 const TravelPanelMap = {
     // 📦 DOM elements
@@ -1690,11 +1690,22 @@ const TravelPanelMap = {
 
     lightenColor(hex, percent) {
         return ColorUtils.lightenColor(hex, percent);
+    },
+
+    // 🖤 Cleanup method - clear intervals to prevent memory leaks 💀
+    cleanup() {
+        if (this.travelState.countdownInterval) {
+            clearInterval(this.travelState.countdownInterval);
+            this.travelState.countdownInterval = null;
+        }
     }
 };
 
 // 🖤 Global export so other systems can access TravelPanelMap
 window.TravelPanelMap = TravelPanelMap;
+
+// 🖤 Cleanup on page unload - no dangling intervals 💀
+window.addEventListener('beforeunload', () => TravelPanelMap.cleanup());
 
 // Auto-initialize when DOM is ready
 if (document.readyState === 'loading') {

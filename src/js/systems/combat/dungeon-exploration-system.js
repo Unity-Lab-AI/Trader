@@ -1,12 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏚️ DUNGEON EXPLORATION SYSTEM - descending into the abyss for shiny things
+// DUNGEON EXPLORATION SYSTEM - greed meets darkness
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// when you're tired of buying low and selling high, go loot some corpses
-// dungeons, caves, ruins - basically anywhere sensible people avoid
-// 12-hour cooldowns because even the undead need a nap
 
 console.log('🏚️ DungeonExplorationSystem crawling out of the shadows...');
 

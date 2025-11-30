@@ -1,10 +1,11 @@
-/**
- * ========================================
- * REPUTATION CONSEQUENCES SYSTEM - Medieval Trading Game
- * ========================================
- * Reputation now has real gameplay effects
- * ========================================
- */
+// ═══════════════════════════════════════════════════════════════
+// REPUTATION SYSTEM - what others think you're worth
+// ═══════════════════════════════════════════════════════════════
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 const ReputationSystem = {
     // Reputation tiers with thresholds and effects

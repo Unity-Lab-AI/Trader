@@ -1,12 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🗺️ GAME WORLD RENDERER v2 - painting the void so you know where you're lost
+// GAME WORLD RENDERER - main world map rendering engine
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// rebuilt from scratch cuz canvas was being a drama queen
-// now using good old HTML elements that actually respond to clicks
-// because apparently nothing works as intended at 3am
 
 const GameWorldRenderer = {
     // 📦 dom elements - the building blocks of our misery
@@ -22,7 +21,7 @@ const GameWorldRenderer = {
         offsetY: 0,
         minZoom: 0.3,        // Max zoomed out - see the whole world
         maxZoom: 2,          // Max zoomed in - close up detail
-        defaultZoom: 1,      // Default zoom for reset (1:1 natural)
+        defaultZoom: 2,      // Default zoom for reset (max zoom per Gee's request)
         isDragging: false,
         dragStartX: 0,
         dragStartY: 0,

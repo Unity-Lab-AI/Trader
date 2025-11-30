@@ -1,11 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 💾 UNIFIED SAVE MANAGER - One system to save them all
+// SAVE MANAGER - preserving your descent into capitalism
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
-// ═══════════════════════════════════════════════════════════════
-// MERGED FROM: save-load-system.js, save-load-ui.js, save-ui-system.js
-// This consolidates 3 separate save systems into ONE.
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const SaveManager = {
@@ -22,6 +21,14 @@ const SaveManager = {
     // STATE
     // ═══════════════════════════════════════════════════════════════
     saveSlots: {},
+
+    // 🖤 Escape HTML - sanitize save names or die 💀
+    escapeHtml(text) {
+        if (text == null) return '';
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
+    },
     autoSaveSlots: [],
     currentAutoSaveIndex: 0,
     currentSaveSlot: null,
@@ -1118,10 +1125,10 @@ const SaveManager = {
                     <div class="save-slot-item ${isSelected ? 'selected' : ''}" data-slot="${i}" onclick="SaveManager.selectSaveSlot(${i})">
                         <div class="slot-num">${i}</div>
                         <div class="slot-info">
-                            <div class="slot-name">${slot.name}</div>
+                            <div class="slot-name">${this.escapeHtml(slot.name)}</div>
                             <div class="slot-meta">
                                 <span>💰 ${(slot.playerInfo?.gold || 0).toLocaleString()}</span>
-                                <span>📍 ${slot.playerInfo?.location || 'Unknown'}</span>
+                                <span>📍 ${this.escapeHtml(slot.playerInfo?.location || 'Unknown')}</span>
                                 <span>⚠️ Overwrite</span>
                             </div>
                         </div>
@@ -1160,9 +1167,9 @@ const SaveManager = {
                 <div class="save-slot-item ${isSelected ? 'selected' : ''}" data-slot="${i}" data-type="manual" onclick="SaveManager.selectLoadSlot(${i}, 'manual')">
                     <div class="slot-num">${i}</div>
                     <div class="slot-info">
-                        <div class="slot-name">${slot.name}</div>
+                        <div class="slot-name">${this.escapeHtml(slot.name)}</div>
                         <div class="slot-meta">
-                            <span>👤 ${slot.playerInfo?.name || 'Unknown'}</span>
+                            <span>👤 ${this.escapeHtml(slot.playerInfo?.name || 'Unknown')}</span>
                             <span>💰 ${(slot.playerInfo?.gold || 0).toLocaleString()}</span>
                             <span>📅 ${slot.playerInfo?.daysSurvived || 0} days</span>
                         </div>
@@ -1180,9 +1187,9 @@ const SaveManager = {
                 <div class="save-slot-item ${isSelected ? 'selected' : ''}" data-slot="${save.index}" data-type="auto" onclick="SaveManager.selectLoadSlot(${save.index}, 'auto')">
                     <div class="slot-num">🔄</div>
                     <div class="slot-info">
-                        <div class="slot-name">${save.name}</div>
+                        <div class="slot-name">${this.escapeHtml(save.name)}</div>
                         <div class="slot-meta">
-                            <span>👤 ${save.playerName}</span>
+                            <span>👤 ${this.escapeHtml(save.playerName)}</span>
                             <span>💰 ${(save.gold || 0).toLocaleString()}</span>
                             <span>📅 Day ${save.day || 1}</span>
                         </div>

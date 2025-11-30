@@ -1,15 +1,15 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎙️ NPC VOICE CHAT SYSTEM - giving NPCs actual voices and souls
+// NPC VOICE CHAT SYSTEM - digital souls learn to speak
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// where digital souls learn to speak and your wallet learns to weep
-// every NPC now has opinions, and they're not afraid to share them
 
 const NPCVoiceChatSystem = {
     // ═══════════════════════════════════════════════════════════
-    // 🔧 CONFIGURATION - the dark rituals of API communion
+    // CONFIGURATION - rituals for summoning AI voices from void
     // ═══════════════════════════════════════════════════════════
 
     config: {

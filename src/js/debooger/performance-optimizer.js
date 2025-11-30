@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🚀 PERFORMANCE OPTIMIZER - making things go brrr smoothly
+// PERFORMANCE OPTIMIZER - making darkness run buttery smooth
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// monitoring FPS and keeping the experience buttery
-// because lag is the real enemy here
 
 const PerformanceOptimizer = {
     // Performance settings

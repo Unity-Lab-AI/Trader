@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 🖤 GAME CONFIG - the dark heart of all settings 🖤
+// GAME CONFIG - the dark heart of all settings
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.7
-// one file to rule them all, one file to bind them
-// change something here and watch the whole world shift
-// it's like being a god but with less responsibility
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const GameConfig = {
@@ -12,8 +12,8 @@ const GameConfig = {
     // 📋 VERSION INFO - tracking our descent into madness
     // ═══════════════════════════════════════════════════════════════
     version: {
-        game: '0.81',          // the great reorganization update 🖤
-        file: '0.81',          // keeping pace with the darkness
+        game: '0.88',          // the great reorganization update 🖤
+        file: '0.88',          // keeping pace with the darkness
         build: '2025.11',      // born in the depths of 2025
         releaseDate: '2025'    // the year we unleashed this beast
     },
@@ -42,21 +42,21 @@ const GameConfig = {
     // 👥 CREDITS - the souls who sacrificed their sanity
     // ═══════════════════════════════════════════════════════════════
     credits: {
-        studio: 'Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com',
+        studio: 'Unity AI Lab',
         developers: [
             { name: 'Hackall360', role: 'Lead Code Necromancer' },
             { name: 'Sponge', role: 'Chaos Engineer' },
             { name: 'GFourteen', role: 'Digital Alchemist' }
         ],
-        year: '2022',
-        copyright: '© 2022 Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com. all rights reserved. souls sold separately.'
+        year: '2025',
+        copyright: '© 2025 Unity AI Lab. Creators: Hackall360, Sponge, GFourteen. All rights reserved. Souls sold separately.'
     },
 
     // ═══════════════════════════════════════════════════════════════
     // 🔗 LINKS - escape routes from this madness
     // ═══════════════════════════════════════════════════════════════
     links: {
-        website: 'https://unityailab.com',           // TODO: build a shrine
+        website: 'https://www.unityailab.com',           // the shrine of darkness
         github: 'https://github.com/Unity-Lab-AI/Medieval-Trading-Game.git',            // where the bodies are buried
         discord: 'https://discord.gg/D33Bk6Ay',           // screaming into the void, together
         support: 'unityailabcontact@gmail.com'            // emotional or technical? yes.

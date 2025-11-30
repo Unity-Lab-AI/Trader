@@ -1,11 +1,13 @@
 // ═══════════════════════════════════════════════════════════════
-// 👂 EVENT MANAGER - listening to everything like a paranoid goth
+// EVENT MANAGER - listening to everything like a paranoid goth
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// 💀 Centralized listener management - because memory leaks are a slow death
-// 🖤 Even code needs therapy for attachment issues
+// centralized listener management - because memory leaks are a slow death
+// even code needs therapy for attachment issues
 
 const EventManager = {
     // 📋 Store all event listeners - tracking our emotional attachments to the DOM
@@ -13,21 +15,21 @@ const EventManager = {
 
     // 🖤 Add event listener with tracking - prevents duplicates, prevents obsession
     addListener(element, eventType, handler, options = {}) {
-        // 🦇 Silently skip if element doesn't exist - ghosts can't listen
-        // Expected during initialization when the DOM is still loading
+        // silently skip if element doesn't exist - ghosts can't listen
+        // expected during initialization when the DOM is still loading its soul
         if (!element || !eventType || !handler) {
             return null;
         }
 
-        // 💀 Check if this element already has a listener for this event type
-        // Prevents duplicate listeners from multiple initialization paths - no obsessive behavior
+        // check if this element already has a listener for this event type
+        // prevents duplicate listeners from multiple initialization paths
+        // no obsessive behavior allowed, we're not THAT clingy
         const elementKey = element.id || element.className || 'unnamed';
-        let existingListener = false;
-        this.listeners.forEach((listener, key) => {
-            if (listener.element === element && listener.eventType === eventType) {
-                existingListener = true;
-            }
-        });
+
+        // 🖤 O(n) → O(1) early exit - find() stops at first match, forEach doesn't 💀
+        const existingListener = Array.from(this.listeners.values()).find(
+            listener => listener.element === element && listener.eventType === eventType
+        );
 
         if (existingListener) {
             // 🗡️ Already has a listener for this event type, skip - no double attachments

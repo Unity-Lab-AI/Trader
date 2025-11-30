@@ -1,11 +1,13 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎮 GAME ENGINE - the beating heart of this digital existence
+// GAME ENGINE - the beating heart of this digital existence
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// 🖤 This module orchestrates the game loop, time system, and travel
-// 💀 Basically the puppet master pulling all the strings while you think you're in control
+// this module orchestrates the game loop, time system, and travel
+// basically the puppet master pulling strings while you think you're in control
 
 const GameEngine = {
     // ⚡ Engine state - the vital signs of our digital frankenstein
@@ -39,9 +41,10 @@ const GameEngine = {
         return true;
     },
 
-    // 💀 Main game loop - DISABLED: game.js gameLoop() handles all updates
-    // This was causing duplicate updates and race conditions with travel/time
-    // 🦇 Keeping the function for compatibility but it only updates UI now
+    // main game loop - DISABLED: game.js gameLoop() handles all updates
+    // this was causing duplicate updates and race conditions with travel/time
+    // keeping the function for compatibility but it only updates UI now
+    // fuck it, sometimes legacy code needs to exist just to not break everything
     tick(currentTime) {
         if (!this.isRunning) {
             this.animationFrameId = null;

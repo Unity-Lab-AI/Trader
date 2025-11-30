@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🌐 BROWSER COMPATIBILITY - making this work on everything
+// BROWSER COMPATIBILITY - taming the browser chaos
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// cross-browser fixes because browsers cant agree on anything
-// safari, firefox, chrome... all have their own drama
 
 const BrowserCompatibility = {
     // Browser detection

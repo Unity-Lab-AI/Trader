@@ -1,8 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// ⌨️ KEY BINDINGS - your keyboard is your weapon 🖤
+// KEY BINDINGS - global keyboard shortcuts system
 // ═══════════════════════════════════════════════════════════════
-// global keyboard shortcuts and rebinding system 💀
-// File Version: GameConfig.version.file | Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 const KeyBindings = {
     // 🎮 Get defaults from GameConfig (or use fallbacks if config not loaded) ⚰️

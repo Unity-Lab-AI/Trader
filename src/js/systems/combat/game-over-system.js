@@ -1,10 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 💀 GAME OVER SYSTEM - all journeys must end... usually badly
+// GAME OVER SYSTEM - every story ends in the void
 // ═══════════════════════════════════════════════════════════════
-// tracking your failures and occasionally your triumphs
-// File Version: GameConfig.version.file
-// Game Version: 0.2
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 console.log('💀 Game Over System loading... preparing for inevitable failures...');
 

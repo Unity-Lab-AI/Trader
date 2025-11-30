@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 📊 MARKET PRICE HISTORY - obsessively tracking numbers
+// MARKET PRICE HISTORY - graphs of your failures
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// because we need to see our missed opportunities in chart form
-// hindsight is 20/20 and painful
 
 const MarketPriceHistory = {
     // 📉 Price history data - memories of better prices

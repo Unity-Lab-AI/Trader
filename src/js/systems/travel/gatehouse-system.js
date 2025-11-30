@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏰 GATEHOUSE & TRAVEL ZONE SYSTEM - capitalism's toll booths
+// GATEHOUSE SYSTEM - pay to escape your current hell
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// controls access to different regions via gatehouses/outposts
-// pay the toll or stay stuck forever, your choice
 
 const GatehouseSystem = {
     // Track which gatehouses have been paid for (unlocked)

@@ -1,12 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎭 NPC WORKFLOW SYSTEM - the brains behind every NPC interaction
+// NPC WORKFLOW SYSTEM - the brains behind every interaction
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
-// ═══════════════════════════════════════════════════════════════
-// This system provides comprehensive context and instructions
-// for the AI to know EXACTLY what to do in every situation.
-// Trading, questing, combat, gossip - it's all here.
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 console.log('🎭 NPCWorkflowSystem loading... teaching NPCs how to actually do their jobs');

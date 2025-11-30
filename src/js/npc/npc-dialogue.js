@@ -1,19 +1,17 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎭 NPC DIALOGUE SYSTEM - unified voice of all digital souls
+// NPC DIALOGUE SYSTEM - unified voice of all digital souls
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
-// ═══════════════════════════════════════════════════════════════
-// the one true source for NPC dialogue generation and TTS
-// no more scattered prompts, no more generic greetings
-// every NPC speaks with their own voice, their own soul
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 console.log('🎭 NPCDialogueSystem awakening... giving voice to the voiceless');
 
 const NPCDialogueSystem = {
     // ═══════════════════════════════════════════════════════════════
-    // 🔧 CONFIGURATION
+    // CONFIGURATION - where we commune with the AI demons
     // ═══════════════════════════════════════════════════════════════
 
     config: {
@@ -37,7 +35,7 @@ const NPCDialogueSystem = {
     },
 
     // ═══════════════════════════════════════════════════════════════
-    // 👹 BOSS PERSONAS - the big bads that haunt your nightmares
+    // BOSS PERSONAS - the nightmares that hunt you in darkness
     // ═══════════════════════════════════════════════════════════════
 
     bossPersonas: {

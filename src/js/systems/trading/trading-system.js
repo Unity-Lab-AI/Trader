@@ -1,10 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 💰 TRADING SYSTEM - capitalism simulator for the medieval masochist
+// TRADING SYSTEM - where greed becomes gameplay
 // ═══════════════════════════════════════════════════════════════
-// buy low, sell high, cry always... the trader's way
-// File Version: GameConfig.version.file
-// Game Version: 0.2
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 const TradingSystem = {
     // ⚙️ Config - how we're gonna hustle today

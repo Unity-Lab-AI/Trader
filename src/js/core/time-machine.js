@@ -1,13 +1,14 @@
 // ═══════════════════════════════════════════════════════════════
-// ⏰ THE TIME MACHINE - All of existence, unified in one dark engine
+// TIME MACHINE - all of existence, unified in one dark engine
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.81
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// 🖤 This is THE source of all time in the game
-// 🦇 No more scattered time logic - everything flows through here
-// 💀 Gregorian calendar, seasons, game loop, UI updates - ALL OF IT
-// ═══════════════════════════════════════════════════════════════
+// this is THE source of all time in the game - no more scattered logic
+// gregorian calendar, seasons, game loop, UI updates - all of it flows through here
+// the void watches and it's judging your temporal architecture
 
 console.log('⏰ TIME MACHINE loading... preparing to bend reality');
 
@@ -126,6 +127,9 @@ const TimeMachine = {
     lastProcessedDay: 0,
     lastProcessedWeek: 0,
     lastWageProcessedDay: 0,
+
+    // 🖤 DOM element cache - query once, use forever 💀
+    _domCache: null,
 
     // ═══════════════════════════════════════════════════════════════
     // 🖤 INITIALIZATION - The beginning of time itself
@@ -350,8 +354,9 @@ const TimeMachine = {
             });
         }
 
-        // 🌦️ Force seasonal transition weather - dramatic effect for new season
-        // 🖤 This weather lasts all day to accompany the backdrop crossfade
+        // force seasonal transition weather - dramatic effect for new season
+        // this weather lasts all day to accompany the backdrop crossfade
+        // because season changes should FEEL different, not just look different
         if (typeof WeatherSystem !== 'undefined' && WeatherSystem.setWeather) {
             const transitionWeather = this.SEASONAL_TRANSITION_WEATHER[newSeason];
             if (transitionWeather) {
@@ -712,40 +717,46 @@ const TimeMachine = {
                this.currentTime.minute;
     },
 
-    // 🖤 Total days since April 1, 1111
+    // 🖤 Total days since game start (uses GameConfig for start date) 💀
     getTotalDays() {
-        let totalDays = 0;
-        const startYear = 1111;
-        const startMonth = 4;
-        const startDay = 1;
+        // 🦇 Get start date from GameConfig (single source of truth)
+        const startDate = typeof GameConfig !== 'undefined'
+            ? GameConfig.time.startingDate
+            : { year: 1111, month: 4, day: 1 };
 
-        // Count days from years
-        for (let y = startYear; y < this.currentTime.year; y++) {
-            totalDays += this.isLeapYear(y) ? 366 : 365;
+        const startYear = startDate.year;
+        const startMonth = startDate.month;
+        const startDay = startDate.day;
+
+        const currYear = this.currentTime.year;
+        const currMonth = this.currentTime.month;
+        const currDay = this.currentTime.day;
+
+        // 🖤 Convert both dates to "days since epoch" then subtract
+        // This is cleaner than the previous branching logic
+
+        // Days from epoch to start date
+        let startDays = 0;
+        for (let y = 1; y < startYear; y++) {
+            startDays += this.isLeapYear(y) ? 366 : 365;
         }
-
-        // Subtract days from Jan 1 to start date
         for (let m = 1; m < startMonth; m++) {
-            totalDays -= this.getDaysInMonth(m, startYear);
+            startDays += this.getDaysInMonth(m, startYear);
         }
-        totalDays -= (startDay - 1);
+        startDays += startDay;
 
-        // Add days from Jan 1 to current date
-        for (let m = 1; m < this.currentTime.month; m++) {
-            totalDays += this.getDaysInMonth(m, this.currentTime.year);
+        // Days from epoch to current date
+        let currDays = 0;
+        for (let y = 1; y < currYear; y++) {
+            currDays += this.isLeapYear(y) ? 366 : 365;
         }
-        totalDays += this.currentTime.day;
-
-        // Handle same-year case
-        if (this.currentTime.year === startYear) {
-            totalDays = 0;
-            for (let m = startMonth; m < this.currentTime.month; m++) {
-                totalDays += this.getDaysInMonth(m, this.currentTime.year);
-            }
-            totalDays += (this.currentTime.day - startDay);
+        for (let m = 1; m < currMonth; m++) {
+            currDays += this.getDaysInMonth(m, currYear);
         }
+        currDays += currDay;
 
-        return totalDays;
+        // 💀 Simple subtraction - no edge cases to worry about
+        return currDays - startDays;
     },
 
     // 🔄 Convenience getter for backward compatibility
@@ -762,68 +773,81 @@ const TimeMachine = {
         this.updateTimeControlButtons();
     },
 
+    // 🖤 Initialize DOM cache - query once, not 60 times per second 💀
+    _initDomCache() {
+        if (this._domCache) return this._domCache;
+
+        this._domCache = {
+            timeDisplay: document.getElementById('game-time') ||
+                        document.getElementById('time-display') ||
+                        document.querySelector('.time-display'),
+            dayDisplay: document.getElementById('current-day'),
+            yearDisplay: document.getElementById('current-year'),
+            dateText: document.getElementById('date-text'),
+            timeIndicator: document.getElementById('time-phase-indicator'),
+            phaseTime: null, // 🦇 Set after timeIndicator found
+            speedDisplay: document.getElementById('speed-indicator') ||
+                         document.querySelector('.speed-indicator'),
+            seasonDisplay: document.getElementById('season-indicator')
+        };
+
+        // 🖤 Cache the nested element too
+        if (this._domCache.timeIndicator) {
+            this._domCache.phaseTime = this._domCache.timeIndicator.querySelector('.phase-time');
+        }
+
+        return this._domCache;
+    },
+
+    // 🔮 Clear DOM cache (call if elements are dynamically recreated)
+    clearDomCache() {
+        this._domCache = null;
+    },
+
     // 🕰️ Update time display elements
     updateTimeDisplay() {
         const timeInfo = this.getTimeInfo();
+        const cache = this._initDomCache();
 
-        // Main time display
-        const timeDisplay = document.getElementById('game-time') ||
-                           document.getElementById('time-display') ||
-                           document.querySelector('.time-display');
-        if (timeDisplay) {
-            timeDisplay.textContent = timeInfo.formatted;
+        // 🖤 Use cached elements - no more 60fps DOM queries 💀
+        if (cache.timeDisplay) {
+            cache.timeDisplay.textContent = timeInfo.formatted;
         }
 
-        // Day display
-        const dayDisplay = document.getElementById('current-day');
-        if (dayDisplay) {
-            dayDisplay.textContent = `Day ${timeInfo.day}`;
+        if (cache.dayDisplay) {
+            cache.dayDisplay.textContent = `Day ${timeInfo.day}`;
         }
 
-        // Year display
-        const yearDisplay = document.getElementById('current-year');
-        if (yearDisplay) {
-            yearDisplay.textContent = `Year ${timeInfo.year}`;
+        if (cache.yearDisplay) {
+            cache.yearDisplay.textContent = `Year ${timeInfo.year}`;
         }
 
-        // Top-bar date
-        const dateText = document.getElementById('date-text');
-        if (dateText) {
-            dateText.textContent = `${timeInfo.monthName} ${timeInfo.day}, ${timeInfo.year}`;
+        if (cache.dateText) {
+            cache.dateText.textContent = `${timeInfo.monthName} ${timeInfo.day}, ${timeInfo.year}`;
         }
 
-        // 🖤 Top-bar time widget - update in real-time
-        const timeIndicator = document.getElementById('time-phase-indicator');
-        if (timeIndicator) {
-            const timeEl = timeIndicator.querySelector('.phase-time');
-            if (timeEl) {
-                // Format as AM/PM
-                const hour = timeInfo.hour;
-                const minute = timeInfo.minute || 0;
-                const ampm = hour >= 12 ? 'PM' : 'AM';
-                const displayHour = hour % 12 || 12;
-                const displayMinute = minute.toString().padStart(2, '0');
-                timeEl.textContent = `${displayHour}:${displayMinute} ${ampm}`;
-            }
+        // 🖤 Top-bar time widget
+        if (cache.phaseTime) {
+            const hour = timeInfo.hour;
+            const minute = timeInfo.minute || 0;
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour % 12 || 12;
+            const displayMinute = minute.toString().padStart(2, '0');
+            cache.phaseTime.textContent = `${displayHour}:${displayMinute} ${ampm}`;
         }
 
-        // Speed indicator
-        const speedDisplay = document.getElementById('speed-indicator') ||
-                            document.querySelector('.speed-indicator');
-        if (speedDisplay) {
+        if (cache.speedDisplay) {
             const speedLabels = {
                 'PAUSED': '⏸ Paused',
                 'NORMAL': '▶ Normal',
                 'FAST': '▶▶ Fast',
                 'VERY_FAST': '▶▶▶ Very Fast'
             };
-            speedDisplay.textContent = speedLabels[timeInfo.speed] || timeInfo.speed;
+            cache.speedDisplay.textContent = speedLabels[timeInfo.speed] || timeInfo.speed;
         }
 
-        // Season indicator (if exists)
-        const seasonDisplay = document.getElementById('season-indicator');
-        if (seasonDisplay) {
-            seasonDisplay.textContent = `${timeInfo.seasonData.icon} ${timeInfo.seasonData.name}`;
+        if (cache.seasonDisplay) {
+            cache.seasonDisplay.textContent = `${timeInfo.seasonData.icon} ${timeInfo.seasonData.name}`;
         }
     },
 

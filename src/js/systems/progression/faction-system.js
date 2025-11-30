@@ -1,11 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏛️ FACTION SYSTEM - Choose your allies wisely
+// FACTION SYSTEM - loyalty is a currency here
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
-// ═══════════════════════════════════════════════════════════════
-// Faction reputation affects prices, access to special items,
-// quest availability, and NPC reactions throughout the game.
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const FactionSystem = {

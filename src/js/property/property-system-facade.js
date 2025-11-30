@@ -1,8 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏠 PROPERTY SYSTEM FACADE - unified interface to modular chaos 🖤
+// PROPERTY SYSTEM FACADE - unified interface to modular darkness
 // ═══════════════════════════════════════════════════════════════
-// backward compatibility layer for the split property modules 💀
-// File Version: GameConfig.version.file | Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 const PropertySystem = {
     // 🏘️ Property types - delegate to PropertyTypes ⚰️

@@ -1,22 +1,24 @@
-// ═══════════════════════════════════════════════════════════════════════════
-// 🖤 SYSTEM REGISTRY - Centralized access to game systems
-// ═══════════════════════════════════════════════════════════════════════════
-// File Version: 0.81
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
-// ═══════════════════════════════════════════════════════════════════════════
-// Instead of 869 `typeof !== 'undefined'` checks scattered everywhere,
-// use this registry to safely access any system. It's like a phone book
-// for game systems - look them up without fear of the void.
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// SYSTEM REGISTRY - centralized access to game systems
+// ═══════════════════════════════════════════════════════════════
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
+// instead of 869 `typeof !== 'undefined'` checks scattered everywhere
+// use this registry to safely access any system - like a phone book
+// for game systems, look them up without fear of the void
 
 const SystemRegistry = {
-    // 🖤 Cache of system references for faster access
+    // cache of system references for faster access
+    // because querying window[] 60 times per second is how we summon the lag demon
     _cache: new Map(),
 
-    // 🗡️ Track which systems have been accessed (for deboogering 🦇)
+    // track which systems have been accessed (for debooging)
     _accessLog: [],
 
-    // ⚰️ Whether to log access attempts (disable in production)
+    // whether to log access attempts (disable in production or suffer console spam)
     _deboogerMode: false,
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -24,12 +26,12 @@ const SystemRegistry = {
     // ═══════════════════════════════════════════════════════════════════════
 
     /**
-     * 🖤 Check if a system exists and is available
+     * check if a system exists and is available
      * @param {string} name - System name (e.g., 'TimeSystem', 'game', 'TravelSystem')
      * @returns {boolean} - True if system exists
      */
     has(name) {
-        // 🦇 Check cache first
+        // check cache first - the void remembers what it's seen
         if (this._cache.has(name)) {
             return this._cache.get(name) !== null;
         }

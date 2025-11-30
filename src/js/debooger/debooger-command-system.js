@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎮 DEBOOGER COMMAND SYSTEM - cheat codes for the morally flexible
+// DEBOOGER COMMAND SYSTEM - bending reality with dark commands
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// click the Debooger button to open the console
-// type commands and press enter to bend reality
 
 console.log('🎮 Debooger Command System loading...');
 

@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🔧 BUTTON FIX - because buttons are drama queens
+// BUTTON FIX - event listener repair shop
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// fixing all the button functionality issues
-// when in doubt, add more event listeners
 
 console.log('🔧 Summoning button repair spirits...');
 

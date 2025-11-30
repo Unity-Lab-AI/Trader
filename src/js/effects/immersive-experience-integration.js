@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎭 IMMERSIVE EXPERIENCE INTEGRATION - weaving the sensory tapestry
+// IMMERSIVE EXPERIENCE INTEGRATION - dark magic converges here
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// 🌙 This is where all my dark magic converges.
-// Audio, visuals, weather... all orchestrated into one beautiful nightmare 🦇
 
 const ImmersiveExperienceIntegration = {
     // 🌙 Initialize all immersive systems - summoning the atmosphere

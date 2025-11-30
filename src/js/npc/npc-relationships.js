@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 💕 NPC RELATIONSHIP SYSTEM - memories, reputation, and bonds
+// NPC RELATIONSHIP SYSTEM - memories, reputation, and bonds
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// NPCs remember you, love you, hate you, and everything in between.
-// Because what's a medieval trading game without social anxiety
-// about whether the blacksmith still likes you after that lowball offer?
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const NPCRelationshipSystem = {
@@ -15,6 +15,7 @@ const NPCRelationshipSystem = {
     relationships: {},     // NPC-specific relationships
     factionReputation: {}, // Faction-wide reputation
     playerTitle: null,     // Earned title based on reputation
+    unlockedBenefits: {},  // 🖤 Track which faction benefits have been unlocked 💀
 
     // ═══════════════════════════════════════════════════════════════
     // 🎭 RELATIONSHIP LEVELS
@@ -449,15 +450,46 @@ const NPCRelationshipSystem = {
 
     /**
      * Check and notify about faction benefits
+     * 🖤 FIXED: Now actually tracks and unlocks benefits 💀
      * @param {string} factionId - Faction identifier
      */
     checkFactionBenefits(factionId) {
         const faction = this.factions[factionId];
+        if (!faction) return; // 🦇 Guard against invalid faction
+
         const rep = this.factionReputation[factionId] || 0;
 
+        // 🖤 Initialize tracking for this faction if not exists 💀
+        if (!this.unlockedBenefits[factionId]) {
+            this.unlockedBenefits[factionId] = [];
+        }
+
         for (const [threshold, benefit] of Object.entries(faction.benefits)) {
-            const thresholdNum = parseInt(threshold);
-            // 🎯 Did we just unlock a new tier of their favor? (tracking needs work) 📊
+            const thresholdNum = parseInt(threshold, 10);
+
+            // 🦇 Check if we've reached this threshold and haven't unlocked it yet
+            if (rep >= thresholdNum && !this.unlockedBenefits[factionId].includes(thresholdNum)) {
+                // 🖤 UNLOCK THE BENEFIT - the darkness rewards you 💀
+                this.unlockedBenefits[factionId].push(thresholdNum);
+
+                // 🔮 Notify the player of their new power
+                if (typeof addMessage === 'function') {
+                    addMessage(`🏛️ ${faction.name}: NEW BENEFIT UNLOCKED! ${benefit}`, 'success');
+                }
+
+                // ⚰️ Emit event for other systems to react
+                if (typeof EventBus !== 'undefined') {
+                    EventBus.emit('faction:benefit-unlocked', {
+                        factionId,
+                        factionName: faction.name,
+                        threshold: thresholdNum,
+                        benefit,
+                        reputation: rep
+                    });
+                }
+
+                console.log(`🖤 [NPCRelationshipSystem] Unlocked ${faction.name} benefit at ${thresholdNum}: ${benefit}`);
+            }
         }
     },
 

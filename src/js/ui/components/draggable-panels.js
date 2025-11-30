@@ -1,12 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 🖤 DRAGGABLE PANELS - because control freaks need their panels where THEY want them
+// DRAGGABLE PANELS - drag and drop system for UI panels
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
-// ═══════════════════════════════════════════════════════════════
-// 💀 SIMPLIFIED: No auto-generated headers or buttons!
-// Close buttons are added via CSS/HTML directly on panels.
-// This system ONLY handles drag functionality.
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const DraggablePanels = {
@@ -52,14 +50,30 @@ const DraggablePanels = {
     },
 
     setupGlobalEvents() {
+        // 🖤 No more always-on listeners - we add/remove during drag only 💀
+        // This prevents 60fps mousemove events when nobody's dragging
         if (this.eventsSetup) return;
 
-        document.addEventListener('mousemove', (e) => this.onDrag(e));
-        document.addEventListener('mouseup', () => this.endDrag());
-        document.addEventListener('touchmove', (e) => this.onDrag(e), { passive: false });
-        document.addEventListener('touchend', () => this.endDrag());
+        // 🦇 Store bound handlers so we can remove them later
+        this._onDragHandler = (e) => this.onDrag(e);
+        this._endDragHandler = () => this.endDrag();
 
         this.eventsSetup = true;
+    },
+
+    // 🖤 Add listeners when drag starts - remove when drag ends 💀
+    _addDragListeners() {
+        document.addEventListener('mousemove', this._onDragHandler);
+        document.addEventListener('mouseup', this._endDragHandler);
+        document.addEventListener('touchmove', this._onDragHandler, { passive: false });
+        document.addEventListener('touchend', this._endDragHandler);
+    },
+
+    _removeDragListeners() {
+        document.removeEventListener('mousemove', this._onDragHandler);
+        document.removeEventListener('mouseup', this._endDragHandler);
+        document.removeEventListener('touchmove', this._onDragHandler);
+        document.removeEventListener('touchend', this._endDragHandler);
     },
 
     setupAllDraggables() {
@@ -220,6 +234,9 @@ const DraggablePanels = {
         };
 
         element.classList.add('dragging');
+
+        // 🦇 NOW we add the listeners - only when actually dragging
+        this._addDragListeners();
     },
 
     onDrag(e) {
@@ -253,10 +270,18 @@ const DraggablePanels = {
 
         this.savePosition(element);
         this.dragState = null;
+
+        // 🖤 Remove listeners - no more mousemove spam until next drag 💀
+        this._removeDragListeners();
     },
 
     observePanelChanges() {
-        const observer = new MutationObserver((mutations) => {
+        // 🖤 Disconnect old observer if it exists - no zombie watchers 💀
+        if (this._panelObserver) {
+            this._panelObserver.disconnect();
+        }
+
+        this._panelObserver = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.type === 'childList') {
                     mutation.addedNodes.forEach(node => {
@@ -270,7 +295,18 @@ const DraggablePanels = {
             });
         });
 
-        observer.observe(document.body, { childList: true, subtree: true });
+        this._panelObserver.observe(document.body, { childList: true, subtree: true });
+
+        // 🦇 Clean up on page unload - no memory leaks in my realm
+        window.addEventListener('beforeunload', () => this.disconnectObserver());
+    },
+
+    // 🖤 Call this to stop watching for new panels 💀
+    disconnectObserver() {
+        if (this._panelObserver) {
+            this._panelObserver.disconnect();
+            this._panelObserver = null;
+        }
     },
 
     savePosition(element) {

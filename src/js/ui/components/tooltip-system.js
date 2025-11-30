@@ -1,10 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 💬 TOOLTIP SYSTEM - whispers of wisdom in the dark UI void
+// TOOLTIP SYSTEM - contextual help on hover
 // ═══════════════════════════════════════════════════════════════
-// hover over things and learn their secrets... no tutorial needed
-// File Version: GameConfig.version.file
-// Game Version: 0.2
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 console.log('💬 Tooltip System loading... preparing to explain everything...');
 

@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// ✨ UI/UX ENHANCEMENTS - making things pretty (and functional)
+// UI ENHANCEMENTS - polish for your trading empire
 // ═══════════════════════════════════════════════════════════════
-// keyboard shortcuts, animations, and all the quality of life stuff
-// because even trading games deserve aesthetic love
-// File Version: GameConfig.version.file
-// Game Version: 0.2
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 // ⌨️ Keyboard Shortcuts - for the power users among us
 const KeyboardShortcuts = {
@@ -593,7 +593,10 @@ const KeyboardShortcuts = {
     
     // Update loading progress
     updateLoadingProgress(percent) {
-        const progressFill = document.getElementById('loading-overlay').querySelector('.progress-fill');
+        // 🖤 FIXED: Added null check for loading-overlay element 💀
+        const overlay = document.getElementById('loading-overlay');
+        if (!overlay) return; // 🦇 Guard against missing overlay
+        const progressFill = overlay.querySelector('.progress-fill');
         if (progressFill) {
             progressFill.style.width = `${percent}%`;
         }
@@ -957,10 +960,12 @@ const KeyboardShortcuts = {
     switchTab() {
         const activeTab = document.querySelector('.tab-btn.active');
         if (!activeTab) return;
-        
-        const allTabs = Array.from(activeElement.parentElement.querySelectorAll('.tab-btn'));
+
+        // 🖤 FIXED: was using undefined 'activeElement', should be 'activeTab' 💀
+        if (!activeTab.parentElement) return; // 🦇 Guard against orphaned tabs
+        const allTabs = Array.from(activeTab.parentElement.querySelectorAll('.tab-btn'));
         const currentIndex = allTabs.findIndex(tab => tab === activeTab);
-        
+
         if (currentIndex !== -1) {
             const nextIndex = (currentIndex + 1) % allTabs.length;
             allTabs[nextIndex].click();

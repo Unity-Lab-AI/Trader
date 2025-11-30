@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 📈 DYNAMIC MARKET SYSTEM - prices go brrr
+// DYNAMIC MARKET SYSTEM - chaos masquerading as economy
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// supply and demand but make it chaotic
-// buy low sell high cry often thats the motto
 
 const DynamicMarketSystem = {
     // ⚙️ Market chaos configuration

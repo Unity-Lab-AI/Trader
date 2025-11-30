@@ -1,13 +1,14 @@
 // ═══════════════════════════════════════════════════════════════
-// 🖤 EVENT BUS - Central nervous system of the game
+// EVENT BUS - central nervous system of the game
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// 💀 The pulse of the machine - systems scream into the void here
-// 🦇 No direct calls, only dark signals echoing through the network
-// 🗡️ Decoupled chaos - beautiful, maintainable isolation
-// ═══════════════════════════════════════════════════════════════
+// the pulse of the machine - systems scream into the void here
+// no direct calls, only dark signals echoing through the network
+// decoupled chaos - beautiful, maintainable isolation
 
 const EventBus = {
     // 🖤 Map of screams -> Set of ears listening
@@ -89,7 +90,7 @@ const EventBus = {
                 try {
                     callback(data);
                 } catch (error) {
-                    // 🦇 Event handler crashed - log for devs
+                    // event handler crashed - sanitize this shit or the XSS demons will feast
                     console.warn(`❌ EventBus: Handler error for '${event}':`, error.message);
                 }
             });

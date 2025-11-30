@@ -1,12 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// ⚔️ COMBAT SYSTEM - When trading isn't an option
+// COMBAT SYSTEM - when words fail, blades speak
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
-// ═══════════════════════════════════════════════════════════════
-// A complete combat resolution system for encounters, robberies,
-// dungeon fights, and random events. Calculates damage, applies
-// equipment bonuses, and determines outcomes.
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const CombatSystem = {
@@ -38,6 +36,7 @@ const CombatSystem = {
     // Combat state
     activeCombat: null,
     combatLog: [],
+    isProcessingAction: false, // 🖤 Mutex flag to prevent double-click race conditions 💀
 
     // ═══════════════════════════════════════════════════════════════
     // ENEMY DEFINITIONS
@@ -266,7 +265,10 @@ const CombatSystem = {
     // COMBAT ACTIONS
     // ═══════════════════════════════════════════════════════════════
     playerAttack() {
+        // 🖤 Mutex check - prevent double-click race conditions 💀
         if (!this.activeCombat || this.activeCombat.state !== 'active') return;
+        if (this.isProcessingAction) return; // 🦇 Already processing, fuck off
+        this.isProcessingAction = true;
 
         const combat = this.activeCombat;
         combat.round++;
@@ -297,7 +299,10 @@ const CombatSystem = {
     },
 
     playerDefend() {
+        // 🖤 Mutex check - darkness waits for no one 💀
         if (!this.activeCombat || this.activeCombat.state !== 'active') return;
+        if (this.isProcessingAction) return; // 🦇 Already processing
+        this.isProcessingAction = true;
 
         const combat = this.activeCombat;
         combat.round++;
@@ -316,7 +321,10 @@ const CombatSystem = {
     },
 
     playerFlee() {
+        // 🖤 Mutex check - can't escape twice at once 💀
         if (!this.activeCombat || this.activeCombat.state !== 'active') return;
+        if (this.isProcessingAction) return; // 🦇 Already processing
+        this.isProcessingAction = true;
 
         const combat = this.activeCombat;
 
@@ -337,10 +345,17 @@ const CombatSystem = {
     },
 
     useItem(itemId) {
+        // 🖤 Mutex check - one potion at a time, mortal 💀
         if (!this.activeCombat || this.activeCombat.state !== 'active') return;
+        if (this.isProcessingAction) return; // 🦇 Already processing
+        this.isProcessingAction = true;
 
         const item = typeof ItemDatabase !== 'undefined' ? ItemDatabase.getItem(itemId) : null;
-        if (!item || !item.consumable) return;
+        // 🖤 Reset mutex if item invalid - don't trap the player in processing hell 💀
+        if (!item || !item.consumable) {
+            this.isProcessingAction = false;
+            return;
+        }
 
         // Use the item
         if (game.player.inventory[itemId] > 0) {
@@ -413,6 +428,9 @@ const CombatSystem = {
             this.addCombatLog(`⏰ The battle drags on... both combatants retreat.`);
             this.endCombat('draw');
         }
+
+        // 🖤 Reset mutex - action complete, ready for next move 💀
+        this.isProcessingAction = false;
     },
 
     // ═══════════════════════════════════════════════════════════════
@@ -541,6 +559,9 @@ const CombatSystem = {
     },
 
     endCombat(result) {
+        // 🖤 Always reset mutex when combat ends 💀
+        this.isProcessingAction = false;
+
         if (this.activeCombat) {
             this.activeCombat.state = result;
         }

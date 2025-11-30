@@ -1,12 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎨 COLOR UTILITIES - Painting the darkness
+// COLOR UTILITIES - painting the darkness with RGB
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
-// ═══════════════════════════════════════════════════════════════
-// This file consolidates all color manipulation functions that were
-// duplicated across 3+ files (game-world-renderer.js, travel-panel-map.js,
-// ui-enhancements.js). Now there's ONE source of truth.
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const ColorUtils = {

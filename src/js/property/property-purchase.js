@@ -1,8 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🏠 PROPERTY PURCHASE - acquiring your empire piece by piece 🖤
+// PROPERTY PURCHASE - acquiring your empire piece by piece in darkness
 // ═══════════════════════════════════════════════════════════════
-// buy, rent, or build your way to landlord status 💀
-// File Version: GameConfig.version.file | Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 const PropertyPurchase = {
     // 💰 Calculate property price with all modifiers ⚰️

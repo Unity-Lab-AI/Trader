@@ -1,18 +1,13 @@
-/**
- * ========================================
- * 🖤 SKILL SYSTEM - Medieval Trading Game 🖤
- * ========================================
- * "Every skill learned is a step away from mediocrity,
- *  a whisper of power in an indifferent world."
- * ========================================
- *
- * 🦇 WHAT THIS DARK GRIMOIRE CONTAINS:
- * - 5 skill trees forged in the fires of ambition
- * - 25 unlockable abilities to shape your destiny
- * - Starting skill integration from character creation
- * - Skill point economy tied to the player's journey
- *
- * 🗡️ THE SACRED TREES:
+// ═══════════════════════════════════════════════════════════════
+// SKILL SYSTEM - power through practice and pain
+// ═══════════════════════════════════════════════════════════════
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
+//
+// 🗡️ THE SACRED TREES:
  * - Trading: The art of turning copper into gold
  * - Combat: When words fail, steel speaks
  * - Crafting: Creation from destruction

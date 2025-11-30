@@ -1,12 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 🔨 CRAFTING ENGINE - Where raw materials become hope (or despair)
+// CRAFTING ENGINE - turning failure into profit
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
-// ═══════════════════════════════════════════════════════════════
-// This file implements the ACTUAL crafting logic that was missing.
-// The recipes exist in unified-item-system.js, but nothing could
-// actually craft items. Now they can. You're welcome.
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const CraftingEngine = {

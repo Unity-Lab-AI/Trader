@@ -1031,7 +1031,9 @@ const PeoplePanel = {
                 const sells = location?.sells || [];
 
                 if (sells.length > 0) {
-                    preview.innerHTML = `<span style="color:#4a9">✓ Trade Available</span><br>Sells: ${sells.slice(0, 4).join(', ')}${sells.length > 4 ? '...' : ''}`;
+                    // 🖤 Sanitize NPC data - XSS is my enemy 💀
+                    const sanitizedSells = sells.slice(0, 4).map(s => this.escapeHtml(s)).join(', ');
+                    preview.innerHTML = `<span style="color:#4a9">✓ Trade Available</span><br>Sells: ${sanitizedSells}${sells.length > 4 ? '...' : ''}`;
                 } else {
                     preview.innerHTML = '<span style="color:#4a9">✓ Trade Available</span><br>Various goods for trade';
                 }
@@ -1288,6 +1290,14 @@ const PeoplePanel = {
     formatNPCName(id) {
         if (!id) return 'Stranger';
         return id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    },
+
+    // 🖤 Escape HTML - sanitize or die 💀
+    escapeHtml(text) {
+        if (text == null) return '';
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
     }
 };
 

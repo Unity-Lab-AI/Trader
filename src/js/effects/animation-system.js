@@ -1,14 +1,14 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎬 ANIMATION SYSTEM - breathing life into the lifeless DOM
+// ANIMATION SYSTEM - commanding pixels to dance at my will
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// 🦇 Every movement is a spell. Every transition is dark magic.
-// Watch as I command these pixels to dance at my will... 💀
 
 const AnimationSystem = {
-    // 🔮 Animation settings - the knobs that control reality itself
+    // animation settings - the knobs controlling reality's dance
     settings: {
         animationsEnabled: true,
         animationSpeed: 1.0,
@@ -16,14 +16,14 @@ const AnimationSystem = {
         quality: 'medium' // 'low', 'medium', 'high'
     },
     
-    // 🌙 Active animations tracking - the spells currently weaving through existence
+    // active animations - spells weaving through existence right now
     activeAnimations: [],
     animationId: 0,
     
-    // ⚡ Animation frame request - our heartbeat in the browser's soul
+    // animation frame - our heartbeat in the browser's dark soul
     animationFrame: null,
     
-    // 🎭 Character animation states - the many moods of our digital puppets
+    // character animation states - the many moods of digital puppets
     characterAnimations: {
         idle: { frames: 4, duration: 1000, loop: true },
         walk: { frames: 8, duration: 800, loop: true },
@@ -35,7 +35,7 @@ const AnimationSystem = {
         celebrate: { frames: 8, duration: 1200, loop: false }
     },
     
-    // 🏚️ Building animation states - even architecture has emotions in my realm
+    // building animation states - even architecture bleeds emotion
     buildingAnimations: {
         idle: { frames: 1, duration: 1000, loop: true },
         active: { frames: 4, duration: 2000, loop: true },
@@ -44,7 +44,7 @@ const AnimationSystem = {
         damaged: { frames: 2, duration: 2000, loop: true }
     },
     
-    // 🌑 Initialize animation system - awakening the dark magic
+    // initialize - awakening the dark magic of motion
     init() {
         this.loadSettings();
         this.setupEventListeners();
@@ -52,7 +52,7 @@ const AnimationSystem = {
         console.log('🎬 Animation system awakened... pixels tremble before me 🖤');
     },
     
-    // 💾 Load settings from localStorage - digging up the past from digital graves
+    // load settings - digging up preferences from digital graves
     loadSettings() {
         const savedSettings = localStorage.getItem('tradingGameAnimationSettings');
         if (savedSettings) {

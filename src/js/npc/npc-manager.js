@@ -1,14 +1,17 @@
 // ═══════════════════════════════════════════════════════════════
-// 👤 NPC MANAGER - central coordination for all our digital souls 🖤
+// NPC MANAGER - puppetmaster pulling strings of virtual souls
 // ═══════════════════════════════════════════════════════════════
-// the puppet master pulling the strings of virtual existence 💀
-// File Version: GameConfig.version.file | Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
 
 const NPCManager = {
-    // 📋 NPC Registry - all NPCs in the game world ⚰️
+    // NPC registry - every soul catalogued in the digital void
     npcs: new Map(),
 
-    // 🎯 Currently active NPC (the one player is interacting with) 🦇
+    // currently active NPC - the soul the player is haunting
     activeNPC: null,
 
     // 🏠 NPCs by location for quick lookup 🗡️
@@ -337,3 +340,6 @@ if (document.readyState === 'loading') {
 } else {
     NPCManager.init();
 }
+
+// 🖤 Cleanup on page unload - no memory leaks in my realm 💀
+window.addEventListener('beforeunload', () => NPCManager.destroy());

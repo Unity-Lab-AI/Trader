@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎪 CITY EVENT SYSTEM - chaos comes to town
+// CITY EVENT SYSTEM - disrupting your plans daily
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// festivals, plagues, economic crashes - ya know, normal medieval life
-// expect the unexpected (its usually bad news)
 
 const CityEventSystem = {
     // 🎲 Event types - varieties of disruption to ruin your plans

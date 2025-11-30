@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
-// 📜 QUEST SYSTEM - the chains that bind you to this damn game
+// QUEST SYSTEM - tasks that pretend to matter
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// every task, every fetch quest, every "go kill 10 rats" moment
-// all flows through the NPCs who pretend to give a shit about you
-// quest items weigh nothing because even the game pities you
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
 const QuestSystem = {
@@ -1788,13 +1788,18 @@ const QuestSystem = {
         const chains = this.getQuestChains();
         let questsToShow = [];
 
+        // 🖤 O(1) lookups - convert arrays to Sets for this loop (performance fix)
+        const completedSet = new Set(this.completedQuests);
+        const failedSet = new Set(this.failedQuests);
+        const discoveredSet = new Set(this.discoveredQuests);
+
         // filter based on category
         Object.entries(chains).forEach(([chainId, chain]) => {
             chain.quests.forEach(quest => {
                 const isActive = !!this.activeQuests[quest.id];
-                const isCompleted = this.completedQuests.includes(quest.id);
-                const isFailed = this.failedQuests.includes(quest.id);
-                const isDiscovered = this.discoveredQuests.includes(quest.id) || isActive || isCompleted;
+                const isCompleted = completedSet.has(quest.id);
+                const isFailed = failedSet.has(quest.id);
+                const isDiscovered = discoveredSet.has(quest.id) || isActive || isCompleted;
                 const isMain = quest.type === 'main';
 
                 // 🖤 filter logic - sorting through the chaos

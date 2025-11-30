@@ -1,13 +1,14 @@
 // ═══════════════════════════════════════════════════════════════
-// 🖤 TIME SYSTEM - The Relentless March of Existence
+// TIME SYSTEM - the relentless march of existence
 // ═══════════════════════════════════════════════════════════════
-// File Version: 0.81
-// Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// Now with ACTUAL Gregorian calendar because medieval accuracy matters
-// Start date: April 1st, 1111 - a date as dark as our code
-// Leap years, real month names, proper days per month... the works
-// ═══════════════════════════════════════════════════════════════
+// gregorian calendar with leap years, proper month names, all the bullshit
+// start date: april 1st, 1111 - a date as dark as the code
+// if time breaks, blame the cosmic horror not me
 
 const TimeSystem = {
     // 🕐 Constants - time being time, but now with REAL calendar math
@@ -198,8 +199,9 @@ const TimeSystem = {
             this.currentSpeed = speed;
             this.isPaused = (speed === 'PAUSED');
 
-            // 🚶 AUTO-TRAVEL: when unpausing with a destination set, begin the journey
-            // 🖤 Because clicking play should actually DO something when you've got somewhere to go
+            // AUTO-TRAVEL: when unpausing with a destination set, begin the journey
+            // because clicking play should actually DO something when you've got somewhere to go
+            // this was driving me insane so i fixed it at 3am
             if (wasAtDestinationReady && !this.isPaused) {
                 this.checkAndStartPendingTravel();
             }
@@ -216,7 +218,8 @@ const TimeSystem = {
             return;
         }
 
-        // 🖤 Notify TravelPanelMap that game is unpaused - it handles auto-start travel 💀
+        // notify TravelPanelMap that game is unpaused - it handles auto-start travel
+            // delegation > duplication, trust me on this one
         if (typeof TravelPanelMap !== 'undefined' && TravelPanelMap.onGameUnpaused) {
             TravelPanelMap.onGameUnpaused();
             return; // TravelPanelMap handles everything
@@ -335,41 +338,47 @@ const TimeSystem = {
                this.currentTime.minute;
     },
 
-    // 🖤 getTotalDays - how many sunsets have we witnessed in this dark world
-    // ⚰️ Calculates actual days from April 1, 1111
+    // 🖤 getTotalDays - how many sunsets have we witnessed in this dark world 💀
+    // Uses GameConfig for start date (single source of truth)
     getTotalDays() {
-        let totalDays = 0;
-        const startYear = 1111;
-        const startMonth = 4; // April
-        const startDay = 1;
+        // 🦇 Get start date from GameConfig
+        const startDate = typeof GameConfig !== 'undefined'
+            ? GameConfig.time.startingDate
+            : { year: 1111, month: 4, day: 1 };
 
-        // 🗡️ Count days from years (from start year to current year - 1)
-        for (let y = startYear; y < this.currentTime.year; y++) {
-            totalDays += this.isLeapYear(y) ? 366 : 365;
+        const startYear = startDate.year;
+        const startMonth = startDate.month;
+        const startDay = startDate.day;
+
+        const currYear = this.currentTime.year;
+        const currMonth = this.currentTime.month;
+        const currDay = this.currentTime.day;
+
+        // 🖤 Convert both dates to "days since epoch" then subtract
+        // This is cleaner than the previous branching logic
+
+        // Days from epoch to start date
+        let startDays = 0;
+        for (let y = 1; y < startYear; y++) {
+            startDays += this.isLeapYear(y) ? 366 : 365;
         }
-
-        // 🦇 Subtract days from Jan 1 to start date in start year
         for (let m = 1; m < startMonth; m++) {
-            totalDays -= this.getDaysInMonth(m, startYear);
+            startDays += this.getDaysInMonth(m, startYear);
         }
-        totalDays -= (startDay - 1);
+        startDays += startDay;
 
-        // 🌙 Add days from Jan 1 to current date in current year
-        for (let m = 1; m < this.currentTime.month; m++) {
-            totalDays += this.getDaysInMonth(m, this.currentTime.year);
+        // Days from epoch to current date
+        let currDays = 0;
+        for (let y = 1; y < currYear; y++) {
+            currDays += this.isLeapYear(y) ? 366 : 365;
         }
-        totalDays += this.currentTime.day;
-
-        // 💀 Handle same-year case
-        if (this.currentTime.year === startYear) {
-            totalDays = 0;
-            for (let m = startMonth; m < this.currentTime.month; m++) {
-                totalDays += this.getDaysInMonth(m, this.currentTime.year);
-            }
-            totalDays += (this.currentTime.day - startDay);
+        for (let m = 1; m < currMonth; m++) {
+            currDays += this.getDaysInMonth(m, currYear);
         }
+        currDays += currDay;
 
-        return totalDays;
+        // 💀 Simple subtraction - no edge cases to worry about
+        return currDays - startDays;
     },
 
     // ═══════════════════════════════════════════════════════════════

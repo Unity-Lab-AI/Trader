@@ -1,15 +1,15 @@
 // ═══════════════════════════════════════════════════════════════
-// 🎭 NPC ENCOUNTER SYSTEM - random souls appearing in your path
+// NPC ENCOUNTER SYSTEM - strangers with opinions to share
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// strangers on the road, mysterious figures in taverns, beggars at gates
-// every journey brings new faces with opinions to share
 
 const NPCEncounterSystem = {
     // ═══════════════════════════════════════════════════════════
-    // 🔧 CONFIGURATION - tuning the frequency of random encounters
+    // CONFIGURATION - tuning the chaos frequency
     // ═══════════════════════════════════════════════════════════
 
     config: {
@@ -38,7 +38,7 @@ const NPCEncounterSystem = {
     // ═══════════════════════════════════════════════════════════
 
     encounterTypes: {
-        // 🛣️ The road is never safe - who will you meet in the wilderness? 🦇
+        // the road is never safe - strangers lurk in shadow
         road: {
             friendly: [
                 { type: 'traveler', weight: 30, minRep: -50 },

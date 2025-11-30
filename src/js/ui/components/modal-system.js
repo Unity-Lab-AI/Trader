@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// 🪟 MODAL SYSTEM - popups that demand your attention
+// MODAL SYSTEM - popup window management
 // ═══════════════════════════════════════════════════════════════
-// File Version: GameConfig.version.file
-// conjured by Unity AI Lab - Hackall360, Sponge, GFourteen
+// Version: 0.88 | Unity AI Lab
+// Creators: Hackall360, Sponge, GFourteen
+// www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
+// unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
-// centralized modal management for all those "are you sure?" moments
-// because one popup is never enough apparently
 
 const ModalSystem = {
     // 📋 Active modals registry - tracking the attention seekers
@@ -164,7 +164,14 @@ const ModalSystem = {
     // 🖱️ DRAG HANDLING - Global drag events for modal dragging
     // ═══════════════════════════════════════════════════════════════
 
+    // 🖤 Guard flag - only setup drag events once 💀
+    _dragEventsInitialized: false,
+
     setupDragEvents() {
+        // 🦇 Prevent duplicate listeners - one set of ears is enough
+        if (this._dragEventsInitialized) return;
+        this._dragEventsInitialized = true;
+
         document.addEventListener('mousemove', (e) => {
             if (!this.dragState) return;
             e.preventDefault();
