@@ -287,9 +287,10 @@ body:has(#main-menu:not(.hidden)) #game-container {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.map-location:hover {
-    transform: translate(-50%, -50%) scale(1.15) !important;
-    z-index: 100 !important;
+/* 🖤 Hover effect - doubled selector for specificity */
+.map-location.map-location:hover {
+    transform: translate(-50%, -50%) scale(1.15);
+    z-index: 100;
 }
 
 .map-controls {
@@ -428,8 +429,9 @@ body:has(#main-menu:not(.hidden)) #game-container {
 }
 
 /* 🖤 Stats Section - ultra compact 💀 */
-.stats-section {
-    padding: 0.3rem 0.5rem !important;
+#side-panel .stats-section,
+.stats-section.stats-section {
+    padding: 0.3rem 0.5rem;
 }
 
 .stats-section .section-title {
@@ -445,15 +447,15 @@ body:has(#main-menu:not(.hidden)) #game-container {
 
 .stats-icons-row,
 .stats-values-row {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-around !important;
-    align-items: center !important;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
     width: 100%;
 }
 
 .stats-icons-row .stat-icon {
-    font-size: 1rem !important;
+    font-size: 1rem;
     cursor: help;
 }
 
@@ -466,42 +468,42 @@ body:has(#main-menu:not(.hidden)) #game-container {
     cursor: help;
 }
 
-/* 🖤 OLD: Side Panel Stats Grid - kept for backwards compatibility */
+/* 🖤 Side Panel Stats Grid - compact horizontal layout */
 #side-panel .stats-grid,
 .stats-section .stats-grid {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: wrap !important; /* 💀 Allow wrapping if needed */
-    justify-content: center !important;
-    gap: 0.2rem 0.4rem !important;
-    grid-template-columns: unset !important;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap; /* 💀 Allow wrapping if needed */
+    justify-content: center;
+    gap: 0.2rem 0.4rem;
+    grid-template-columns: unset;
 }
 
 #side-panel .stat-item,
 .stats-section .stat-item {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 0.15rem !important;
-    padding: 0.1rem 0.2rem !important;
-    background: none !important;
-    font-size: 0.75rem !important;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.1rem 0.2rem;
+    background: none;
+    font-size: 0.75rem;
     cursor: help;
-    border: none !important;
-    border-radius: 0 !important;
+    border: none;
+    border-radius: 0;
 }
 
 #side-panel .stat-item:hover,
 .stats-section .stat-item:hover {
-    background: rgba(79, 195, 247, 0.1) !important;
-    border-radius: 3px !important;
+    background: rgba(79, 195, 247, 0.1);
+    border-radius: 3px;
 }
 
 #side-panel .stat-icon,
 .stats-section .stat-icon {
-    font-size: 0.8rem !important;
+    font-size: 0.8rem;
     line-height: 1;
-    margin-bottom: 0 !important;
+    margin-bottom: 0;
 }
 
 #side-panel .stat-value,
@@ -2060,8 +2062,8 @@ body:has(#main-menu:not(.hidden)) #game-container {
 
 /* 🖤 Settings button in setup form - make it visible as icon button */
 #setup-settings-btn {
-    flex: 0 0 auto !important;
-    min-width: 40px !important;
+    flex: 0 0 auto;
+    min-width: 40px;
     width: 40px;
     font-size: 1.2rem;
     padding: 0.5rem;
@@ -2272,15 +2274,17 @@ body:has(#main-menu:not(.hidden)) #game-container {
     pointer-events: auto;
 }
 
-#message-log h3 {
+/* 🖤 Message log header - draggable, higher specificity for cursor/pointer */
+#message-log h3,
+#game-container #message-log h3 {
     padding: 0.5rem 1rem;
     margin: 0;
     background: rgba(79, 195, 247, 0.1);
     border-bottom: 1px solid rgba(79, 195, 247, 0.2);
     font-size: 0.9rem;
-    cursor: move !important;
+    cursor: move;
     user-select: none;
-    pointer-events: auto !important;
+    pointer-events: auto;
     position: relative;
     z-index: 151;
 }
@@ -9303,13 +9307,14 @@ button,
     text-align: center;
 }
 
-.stats-grid {
+/* 🖤 Game Over specific stats - scoped to avoid overriding side-panel */
+.game-over-stats .stats-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
 }
 
-.stat-item {
+.game-over-stats .stat-item {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
@@ -9317,19 +9322,19 @@ button,
     text-align: center;
 }
 
-.stat-icon {
+.game-over-stats .stat-icon {
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
 }
 
-.stat-value {
+.game-over-stats .stat-value {
     font-size: 1.4rem;
     font-weight: bold;
     color: #fff;
     margin-bottom: 0.25rem;
 }
 
-.stat-label {
+.game-over-stats .stat-label {
     font-size: 0.8rem;
     color: #888;
     text-transform: uppercase;
@@ -9412,16 +9417,16 @@ button,
         font-size: 1.8rem;
     }
 
-    .stats-grid {
+    .game-over-stats .stats-grid {
         grid-template-columns: 1fr 1fr;
         gap: 0.75rem;
     }
 
-    .stat-item {
+    .game-over-stats .stat-item {
         padding: 0.75rem;
     }
 
-    .stat-value {
+    .game-over-stats .stat-value {
         font-size: 1.1rem;
     }
 

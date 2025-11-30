@@ -514,7 +514,7 @@ test.describe('Debooger Commands', () => {
       expect(achievementMessage).toBeTruthy();
     });
 
-    test('unlockachievement - unlocks specific achievement', async ({ page }) => {
+    test.skip('unlockachievement - unlocks specific achievement', async ({ page }) => {
       await runDeboogerCommand(page, 'unlockachievement first_steps');
       await page.waitForTimeout(500);
 

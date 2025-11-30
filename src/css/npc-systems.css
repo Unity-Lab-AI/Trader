@@ -2268,8 +2268,10 @@
     background: #F57C00;
 }
 
+/* 🖤 Disabled state - higher specificity to override .acquisition-option variants */
+.acquisition-option .ao-btn.disabled,
 .ao-btn.disabled {
-    background: #555 !important;
+    background: #555;
     cursor: not-allowed;
 }
 

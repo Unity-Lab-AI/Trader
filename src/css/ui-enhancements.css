@@ -1282,8 +1282,11 @@ textarea:focus {
     display: flex;
 }
 
-.overlay.hidden {
-    display: none !important;
+/* 🖤 Hidden state - higher specificity to override .active/.show */
+.overlay.hidden,
+.overlay.active.hidden,
+.overlay.show.hidden {
+    display: none;
 }
 
 /* Enhanced form controls */
