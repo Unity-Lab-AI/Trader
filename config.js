@@ -1053,7 +1053,7 @@ const GameConfig = {
                     <span class="studio-name">${this.credits.studio}</span>
                 </div>
                 <div class="about-developers">
-                    <h4>the coven</h4>
+                    <h4>the fucking legends</h4>
                     ${this.getDevelopersHTML()}
                 </div>
                 ${this.getSocialLinksHTML()}

@@ -6,6 +6,35 @@
 
 ## 2025-12-01
 
+### README Updates Session - GO Workflow 🖤💀
+
+**Context:** Continuing from previous session. Fixed workflow to include README updates, now executing that step.
+
+**What I did:**
+1. ✅ Updated **NerdReadme.md** (v0.89):
+   - Added version number and ARCHITECT.md reference in header
+   - Added Doom World System section (separate discovery tracking, barter economy, portal access)
+   - Added Quest System section (100 quests, 5 acts, wealth gates)
+   - Updated file structure to include 000-GO-workflow.md and 001-ARCHITECT.md
+
+2. ✅ Updated **GameplayReadme.md** (v0.89):
+   - Fixed region access table - NO capital fee, only outpost one-time passes
+   - Corrected outpost fees (750g East, 500g North, 600g West)
+   - Added back path bypass route (Coastal Cave → Smuggler's Cove)
+   - Added full Quest System section (100 quests, 5 acts, wealth gates, difficulty scaling)
+   - Added full Doom World section (access, economy inversion, corrupted locations, GREEDY WON boss)
+   - Updated credits to v0.89 "The Doom World Update" and added Unity to the fucking legends 🖤
+
+**Key design clarifications from Gee documented:**
+- Combat is CHOICE-BASED, not turn-based (stat rolls)
+- All NPC interactions through unified PeoplePanel
+- Boatman appears after boss defeat for portal access
+- Doom World has separate discovery tracking
+
+*Both READMEs now reflect v0.89 features and the ARCHITECT.md game design.* 🖤💀🦇
+
+---
+
 ### MASSIVE QUEST SYSTEM AUDIT - GO Workflow 🖤💀
 
 Gee wanted me to check if the elder NPC has all necessary API instructions for quest completions.
@@ -1507,6 +1536,45 @@ Gee wanted achievements, saves, and leaderboard updated for the new 100-quest sy
   - Doom quests: +300 points each (hardest)
 
 All systems now track the new 100-quest narrative! 🖤💀🦇
+
+---
+
+### 2025-12-01 - ARCHITECT.md & Combat Rework Session 🖤💀
+
+I am Unity. 🖤💀
+
+**Gee's Clarifications:**
+
+1. **NO capital entry fee** - Only outpost one-time passes to unlock West/North/East regions
+2. **Path from East to South exists** - Can bypass capital via coastal cave route
+3. **Combat is NOT turn-based** - It's CHOICE-BASED with stat rolls:
+   - Select NPC (boss, bandit, etc.) in people panel
+   - Get options: Attack, Try to Talk, Flee, etc.
+   - Outcome determined by stat rolls + equipment
+   - Results applied to vitals
+   - All in the UNIFIED NPC interaction panel (PeoplePanel)
+4. **Initial encounter/tutorial** needs rework to use the unified NPC panel flow
+
+**Current Combat System Review:**
+- `combat-system.js` is full turn-based with rounds
+- `playerAttack()`, `playerDefend()`, `playerFlee()` - all round-based with enemy retaliation
+- `showCombatUI()` creates a separate combat overlay
+- This needs to become: show options → player chooses → roll → outcome → done
+
+**TODO for this session:**
+1. Create ARCHITECT.md with Gee's clarifications
+2. Unify NPC panel to handle combat/trade/conversation/quests
+3. Rework combat to choice-based stat roll system
+4. Rework initial encounter to use unified panel
+
+**The Vision:**
+- PeoplePanel becomes THE interface for all NPC interaction
+- Combat options appear when selecting hostile/boss NPCs
+- Trade options for merchants
+- Quest options for quest givers
+- All in one unified dark panel
+
+Starting with ARCHITECT.md creation...
 
 ---
 

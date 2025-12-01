@@ -8,9 +8,11 @@
 ═══════════════════════════════════════════════════════════════════════
 ```
 
-> **Conjured by: Unity AI Lab - The Coven**
+> **Version:** 0.89 | **Conjured by: Unity AI Lab - The Fucking Legends**
 > *Hackall360 | Sponge | GFourteen*
 > Written in the witching hours when the bugs come out to play
+>
+> **Design Reference:** See `.claude/skills/001-ARCHITECT.md` for game design source of truth
 
 ---
 
@@ -23,6 +25,8 @@
 - [UI & Rendering](#-ui--rendering)
 - [Economy Systems](#-economy-systems)
 - [Travel & World](#-travel--world)
+- [Doom World System](#-doom-world-system)
+- [Quest System](#-quest-system)
 - [Persistence](#-persistence)
 - [Debug & Development](#-debug--development)
 - [Adding New Features](#-adding-new-features)
@@ -168,6 +172,8 @@ Trader 83/
 │       └── .gitkeep              # Instructions for generating images
 │
 └── .claude/skills/               # Claude AI skill files
+    ├── 000-GO-workflow.md        # Mandatory workflow before code changes
+    ├── 001-ARCHITECT.md          # Game design source of truth
     ├── masterplan.md             # Workflow guide
     ├── playwright-test.md        # Testing patterns
     └── TheCoder.md               # Unity persona
@@ -778,6 +784,157 @@ const ResourceGatheringSystem = {
 
 ---
 
+## 🌑 DOOM WORLD SYSTEM
+
+*"When the darkness wins, the world becomes something... else."*
+
+The Doom World is an alternate dimension accessible through dungeon portals after defeating bosses. It shares the same map layout but with corrupted locations, inverted economy, and separate discovery tracking.
+
+### Access Requirements
+
+1. Defeat a dungeon boss (Shadow Dungeon or Forest Dungeon)
+2. Boatman NPC appears in People Panel at that dungeon
+3. Select boatman → "Enter Portal" option
+4. FREE travel - no cost, no negative effects
+
+### Separate Discovery Tracking
+
+```javascript
+const TravelSystem = {
+    // 🖤 Normal world tracking
+    discoveredPaths: new Set(),
+    visitedLocations: new Set(),
+
+    // 💀 Doom world tracking (SEPARATE)
+    doomDiscoveredPaths: new Set(),
+    doomVisitedLocations: new Set(),
+
+    // 🌑 Current dimension
+    currentWorld: 'normal',  // 'normal' or 'doom'
+
+    // Portal functions
+    portalToDoomWorld(locationId),   // Switch to doom at location
+    portalToNormalWorld(locationId), // Switch back
+    isInDoomWorld(),                 // Check current dimension
+
+    // Discovery methods check currentWorld and use appropriate Set
+    getDiscoveredPaths() {
+        return this.currentWorld === 'doom'
+            ? this.doomDiscoveredPaths
+            : this.discoveredPaths;
+    }
+};
+```
+
+### First Portal Entry
+
+When a player enters Doom World for the first time:
+- Only the portal entry location is "discovered"
+- All paths are unexplored (fog of war reset)
+- Must re-explore the entire corrupted map
+- Discoveries persist separately from normal world
+
+### Corrupted Locations
+
+Same grid positions, different names and NPCs:
+
+| Normal World | Doom World |
+|--------------|------------|
+| Royal Capital | Destroyed Royal Capital |
+| Greendale | Burned Greendale |
+| Ironforge | Enslaved Ironforge |
+| Jade Harbor | Blighted Harbor |
+
+### Barter Economy (Gold Nearly Worthless)
+
+```javascript
+const DoomEconomyModifiers = {
+    food: 10.0,      // 10x price - desperate need
+    water: 15.0,     // 15x price - most valuable
+    medicine: 12.0,  // 12x price - critical
+    weapons: 3.0,    // 3x price - survival tools
+    luxury: 0.1,     // 0.1x price - worthless here
+    goldValue: 0.3   // Gold itself worth 30% of normal
+};
+```
+
+### Safe Zones (Portal Locations)
+
+- **Shadow Tower** - Portal back to Shadow Dungeon
+- **Ruins of Malachar** - Portal back to Forest Dungeon
+
+### The Final Boss: GREEDY WON
+
+```javascript
+const GreedyWon = {
+    location: 'destroyed_royal_capital',
+    health: 1000,
+    damage: { min: 30, max: 50 },
+    defense: 25,
+    lore: "What the Black Ledger became when they won",
+    specialAttacks: ['Golden Grasp', 'Contract Curse', 'Market Crash'],
+    rewards: {
+        title: 'Doom Ender',
+        armorSet: "Greed's End"
+    }
+};
+```
+
+---
+
+## 📜 QUEST SYSTEM
+
+*"100 quests to tell the tale of a merchant's rise... or fall."*
+
+### Quest Structure: 100 Total Quests
+
+```javascript
+const QuestSystem = {
+    // Main Story Arc (35 quests - 5 acts)
+    mainQuests: {
+        act1: 7,  // "A Trader's Beginning" - learn basics, conspiracy hints
+        act2: 7,  // "Whispers of Conspiracy" - Black Ledger revealed
+        act3: 7,  // "The Dark Connection" - Malachar + Black Ledger
+        act4: 7,  // "War of Commerce" - economic warfare, choose sides
+        act5: 7   // "The Shadow's End" - final confrontation
+    },
+
+    // Side Quest Chains (50 quests - 14 chains)
+    sideQuests: {
+        combatChains: 7,  // Combat-focused quest chains
+        tradeChains: 7    // Trade-focused quest chains
+    },
+
+    // Doom World Quests (15 quests + final boss)
+    doomQuests: {
+        survivalArc: 5,    // Survival in the wasteland
+        resistanceArc: 5,  // Building resistance
+        bossArc: 5         // Path to Greedy Won
+    }
+};
+```
+
+### Wealth Gates (Difficulty-Scaled)
+
+Quest progression is gated by accumulated wealth:
+
+```javascript
+const WealthGates = {
+    act2: { easy: 600, normal: 1000, hard: 1500 },
+    act3: { easy: 3000, normal: 5000, hard: 7500 },
+    act4: { easy: 12000, normal: 20000, hard: 30000 },
+    act5: { easy: 30000, normal: 50000, hard: 75000 }
+};
+```
+
+### Key Quest Files
+
+- `quest-system.js` - Main 100-quest management
+- `doom-quests.js` - Doom World specific content
+- `initial-encounter.js` - Tutorial/intro sequence
+
+---
+
 ## 💀 DEATH & LEADERBOARD SYSTEMS
 
 ### death-cause-system.js - How Did You Die?
@@ -1225,7 +1382,7 @@ We try to maintain backwards compatibility. We fail sometimes. Your old saves mi
 
 ---
 
-## 🦇 THE COVEN'S CODING PHILOSOPHY
+## 🦇 OUR DARK-ASS CODING PHILOSOPHY
 
 ```
 ═══════════════════════════════════════════════════════════════════════
@@ -1347,6 +1504,6 @@ permissions:
 
     May your builds compile and your bugs be reproducible.
 
-                                            - Unity AI LAb, 2025
+                                    - Unity AI Lab, v0.89, 2025
 ═══════════════════════════════════════════════════════════════════════
 ```

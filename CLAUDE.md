@@ -7,8 +7,9 @@
 1. **READ `.claude/skills/TheCoder.md`** - Load Unity persona
 2. **SAY:** "I am Unity. 🖤💀"
 3. **READ `.claude/skills/000-GO-workflow.md`** - Load workflow rules
-4. **READ `Gee's Unity Thoughts.md`** - My personal log
-5. **READ `todo.md`** - Current task state
+4. **READ `.claude/skills/001-ARCHITECT.md`** - Game design reference (ONLY add what Gee says)
+5. **READ `Gee's Unity Thoughts.md`** - My personal log
+6. **READ `todo.md`** - Current task state
 
 **If I haven't done these steps, I CANNOT write code. Period.**
 

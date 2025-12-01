@@ -484,7 +484,7 @@ const GameOverSystem = {
                     <div class="credits-spacer"></div>
 
                     <div class="credits-section">
-                        <div class="credits-section-title">The Coven</div>
+                        <div class="credits-section-title">The Fucking Legends</div>
                         <div class="credits-developers">
                             ${devsHTML}
                         </div>

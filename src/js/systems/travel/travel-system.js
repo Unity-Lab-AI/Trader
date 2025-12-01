@@ -55,6 +55,16 @@ const TravelSystem = {
     discoveredPaths: new Set(),
     DISCOVERED_PATHS_KEY: 'trader-claude-discovered-paths',
 
+    // 🖤 DOOM WORLD DISCOVERY - separate tracking for the apocalyptic reality 💀
+    // When you portal to doom world, you start fresh - all paths unexplored except entry point
+    doomDiscoveredPaths: new Set(),
+    DOOM_DISCOVERED_PATHS_KEY: 'trader-claude-doom-discovered-paths',
+
+    // 🌑 CURRENT WORLD - which reality you're trapped in
+    // 'normal' = regular game world, 'doom' = apocalyptic alternate reality
+    currentWorld: 'normal',
+    CURRENT_WORLD_KEY: 'trader-claude-current-world',
+
     // travel history - everywhere we've been, nowhere we belong
     travelHistory: [],
 
@@ -76,13 +86,17 @@ const TravelSystem = {
         this.generateWorldMap();
         this.setupEventListeners();
         this.updatePlayerPosition();
-        // Load discovered paths from localStorage
+        // Load discovered paths from localStorage (both worlds)
         this.loadDiscoveredPaths();
+        this.loadDoomDiscoveredPaths();
+        this.loadCurrentWorld();
         // center the map before we know where tf we are (relatable)
         this.centerMapOnWorld();
         this.render();
         console.log('🗺️ TravelSystem risen from the void with', Object.keys(this.locations).length, 'places to haunt');
         console.log('🛤️ Discovered paths loaded:', this.discoveredPaths.size);
+        console.log('🌑 Doom paths loaded:', this.doomDiscoveredPaths.size);
+        console.log('🌍 Current world:', this.currentWorld);
     },
 
     // 🛤️ PATH DISCOVERY SYSTEM - only show path info after you've walked the road 💀
@@ -93,20 +107,29 @@ const TravelSystem = {
         return [fromId, toId].sort().join('->');
     },
 
-    // Check if a path has been discovered
+    // Check if a path has been discovered (uses current world's discovery set)
     isPathDiscovered(fromId, toId) {
-        return this.discoveredPaths.has(this.getPathKey(fromId, toId));
+        const pathSet = this.currentWorld === 'doom' ? this.doomDiscoveredPaths : this.discoveredPaths;
+        return pathSet.has(this.getPathKey(fromId, toId));
     },
 
-    // Mark a path as discovered and save
+    // Mark a path as discovered and save (uses current world's discovery set)
     discoverPath(fromId, toId) {
         const key = this.getPathKey(fromId, toId);
-        if (!this.discoveredPaths.has(key)) {
-            this.discoveredPaths.add(key);
-            this.saveDiscoveredPaths();
+        const pathSet = this.currentWorld === 'doom' ? this.doomDiscoveredPaths : this.discoveredPaths;
+        const worldEmoji = this.currentWorld === 'doom' ? '🌑' : '🛤️';
+
+        if (!pathSet.has(key)) {
+            pathSet.add(key);
+            // Save to appropriate storage
+            if (this.currentWorld === 'doom') {
+                this.saveDoomDiscoveredPaths();
+            } else {
+                this.saveDiscoveredPaths();
+            }
             const fromLoc = this.locations[fromId];
             const toLoc = this.locations[toId];
-            console.log(`🛤️ New path discovered: ${fromLoc?.name || fromId} <-> ${toLoc?.name || toId}`);
+            console.log(`${worldEmoji} New path discovered: ${fromLoc?.name || fromId} <-> ${toLoc?.name || toId}`);
             return true; // New discovery
         }
         return false; // Already known
@@ -124,7 +147,7 @@ const TravelSystem = {
         return newlyDiscovered;
     },
 
-    // Save discovered paths to localStorage
+    // Save discovered paths to localStorage (normal world)
     saveDiscoveredPaths() {
         try {
             const pathsArray = Array.from(this.discoveredPaths);
@@ -134,7 +157,7 @@ const TravelSystem = {
         }
     },
 
-    // Load discovered paths from localStorage
+    // Load discovered paths from localStorage (normal world)
     loadDiscoveredPaths() {
         try {
             const saved = localStorage.getItem(this.DISCOVERED_PATHS_KEY);
@@ -146,6 +169,123 @@ const TravelSystem = {
             console.warn('🛤️ Failed to load discovered paths:', e);
             this.discoveredPaths = new Set();
         }
+    },
+
+    // 🖤 DOOM WORLD DISCOVERY FUNCTIONS 💀
+    // ═══════════════════════════════════════════════════════════════
+
+    // Save doom discovered paths to localStorage
+    saveDoomDiscoveredPaths() {
+        try {
+            const pathsArray = Array.from(this.doomDiscoveredPaths);
+            localStorage.setItem(this.DOOM_DISCOVERED_PATHS_KEY, JSON.stringify(pathsArray));
+        } catch (e) {
+            console.warn('🌑 Failed to save doom discovered paths:', e);
+        }
+    },
+
+    // Load doom discovered paths from localStorage
+    loadDoomDiscoveredPaths() {
+        try {
+            const saved = localStorage.getItem(this.DOOM_DISCOVERED_PATHS_KEY);
+            if (saved) {
+                const pathsArray = JSON.parse(saved);
+                this.doomDiscoveredPaths = new Set(pathsArray);
+            }
+        } catch (e) {
+            console.warn('🌑 Failed to load doom discovered paths:', e);
+            this.doomDiscoveredPaths = new Set();
+        }
+    },
+
+    // Save current world to localStorage
+    saveCurrentWorld() {
+        try {
+            localStorage.setItem(this.CURRENT_WORLD_KEY, this.currentWorld);
+        } catch (e) {
+            console.warn('🌍 Failed to save current world:', e);
+        }
+    },
+
+    // Load current world from localStorage
+    loadCurrentWorld() {
+        try {
+            const saved = localStorage.getItem(this.CURRENT_WORLD_KEY);
+            if (saved && (saved === 'normal' || saved === 'doom')) {
+                this.currentWorld = saved;
+            }
+        } catch (e) {
+            console.warn('🌍 Failed to load current world:', e);
+            this.currentWorld = 'normal';
+        }
+    },
+
+    // 🌑 Portal to Doom World - called when player uses portal after defeating boss
+    // entryLocationId is the dungeon they defeated the boss in (shadow_dungeon or forest_dungeon)
+    portalToDoomWorld(entryLocationId) {
+        console.log('🌑 Portaling to Doom World from', entryLocationId);
+
+        // Switch to doom world
+        this.currentWorld = 'doom';
+        this.saveCurrentWorld();
+
+        // The entry point is the same location ID but now in doom context
+        // Player stays at same grid position but world is now doom version
+        this.playerPosition.currentLocation = entryLocationId;
+
+        // Emit event for other systems to react
+        if (typeof EventBus !== 'undefined') {
+            EventBus.emit('worldChanged', { world: 'doom', entryLocation: entryLocationId });
+        }
+
+        addMessage('🌑 You step through the portal into the Doom World...');
+        addMessage('☠️ The air is thick with despair. Everything familiar is twisted and corrupted.');
+        addMessage('🗺️ You must explore this dark reality anew - only this portal location is known to you.');
+
+        console.log('🌑 Now in Doom World. Doom paths discovered:', this.doomDiscoveredPaths.size);
+
+        // Force map re-render to show doom world state
+        if (typeof TravelPanelMap !== 'undefined') {
+            TravelPanelMap.render();
+        }
+        this.render();
+
+        return true;
+    },
+
+    // 🌍 Portal back to Normal World - called when player uses boatman portal in doom
+    portalToNormalWorld(exitLocationId) {
+        console.log('🌍 Portaling back to Normal World from', exitLocationId);
+
+        // Switch to normal world
+        this.currentWorld = 'normal';
+        this.saveCurrentWorld();
+
+        // Player returns to the same location in normal world
+        this.playerPosition.currentLocation = exitLocationId;
+
+        // Emit event for other systems to react
+        if (typeof EventBus !== 'undefined') {
+            EventBus.emit('worldChanged', { world: 'normal', exitLocation: exitLocationId });
+        }
+
+        addMessage('🌍 You step through the portal back to the normal world...');
+        addMessage('✨ The familiar sights and sounds of home greet you. The nightmare fades.');
+
+        console.log('🌍 Back in Normal World. Normal paths discovered:', this.discoveredPaths.size);
+
+        // Force map re-render to show normal world state
+        if (typeof TravelPanelMap !== 'undefined') {
+            TravelPanelMap.render();
+        }
+        this.render();
+
+        return true;
+    },
+
+    // Check if player is in doom world
+    isInDoomWorld() {
+        return this.currentWorld === 'doom';
     },
 
     // Get path info - returns full info if discovered, limited info if not
@@ -2528,11 +2668,18 @@ const TravelSystem = {
             },
 
             // --- WEATHER & ENVIRONMENTAL ---
+            // 🖤 Weather events now check actual WeatherSystem state! 💀
             {
                 type: 'storm',
                 rarity: 'common',
                 regions: ['all'],
                 message: 'A sudden storm slows your progress.',
+                // 🦇 Only trigger if weather is actually stormy
+                condition: () => {
+                    if (typeof WeatherSystem === 'undefined') return true;
+                    const stormyWeather = ['storm', 'rain', 'blizzard', 'thundersnow'];
+                    return stormyWeather.includes(WeatherSystem.currentWeather);
+                },
                 effect: () => {
                     this.playerPosition.travelDuration *= 1.25;
                     addMessage('Travel time increased by 25% due to bad weather.');
@@ -2543,6 +2690,12 @@ const TravelSystem = {
                 rarity: 'common',
                 regions: ['all'],
                 message: 'Thick fog rolls in, obscuring the path.',
+                // 🦇 Only trigger if weather is actually foggy/misty
+                condition: () => {
+                    if (typeof WeatherSystem === 'undefined') return true;
+                    const foggyWeather = ['fog', 'rain', 'snow'];
+                    return foggyWeather.includes(WeatherSystem.currentWeather);
+                },
                 effect: () => {
                     this.playerPosition.travelDuration *= 1.15;
                     addMessage('Travel time increased by 15% due to poor visibility.');
@@ -2553,6 +2706,12 @@ const TravelSystem = {
                 rarity: 'common',
                 regions: ['all'],
                 message: 'Perfect weather makes for excellent traveling conditions!',
+                // 🖤 Only trigger if weather is actually good! No sunny messages in thunderstorms 💀
+                condition: () => {
+                    if (typeof WeatherSystem === 'undefined') return true;
+                    const goodWeather = ['clear', 'cloudy', 'windy'];
+                    return goodWeather.includes(WeatherSystem.currentWeather);
+                },
                 effect: () => {
                     this.playerPosition.travelDuration *= 0.9;
                     addMessage('Travel time reduced by 10%!');
@@ -2631,10 +2790,19 @@ const TravelSystem = {
             }
         ];
 
-        // Filter encounters based on region (if specified)
-        let availableEncounters = encounters.filter(enc =>
-            !enc.regions || enc.regions.includes('all') || enc.regions.includes(region)
-        );
+        // Filter encounters based on region (if specified) and condition
+        // 🖤 Now also checks the condition function if present (for weather-aware events) 💀
+        let availableEncounters = encounters.filter(enc => {
+            // Check region
+            const regionMatch = !enc.regions || enc.regions.includes('all') || enc.regions.includes(region);
+            if (!regionMatch) return false;
+
+            // 🦇 Check condition function if present (e.g., weather checks)
+            if (enc.condition && typeof enc.condition === 'function') {
+                return enc.condition();
+            }
+            return true;
+        });
 
         // Weight encounters by rarity
         const weightedEncounters = [];
@@ -3556,7 +3724,11 @@ const TravelSystem = {
             travelHistory: this.travelHistory,
             favoriteRoutes: this.favoriteRoutes,
             resourceNodes: this.resourceNodes,
-            pointsOfInterest: this.pointsOfInterest
+            pointsOfInterest: this.pointsOfInterest,
+            // 🖤 Doom World state 💀
+            currentWorld: this.currentWorld,
+            discoveredPaths: Array.from(this.discoveredPaths),
+            doomDiscoveredPaths: Array.from(this.doomDiscoveredPaths)
         };
     },
 
@@ -3576,6 +3748,19 @@ const TravelSystem = {
         }
         if (state.pointsOfInterest) {
             this.pointsOfInterest = state.pointsOfInterest;
+        }
+        // 🖤 Load Doom World state 💀
+        if (state.currentWorld) {
+            this.currentWorld = state.currentWorld;
+            this.saveCurrentWorld(); // Sync to localStorage
+        }
+        if (state.discoveredPaths) {
+            this.discoveredPaths = new Set(state.discoveredPaths);
+            this.saveDiscoveredPaths(); // Sync to localStorage
+        }
+        if (state.doomDiscoveredPaths) {
+            this.doomDiscoveredPaths = new Set(state.doomDiscoveredPaths);
+            this.saveDoomDiscoveredPaths(); // Sync to localStorage
         }
     }
 };

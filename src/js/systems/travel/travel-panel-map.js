@@ -1373,22 +1373,55 @@ const TravelPanelMap = {
                     (s.to === locId && s.from === nextLocId)
                 );
 
-                // Check if path is discovered
+                // Check if path is discovered OR if we're currently traveling it
+                // 🖤 If you're walking the path, you're discovering it! 💀
                 const pathDiscovered = typeof TravelSystem !== 'undefined' &&
                                        TravelSystem.isPathDiscovered?.(locId, nextLocId);
+                const isCurrentlyTraveling = typeof TravelSystem !== 'undefined' &&
+                                             TravelSystem.playerPosition?.isTraveling &&
+                                             travelInfo.route &&
+                                             JSON.stringify(TravelSystem.playerPosition.route) === JSON.stringify(travelInfo.route);
+
+                // 🦇 Show path info if discovered OR currently being traveled
+                const showPathInfo = pathDiscovered || isCurrentlyTraveling;
 
                 const pathType = segment?.type || 'trail';
                 const pathTypeInfo = TravelSystem?.PATH_TYPES?.[pathType] || { name: 'Trail', icon: '🛤️' };
                 const segmentTime = segment?.time ? TravelSystem.formatTime(segment.time) : '???';
                 const segmentDist = segment?.distance ? Math.round(segment.distance) : '???';
 
+                // 🖤 Fun discovery messages for paths being walked for the first time 💀
+                const discoveryMessages = {
+                    distance: [
+                        `~${segmentDist} mi (counting steps...)`,
+                        `${segmentDist} mi (feels longer)`,
+                        `${segmentDist} mi (give or take)`,
+                        `about ${segmentDist} miles`
+                    ],
+                    time: [
+                        `~${segmentTime} (rough guess)`,
+                        `${segmentTime} (if lucky)`,
+                        `${segmentTime} (estimated)`,
+                        `maybe ${segmentTime}`
+                    ]
+                };
+
+                // Pick consistent random messages based on segment
+                const msgIndex = (locId.charCodeAt(0) + nextLocId.charCodeAt(0)) % 4;
+                const distDisplay = !pathDiscovered && isCurrentlyTraveling
+                    ? discoveryMessages.distance[msgIndex]
+                    : `${segmentDist} mi`;
+                const timeDisplay = !pathDiscovered && isCurrentlyTraveling
+                    ? discoveryMessages.time[msgIndex]
+                    : segmentTime;
+
                 html += `
-                    <div class="route-segment ${pathDiscovered ? 'discovered' : 'undiscovered'}">
+                    <div class="route-segment ${showPathInfo ? 'discovered' : 'undiscovered'} ${isCurrentlyTraveling && !pathDiscovered ? 'discovering' : ''}">
                         <div class="segment-line"></div>
                         <div class="segment-info">
-                            ${pathDiscovered ? `
-                                <span class="segment-type">${pathTypeInfo.name}</span>
-                                <span class="segment-details">${segmentDist} mi • ${segmentTime}</span>
+                            ${showPathInfo ? `
+                                <span class="segment-type">${pathTypeInfo.name}${isCurrentlyTraveling && !pathDiscovered ? ' 👣' : ''}</span>
+                                <span class="segment-details">${distDisplay} • ${timeDisplay}</span>
                             ` : `
                                 <span class="segment-type">Unexplored</span>
                                 <span class="segment-details">??? mi • ???</span>

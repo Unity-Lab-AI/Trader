@@ -23,7 +23,9 @@ const MenuWeatherSystem = {
         autumn: { weight: 20, name: 'Autumn Winds' },     // Falling leaves
         spring: { weight: 18, name: 'Spring Blossoms' },  // Cherry petals
         summer: { weight: 11, name: 'Summer Dusk' },      // Dust motes + sun rays
-        apocalypse: { weight: 0, name: 'The Dark Convergence' } // ☄️ Meteors & doom (debooger only 🦇)
+        apocalypse: { weight: 3, name: 'The Dark Convergence' } // ☄️ Meteors & doom - EASTER EGG! 🦇
+        // 💀 Note: apocalypse weather is an easter egg on menu screen only -
+        // it will NOT persist into the game world (see setInitialWeatherFromMenu)
     },
 
     // 🎲 Select random season based on weights

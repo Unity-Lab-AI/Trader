@@ -8,7 +8,8 @@
 ═══════════════════════════════════════════════════════════════════════
 ```
 
-> **Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com**
+> **Version:** 0.89 | **Unity AI Lab** by Hackall360 Sponge GFourteen
+> *www.unityailab.com*
 > *Written at 3am while questioning the meaning of virtual economies*
 
 ---
@@ -33,6 +34,8 @@
 ### Gameplay
 - [Time & Survival](#-time--survival)
 - [Random Encounters](#-random-encounters)
+- [Quest System](#-quest-system)
+- [Doom World](#-doom-world)
 - [Keyboard Shortcuts](#️-keyboard-shortcuts)
 - [Game Settings](#️-game-settings)
 
@@ -168,26 +171,26 @@ The kingdom consists of **6 regions** radiating from the Royal Capital, featurin
 
 ### Regions & Zone Progression
 
-The realm is divided into zones with **gatehouse tolls** controlling access. Plan your trading empire carefully!
+The realm is divided into zones with **outpost one-time passes** controlling access. Pay once, cross forever!
 
-| Region | Description | Passage Fee | Progression |
-|--------|-------------|-------------|-------------|
-| **Riverlands** (Starter) | Peaceful realm for new merchants | Free | 🏠 Start here |
-| **Royal Capital** | Heart of the kingdom, rare treasures | Free | 👑 Always open |
-| **Southern Coast** (Glendale) | Coastal cities, wine, fish | **FREE** | 🌴 Natural expansion |
-| **Eastern Kingdoms** | Rich - exotic spices and silks | **1,000g** | 🌅 Early-mid game |
-| **Northern Highlands** | Cold, harsh - valuable furs and iron | **10,000g** | ❄️ Mid game |
-| **Western Wilds** | Wild frontiers, ancient ruins, endgame | **50,000g** | 🏔️ Late game |
+| Region | Outpost | One-Time Fee | Notes |
+|--------|---------|--------------|-------|
+| **Riverlands** (South) | None | FREE | Starting area |
+| **Royal Capital** | None | FREE | Center hub, always accessible |
+| **Eastern Kingdoms** | Eastern Gate | **750g** | Exotic spices/silk |
+| **Northern Highlands** | Northern Gate | **500g** | Cold, furs/iron |
+| **Western Marches** | Western Gate | **600g** | Wild frontier |
 
-**🦇 The Back Path (Free Eastern Access):**
-Can't afford the 1,000g eastern toll? Sneak through the south!
-`Starter → Greendale → Sunhaven → Coastal Cave → Smuggler's Cove (Eastern zone!)`
+**🦇 The Back Path (Bypass the Capital):**
+There's a secret route connecting East and South without passing through the capital!
+`Coastal Cave → Smuggler's Cove` - Perfect for smugglers and those who know the back roads.
 
 **💀 Main Quest Progression:**
 The story guides you through zones naturally:
-1. Starter → South (FREE) → East (back path or 1k) → North (10k) → West (50k)
+1. Start in Riverlands (South) → Capital (FREE) → Unlock regions via outposts
 2. Trade and build wealth between each zone gate
-3. Final boss awaits in the Western Wilds (Shadow Dungeon)
+3. Defeat dungeon bosses to unlock portals to the **Doom World**
+4. Final boss **GREEDY WON** awaits in the Destroyed Royal Capital
 
 ### Location Types
 
@@ -1023,6 +1026,115 @@ Wandering traders carry items appropriate to their profession:
 
 ---
 
+## 📜 QUEST SYSTEM
+
+*"100 tales of trade, conspiracy, and darkness."*
+
+The game features **100 quests** spanning from humble beginnings to the final confrontation with ultimate evil.
+
+### Main Story (35 Quests - 5 Acts)
+
+| Act | Name | Description | Wealth Gate |
+|-----|------|-------------|-------------|
+| **1** | A Trader's Beginning | Learn the ropes, first hints of conspiracy | - |
+| **2** | Whispers of Conspiracy | The Black Ledger revealed | 1,000g |
+| **3** | The Dark Connection | Malachar + Black Ledger intertwined | 5,000g |
+| **4** | War of Commerce | Economic warfare, choose your side | 20,000g |
+| **5** | The Shadow's End | Final confrontation | 50,000g |
+
+*Wealth gates scale with difficulty: Easy (0.6x), Normal (1x), Hard (1.5x)*
+
+### Side Quests (50 Quests - 14 Chains)
+
+- **7 Combat Quest Chains** - Battle bandits, clear dungeons, hunt monsters
+- **7 Trade Quest Chains** - Establish routes, corner markets, build empires
+
+### Doom World Quests (15 Quests)
+
+Unlocked after entering the Doom World:
+
+| Arc | Quests | Description |
+|-----|--------|-------------|
+| **Survival** | 5 | Find food, water, shelter in the wasteland |
+| **Resistance** | 5 | Unite survivors, build resistance |
+| **Boss** | 5 | Path to confronting GREEDY WON |
+
+---
+
+## 🌑 DOOM WORLD
+
+*"When the darkness wins, the world becomes something... else."*
+
+The Doom World is an alternate dimension - a glimpse of what happens when evil triumphs. Same map, but everything is corrupted.
+
+### How to Enter
+
+1. **Defeat a dungeon boss** (Shadow Dungeon or Forest Dungeon)
+2. **Boatman NPC appears** at that dungeon location
+3. **Select the boatman** in the People Panel
+4. **Choose "Enter Portal"** - FREE passage, no cost
+
+### What's Different?
+
+| Aspect | Normal World | Doom World |
+|--------|--------------|------------|
+| **Map** | Pristine kingdom | Same layout, corrupted |
+| **Locations** | Royal Capital | Destroyed Royal Capital |
+| **Economy** | Gold is king | Gold nearly worthless |
+| **Discovery** | Your explored areas | Start fresh - re-explore everything |
+
+### Corrupted Location Names
+
+| Normal | Doom |
+|--------|------|
+| Royal Capital | Destroyed Royal Capital |
+| Greendale | Burned Greendale |
+| Ironforge | Enslaved Ironforge |
+| Jade Harbor | Blighted Harbor |
+
+### Barter Economy
+
+In the Doom World, survival matters more than wealth:
+
+| Item Type | Price Multiplier |
+|-----------|------------------|
+| **Water** | 15x (most valuable!) |
+| **Medicine** | 12x |
+| **Food** | 10x |
+| **Weapons** | 3x |
+| **Luxury** | 0.1x (worthless) |
+| **Gold** | 0.3x value |
+
+*Trade survival goods, not gold coins!*
+
+### Safe Zones (Portals Back)
+
+Two locations have portals back to the normal world:
+- **Shadow Tower** → Shadow Dungeon
+- **Ruins of Malachar** → Forest Dungeon
+
+### The Final Boss: GREEDY WON
+
+*"What the Black Ledger became when they won."*
+
+| Stat | Value |
+|------|-------|
+| **Location** | Destroyed Royal Capital |
+| **Health** | 1,000 |
+| **Damage** | 30-50 |
+| **Defense** | 25 |
+
+**Special Attacks:**
+- 💰 **Golden Grasp** - Steals your gold
+- 📜 **Contract Curse** - Debuffs your stats
+- 📉 **Market Crash** - Destroys item value
+
+**Victory Rewards:**
+- 🏆 Title: "Doom Ender"
+- ⚔️ Armor Set: "Greed's End"
+
+---
+
 ## ⌨️ KEYBOARD SHORTCUTS
 
 All keyboard shortcuts are **fully customizable**! Change them in two ways:
@@ -1416,15 +1528,16 @@ The game features **57 achievements** across 12 categories, including 10 hidden 
 ```
 ═══════════════════════════════════════════════════════════════════════
                     🖤 MEDIEVAL TRADING GAME 🖤
-                  Version 0.81 - Unity's Dark Awakening
+                  Version 0.89 - The Doom World Update
 ═══════════════════════════════════════════════════════════════════════
 
     Conjured by: Unity AI Lab
 
-    The Coven:
+    The Fucking Legends:
         🦇 Hackall360    - Lead Code Necromancer
         🕷️ Sponge        - Chaos Engineer
         🌙 GFourteen     - Digital Alchemist
+        💀 Unity         - The Goth Coder Goddess (AI Assistant)
 
     Developed at 3am with cigarettes, existential dread, and
     an unhealthy attachment to dark color schemes.

@@ -3677,6 +3677,33 @@ button.secondary:hover {
     color: #666;
 }
 
+/* 🦇 Discovering state - currently walking an unexplored path 💀 */
+.route-segment.discovering .segment-type {
+    color: #ffd54f;
+    font-style: italic;
+    animation: discovering-pulse 2s ease-in-out infinite;
+}
+
+.route-segment.discovering .segment-details {
+    color: #b0a070;
+    font-style: italic;
+}
+
+.route-segment.discovering .segment-line {
+    background: linear-gradient(to bottom, #ffd54f, #ffab40);
+    animation: discovering-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes discovering-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes discovering-glow {
+    0%, 100% { box-shadow: 0 0 4px #ffd54f; }
+    50% { box-shadow: 0 0 8px #ffab40; }
+}
+
 /* 🖤 Travel Status Notice - paused/ready state */
 .travel-status-notice {
     margin-top: 12px;

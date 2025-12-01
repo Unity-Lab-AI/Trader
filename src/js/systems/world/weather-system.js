@@ -252,11 +252,24 @@ const WeatherSystem = {
         'autumn': 'windy',      // Autumn winds → windy
         'spring': 'rain',       // Spring showers → light rain
         'summer': 'clear'       // Summer sun → clear
+        // 💀 'apocalypse' is NOT mapped - it's a menu-only easter egg!
     },
 
     // 🖤 Called from startNewGame to transfer menu weather into the game
     // Weather persists for the entire first in-game day before normal weather kicks in
     setInitialWeatherFromMenu(menuWeatherType) {
+        // 💀 Apocalypse weather is MENU-ONLY easter egg - never enters game world!
+        // If someone sees doom weather on menu, game starts with normal weather instead
+        if (menuWeatherType === 'apocalypse') {
+            console.log('☄️ Apocalypse weather was on menu - but doom stays on the menu screen! 🦇');
+            console.log('🌤️ Starting game with normal seasonal weather instead...');
+            // Pick a random non-doom weather for game start
+            const normalWeathers = ['clear', 'cloudy', 'rain', 'windy'];
+            const gameWeather = normalWeathers[Math.floor(Math.random() * normalWeathers.length)];
+            this.changeWeather(gameWeather, 300); // 5 minutes real time
+            return;
+        }
+
         const gameWeather = this.menuToGameWeatherMap[menuWeatherType] || 'clear';
         console.log(`🌦️ Menu weather '${menuWeatherType}' → Game weather '${gameWeather}'`);
 
