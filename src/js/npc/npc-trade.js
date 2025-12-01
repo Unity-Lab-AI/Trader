@@ -536,8 +536,9 @@ const NPCTradeWindow = {
     },
 
     renderQuestContent(npcData) {
+        // 🖤 Fixed: was getQuestsFromNPC, correct method is getQuestsForNPC 💀
         const availableQuests = typeof QuestSystem !== 'undefined' ?
-            QuestSystem.getQuestsFromNPC(npcData.type, npcData.location) : [];
+            QuestSystem.getQuestsForNPC(npcData.type, npcData.location) : [];
 
         if (availableQuests.length === 0) {
             return `

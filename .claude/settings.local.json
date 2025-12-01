@@ -33,7 +33,11 @@
       "Bash(nul)",
       "Bash(git ls-tree:*)",
       "Bash(findstr:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(temp_old.txt)",
+      "Bash(del temp_old.txt)",
+      "Bash(cd:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []

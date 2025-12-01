@@ -1631,6 +1631,59 @@ Continue the conversation naturally based on above history.
                 return { success: true };
             }
 
+            // 🖤 Collection quest commands - "bring me 20 wheat" 💀
+            case 'takecollection': {
+                const [itemId, qty = 1] = params;
+                const quantity = parseInt(qty);
+                if (!game.player.inventory?.[itemId] || game.player.inventory[itemId] < quantity) {
+                    return { success: false, error: `Player needs ${quantity}x ${itemId}` };
+                }
+                game.player.inventory[itemId] -= quantity;
+                if (game.player.inventory[itemId] <= 0) delete game.player.inventory[itemId];
+                if (typeof addMessage === 'function') addMessage(`Gave ${quantity}x ${itemId}`, 'info');
+                if (typeof InventorySystem !== 'undefined') InventorySystem.updateInventoryDisplay();
+                // Update collect objective progress
+                if (typeof QuestSystem !== 'undefined') {
+                    QuestSystem.updateProgress('collect', { item: itemId, count: quantity });
+                }
+                return { success: true };
+            }
+
+            // 🖤 Delivery quest confirmation - NPC confirms receipt 💀
+            case 'confirmdelivery': {
+                const [questId, questItemId] = params;
+                if (typeof QuestSystem === 'undefined') {
+                    return { success: false, error: 'QuestSystem not loaded' };
+                }
+                const quest = QuestSystem.activeQuests[questId];
+                if (!quest) {
+                    return { success: false, error: 'Quest not active' };
+                }
+                // Mark talk objective for this NPC as complete
+                const npcType = npcData.type;
+                const talkObj = quest.objectives.find(obj =>
+                    obj.type === 'talk' && obj.npc === npcType && !obj.completed
+                );
+                if (talkObj) {
+                    talkObj.completed = true;
+                }
+                // Take the quest item if specified
+                if (questItemId && game.player.questItems?.[questItemId]) {
+                    delete game.player.questItems[questItemId];
+                    if (typeof addMessage === 'function') addMessage(`Delivered: ${questItemId}`, 'info');
+                }
+                QuestSystem.saveQuestProgress();
+                return { success: true };
+            }
+
+            // 🖤 Check if player has collection items 💀
+            case 'checkcollection': {
+                const [itemId, qty = 1] = params;
+                const quantity = parseInt(qty);
+                const has = (game.player.inventory?.[itemId] || 0) >= quantity;
+                return { success: true, hasItems: has, required: quantity, current: game.player.inventory?.[itemId] || 0 };
+            }
+
             default:
                 console.warn('🎮 Unknown command:', cmd);
                 return { success: false, error: `Unknown command: ${cmd}` };

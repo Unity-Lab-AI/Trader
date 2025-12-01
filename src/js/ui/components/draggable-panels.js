@@ -19,7 +19,7 @@ const DraggablePanels = {
         'travel-panel': '.travel-header',
         'game-setup-panel': '.setup-header',
         'inventory-panel': '.inventory-header, h2, h3',
-        'side-panel': 'h3',
+        'side-panel': '.player-section, .player-name-gold-row',
         'message-log': 'h3',
         'character-sheet-overlay': '.character-header, h2',
         'quest-overlay': '.quest-header, h2',

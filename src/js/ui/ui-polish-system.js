@@ -482,12 +482,42 @@ const UIPolishSystem = {
     handleEscapeKey(event) {
         // Close any open modals or panels
         const openPanels = document.querySelectorAll('.panel[style*="display: block"], .modal[style*="display: block"]');
-        
+
         openPanels.forEach(panel => {
             panel.style.display = 'none';
         });
     },
-    
+
+    // 🖤 PANEL TRANSITION METHODS - the darkness fades in and out 💀
+    fadeIn(element, duration = 300) {
+        if (!element) return;
+        element.style.opacity = '0';
+        element.style.display = '';
+        element.style.transition = `opacity ${duration}ms ease-in-out`;
+
+        // 🦇 Force reflow then fade in
+        void element.offsetWidth;
+        element.style.opacity = '1';
+
+        // ⚰️ Clean up transition after complete
+        setTimeout(() => {
+            element.style.transition = '';
+        }, duration);
+    },
+
+    fadeOut(element, duration = 300) {
+        if (!element) return;
+        element.style.transition = `opacity ${duration}ms ease-in-out`;
+        element.style.opacity = '0';
+
+        // 🖤 Hide after fade completes
+        setTimeout(() => {
+            element.style.display = 'none';
+            element.style.transition = '';
+            element.style.opacity = '';
+        }, duration);
+    },
+
     // Tooltip system
     setupTooltipSystem() {
         // Create tooltip container

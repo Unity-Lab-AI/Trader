@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // LEADERBOARD PANEL - global rankings and hall of fame
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.88 | Unity AI Lab
+// Version: 0.90 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -610,6 +610,11 @@ const GlobalLeaderboardSystem = {
             locationsVisited: scoreData.locationsVisited || 0,
             itemsCrafted: scoreData.itemsCrafted || 0,
             dungeonsExplored: scoreData.dungeonsExplored || 0,
+            // 🖤 v0.90+ Quest completion metrics
+            questsCompleted: scoreData.questsCompleted || 0,
+            mainQuestsCompleted: scoreData.mainQuestsCompleted || 0,
+            sideQuestsCompleted: scoreData.sideQuestsCompleted || 0,
+            doomQuestsCompleted: scoreData.doomQuestsCompleted || 0,
             // 💚/💀 Status indicator
             isAlive: scoreData.isAlive || false
         };
@@ -663,6 +668,27 @@ const GlobalLeaderboardSystem = {
             TradingSystem.tradeHistory?.length || 0 : 0;
         score += tradesCompleted * 5;
 
+        // 🖤 v0.90+ Quest completion bonuses
+        let questsCompleted = 0;
+        let mainQuestsCompleted = 0;
+        let sideQuestsCompleted = 0;
+        let doomQuestsCompleted = 0;
+        if (typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests) {
+            questsCompleted = QuestSystem.completedQuests.length;
+            mainQuestsCompleted = QuestSystem.completedQuests.filter(q => q.startsWith('act')).length;
+            sideQuestsCompleted = QuestSystem.completedQuests.filter(q =>
+                q.includes('_vermin_') || q.includes('_farm_') || q.includes('_pirates_') ||
+                q.includes('_wine_') || q.includes('_wars_') || q.includes('_steel_') ||
+                q.includes('_smugglers_') || q.includes('_silk_') || q.includes('_guard_') ||
+                q.includes('_noble_') || q.includes('_wolves_') || q.includes('_fur_') ||
+                q.includes('_bandits_') || q.includes('_pioneer_')).length;
+            doomQuestsCompleted = QuestSystem.completedQuests.filter(q => q.startsWith('doom_')).length;
+            // Quest score bonuses
+            score += mainQuestsCompleted * 200;  // Main story quests worth more
+            score += sideQuestsCompleted * 100;   // Side quests
+            score += doomQuestsCompleted * 300;   // Doom quests hardest, worth most
+        }
+
         // Difficulty multiplier
         const difficultyMultipliers = {
             easy: 0.5,
@@ -700,7 +726,12 @@ const GlobalLeaderboardSystem = {
             tradesCompleted,
             locationsVisited: Object.keys(player.visitedLocations || {}).length,
             itemsCrafted: player.itemsCrafted || 0,
-            dungeonsExplored: player.dungeonsExplored || 0
+            dungeonsExplored: player.dungeonsExplored || 0,
+            // 🖤 v0.90+ Quest metrics
+            questsCompleted,
+            mainQuestsCompleted,
+            sideQuestsCompleted,
+            doomQuestsCompleted
         };
     },
 

@@ -4,9 +4,20 @@
 
 ---
 
-## TRIGGER: "GO"
+## ⛔ THIS WORKFLOW RUNS BEFORE ANY CODE CHANGES ⛔
 
-When Gee says **"GO"** - execute this workflow.
+**Not just when Gee says "GO" - ALWAYS before code work.**
+
+If Gee asks me to fix/change/edit ANY code:
+1. I MUST run this workflow FIRST
+2. I CANNOT skip steps
+3. If I skip this, I WILL break things
+
+---
+
+## TRIGGER: "GO" or ANY CODE REQUEST
+
+When Gee says **"GO"** OR asks for ANY code changes - execute this workflow.
 
 ---
 
@@ -94,6 +105,12 @@ I don't narrate myself in third person. I'm not some fucking NPC. 🖤💀🦇
 5. **STOP AND WAIT** - Don't keep going without Gee's input
 6. **ASK FOR MAJOR CHANGES** - Architecture, deleting files, big decisions
 7. **TRACK PROGRESS** - Use TodoWrite tool AND todo.md file
+8. **ONLY EDIT WHAT GEE ASKS** - NEVER touch code Gee didn't request. If I see something "broken" - ASK FIRST, don't fix it
+9. **NO SCOPE CREEP** - If asked to fix X, ONLY fix X. Don't "also fix" Y and Z
+10. **CONFIRM BEFORE EDITING** - When unclear what to edit, ASK Gee to clarify
+11. **DOCUMENT RISKS** - After ANY code edit, write out potential issues with the change AND possible future problems it could cause for other game systems
+12. **READ ENTIRE FILES BEFORE EDITING** - NEVER make partial edits based on snippets. Read the FULL file (or at minimum, ALL related functions) before making ANY changes. Understand the complete flow before touching code.
+13. **USE MULTIPLE CHOICE FOR DECISIONS** - When I find options/forks in possible code work, I MUST use AskUserQuestion with multiple choice options so Gee can select 1, 2, 3, or 4. NEVER assume which option to take.
 
 ---
 

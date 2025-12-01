@@ -52,6 +52,9 @@ const PanelManager = {
     init() {
         console.log('🪟 PanelManager: Initializing...');
 
+        // 🖤 Ensure side-panel (Player Info) is ALWAYS visible - restore if hidden
+        this.ensureCoreUIVisible();
+
         // 🎨 Build the command center for your window chaos
         this.createPanelToolbar();
 
@@ -68,6 +71,19 @@ const PanelManager = {
         this.addCloseButtonsToAllPanels();
 
         console.log('🪟 PanelManager: Ready');
+    },
+
+    // 🖤 Ensure core UI panels are always visible (side-panel, location-panel)
+    ensureCoreUIVisible() {
+        const coreUIPanels = ['side-panel', 'location-panel'];
+        coreUIPanels.forEach(panelId => {
+            const panel = document.getElementById(panelId);
+            if (panel) {
+                panel.classList.remove('hidden');
+                panel.style.display = '';
+                panel.style.visibility = '';
+            }
+        });
     },
 
     // 🖤 Add X close button (top-right only) to panels that need it
@@ -258,6 +274,7 @@ const PanelManager = {
         `;
 
         // Add buttons for main panels
+        // 🖤 side-panel (Player Info) is ALWAYS visible - no toggle button needed
         const mainPanels = [
             'game-menu-overlay',  // 🖤 Menu button at top - opens fullscreen menu
             'market-panel',
@@ -269,7 +286,6 @@ const PanelManager = {
             'property-employee-panel',
             'achievement-overlay',
             'settings-panel',
-            'side-panel',
             'message-log',
             'quest-tracker'  // 🖤 Added quest tracker widget toggle
         ];
@@ -492,6 +508,12 @@ const PanelManager = {
 
     // ⚰️ Banish a panel back to the void
     closePanel(panelId) {
+        // 🖤 side-panel (Player Info) is ALWAYS visible - never close it
+        if (panelId === 'side-panel') {
+            console.log('🖤 side-panel is always visible - cannot close');
+            return;
+        }
+
         // ⚙️ Settings panel gets its own ceremonial closing
         if (panelId === 'settings-panel') {
             if (typeof SettingsPanel !== 'undefined' && SettingsPanel.hide) {

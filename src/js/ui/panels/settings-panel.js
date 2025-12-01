@@ -535,8 +535,19 @@ const SettingsPanel = {
                                     </button>
                                 </div>
 
+                                <h4>⏱️ Auto-Save Interval</h4>
+                                <div class="setting-item">
+                                    <label for="autosave-interval">Save every:</label>
+                                    <select id="autosave-interval" onchange="SettingsPanel.setAutoSaveInterval(this.value)">
+                                        <option value="300000">5 minutes</option>
+                                        <option value="900000" selected>15 minutes (default)</option>
+                                        <option value="1800000">30 minutes</option>
+                                        <option value="3600000">1 hour</option>
+                                    </select>
+                                </div>
+                                <p class="settings-description">Real-time interval between automatic saves</p>
+
                                 <h4>📂 Auto-Saves (Rotating - up to 10)</h4>
-                                <p class="settings-description">Auto-saves happen every 5 minutes during gameplay</p>
                                 <div id="auto-save-list" class="auto-save-list">
                                     <!-- auto-saves materialize here like ghosts -->
                                     <p class="no-saves">No auto-saves yet...</p>
@@ -3204,6 +3215,9 @@ const SettingsPanel = {
             this.refreshKeyBindingsUI();
         }, 50);
 
+        // ⏱️ Load autosave interval from SaveManager
+        this.loadAutoSaveIntervalUI();
+
         console.log('🖤 SettingsPanel opened, z-index:', this.panelElement.style.zIndex);
     },
 
@@ -3588,6 +3602,24 @@ const SettingsPanel = {
 
         this.updateStorageInfo();
         addMessage(`🗑️ Cleared ${clearedCount} auto-saves!`, 'success');
+    },
+
+    // ⏱️ Load autosave interval into dropdown
+    loadAutoSaveIntervalUI() {
+        const dropdown = document.getElementById('autosave-interval');
+        if (dropdown && typeof SaveManager !== 'undefined') {
+            dropdown.value = SaveManager.autoSaveInterval.toString();
+        }
+    },
+
+    // ⏱️ Set autosave interval
+    setAutoSaveInterval(intervalMs) {
+        const interval = parseInt(intervalMs, 10);
+        if (typeof SaveManager !== 'undefined') {
+            if (SaveManager.setAutoSaveInterval(interval)) {
+                addMessage(`⏱️ Auto-save interval set to ${interval / 60000} minutes`, 'success');
+            }
+        }
     },
 
     // 🧹 Clear cache data (price history, events, etc)

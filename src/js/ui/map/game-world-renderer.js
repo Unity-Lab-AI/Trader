@@ -593,6 +593,11 @@ const GameWorldRenderer = {
 
         // Render player-owned property markers
         this.renderPropertyMarkers();
+
+        // 🖤 Reapply quest target marker if a quest is tracked 💀
+        if (typeof QuestSystem !== 'undefined' && QuestSystem.trackedQuestId && QuestSystem.updateQuestMapMarker) {
+            QuestSystem.updateQuestMapMarker();
+        }
     },
 
     // 🏠 Render property markers for player-owned properties
@@ -994,28 +999,59 @@ const GameWorldRenderer = {
     },
 
     // 🛤️ Get path information for tooltip
+    // 🖤 FIX: Delegate to TravelSystem.calculateTravelInfo() for accurate times! 💀
+    // The tooltip MUST show the same time as actual travel - no separate calculations!
     getPathInfo(fromLocation, toLocation) {
-        // 🦇 FIX: Calculate distance in miles - divide by 50 for reasonable distances
-        // Adjacent locations (~100-200 pixels) become ~2-4 miles
-        // This matches TravelSystem's calculation (10x scaled coords / 500 = mapPosition / 50)
+        // 🖤 USE TRAVELSYSTEM FOR ACCURATE CALCULATIONS 💀
+        // This ensures tooltip shows EXACTLY what the actual travel will be
+        // Only use if game is running and player has a current location
+        if (typeof TravelSystem !== 'undefined' &&
+            TravelSystem.calculateTravelInfo &&
+            TravelSystem.locations &&
+            TravelSystem.playerPosition?.currentLocation) {
+            try {
+                const destLocation = TravelSystem.locations[toLocation.id];
+                if (destLocation) {
+                    const travelInfo = TravelSystem.calculateTravelInfo(destLocation);
+                    if (travelInfo && travelInfo.timeHours !== undefined) {
+                        return {
+                            type: travelInfo.pathType || 'road',
+                            typeName: travelInfo.pathTypeName || 'Road',
+                            description: travelInfo.pathDescription || 'A well-worn path',
+                            distanceMiles: travelInfo.distance || 0,
+                            travelTimeMinutes: Math.round((travelInfo.timeHours || 0) * 60),
+                            baseTravelTimeMinutes: Math.round((travelInfo.timeHours || 0) * 60),
+                            staminaDrain: travelInfo.staminaCost || 0,
+                            safety: travelInfo.safety || 50,
+                            speedMultiplier: travelInfo.speedMultiplier || 1.0,
+                            weatherMod: travelInfo.weatherSpeedMod || 1.0,
+                            seasonMod: travelInfo.seasonalSpeedMod || 1.0,
+                            eventMod: travelInfo.eventSpeedMod || 1.0,
+                            hops: travelInfo.hops || 1,
+                            routeDescription: travelInfo.routeDescription || ''
+                        };
+                    }
+                }
+            } catch (err) {
+                // 🖤 If TravelSystem fails, fall through to local calculation 💀
+                console.warn('🖤 getPathInfo: TravelSystem error, using fallback', err.message);
+            }
+        }
+
+        // 🖤 FALLBACK: Only if TravelSystem not available or failed 💀
         const dx = toLocation.mapPosition.x - fromLocation.mapPosition.x;
         const dy = toLocation.mapPosition.y - fromLocation.mapPosition.y;
         const pixelDistance = Math.sqrt(dx * dx + dy * dy);
-        const distanceMiles = Math.round(pixelDistance / 50 * 10) / 10; // ~50 pixels per mile
+        const distanceMiles = Math.round(pixelDistance / 50 * 10) / 10;
 
-        // Determine path type based on location types
         const pathType = this.determinePathType(fromLocation, toLocation);
         const pathData = this.PATH_TYPES[pathType] || this.PATH_TYPES.road;
 
-        // Calculate travel time (base walking speed ~3 mph)
         const baseSpeed = 3;
         const effectiveSpeed = baseSpeed * pathData.speedMultiplier;
         let travelTimeHours = distanceMiles / effectiveSpeed;
-        // 🦇 FIX: Cap max travel time at 6 hours
         travelTimeHours = Math.min(travelTimeHours, 6);
         const travelTimeMinutes = Math.round(travelTimeHours * 60);
-
-        // Calculate stamina drain
         const staminaDrain = Math.round(distanceMiles * pathData.staminaDrain * 10) / 10;
 
         return {
@@ -1024,9 +1060,13 @@ const GameWorldRenderer = {
             description: pathData.description,
             distanceMiles: distanceMiles,
             travelTimeMinutes: travelTimeMinutes,
+            baseTravelTimeMinutes: travelTimeMinutes,
             staminaDrain: staminaDrain,
             safety: Math.round(pathData.safety * 100),
-            speedMultiplier: pathData.speedMultiplier
+            speedMultiplier: pathData.speedMultiplier,
+            weatherMod: 1.0,
+            seasonMod: 1.0,
+            eventMod: 1.0
         };
     },
 
@@ -1119,11 +1159,12 @@ const GameWorldRenderer = {
             return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
         };
 
-        // Calculate real-time based on game speed (2 game min per real second at NORMAL)
-        // At NORMAL: 120 game minutes = 60 real seconds
+        // 🖤 Calculate real-time using BASE time (clear skies, normal speed) 💀
+        // This shows ideal conditions - what the trip WOULD take without weather/season penalties
         const gameMinutesPerRealSecond = typeof TimeSystem !== 'undefined' ?
             (TimeSystem.SPEEDS?.NORMAL || 2) : 2;
-        const realTimeSeconds = Math.round(pathInfo.travelTimeMinutes / gameMinutesPerRealSecond);
+        const baseTimeMinutes = pathInfo.baseTravelTimeMinutes || pathInfo.travelTimeMinutes;
+        const realTimeSeconds = Math.round(baseTimeMinutes / gameMinutesPerRealSecond);
         const realTimeDisplay = realTimeSeconds < 60 ?
             `~${realTimeSeconds}s` :
             `~${Math.round(realTimeSeconds / 60)}m ${realTimeSeconds % 60}s`;
@@ -1143,7 +1184,7 @@ const GameWorldRenderer = {
                 <span style="color: #81c784;">${formatGameTime(pathInfo.travelTimeMinutes)} game time</span>
 
                 <span style="color: #888;">Real Time:</span>
-                <span style="color: #ce93d8;">${realTimeDisplay} (at normal speed)</span>
+                <span style="color: #ce93d8;">${realTimeDisplay} (clear skies)</span>
 
                 <span style="color: #888;">Stamina Drain:</span>
                 <span style="color: #ffb74d;">${pathInfo.staminaDrain} pts</span>
@@ -1388,7 +1429,8 @@ const GameWorldRenderer = {
 
         // 🖤 Create marker if it doesn't exist OR if it was removed from DOM (render() clears innerHTML)
         // Check if marker exists AND is still in the DOM - if not, recreate it
-        if (!this.playerMarker || !this.mapElement.contains(this.playerMarker)) {
+        // Guard against null mapElement to prevent crash 💀
+        if (!this.playerMarker || (this.mapElement && !this.mapElement.contains(this.playerMarker))) {
             // Reset the reference if it was orphaned
             this.playerMarker = null;
             this.playerMarker = document.createElement('div');
@@ -1675,6 +1717,9 @@ const GameWorldRenderer = {
             this.playerMarker.classList.remove('traveling');
             this.playerMarker.classList.add('arrived');
 
+            // 🖤 Store reference to marker for setTimeout callbacks - prevents stale reference crash 💀
+            const markerRef = this.playerMarker;
+
             // 🖤 Switch back from walking person to tack/pin
             const tack = this.playerMarker.querySelector('.marker-tack');
             if (tack) {
@@ -1682,7 +1727,10 @@ const GameWorldRenderer = {
                 // Play arrival animation then settle into float
                 tack.style.animation = 'marker-arrive 0.6s ease-out forwards';
                 setTimeout(() => {
-                    tack.style.animation = 'tack-float 3s ease-in-out infinite';
+                    // 🖤 Check if element still exists in DOM before modifying 💀
+                    if (tack && tack.isConnected) {
+                        tack.style.animation = 'tack-float 3s ease-in-out infinite';
+                    }
                 }, 600);
             }
 
@@ -1691,7 +1739,10 @@ const GameWorldRenderer = {
             if (pulse) {
                 pulse.style.animation = 'marker-arrival-pulse 0.8s ease-out';
                 setTimeout(() => {
-                    pulse.style.animation = 'marker-pulse 2s ease-out infinite';
+                    // 🖤 Check if element still exists in DOM before modifying 💀
+                    if (pulse && pulse.isConnected) {
+                        pulse.style.animation = 'marker-pulse 2s ease-out infinite';
+                    }
                 }, 800);
             }
 
@@ -1702,9 +1753,12 @@ const GameWorldRenderer = {
                 label.style.background = 'linear-gradient(180deg, #44ff44 0%, #00cc00 100%)';
                 // After 2 seconds, show normal "YOU ARE HERE"
                 setTimeout(() => {
-                    label.textContent = 'YOU ARE HERE';
-                    label.style.background = 'linear-gradient(180deg, #dc143c 0%, #8b0000 100%)';
-                    this.playerMarker.classList.remove('arrived');
+                    // 🖤 Check if element still exists in DOM before modifying 💀
+                    if (label && label.isConnected && markerRef && markerRef.isConnected) {
+                        label.textContent = 'YOU ARE HERE';
+                        label.style.background = 'linear-gradient(180deg, #dc143c 0%, #8b0000 100%)';
+                        markerRef.classList.remove('arrived');
+                    }
                 }, 2000);
             }
         }

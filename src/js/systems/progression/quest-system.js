@@ -1,10 +1,15 @@
 // ═══════════════════════════════════════════════════════════════
 // QUEST SYSTEM - tasks that pretend to matter
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.88 | Unity AI Lab
+// Version: 0.90 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
+// ═══════════════════════════════════════════════════════════════
+// QUEST FILES:
+// - main-quests.js: 35 Main Story Quests (The Shadow Rising & Black Ledger)
+// - side-quests.js: 50 Regional Side Quests (Combat & Trade Chains)
+// - doom-quests.js: 15 Doom World Quests + Greedy Won Boss
 // ═══════════════════════════════════════════════════════════════
 
 const QuestSystem = {
@@ -1018,12 +1023,88 @@ const QuestSystem = {
         }
 
         console.log('📜 QuestSystem dragging itself out of bed...');
+
+        // 🖤 LOAD EXTERNAL QUEST FILES (v0.90+)
+        this.loadExternalQuests();
+
         this.loadQuestProgress();
         this.createQuestLogUI();
         this.setupEventListeners();
         this.initialized = true;
-        console.log(`📜 QuestSystem ready - ${Object.keys(this.quests).length} quests to make you suffer`);
+
+        // Count quests by type
+        const mainCount = Object.values(this.quests).filter(q => q.type === 'main').length;
+        const sideCount = Object.values(this.quests).filter(q => q.type === 'side').length;
+        const doomCount = Object.values(this.quests).filter(q => q.type === 'doom').length;
+        const otherCount = Object.keys(this.quests).length - mainCount - sideCount - doomCount;
+
+        console.log(`📜 QuestSystem ready - ${Object.keys(this.quests).length} total quests:`);
+        console.log(`   🎭 Main Story: ${mainCount} | 🗺️ Side: ${sideCount} | 💀 Doom: ${doomCount} | 📋 Other: ${otherCount}`);
         return this;
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📦 LOAD EXTERNAL QUEST FILES - The Great Quest Unification
+    // ═══════════════════════════════════════════════════════════════
+    loadExternalQuests() {
+        console.log('📦 Loading external quest files...');
+
+        // 🎭 MAIN QUESTS (35 quests - The Shadow Rising & Black Ledger)
+        if (typeof MainQuests !== 'undefined') {
+            let mainLoaded = 0;
+            // Load all acts
+            for (let act = 1; act <= 5; act++) {
+                const actData = MainQuests[`act${act}`];
+                if (actData?.quests) {
+                    for (const [questId, quest] of Object.entries(actData.quests)) {
+                        this.quests[questId] = quest;
+                        mainLoaded++;
+                    }
+                }
+            }
+            // Store wealth gates reference
+            this.wealthGates = MainQuests.wealthGates;
+            this.storyInfo = MainQuests.storyInfo;
+            console.log(`   🎭 MainQuests loaded: ${mainLoaded} quests across 5 acts`);
+        } else {
+            console.warn('   ⚠️ MainQuests not found - main story quests unavailable');
+        }
+
+        // 🗺️ SIDE QUESTS (50 quests - Regional Combat & Trade Chains)
+        if (typeof SideQuests !== 'undefined') {
+            let sideLoaded = 0;
+            const sideQuestsList = SideQuests.getAllQuests?.() || [];
+            for (const quest of sideQuestsList) {
+                this.quests[quest.id] = quest;
+                sideLoaded++;
+            }
+            // Store side quest metadata
+            this.sideQuestInfo = SideQuests.sideQuestInfo;
+            console.log(`   🗺️ SideQuests loaded: ${sideLoaded} quests in ${SideQuests.sideQuestInfo?.totalChains || 14} chains`);
+        } else {
+            console.warn('   ⚠️ SideQuests not found - regional side quests unavailable');
+        }
+
+        // 💀 DOOM QUESTS (15 quests + Greedy Won Boss)
+        if (typeof DoomQuests !== 'undefined') {
+            let doomLoaded = 0;
+            const doomQuestsList = DoomQuests.getAllQuests?.() || [];
+            for (const quest of doomQuestsList) {
+                this.quests[quest.id] = quest;
+                doomLoaded++;
+            }
+            // Store doom world references
+            this.doomInfo = DoomQuests.doomInfo;
+            this.doomEconomy = DoomQuests.doomEconomy;
+            this.doomLocations = DoomQuests.doomLocations;
+            this.doomItems = DoomQuests.doomItems;
+            this.greedyWon = DoomQuests.greedyWon;
+            console.log(`   💀 DoomQuests loaded: ${doomLoaded} quests + Greedy Won boss`);
+        } else {
+            console.warn('   ⚠️ DoomQuests not found - Doom World content unavailable');
+        }
+
+        console.log('📦 External quest loading complete');
     },
 
     // ═══════════════════════════════════════════════════════════════
@@ -1036,7 +1117,9 @@ const QuestSystem = {
             failedQuests: this.failedQuests,
             discoveredQuests: this.discoveredQuests,
             questCompletionTimes: this.questCompletionTimes,
-            questItemInventory: this.getQuestItemInventory()
+            questItemInventory: this.getQuestItemInventory(),
+            // 🖤 v0.90+ Save tracked quest
+            trackedQuestId: this.trackedQuestId
         };
         try {
             localStorage.setItem('medievalTradingGameQuests', JSON.stringify(saveData));
@@ -1055,7 +1138,24 @@ const QuestSystem = {
                 this.failedQuests = data.failedQuests || [];
                 this.discoveredQuests = data.discoveredQuests || [];
                 this.questCompletionTimes = data.questCompletionTimes || {};
-                console.log(`📜 Loaded ${Object.keys(this.activeQuests).length} active, ${this.completedQuests.length} completed quests from the abyss`);
+                // 🖤 v0.90+ Restore tracked quest
+                if (data.trackedQuestId && this.activeQuests[data.trackedQuestId]) {
+                    this.trackedQuestId = data.trackedQuestId;
+                }
+
+                // Log quest metrics
+                const mainCount = this.completedQuests.filter(q => q.startsWith('act')).length;
+                const sideCount = this.completedQuests.filter(q =>
+                    q.includes('_vermin_') || q.includes('_farm_') || q.includes('_pirates_') ||
+                    q.includes('_wine_') || q.includes('_wars_') || q.includes('_steel_') ||
+                    q.includes('_smugglers_') || q.includes('_silk_') || q.includes('_guard_') ||
+                    q.includes('_noble_') || q.includes('_wolves_') || q.includes('_fur_') ||
+                    q.includes('_bandits_') || q.includes('_pioneer_')).length;
+                const doomCount = this.completedQuests.filter(q => q.startsWith('doom_')).length;
+
+                console.log(`📜 Loaded quest progress from the abyss:`);
+                console.log(`   📋 Active: ${Object.keys(this.activeQuests).length} | Completed: ${this.completedQuests.length}`);
+                console.log(`   🎭 Main: ${mainCount}/35 | 🗺️ Side: ${sideCount}/50 | 💀 Doom: ${doomCount}/15`);
             }
         } catch (e) {
             // 🖤 Corrupt quest data - nuke and start fresh
@@ -2135,10 +2235,7 @@ const QuestSystem = {
             tracker.innerHTML = `
                 <div class="tracker-header">
                     <span class="drag-grip" style="opacity:0.5;pointer-events:none;">⋮⋮</span>
-                    <span style="flex:1;pointer-events:none;display:flex;flex-direction:column;line-height:1.2;" onclick="QuestSystem.showQuestLog()">
-                        <span style="font-size:10px;opacity:0.7;">Tracked</span>
-                        <span>📋 Quests</span>
-                    </span>
+                    <span style="flex:1;pointer-events:none;" onclick="QuestSystem.showQuestLog()">📋 Tracked Quests</span>
                     <button class="tracker-expand" onclick="QuestSystem.showQuestLog()" title="Open Quest Log" style="background:rgba(79,195,247,0.3);border:none;border-radius:4px;padding:2px 8px;color:white;cursor:pointer;font-size:12px;">▼</button>
                     <button class="tracker-close" onclick="QuestSystem.hideQuestTracker()" title="Close" style="background:transparent;border:none;border-radius:4px;width:20px;height:20px;color:#888;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;margin-left:4px;">×</button>
                 </div>
@@ -2449,42 +2546,106 @@ const QuestSystem = {
         const targetLocation = this.getTrackedQuestLocation();
         if (!targetLocation) return;
 
-        // 🦇 Get the location element on the map
+        // 🦇 Get the location element on the map (if it exists/is visible)
         const locationEl = document.querySelector(`.map-location[data-location-id="${targetLocation}"]`);
-        if (!locationEl) {
-            console.log(`🎯 Quest target location "${targetLocation}" not visible on map yet`);
+
+        // 🖤 Add animation styles first - needed either way 💀
+        this.addQuestMarkerStyles();
+
+        if (locationEl) {
+            // 🖤 Location is visible - attach marker to it
+            this.questMarkerElement = document.createElement('div');
+            this.questMarkerElement.className = 'quest-target-marker';
+            this.questMarkerElement.innerHTML = '🎯';
+            this.questMarkerElement.style.cssText = `
+                position: absolute;
+                top: -15px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 20px;
+                filter: drop-shadow(0 0 8px gold) drop-shadow(0 0 15px gold);
+                animation: quest-marker-bounce 1s ease-in-out infinite;
+                pointer-events: none;
+                z-index: 100;
+            `;
+
+            // 🦇 Add glow effect to the location itself
+            locationEl.classList.add('quest-target-glow');
+            locationEl.style.boxShadow = '0 0 20px 10px rgba(255, 215, 0, 0.6), 0 0 40px 20px rgba(255, 215, 0, 0.3)';
+            locationEl.style.animation = 'quest-location-pulse 2s ease-in-out infinite';
+
+            // 💀 Append marker to the location
+            locationEl.style.position = 'absolute';
+            locationEl.appendChild(this.questMarkerElement);
+
+            console.log(`🎯 Quest marker attached to visible location: ${targetLocation}`);
+        } else {
+            // 🖤 Location is HIDDEN/UNEXPLORED - create floating marker at map coordinates 💀
+            // The player MUST be able to see where their quest leads, even into the unknown!
+            this.createFloatingQuestMarker(targetLocation);
+        }
+    },
+
+    // 🖤 Create a floating quest marker for unexplored locations 💀
+    createFloatingQuestMarker(locationId) {
+        // Get location data from GameWorld
+        const location = typeof GameWorld !== 'undefined' ? GameWorld.locations?.[locationId] : null;
+        if (!location || !location.mapPosition) {
+            console.log(`🎯 Quest target "${locationId}" has no map position`);
             return;
         }
 
-        // 🖤 Create the quest marker overlay
+        // 🦇 Find the map container - try both main map and travel panel map
+        const mapContainer = document.getElementById('world-map') ||
+                            document.querySelector('.travel-mini-map') ||
+                            document.getElementById('travel-mini-map');
+        if (!mapContainer) {
+            console.log(`🎯 No map container found for floating quest marker`);
+            return;
+        }
+
+        // 🖤 Scale position using GameWorldRenderer if available 💀
+        let scaledPos = location.mapPosition;
+        if (typeof GameWorldRenderer !== 'undefined' && GameWorldRenderer.scalePosition) {
+            scaledPos = GameWorldRenderer.scalePosition(location.mapPosition);
+        }
+        if (!scaledPos) return;
+
+        // 🦇 Create floating marker element
         this.questMarkerElement = document.createElement('div');
-        this.questMarkerElement.className = 'quest-target-marker';
+        this.questMarkerElement.className = 'quest-target-marker floating-quest-marker';
         this.questMarkerElement.innerHTML = '🎯';
         this.questMarkerElement.style.cssText = `
             position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 20px;
-            filter: drop-shadow(0 0 8px gold) drop-shadow(0 0 15px gold);
-            animation: quest-marker-bounce 1s ease-in-out infinite;
+            left: ${scaledPos.x}px;
+            top: ${scaledPos.y}px;
+            font-size: 28px;
             pointer-events: none;
-            z-index: 100;
+            z-index: 150;
         `;
 
-        // 🦇 Add glow effect to the location itself
-        locationEl.classList.add('quest-target-glow');
-        locationEl.style.boxShadow = '0 0 20px 10px rgba(255, 215, 0, 0.6), 0 0 40px 20px rgba(255, 215, 0, 0.3)';
-        locationEl.style.animation = 'quest-location-pulse 2s ease-in-out infinite';
+        // 🖤 Create a glowing circle underneath to show the unexplored destination 💀
+        this.questGlowElement = document.createElement('div');
+        this.questGlowElement.className = 'quest-target-glow-circle';
+        this.questGlowElement.style.cssText = `
+            position: absolute;
+            left: ${scaledPos.x}px;
+            top: ${scaledPos.y}px;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, rgba(255, 215, 0, 0.1) 50%, transparent 70%);
+            box-shadow: 0 0 30px 15px rgba(255, 215, 0, 0.4), 0 0 60px 30px rgba(255, 215, 0, 0.2);
+            animation: quest-location-pulse 2s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 140;
+        `;
 
-        // 💀 Append marker to the location
-        locationEl.style.position = 'absolute'; // ensure positioning context
-        locationEl.appendChild(this.questMarkerElement);
+        mapContainer.appendChild(this.questGlowElement);
+        mapContainer.appendChild(this.questMarkerElement);
 
-        // 🖤 Add animation styles if not exists
-        this.addQuestMarkerStyles();
-
-        console.log(`🎯 Quest marker placed at ${targetLocation}`);
+        console.log(`🎯 Floating quest marker created at unexplored location: ${locationId} (${scaledPos.x}, ${scaledPos.y})`);
     },
 
     // 💀 Remove the quest map marker
@@ -2495,7 +2656,16 @@ const QuestSystem = {
         }
         this.questMarkerElement = null;
 
-        // 🖤 Remove glow from all locations
+        // 🖤 Remove floating glow circle (for unexplored locations) 💀
+        if (this.questGlowElement && this.questGlowElement.parentNode) {
+            this.questGlowElement.remove();
+        }
+        this.questGlowElement = null;
+
+        // 🦇 Also clean up any orphaned floating markers
+        document.querySelectorAll('.floating-quest-marker, .quest-target-glow-circle').forEach(el => el.remove());
+
+        // 🖤 Remove glow from all location elements
         document.querySelectorAll('.quest-target-glow').forEach(el => {
             el.classList.remove('quest-target-glow');
             el.style.boxShadow = '';
@@ -2514,6 +2684,18 @@ const QuestSystem = {
                 0%, 100% { transform: translateX(-50%) translateY(0); }
                 50% { transform: translateX(-50%) translateY(-8px); }
             }
+            @keyframes quest-marker-float-bounce {
+                0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+                50% { transform: translate(-50%, -50%) translateY(-12px); }
+            }
+            @keyframes quest-marker-glow {
+                0%, 100% {
+                    filter: drop-shadow(0 0 12px gold) drop-shadow(0 0 20px gold) drop-shadow(0 0 30px rgba(255, 215, 0, 0.5));
+                }
+                50% {
+                    filter: drop-shadow(0 0 18px gold) drop-shadow(0 0 30px gold) drop-shadow(0 0 45px rgba(255, 215, 0, 0.7));
+                }
+            }
             @keyframes quest-location-pulse {
                 0%, 100% {
                     box-shadow: 0 0 20px 10px rgba(255, 215, 0, 0.6), 0 0 40px 20px rgba(255, 215, 0, 0.3);
@@ -2524,6 +2706,10 @@ const QuestSystem = {
             }
             .quest-target-glow {
                 z-index: 15 !important;
+            }
+            /* 🖤 Floating marker for unexplored quest locations - extra bounce for visibility 💀 */
+            .floating-quest-marker {
+                animation: quest-marker-float-bounce 1s ease-in-out infinite, quest-marker-glow 2s ease-in-out infinite !important;
             }
         `;
         document.head.appendChild(style);

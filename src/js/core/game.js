@@ -511,139 +511,12 @@ const LeaderboardFeatures = {
 // Expose globally
 window.LeaderboardFeatures = LeaderboardFeatures;
 
-// ═══════════════════════════════════════════════════════════════
-// 🖤 KEYBOARD BINDINGS - EXTRACTED TO src/js/ui/key-bindings.js
-// ═══════════════════════════════════════════════════════════════
-/* EXTRACTED - KeyBindings now lives at src/js/ui/key-bindings.js
-// ⌨️ KEYBOARD BINDINGS SYSTEM - because clicking is for casuals
-// All defaults are now controlled via config.js - change them there
-// or rebind in-game via Settings Panel > Controls tab
-const KeyBindings = {
-    // Get defaults from GameConfig (or use fallbacks if config not loaded)
-    get defaults() {
-        if (typeof GameConfig !== 'undefined' && GameConfig.keybindings) {
-            return GameConfig.keybindings.defaults;
-        }
-        // Fallback defaults if GameConfig isn't available
-        return {
-            pause: ' ', inventory: 'i', character: 'c', financial: 'f',
-            market: 'm', travel: 't', map: 'w', escape: 'Escape',
-            quickSave: 'F5', quickLoad: 'F9', mapUp: 'w', mapDown: 's',
-            mapLeft: 'a', mapRight: 'd', zoomIn: '=', zoomOut: '-',
-            properties: 'p', achievements: 'h', settings: ',', quests: 'q',
-        };
-    },
+// 🖤 KEYBOARD BINDINGS - MOVED TO src/js/ui/key-bindings.js 💀
+// 🦇 800+ lines of dead code removed by Unity on 2025-12-01
+// Keyboard bindings live in src/js/ui/key-bindings.js now
+// ⚰️ RIP dead code - 750+ lines removed here 💀
 
-    // Current bindings (loaded from localStorage or defaults)
-    current: {},
-
-    // Get descriptions from GameConfig (or use fallbacks)
-    get descriptions() {
-        if (typeof GameConfig !== 'undefined' && GameConfig.keybindings) {
-            return GameConfig.keybindings.descriptions;
-        }
-        // Fallback descriptions
-        return {
-            pause: 'Pause/Resume Time', inventory: 'Open Inventory',
-            character: 'Open Character Sheet', financial: 'Open Financial Sheet',
-            market: 'Open Market', travel: 'Open Travel Panel', map: 'Open World Map',
-            escape: 'Close/Exit', quickSave: 'Quick Save', quickLoad: 'Quick Load',
-            mapUp: 'Pan Map Up', mapDown: 'Pan Map Down', mapLeft: 'Pan Map Left',
-            mapRight: 'Pan Map Right', zoomIn: 'Zoom In', zoomOut: 'Zoom Out',
-            properties: 'Open Properties', achievements: 'Open Achievements',
-            settings: 'Open Settings', quests: 'Open Quest Log',
-        };
-    },
-
-    // Get storage key from GameConfig
-    get storageKey() {
-        if (typeof GameConfig !== 'undefined' && GameConfig.keybindings) {
-            return GameConfig.keybindings.storageKey;
-        }
-        return 'tradingGame_keyBindings';
-    },
-
-    // Is the user currently rebinding a key?
-    isRebinding: false,
-    rebindingAction: null,
-
-    // Initialize - wake up from the keyboard slumber
-    init() {
-        this.loadBindings();
-        this.setupGlobalKeyListener();
-        console.log('⌨️ Keyboard bindings initialized - defaults from config.js');
-    },
-
-    // Load bindings from localStorage or use defaults
-    loadBindings() {
-        try {
-            const saved = localStorage.getItem(this.storageKey);
-            if (saved) {
-                this.current = { ...this.defaults, ...JSON.parse(saved) };
-                console.log('⌨️ Loaded custom key bindings from localStorage');
-            } else {
-                this.current = { ...this.defaults };
-                console.log('⌨️ Using default key bindings from config.js');
-            }
-        } catch (e) {
-            this.current = { ...this.defaults };
-            console.warn('⌨️ Failed to load key bindings, using defaults from config.js');
-        }
-    },
-
-    // Save bindings to localStorage
-    saveBindings() {
-        try {
-            localStorage.setItem(this.storageKey, JSON.stringify(this.current));
-            console.log('⌨️ Key bindings saved to localStorage');
-        } catch (e) {
-            console.warn('⌨️ Failed to save key bindings - using defaults');
-        }
-    },
-
-    // Reset to defaults from config.js
-    resetToDefaults() {
-        this.current = { ...this.defaults };
-        this.saveBindings();
-        console.log('⌨️ Key bindings reset to config.js defaults');
-        addMessage('🔄 Key bindings reset to defaults');
-    },
-
-    // Get the key for an action
-    getKey(action) {
-        return this.current[action] || this.defaults[action];
-    },
-
-    // Set a new key for an action
-    setKey(action, key, skipMessage = false) {
-        this.current[action] = key;
-        this.saveBindings();
-        if (!skipMessage) {
-            addMessage(`⌨️ "${this.descriptions[action]}" bound to ${this.formatKey(key)}`);
-        }
-        return true;
-    },
-
-    // Format key for display
-    formatKey(key) {
-        const specialKeys = {
-            ' ': 'Space',
-            'Escape': 'Esc',
-            'ArrowUp': '↑',
-            'ArrowDown': '↓',
-            'ArrowLeft': '←',
-            'ArrowRight': '→',
-            'Control': 'Ctrl',
-            'Shift': 'Shift',
-            'Alt': 'Alt',
-        };
-        return specialKeys[key] || key.toUpperCase();
-    },
-
-    // Check if a key matches an action
-    matches(event, action) {
-        const key = this.getKey(action);
-        if (!key) return false;
+// 🦇 Continuing dead code removal...
 
         // Handle special keys
         if (key === 'F5' || key === 'F9') {
@@ -1831,24 +1704,8 @@ const EventSystem = {
             duration: 240, // 4 hours
             chance: 0.03
         });
-        
-        // Weather events
-        this.addEventType('rain_storm', {
-            name: 'Rain Storm',
-            description: 'Heavy rains turn the roads to mud, making travel difficult.',
-            effects: { travelSpeedPenalty: -0.3 },
-            duration: 90, // 1.5 hours
-            chance: 0.04
-        });
-        
-        this.addEventType('clear_skies', {
-            name: 'Clear Skies',
-            description: 'Perfect weather for travel and trade along the kingdom roads.',
-            effects: { travelSpeedBonus: 0.2 },
-            duration: 180, // 3 hours
-            chance: 0.05
-        });
-        
+
+        // 🖤 REMOVED: rain_storm and clear_skies events - WeatherSystem controls all weather now 💀
         // Travel event
         this.addEventType('travel_complete', {
             name: 'Travel Complete',
@@ -1892,14 +1749,12 @@ const EventSystem = {
         });
     },
     
-    // Trigger random events
+    // 🖤 Trigger random events - weather events removed, WeatherSystem handles all weather 💀
     checkRandomEvents() {
         if (Math.random() < this.randomEventChance) {
             const eventTypes = Object.keys(this.eventTypes || {});
-            // 🖤 Exclude weather events - WeatherSystem handles all weather now 💀
-            const nonWeatherEvents = eventTypes.filter(e => !['rain_storm', 'clear_skies'].includes(e));
-            if (nonWeatherEvents.length > 0) {
-                const randomType = nonWeatherEvents[Math.floor(Math.random() * nonWeatherEvents.length)];
+            if (eventTypes.length > 0) {
+                const randomType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
                 this.triggerEvent(randomType);
             }
         }
@@ -7977,6 +7832,41 @@ function populateDestinations() {
         cave: '🕳️', ruins: '🏛️', port: '⚓', inn: '🍺'
     };
 
+    // 🖤 Inject destination card styles if not present 💀
+    if (!document.getElementById('destination-card-styles')) {
+        const styleEl = document.createElement('style');
+        styleEl.id = 'destination-card-styles';
+        styleEl.textContent = `
+            .destination-card {
+                display: grid;
+                grid-template-columns: auto 1fr auto;
+                grid-template-rows: auto auto;
+                gap: 4px 12px;
+                align-items: center;
+                background: rgba(40, 40, 60, 0.6);
+                border: 1px solid #4fc3f7;
+                border-radius: 8px;
+                padding: 10px 12px;
+                margin-bottom: 8px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .destination-card:hover { background: rgba(79, 195, 247, 0.15); border-color: #81d4fa; }
+            .destination-card.discovered { background: rgba(60, 60, 60, 0.4); border-color: #666; }
+            .destination-card.no-route { opacity: 0.5; cursor: not-allowed; border-color: #444; }
+            .destination-card.no-route:hover { background: rgba(60, 60, 60, 0.4); border-color: #444; }
+            .dest-card-icon { grid-row: span 2; font-size: 28px; }
+            .dest-card-name { font-weight: bold; font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .dest-card-stats { display: flex; gap: 10px; font-size: 11px; color: #aaa; }
+            .dest-card-stat { display: flex; align-items: center; gap: 3px; }
+            .dest-card-badge { grid-row: span 2; font-size: 10px; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); color: #888; text-transform: uppercase; }
+            .destination-card.can-travel .dest-card-badge { background: rgba(79, 195, 247, 0.2); color: #4fc3f7; }
+            .dest-card-warning { grid-column: 2; font-size: 10px; color: #ff9800; margin-top: 2px; }
+            .discovered .dest-card-name { color: #888; }
+        `;
+        document.head.appendChild(styleEl);
+    }
+
     // Render each destination
     destinations.forEach(destination => {
         const icon = typeIcons[destination.type] || '📍';
@@ -7984,53 +7874,30 @@ function populateDestinations() {
         const canTravel = destination.isConnected;
 
         const destElement = document.createElement('div');
-        destElement.className = `destination-item ${isDiscovered ? 'discovered' : 'visible'} ${canTravel ? 'can-travel' : 'no-direct-route'}`;
-        destElement.style.cssText = `
-            background: ${isDiscovered ? 'rgba(100, 100, 100, 0.3)' : 'rgba(79, 195, 247, 0.1)'};
-            border: 1px solid ${canTravel ? '#4fc3f7' : '#555'};
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
-            cursor: ${canTravel ? 'pointer' : 'not-allowed'};
-            transition: all 0.2s ease;
-            opacity: ${canTravel ? '1' : '0.6'};
-        `;
+        destElement.className = `destination-card ${isDiscovered ? 'discovered' : ''} ${canTravel ? 'can-travel' : 'no-route'}`;
 
-        // Content varies based on discovered vs visible
+        // 🖤 Clean card layout: icon | name+stats | badge 💀
         if (isDiscovered) {
-            // Discovered but not visited - show limited info
             destElement.innerHTML = `
-                <div class="dest-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span class="dest-name" style="font-size: 1.1em; font-weight: bold; color: #aaa;">
-                        ❓ Unknown ${destination.type.charAt(0).toUpperCase() + destination.type.slice(1)}
-                    </span>
-                    <span class="dest-distance" style="color: #888;">~${Math.round(destination.distance)} units away</span>
-                </div>
-                <div class="dest-info" style="margin-top: 8px; font-size: 0.9em; color: #666;">
-                    ${canTravel
-                        ? '<span style="color: #ffcc00;">⚠️ unexplored territory. venture forth to discover its secrets.</span>'
-                        : '<span style="color: #888;">🚫 no direct route. explore connected locations first.</span>'
-                    }
+                <div class="dest-card-icon">❓</div>
+                <div class="dest-card-name">Unknown ${destination.type.charAt(0).toUpperCase() + destination.type.slice(1)}</div>
+                <div class="dest-card-badge">${canTravel ? '⚠️ Unexplored' : '🚫 No Route'}</div>
+                <div class="dest-card-stats">
+                    <span class="dest-card-stat">📏 ~${Math.round(destination.distance)} mi</span>
+                    <span class="dest-card-stat">⏱️ ~${destination.travelTime}m</span>
                 </div>
             `;
         } else {
-            // Visited - show full info
             destElement.innerHTML = `
-                <div class="dest-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span class="dest-name" style="font-size: 1.1em; font-weight: bold;">
-                        ${icon} ${destination.name}
-                    </span>
-                    <span class="dest-type-badge" style="background: #333; padding: 2px 8px; border-radius: 4px; font-size: 0.8em;">
-                        ${destination.type}
-                    </span>
+                <div class="dest-card-icon">${icon}</div>
+                <div class="dest-card-name">${destination.name}</div>
+                <div class="dest-card-badge">${destination.region || destination.type}</div>
+                <div class="dest-card-stats">
+                    <span class="dest-card-stat">📏 ${Math.round(destination.distance)} mi</span>
+                    <span class="dest-card-stat">⏱️ ~${destination.travelTime}m</span>
+                    ${destination.population ? `<span class="dest-card-stat">👥 ${destination.population.toLocaleString()}</span>` : ''}
                 </div>
-                <div class="dest-stats" style="display: flex; gap: 15px; margin-top: 8px; font-size: 0.9em;">
-                    <span>📏 ${Math.round(destination.distance)} units</span>
-                    <span>⏱️ ~${destination.travelTime} min</span>
-                    ${destination.population ? `<span>👥 ${destination.population.toLocaleString()}</span>` : ''}
-                </div>
-                ${destination.region ? `<div style="margin-top: 5px; font-size: 0.85em; color: #888;">Region: ${destination.region}</div>` : ''}
-                ${!canTravel ? '<div style="margin-top: 8px; color: #ff6600; font-size: 0.85em;">🚫 not directly connected - find a route through other locations</div>' : ''}
+                ${!canTravel ? '<div class="dest-card-warning">🚫 No direct route - explore connected locations</div>' : ''}
             `;
         }
 
@@ -8057,16 +7924,6 @@ function populateDestinations() {
 
                 const destName = isDiscovered ? 'mysterious unknown location' : destination.name;
                 addMessage(`🎯 destination locked: ${destName}. hit play or click travel to begin your pilgrimage.`);
-            });
-
-            // Hover effect
-            destElement.addEventListener('mouseenter', () => {
-                destElement.style.background = 'rgba(79, 195, 247, 0.2)';
-                destElement.style.borderColor = '#81d4fa';
-            });
-            destElement.addEventListener('mouseleave', () => {
-                destElement.style.background = isDiscovered ? 'rgba(100, 100, 100, 0.3)' : 'rgba(79, 195, 247, 0.1)';
-                destElement.style.borderColor = canTravel ? '#4fc3f7' : '#555';
             });
         }
 

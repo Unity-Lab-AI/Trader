@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // ACHIEVEMENT SYSTEM - hollow victories for hollow souls
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.88 | Unity AI Lab
+// Version: 0.90 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -202,38 +202,354 @@ const AchievementSystem = {
             unlockedAt: null,
             condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.length >= 50
         },
-        main_quest_complete: {
-            id: 'main_quest_complete',
-            name: 'Hero of the Realm',
-            description: 'Complete the main quest by defeating Malachar',
+        quest_legend: {
+            id: 'quest_legend',
+            name: 'Living Legend',
+            description: 'Complete 100 quests - master of all tasks',
+            icon: '🌟',
+            category: 'quests',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.length >= 100
+        },
+
+        // --- MAIN STORY ACT ACHIEVEMENTS ---
+        act1_complete: {
+            id: 'act1_complete',
+            name: 'A Trader\'s Beginning',
+            description: 'Complete Act 1 of the main story',
+            icon: '📖',
+            category: 'quests',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('act1_quest7')
+        },
+        act2_complete: {
+            id: 'act2_complete',
+            name: 'Whispers of Conspiracy',
+            description: 'Complete Act 2 - uncover the Black Ledger',
+            icon: '📖',
+            category: 'quests',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('act2_quest7')
+        },
+        act3_complete: {
+            id: 'act3_complete',
+            name: 'The Dark Connection',
+            description: 'Complete Act 3 - link Malachar and Black Ledger',
+            icon: '📖',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('act3_quest7')
+        },
+        act4_complete: {
+            id: 'act4_complete',
+            name: 'War of Commerce',
+            description: 'Complete Act 4 - wage economic warfare',
+            icon: '📖',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('act4_quest7')
+        },
+        act5_complete: {
+            id: 'act5_complete',
+            name: 'The Shadow\'s End',
+            description: 'Complete Act 5 - defeat Malachar and end the threat',
             icon: '⚔️',
             category: 'quests',
             rarity: 'legendary',
             unlocked: false,
             unlockedAt: null,
-            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('main_tower_assault')
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('act5_quest7')
         },
-        dragon_slayer: {
-            id: 'dragon_slayer',
-            name: 'Dragonslayer',
-            description: 'Slay the legendary dragon',
-            icon: '🐉',
+        main_quest_complete: {
+            id: 'main_quest_complete',
+            name: 'Hero of the Realm',
+            description: 'Complete all 35 main story quests',
+            icon: '👑',
             category: 'quests',
             rarity: 'legendary',
             unlocked: false,
             unlockedAt: null,
-            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('legendary_dragon_slayer')
+            condition: () => {
+                if (typeof QuestSystem === 'undefined') return false;
+                const mainQuests = ['act1_quest7', 'act2_quest7', 'act3_quest7', 'act4_quest7', 'act5_quest7'];
+                return mainQuests.every(q => QuestSystem.completedQuests?.includes(q));
+            }
         },
-        frost_vanquisher: {
-            id: 'frost_vanquisher',
-            name: 'Frost Vanquisher',
-            description: 'Defeat the Frost Lord and end the eternal winter',
+
+        // --- SIDE QUEST CHAIN ACHIEVEMENTS ---
+        pest_controller: {
+            id: 'pest_controller',
+            name: 'Pest Controller',
+            description: 'Complete the Vermin Menace chain in Greendale',
+            icon: '🐀',
+            category: 'quests',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('greendale_vermin_3')
+        },
+        grain_baron: {
+            id: 'grain_baron',
+            name: 'Grain Baron',
+            description: 'Complete the Farm to Market chain in Greendale',
+            icon: '🌾',
+            category: 'quests',
+            rarity: 'common',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('greendale_farm_3')
+        },
+        pirate_hunter: {
+            id: 'pirate_hunter',
+            name: 'Pirate Hunter',
+            description: 'Complete the Pirates of the South chain in Sunhaven',
+            icon: '🏴‍☠️',
+            category: 'quests',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('sunhaven_pirates_4')
+        },
+        royal_vintner: {
+            id: 'royal_vintner',
+            name: 'Royal Vintner',
+            description: 'Complete the Wine Country chain in Sunhaven',
+            icon: '🍷',
+            category: 'quests',
+            rarity: 'uncommon',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('sunhaven_wine_3')
+        },
+        forge_defender: {
+            id: 'forge_defender',
+            name: 'Forge Defender',
+            description: 'Complete the Forge Wars chain in Ironforge',
+            icon: '🔥',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('ironforge_wars_4')
+        },
+        steel_magnate: {
+            id: 'steel_magnate',
+            name: 'Steel Magnate',
+            description: 'Complete the Steel Magnate chain in Ironforge',
+            icon: '⚒️',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('ironforge_steel_4')
+        },
+        smuggler_hunter: {
+            id: 'smuggler_hunter',
+            name: 'Smuggler Hunter',
+            description: 'Complete the Smuggler\'s Justice chain in Jade Harbor',
+            icon: '🔍',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('jade_smugglers_3')
+        },
+        silk_emperor: {
+            id: 'silk_emperor',
+            name: 'Silk Emperor',
+            description: 'Complete the Silk Road chain in Jade Harbor',
+            icon: '🧵',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('jade_silk_4')
+        },
+        knight_of_realm: {
+            id: 'knight_of_realm',
+            name: 'Knight of the Realm',
+            description: 'Complete the Royal Guard chain in the Capital',
+            icon: '🛡️',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('capital_guard_4')
+        },
+        merchant_prince: {
+            id: 'merchant_prince',
+            name: 'Merchant Prince',
+            description: 'Complete the Noble Commerce chain in the Capital',
+            icon: '💎',
+            category: 'quests',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('capital_noble_4')
+        },
+        winters_bane: {
+            id: 'winters_bane',
+            name: 'Winter\'s Bane',
+            description: 'Complete the Winter Wolves chain in Frostholm',
             icon: '❄️',
             category: 'quests',
             rarity: 'rare',
             unlocked: false,
             unlockedAt: null,
-            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('frostholm_frost_lord')
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('frostholm_wolves_4')
+        },
+        fur_baron: {
+            id: 'fur_baron',
+            name: 'Fur Baron',
+            description: 'Complete the Fur Trade chain in Frostholm',
+            icon: '🦊',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('frostholm_fur_3')
+        },
+        frontier_marshal: {
+            id: 'frontier_marshal',
+            name: 'Frontier Marshal',
+            description: 'Complete the Frontier Defense chain in the West',
+            icon: '🤠',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('western_bandits_4')
+        },
+        western_tycoon: {
+            id: 'western_tycoon',
+            name: 'Western Tycoon',
+            description: 'Complete the Pioneer Trade chain in the West',
+            icon: '🏜️',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('western_pioneer_3')
+        },
+        side_quest_master: {
+            id: 'side_quest_master',
+            name: 'Regional Champion',
+            description: 'Complete all 14 regional side quest chains',
+            icon: '🗺️',
+            category: 'quests',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => {
+                if (typeof QuestSystem === 'undefined') return false;
+                const chainFinals = [
+                    'greendale_vermin_3', 'greendale_farm_3',
+                    'sunhaven_pirates_4', 'sunhaven_wine_3',
+                    'ironforge_wars_4', 'ironforge_steel_4',
+                    'jade_smugglers_3', 'jade_silk_4',
+                    'capital_guard_4', 'capital_noble_4',
+                    'frostholm_wolves_4', 'frostholm_fur_3',
+                    'western_bandits_4', 'western_pioneer_3'
+                ];
+                return chainFinals.every(q => QuestSystem.completedQuests?.includes(q));
+            }
+        },
+
+        // --- DOOM WORLD ACHIEVEMENTS ---
+        doom_survivor: {
+            id: 'doom_survivor',
+            name: 'Doom Survivor',
+            description: 'Complete the Survival arc in the Doom World',
+            icon: '🏚️',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('doom_survival_5')
+        },
+        resistance_hero: {
+            id: 'resistance_hero',
+            name: 'Resistance Hero',
+            description: 'Complete the Resistance arc in the Doom World',
+            icon: '✊',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('doom_resistance_5')
+        },
+        doom_champion: {
+            id: 'doom_champion',
+            name: 'Doom Champion',
+            description: 'Defeat the Shadow Lieutenants in the Doom World',
+            icon: '💀',
+            category: 'quests',
+            rarity: 'rare',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('doom_boss_3')
+        },
+        greed_defeated: {
+            id: 'greed_defeated',
+            name: 'Greed Defeated',
+            description: 'Destroy Greedy Won and end the Doom',
+            icon: '🖤',
+            category: 'quests',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => typeof QuestSystem !== 'undefined' && QuestSystem.completedQuests?.includes('doom_boss_5')
+        },
+        doom_ender: {
+            id: 'doom_ender',
+            name: 'Doom Ender',
+            description: 'Complete all 15 Doom World quests',
+            icon: '🌅',
+            category: 'quests',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => {
+                if (typeof QuestSystem === 'undefined') return false;
+                const doomFinals = ['doom_survival_5', 'doom_resistance_5', 'doom_boss_5'];
+                return doomFinals.every(q => QuestSystem.completedQuests?.includes(q));
+            }
+        },
+        true_completionist: {
+            id: 'true_completionist',
+            name: 'True Completionist',
+            description: 'Complete ALL quests - Main Story, Side Chains, and Doom World',
+            icon: '🏆',
+            category: 'quests',
+            rarity: 'legendary',
+            unlocked: false,
+            unlockedAt: null,
+            condition: () => {
+                if (typeof QuestSystem === 'undefined') return false;
+                // Check main story, all side chains, and doom
+                const required = [
+                    'act5_quest7', // Main story
+                    'doom_boss_5', // Doom world
+                    'greendale_vermin_3', 'greendale_farm_3', // Greendale
+                    'sunhaven_pirates_4', 'sunhaven_wine_3', // Sunhaven
+                    'ironforge_wars_4', 'ironforge_steel_4', // Ironforge
+                    'jade_smugglers_3', 'jade_silk_4', // Jade Harbor
+                    'capital_guard_4', 'capital_noble_4', // Capital
+                    'frostholm_wolves_4', 'frostholm_fur_3', // Frostholm
+                    'western_bandits_4', 'western_pioneer_3' // Western
+                ];
+                return required.every(q => QuestSystem.completedQuests?.includes(q));
+            }
         },
 
         // --- BOSS DEFEAT ACHIEVEMENTS ---

@@ -939,6 +939,16 @@ RELATIONSHIP MEMORY:
 
         this.activeConversations.set(persistentId, conversation);
 
+        // 🖤 Dispatch npc-interaction event for quest 'talk' objectives 💀
+        document.dispatchEvent(new CustomEvent('npc-interaction', {
+            detail: {
+                npcId: persistentId,
+                npcType: npcData.type,
+                npcName: npcData.name,
+                isQuestNPC: isQuestNPC
+            }
+        }));
+
         // Log with info about previous visits
         const visitInfo = isReturningVisitor ? ` (returning - ${previousHistory.length} previous messages)` : ' (first meeting)';
         console.log(`🎙️ Started conversation with ${npcData.name || persistentId}${isQuestNPC ? ' (quest NPC)' : ''}${visitInfo}`);
@@ -2617,6 +2627,134 @@ ACCENT: Military crispness. Voice of command. Occasional softening when speaking
             Elder Morin in Greendale sent word of a new trader who might help. I am skeptical but desperate times call for unusual allies.
             The main investigation quest - gather evidence, speak to witnesses, piece together what the enemy is planning.
             We must know the scope of the threat before we can mount a defense. Information is our most valuable weapon now.`
+        },
+
+        // 🖤 ADDITIONAL QUEST-CAPABLE NPCs - souls who can guide the lost 💀
+
+        sage: {
+            type: 'sage',
+            voice: 'sage',
+            personality: 'wise',
+            background: 'Ancient keeper of forbidden knowledge. Studies the old texts and remembers what others have forgotten.',
+            gameKnowledge: {
+                sells: ['Ancient wisdom', 'Forgotten lore', 'Quest guidance'],
+                knowsAbout: ['Ancient history', 'Magic artifacts', 'Dungeon secrets', 'Lost civilizations'],
+                canHelp: ['Finding rare items', 'Understanding mysteries', 'Locating hidden places']
+            },
+            worldKnowledge: `I have spent decades studying texts others dare not read. The Shadow Tower... yes, I know its history.
+            There are quests for those brave enough - artifacts to recover, knowledge to uncover, enemies to understand.`
+        },
+
+        huntmaster: {
+            type: 'huntmaster',
+            voice: 'onyx',
+            personality: 'rugged',
+            background: 'Master of the hunt. Knows every trail, every beast, every danger in the wild.',
+            gameKnowledge: {
+                sells: ['Hunting contracts', 'Beast bounties', 'Wilderness quests'],
+                knowsAbout: ['Dangerous beasts', 'Forest paths', 'Rare creatures', 'Hunting grounds'],
+                canHelp: ['Beast hunting quests', 'Rare pelt collection', 'Dangerous creature removal']
+            },
+            worldKnowledge: `The forest holds many secrets and many dangers. Creatures grow bold near the Shadow Tower's influence.
+            I have contracts for capable hunters - beasts to slay, pelts to collect, threats to eliminate.`
+        },
+
+        harbormaster: {
+            type: 'harbormaster',
+            voice: 'onyx',
+            personality: 'weathered',
+            background: 'Controls all shipping and trade through the port. Knows every captain and every cargo.',
+            gameKnowledge: {
+                sells: ['Shipping contracts', 'Cargo quests', 'Trade route information'],
+                knowsAbout: ['Ship schedules', 'Trade routes', 'Smuggler activity', 'Port politics'],
+                canHelp: ['Delivery quests', 'Finding rare imports', 'Investigating suspicious cargo']
+            },
+            worldKnowledge: `Every ship that docks here passes through my ledger. I've noticed strange shipments lately.
+            There's work for those who can be trusted - deliveries, investigations, cargo that needs escorting.`
+        },
+
+        herald: {
+            type: 'herald',
+            voice: 'echo',
+            personality: 'formal',
+            background: 'Voice of the crown. Announces decrees and delivers royal messages.',
+            gameKnowledge: {
+                sells: ['Royal proclamations', 'Official quests', 'Crown business'],
+                knowsAbout: ['Royal decrees', 'Noble politics', 'Official bounties', 'Kingdom events'],
+                canHelp: ['Royal delivery quests', 'Official investigations', 'Crown-sanctioned missions']
+            },
+            worldKnowledge: `By order of the crown! I carry the word of royalty to all corners of the realm.
+            There are official tasks for loyal subjects - messages to deliver, investigations to conduct.`
+        },
+
+        sergeant: {
+            type: 'sergeant',
+            voice: 'onyx',
+            personality: 'gruff',
+            background: 'Veteran soldier who trains recruits and maintains order at outposts.',
+            gameKnowledge: {
+                sells: ['Military contracts', 'Patrol quests', 'Combat training'],
+                knowsAbout: ['Enemy movements', 'Bandit activity', 'Defense tactics', 'Outpost security'],
+                canHelp: ['Bandit elimination quests', 'Patrol routes', 'Military supply runs']
+            },
+            worldKnowledge: `I keep these outposts running and the roads safe. Or try to.
+            Bandits grow bolder, creatures more numerous. There's always work for capable fighters.`
+        },
+
+        miller: {
+            type: 'miller',
+            voice: 'nova',
+            personality: 'practical',
+            background: 'Grinds grain for the region. Central to the food supply chain.',
+            gameKnowledge: {
+                sells: ['Grain processing', 'Flour', 'Mill services'],
+                knowsAbout: ['Harvest quality', 'Grain prices', 'Farm production', 'Food supplies'],
+                canHelp: ['Grain collection quests', 'Harvest deliveries', 'Food supply missions']
+            },
+            worldKnowledge: `Every loaf of bread starts at my mill. The harvest has been poor lately - dark omens some say.
+            I need help collecting grain from distant farms, finding quality wheat, keeping the region fed.`
+        },
+
+        vintner: {
+            type: 'vintner',
+            voice: 'nova',
+            personality: 'refined',
+            background: 'Master of wines. Produces the finest vintages for nobles and common folk alike.',
+            gameKnowledge: {
+                sells: ['Fine wines', 'Rare vintages', 'Wine knowledge'],
+                knowsAbout: ['Wine quality', 'Grape harvests', 'Noble tastes', 'Rare ingredients'],
+                canHelp: ['Rare ingredient quests', 'Wine delivery missions', 'Harvest collection']
+            },
+            worldKnowledge: `A fine vintage requires patience, skill, and the right ingredients.
+            I'm always seeking rare grapes, exotic additives, or reliable traders to deliver my wines.`
+        },
+
+        mason: {
+            type: 'mason',
+            voice: 'onyx',
+            personality: 'steady',
+            background: 'Master builder. Constructs everything from hovels to castles.',
+            gameKnowledge: {
+                sells: ['Construction contracts', 'Building services', 'Stone work'],
+                knowsAbout: ['Building materials', 'Architecture', 'Quarry locations', 'Construction costs'],
+                canHelp: ['Material gathering quests', 'Building projects', 'Quarry expeditions']
+            },
+            worldKnowledge: `Every wall, every tower, every road - built by hands like mine.
+            Good stone is hard to find. Reliable workers harder still. There's always need for help.`
+        },
+
+        steward: {
+            type: 'steward',
+            voice: 'sage',
+            personality: 'efficient',
+            background: 'Manages the affairs of noble households. Knows where every coin goes.',
+            gameKnowledge: {
+                sells: ['Noble contracts', 'Household services', 'Administrative tasks'],
+                knowsAbout: ['Noble families', 'Political intrigues', 'Household management', 'Royal affairs'],
+                canHelp: ['Diplomatic quests', 'Noble errands', 'Political missions']
+            },
+            worldKnowledge: `I manage the affairs of those too important to manage their own.
+            There are always tasks needing discrete handling - deliveries, messages, investigations.`
         }
     },
 

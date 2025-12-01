@@ -42,6 +42,11 @@ const MenuWeatherSystem = {
 
     // 🚀 Initialize the weather system
     init() {
+        // 🖤 Prevent double initialization - no duplicate weather effects!
+        if (this.isActive) {
+            console.log('🌦️ MenuWeatherSystem: Already active, skipping init...');
+            return;
+        }
         console.log('🌦️ MenuWeatherSystem.init() called');
         this.container = document.getElementById('menu-weather-container');
         if (!this.container) {

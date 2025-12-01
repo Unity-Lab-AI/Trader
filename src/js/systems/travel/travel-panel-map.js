@@ -1642,18 +1642,57 @@ const TravelPanelMap = {
         }
     },
 
-    // ❌ Cancel ongoing travel
+    // ❌ Cancel ongoing travel - turn around and head back at ANY point! 🖤💀
     cancelTravel() {
-        if (typeof TravelSystem !== 'undefined') {
-            TravelSystem.playerPosition.isTraveling = false;
-            TravelSystem.playerPosition.destination = null;
-            TravelSystem.playerPosition.travelProgress = 0;
-
-            if (typeof addMessage === 'function') {
-                addMessage('🛑 Journey cancelled');
-            }
+        if (typeof TravelSystem === 'undefined') {
+            this.onTravelComplete();
+            return;
         }
-        this.onTravelComplete();
+
+        // 🖤 Get the start location to turn back to 💀
+        const startLoc = this.travelState.startLocation;
+        const currentProgress = TravelSystem.playerPosition.travelProgress || 0;
+        const originalDuration = TravelSystem.playerPosition.travelDuration || 30;
+
+        // Stop current travel
+        TravelSystem.playerPosition.isTraveling = false;
+        TravelSystem.playerPosition.destination = null;
+        TravelSystem.playerPosition.travelProgress = 0;
+
+        // Clear countdown
+        if (this.travelState.countdownInterval) {
+            clearInterval(this.travelState.countdownInterval);
+            this.travelState.countdownInterval = null;
+        }
+
+        // Hide travel marker
+        if (this.travelMarker) {
+            this.travelMarker.style.display = 'none';
+        }
+
+        // 🖤 Turn around and head back - proportional time based on distance traveled 💀
+        if (startLoc && startLoc.id) {
+            // Calculate return time: if 30% there, takes 30% of original time to get back
+            const returnDuration = Math.max(1, Math.round(originalDuration * currentProgress));
+
+            addMessage(`🔙 Turning back to ${startLoc.name}... (${returnDuration} min)`);
+
+            // Reset travel state before starting return journey
+            this.travelState.startLocation = null;
+            this.travelState.destination = null;
+            this.currentDestination = null;
+
+            // Start travel back to where we came from
+            setTimeout(() => {
+                if (typeof TravelSystem !== 'undefined' && TravelSystem.startTravel) {
+                    TravelSystem.startTravel(startLoc.id);
+                }
+            }, 100);
+        } else {
+            // No start location recorded - just cancel
+            addMessage('🛑 Journey cancelled');
+            this.onTravelComplete();
+        }
     },
 
     // ✅ Handle travel completion - mark destination as reached with learned info 🖤
@@ -1671,9 +1710,9 @@ const TravelPanelMap = {
 
         // 🖤 Save the travel info before resetting - this is what we "learned" 💀
         let learnedInfo = null;
-        if (this.currentDestination && typeof TravelSystem !== 'undefined') {
+        if (this.currentDestination && typeof TravelSystem !== 'undefined' && TravelSystem.locations) {
             const destLocation = TravelSystem.locations[this.currentDestination.id];
-            if (destLocation && TravelSystem.calculateTravelInfo) {
+            if (destLocation && typeof TravelSystem.calculateTravelInfo === 'function') {
                 const travelInfo = TravelSystem.calculateTravelInfo(destLocation);
                 learnedInfo = {
                     distance: travelInfo.distance,

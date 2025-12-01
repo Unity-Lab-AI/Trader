@@ -13,7 +13,7 @@ const SaveManager = {
     // ═══════════════════════════════════════════════════════════════
     maxSaveSlots: 10,
     maxAutoSaveSlots: 10,
-    autoSaveInterval: 300000, // 5 minutes
+    autoSaveInterval: 900000, // 15 minutes (real time) - configurable in settings
     compressionEnabled: true,
     saveVersion: '1.0.0',
 
@@ -46,6 +46,7 @@ const SaveManager = {
         console.log('💾 SaveManager: Initializing unified save system...');
 
         this.loadSaveSlotsMetadata();
+        this.loadAutoSaveIntervalSetting();
         this.setupAutoSave();
         this.setupKeyboardShortcuts();
         this.setupEventListeners();
@@ -98,6 +99,41 @@ const SaveManager = {
         }
     },
 
+    // 🕐 Load autosave interval from localStorage
+    loadAutoSaveIntervalSetting() {
+        const savedInterval = localStorage.getItem('tradingGameAutoSaveInterval');
+        if (savedInterval) {
+            const interval = parseInt(savedInterval, 10);
+            // Validate it's one of our allowed values
+            const validIntervals = [300000, 900000, 1800000, 3600000]; // 5m, 15m, 30m, 1hr
+            if (validIntervals.includes(interval)) {
+                this.autoSaveInterval = interval;
+                console.log(`💾 Autosave interval loaded: ${interval / 60000} minutes`);
+            }
+        }
+    },
+
+    // 🕐 Set and save autosave interval
+    setAutoSaveInterval(intervalMs) {
+        const validIntervals = [300000, 900000, 1800000, 3600000]; // 5m, 15m, 30m, 1hr
+        if (!validIntervals.includes(intervalMs)) {
+            console.warn('💀 Invalid autosave interval:', intervalMs);
+            return false;
+        }
+
+        this.autoSaveInterval = intervalMs;
+        localStorage.setItem('tradingGameAutoSaveInterval', intervalMs.toString());
+
+        // Restart autosave timer with new interval
+        if (typeof TimerManager !== 'undefined' && this._autoSaveTimerId) {
+            TimerManager.clearInterval(this._autoSaveTimerId);
+        }
+        this.setupAutoSave();
+
+        console.log(`💾 Autosave interval set to: ${intervalMs / 60000} minutes`);
+        return true;
+    },
+
     saveSaveSlotsMetadata() {
         try {
             localStorage.setItem('tradingGameSaveSlots', JSON.stringify(this.saveSlots));
@@ -113,7 +149,7 @@ const SaveManager = {
 
     setupAutoSave() {
         if (typeof TimerManager !== 'undefined') {
-            TimerManager.setInterval(() => {
+            this._autoSaveTimerId = TimerManager.setInterval(() => {
                 if (typeof game !== 'undefined' && game.state === GameState.PLAYING && game.settings?.autoSave) {
                     this.autoSave();
                 }
@@ -228,7 +264,22 @@ const SaveManager = {
                 questState: typeof QuestSystem !== 'undefined' ? {
                     activeQuests: QuestSystem.activeQuests || {},
                     completedQuests: QuestSystem.completedQuests || [],
-                    failedQuests: QuestSystem.failedQuests || []
+                    failedQuests: QuestSystem.failedQuests || [],
+                    discoveredQuests: QuestSystem.discoveredQuests || [],
+                    questCompletionTimes: QuestSystem.questCompletionTimes || {},
+                    trackedQuestId: QuestSystem.trackedQuestId || null,
+                    // 🖤 v0.90+ Quest metrics for leaderboard
+                    questMetrics: {
+                        mainQuestsCompleted: QuestSystem.completedQuests?.filter(q => q.startsWith('act'))?.length || 0,
+                        sideQuestsCompleted: QuestSystem.completedQuests?.filter(q =>
+                            q.includes('_vermin_') || q.includes('_farm_') || q.includes('_pirates_') ||
+                            q.includes('_wine_') || q.includes('_wars_') || q.includes('_steel_') ||
+                            q.includes('_smugglers_') || q.includes('_silk_') || q.includes('_guard_') ||
+                            q.includes('_noble_') || q.includes('_wolves_') || q.includes('_fur_') ||
+                            q.includes('_bandits_') || q.includes('_pioneer_'))?.length || 0,
+                        doomQuestsCompleted: QuestSystem.completedQuests?.filter(q => q.startsWith('doom_'))?.length || 0,
+                        totalQuestsCompleted: QuestSystem.completedQuests?.length || 0
+                    }
                 } : null,
                 marketData: {
                     marketPrices: game.marketPrices || {},

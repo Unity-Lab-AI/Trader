@@ -774,22 +774,24 @@ const GameWorld = {
     // ═══════════════════════════════════════════════════════════════
     // 🦇 Maps location types to NPC types that spawn there
     // This makes People panel actually show people, imagine that
+    // 🖤 QUEST-ENABLED NPC SPAWNS - all quest givers now spawn somewhere! 💀
     npcSpawnsByLocationType: {
-        capital: ['innkeeper', 'blacksmith', 'jeweler', 'tailor', 'banker', 'guard', 'noble', 'general_store', 'apothecary'],
-        city: ['innkeeper', 'blacksmith', 'general_store', 'apothecary', 'guard', 'merchant', 'tailor'],
-        town: ['innkeeper', 'blacksmith', 'general_store', 'farmer', 'guard'],
-        village: ['innkeeper', 'farmer', 'general_store'],
-        mine: ['miner', 'blacksmith', 'general_store'],
-        forest: ['hunter', 'herbalist', 'druid'],
-        farm: ['farmer', 'general_store'],
+        capital: ['innkeeper', 'blacksmith', 'jeweler', 'tailor', 'banker', 'guard', 'noble', 'general_store', 'apothecary', 'herald', 'steward', 'captain', 'sage'], // 🖤 Added quest NPCs
+        city: ['innkeeper', 'blacksmith', 'general_store', 'apothecary', 'guard', 'merchant', 'tailor', 'elder', 'scholar', 'vintner'], // 🖤 Added elder + quest NPCs 💀
+        town: ['innkeeper', 'blacksmith', 'general_store', 'farmer', 'guard', 'miller', 'mason'], // 🖤 Added craft quest givers
+        village: ['innkeeper', 'farmer', 'general_store', 'elder'], // 🖤 Villages can have elders too
+        mine: ['miner', 'blacksmith', 'general_store', 'sergeant'], // 🖤 Mine foreman quests
+        forest: ['hunter', 'herbalist', 'druid', 'huntmaster'], // 🖤 Forest quest giver
+        farm: ['farmer', 'general_store', 'miller'], // 🖤 Farm quest giver
         inn: ['innkeeper', 'traveler', 'merchant', 'guard'],
-        cave: ['explorer', 'miner'],
-        dungeon: ['adventurer', 'guard'],
-        ruins: ['scholar', 'adventurer', 'explorer'],
-        outpost: ['guard', 'blacksmith', 'general_store', 'healer'],
-        port: ['ferryman', 'merchant', 'sailor', 'general_store', 'fisherman'],
-        temple: ['priest', 'healer'],
-        grove: ['druid', 'herbalist']
+        cave: ['explorer', 'miner', 'scholar'], // 🖤 Cave exploration quests
+        dungeon: ['adventurer', 'guard', 'scholar'], // 🖤 Dungeon lore quests
+        ruins: ['scholar', 'adventurer', 'explorer', 'sage'], // 🖤 Ancient knowledge quests
+        outpost: ['guard', 'blacksmith', 'general_store', 'healer', 'sergeant'], // 🖤 Military quest NPCs
+        port: ['ferryman', 'merchant', 'sailor', 'general_store', 'fisherman', 'harbormaster'], // 🖤 Port quest giver
+        temple: ['priest', 'healer', 'sage'], // 🖤 Wisdom quests
+        grove: ['druid', 'herbalist', 'sage'], // 🖤 Nature wisdom quests
+        fortress: ['guard', 'captain', 'sergeant', 'blacksmith'] // 🖤 Military strongholds
     },
 
     // 🖤 Get NPCs that should spawn at a location
@@ -1169,7 +1171,24 @@ const GameWorld = {
         const transport = transportationOptions[game.player.transportation];
         const speedModifier = transport ? transport.speedModifier : 1.0;
         const eventModifier = game.travelSpeedModifier || 1.0;
-        const finalTime = Math.round(baseTime / (speedModifier * eventModifier));
+
+        // 🖤 Apply weather and seasonal modifiers - MUST match TravelSystem 💀
+        let weatherSpeedMod = 1.0;
+        let seasonalSpeedMod = 1.0;
+
+        if (typeof WeatherSystem !== 'undefined' && WeatherSystem.getTravelSpeedModifier) {
+            weatherSpeedMod = WeatherSystem.getTravelSpeedModifier() || 1.0;
+        }
+
+        if (typeof TimeMachine !== 'undefined' && TimeMachine.getSeasonData) {
+            const seasonData = TimeMachine.getSeasonData();
+            if (seasonData && seasonData.effects && seasonData.effects.travelSpeed) {
+                seasonalSpeedMod = seasonData.effects.travelSpeed;
+            }
+        }
+
+        const combinedMod = speedModifier * eventModifier * weatherSpeedMod * seasonalSpeedMod;
+        const finalTime = Math.round(baseTime / combinedMod);
         return Math.max(finalTime, 10);
     },
 

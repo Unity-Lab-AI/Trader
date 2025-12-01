@@ -1255,13 +1255,9 @@
     <script src="src/js/npc/npc-trade.js?v=0.88"></script>
     <script src="src/js/ui/panels/trade-cart-panel.js?v=0.88"></script>
 
-    <!-- 🤖 Command & Quest Systems (v0.90) -->
-    <script src="src/js/debooger/api-command-system.js?v=0.90"></script>
-    <!-- 📜 Quest Data Files (must load BEFORE quest-system.js) -->
-    <script src="src/js/systems/progression/main-quests.js?v=0.90"></script>
-    <script src="src/js/systems/progression/side-quests.js?v=0.90"></script>
-    <script src="src/js/systems/progression/doom-quests.js?v=0.90"></script>
-    <script src="src/js/systems/progression/quest-system.js?v=0.90"></script>
+    <!-- 🤖 Command & Quest Systems (v0.7) -->
+    <script src="src/js/debooger/api-command-system.js?v=0.88"></script>
+    <script src="src/js/systems/progression/quest-system.js?v=0.88"></script>
 
     <!-- 👑 Merchant Rank System - defines property/employee limits -->
     <script src="src/js/systems/trading/merchant-rank-system.js?v=0.88"></script>

@@ -11,6 +11,7 @@ const WeatherSystem = {
     // ═══════════════════════════════════════════════════════════════
     // CONFIGURATION
     // ═══════════════════════════════════════════════════════════════
+    initialized: false, // 🖤 Prevent double initialization
     currentWeather: 'clear',
     currentIntensity: 0.5, // 0-1 scale
     weatherEndTime: 0, // 🖤 REAL timestamp when weather ends (prevents speed spam)
@@ -489,6 +490,12 @@ const WeatherSystem = {
     // The weatherHistory array stores old weather as it changes
 
     init() {
+        // 🖤 Prevent double initialization - no duplicate weather popups!
+        if (this.initialized) {
+            console.log('🌦️ WeatherSystem: Already initialized, skipping...');
+            return;
+        }
+        this.initialized = true;
         console.log('🌦️ WeatherSystem: Forecasting chaos...');
 
         this.injectStyles();

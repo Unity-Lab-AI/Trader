@@ -23,18 +23,20 @@ const ItemDatabase = {
     },
 
     // ✨ Rarity levels - how special is your junk?
+    // 🖤 Cleaned up - lowercase only, getRarity() handles case-insensitive lookup 💀
     rarity: {
         common: { name: 'Common', color: '#888888' },
         uncommon: { name: 'Uncommon', color: '#00ff00' },
         rare: { name: 'Rare', color: '#0080ff' },
         epic: { name: 'Epic', color: '#800080' },
-        legendary: { name: 'Legendary', color: '#ff8000' },
-        // Uppercase aliases for backward compatibility
-        COMMON: { name: 'Common', color: '#888888' },
-        UNCOMMON: { name: 'Uncommon', color: '#00ff00' },
-        RARE: { name: 'Rare', color: '#0080ff' },
-        EPIC: { name: 'Epic', color: '#800080' },
-        LEGENDARY: { name: 'Legendary', color: '#ff8000' }
+        legendary: { name: 'Legendary', color: '#ff8000' }
+    },
+
+    // 🦇 Case-insensitive rarity lookup for backwards compatibility
+    getRarity(rarityKey) {
+        if (!rarityKey) return this.rarity.common;
+        const key = String(rarityKey).toLowerCase();
+        return this.rarity[key] || this.rarity.common;
     },
 
     // Item definitions
