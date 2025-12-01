@@ -1896,8 +1896,10 @@ const EventSystem = {
     checkRandomEvents() {
         if (Math.random() < this.randomEventChance) {
             const eventTypes = Object.keys(this.eventTypes || {});
-            if (eventTypes.length > 0) {
-                const randomType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+            // 🖤 Exclude weather events - WeatherSystem handles all weather now 💀
+            const nonWeatherEvents = eventTypes.filter(e => !['rain_storm', 'clear_skies'].includes(e));
+            if (nonWeatherEvents.length > 0) {
+                const randomType = nonWeatherEvents[Math.floor(Math.random() * nonWeatherEvents.length)];
                 this.triggerEvent(randomType);
             }
         }
@@ -3816,24 +3818,41 @@ const GameWorld = {
     },
     
     // Calculate travel time between locations
+    // 🖤 UNIFIED: All travel time calculations MUST use weather/seasonal modifiers from TimeMachine 💀
     calculateTravelTime(fromId, toId) {
         const fromLocation = this.locations[fromId];
         const toLocation = this.locations[toId];
-        
+
         if (!fromLocation || !toLocation) return 0;
-        
+
         let baseTime = (fromLocation.travelCost.base + toLocation.travelCost.base) * 5; // Base time in minutes
-        
+
         // Apply transportation modifier
         const transport = transportationOptions[game.player.transportation];
         const speedModifier = transport ? transport.speedModifier : 1.0;
-        
+
         // Apply travel speed modifier from events
         const eventModifier = game.travelSpeedModifier || 1.0;
-        
-        // Calculate final time
-        const finalTime = Math.round(baseTime / (speedModifier * eventModifier));
-        
+
+        // 🖤 Apply weather and seasonal modifiers - MUST match TravelSystem 💀
+        let weatherSpeedMod = 1.0;
+        let seasonalSpeedMod = 1.0;
+
+        if (typeof WeatherSystem !== 'undefined' && WeatherSystem.getTravelSpeedModifier) {
+            weatherSpeedMod = WeatherSystem.getTravelSpeedModifier() || 1.0;
+        }
+
+        if (typeof TimeMachine !== 'undefined' && TimeMachine.getSeasonData) {
+            const seasonData = TimeMachine.getSeasonData();
+            if (seasonData && seasonData.effects && seasonData.effects.travelSpeed) {
+                seasonalSpeedMod = seasonData.effects.travelSpeed;
+            }
+        }
+
+        // Calculate final time with ALL modifiers
+        const combinedMod = speedModifier * eventModifier * weatherSpeedMod * seasonalSpeedMod;
+        const finalTime = Math.round(baseTime / combinedMod);
+
         return Math.max(finalTime, 10); // Minimum time of 10 minutes
     },
     
