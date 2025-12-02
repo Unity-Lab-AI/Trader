@@ -18,6 +18,47 @@ Each entry follows this format:
 
 ## 2025-12-02 - Current Session
 
+### Fix Save/Load Tab - Actually Show Saves 🖤💀
+
+**Request:**
+1. Save/Load tab shows "No auto-saves yet" and "No manual saves" even though saves EXIST
+2. Make both lists actually populated, scrollable, selectable, loadable
+3. Save button should work IN-GAME only (not on start menu or game setup)
+**Context:** The save lists aren't being populated with actual localStorage data
+**Status:** COMPLETE ✅
+
+**Root Causes Found:**
+1. `populateAutoSaveList()` relied on `SaveLoadSystem.getAutoSaveList()` which returned metadata - but metadata could be stale/empty
+2. `populateManualSaveList()` checked `info.exists` in metadata, but saves could exist in localStorage without metadata
+3. Save buttons worked even when no game was running
+
+**Fixes Applied:**
+1. **settings-panel.js:2990-3046** - Rewrote `populateAutoSaveList()` to scan localStorage directly for `tradingGameAutoSave_*` keys
+2. **settings-panel.js:3048-3106** - Rewrote `populateManualSaveList()` to scan localStorage directly for `tradingGameSave_*` keys
+3. **settings-panel.js:2922-2988** - Added `canSaveNow()`, `updateSaveButtonStates()`, `handleManualSave()`, `handleQuickSave()` methods
+4. **settings-panel.js:530-537** - Updated save buttons to use new handlers with game state checking
+5. **settings-panel.js:956-995** - Added CSS for disabled buttons and status messages
+
+**Save Lists Now Show:**
+- Player name, day, gold, location for each save
+- Timestamp of when save was created
+- Load button (always visible)
+- Delete button (with trash icon)
+- Sorted by timestamp (newest first)
+
+**Save Buttons Now:**
+- Disabled when not in-game (on main menu, game setup, etc.)
+- Show warning message: "⚠️ Start or load a game first to enable saving"
+- Only enabled when `game.state === GameState.PLAYING`
+
+**Files Changed:**
+- `src/js/ui/panels/settings-panel.js`
+
+**Potential Risks:**
+- None - existing save/load functionality unchanged, just fixed the UI display
+
+---
+
 ### Hall of Champions Main Menu Bug + Backend Default 🖤💀
 
 **Request:** Multiple Hall of Champions issues:

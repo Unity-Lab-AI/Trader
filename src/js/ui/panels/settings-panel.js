@@ -527,13 +527,14 @@ const SettingsPanel = {
                             <h3>💾 Save & Load Game</h3>
                             <div class="settings-group">
                                 <div class="setting-item save-actions">
-                                    <button id="manual-save-btn" class="save-load-btn" onclick="if(typeof SaveLoadSystem !== 'undefined') SaveLoadSystem.manualSave();">
+                                    <button id="manual-save-btn" class="save-load-btn" onclick="SettingsPanel.handleManualSave();">
                                         💾 Save Game Now
                                     </button>
-                                    <button id="quick-save-btn" class="save-load-btn" onclick="if(typeof SaveLoadSystem !== 'undefined') SaveLoadSystem.quickSave();">
+                                    <button id="quick-save-btn" class="save-load-btn" onclick="SettingsPanel.handleQuickSave();">
                                         ⚡ Quick Save (F5)
                                     </button>
                                 </div>
+                                <p id="save-status-msg" class="save-status-msg"></p>
 
                                 <h4>⏱️ Auto-Save Interval</h4>
                                 <div class="setting-item">
@@ -950,6 +951,47 @@ const SettingsPanel = {
 
             .save-load-btn.danger:hover {
                 background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%);
+            }
+
+            /* 🖤 Disabled save buttons - can't save when not in game 💀 */
+            .save-load-btn:disabled,
+            .save-load-btn.disabled {
+                background: #555 !important;
+                color: #888 !important;
+                cursor: not-allowed;
+                opacity: 0.6;
+                transform: none !important;
+            }
+
+            .save-load-btn:disabled:hover,
+            .save-load-btn.disabled:hover {
+                background: #555 !important;
+                transform: none !important;
+            }
+
+            /* 🦇 Save status message styles */
+            .save-status-msg {
+                font-size: 0.85rem;
+                padding: 8px 12px;
+                border-radius: 6px;
+                margin-top: 10px;
+                text-align: center;
+            }
+
+            .save-status-msg.warning {
+                background: rgba(255, 152, 0, 0.2);
+                color: #ffb74d;
+                border: 1px solid rgba(255, 152, 0, 0.3);
+            }
+
+            .save-status-msg.error {
+                background: rgba(244, 67, 54, 0.2);
+                color: #ef5350;
+                border: 1px solid rgba(244, 67, 54, 0.3);
+            }
+
+            .save-status-msg:empty {
+                display: none;
             }
 
             .storage-info {
@@ -2915,21 +2957,111 @@ const SettingsPanel = {
     refreshSaveLists() {
         this.populateAutoSaveList();
         this.populateManualSaveList();
+        this.updateSaveButtonStates();
     },
 
-    // populate auto-save list - the system's attempt at saving you
+    // 🖤 Check if we're in a state where saving is allowed 💀
+    canSaveNow() {
+        return typeof game !== 'undefined' &&
+               typeof GameState !== 'undefined' &&
+               game.state === GameState.PLAYING;
+    },
+
+    // 🖤 Update save button states based on game state 💀
+    updateSaveButtonStates() {
+        const manualSaveBtn = document.getElementById('manual-save-btn');
+        const quickSaveBtn = document.getElementById('quick-save-btn');
+        const statusMsg = document.getElementById('save-status-msg');
+
+        const canSave = this.canSaveNow();
+
+        if (manualSaveBtn) {
+            manualSaveBtn.disabled = !canSave;
+            manualSaveBtn.classList.toggle('disabled', !canSave);
+        }
+        if (quickSaveBtn) {
+            quickSaveBtn.disabled = !canSave;
+            quickSaveBtn.classList.toggle('disabled', !canSave);
+        }
+        if (statusMsg) {
+            if (!canSave) {
+                statusMsg.textContent = '⚠️ Start or load a game first to enable saving';
+                statusMsg.className = 'save-status-msg warning';
+            } else {
+                statusMsg.textContent = '';
+                statusMsg.className = 'save-status-msg';
+            }
+        }
+    },
+
+    // 🖤 Handle manual save button click 💀
+    handleManualSave() {
+        if (!this.canSaveNow()) {
+            const statusMsg = document.getElementById('save-status-msg');
+            if (statusMsg) {
+                statusMsg.textContent = '❌ Cannot save - no game in progress!';
+                statusMsg.className = 'save-status-msg error';
+            }
+            return;
+        }
+        if (typeof SaveLoadSystem !== 'undefined') {
+            SaveLoadSystem.manualSave();
+            // Refresh the save lists after saving
+            setTimeout(() => this.refreshSaveLists(), 500);
+        }
+    },
+
+    // 🖤 Handle quick save button click 💀
+    handleQuickSave() {
+        if (!this.canSaveNow()) {
+            const statusMsg = document.getElementById('save-status-msg');
+            if (statusMsg) {
+                statusMsg.textContent = '❌ Cannot save - no game in progress!';
+                statusMsg.className = 'save-status-msg error';
+            }
+            return;
+        }
+        if (typeof SaveLoadSystem !== 'undefined') {
+            SaveLoadSystem.quickSave();
+            // Refresh the save lists after saving
+            setTimeout(() => this.refreshSaveLists(), 500);
+        }
+    },
+
+    // 🖤 populate auto-save list - scan localStorage for ALL auto-saves 💀
     populateAutoSaveList() {
         const listContainer = document.getElementById('auto-save-list');
         if (!listContainer) return;
 
-        if (typeof SaveLoadSystem === 'undefined') {
-            listContainer.innerHTML = '<p class="no-saves">Save system not available</p>';
-            return;
+        // 🦇 Scan localStorage directly for auto-saves (more reliable than metadata)
+        const autoSaves = [];
+        for (let i = 0; i < 10; i++) {
+            const key = `tradingGameAutoSave_${i}`;
+            const saveData = localStorage.getItem(key);
+            if (saveData) {
+                try {
+                    const parsed = JSON.parse(saveData);
+                    const gameData = parsed.gameData || parsed;
+                    autoSaves.push({
+                        index: i,
+                        name: `Auto-Save ${i + 1}`,
+                        playerName: gameData.player?.name || 'Unknown',
+                        gold: gameData.player?.gold || 0,
+                        day: gameData.time?.day || parsed.time?.day || 1,
+                        location: gameData.player?.currentLocation || 'Unknown',
+                        timestamp: parsed.timestamp || Date.now(),
+                        version: parsed.version || '?'
+                    });
+                } catch (e) {
+                    // 💀 Corrupt save - skip it
+                }
+            }
         }
 
-        const autoSaves = SaveLoadSystem.getAutoSaveList();
+        // Sort by timestamp (newest first)
+        autoSaves.sort((a, b) => b.timestamp - a.timestamp);
 
-        if (!autoSaves || autoSaves.length === 0) {
+        if (autoSaves.length === 0) {
             listContainer.innerHTML = '<p class="no-saves">No auto-saves yet... play the game to create some!</p>';
             return;
         }
@@ -2937,34 +3069,58 @@ const SettingsPanel = {
         listContainer.innerHTML = autoSaves.map(save => `
             <div class="save-slot-item" data-save-index="${save.index}">
                 <div class="save-slot-info">
-                    <span class="save-slot-name">💾 ${save.name}</span>
+                    <span class="save-slot-name">💾 ${this.escapeHtml(save.name)}</span>
                     <span class="save-slot-details">
-                        ${save.playerName} | Day ${save.day} | ${save.gold}g | ${save.location}
+                        ${this.escapeHtml(save.playerName)} | Day ${save.day} | ${save.gold.toLocaleString()}g | ${this.escapeHtml(save.location)}
                     </span>
-                    <span class="save-slot-details">${save.formattedTime}</span>
+                    <span class="save-slot-details">${new Date(save.timestamp).toLocaleString()}</span>
                 </div>
                 <div class="save-slot-actions">
                     <button class="save-slot-btn load-btn" onclick="SaveLoadSystem.loadAutoSave(${save.index}); SettingsPanel.closePanel();">
                         Load
+                    </button>
+                    <button class="save-slot-btn delete-btn" onclick="localStorage.removeItem('tradingGameAutoSave_${save.index}'); SettingsPanel.refreshSaveLists();">
+                        🗑️
                     </button>
                 </div>
             </div>
         `).join('');
     },
 
-    // populate manual save list - your deliberate checkpoints
+    // 🖤 populate manual save list - scan localStorage for ALL manual saves 💀
     populateManualSaveList() {
         const listContainer = document.getElementById('manual-save-list');
         if (!listContainer) return;
 
-        if (typeof SaveLoadSystem === 'undefined') {
-            listContainer.innerHTML = '<p class="no-saves">Save system not available</p>';
-            return;
+        // 🦇 Scan localStorage directly for manual saves (more reliable than metadata)
+        const manualSaves = [];
+        for (let i = 1; i <= 10; i++) {
+            const key = `tradingGameSave_${i}`;
+            const saveData = localStorage.getItem(key);
+            if (saveData) {
+                try {
+                    const parsed = JSON.parse(saveData);
+                    const gameData = parsed.gameData || parsed;
+                    // Also check metadata for the name
+                    const metaName = SaveLoadSystem?.saveSlots?.[i]?.name;
+                    manualSaves.push({
+                        slot: i,
+                        name: metaName || `Save Slot ${i}`,
+                        playerName: gameData.player?.name || 'Unknown',
+                        gold: gameData.player?.gold || 0,
+                        day: gameData.time?.day || parsed.time?.day || 1,
+                        location: gameData.player?.currentLocation || 'Unknown',
+                        timestamp: parsed.timestamp || Date.now(),
+                        version: parsed.version || '?'
+                    });
+                } catch (e) {
+                    // 💀 Corrupt save - skip it
+                }
+            }
         }
 
-        const manualSaves = Object.entries(SaveLoadSystem.saveSlots)
-            .filter(([slot, info]) => info.exists)
-            .map(([slot, info]) => ({ slot: parseInt(slot), ...info }));
+        // Sort by timestamp (newest first)
+        manualSaves.sort((a, b) => b.timestamp - a.timestamp);
 
         if (manualSaves.length === 0) {
             listContainer.innerHTML = '<p class="no-saves">No manual saves yet... press Save Game to create one!</p>';
@@ -2974,17 +3130,18 @@ const SettingsPanel = {
         listContainer.innerHTML = manualSaves.map(save => `
             <div class="save-slot-item" data-save-slot="${save.slot}">
                 <div class="save-slot-info">
-                    <span class="save-slot-name">📁 ${save.name || 'Save Slot ' + save.slot}</span>
+                    <span class="save-slot-name">📁 ${this.escapeHtml(save.name)}</span>
                     <span class="save-slot-details">
-                        ${save.timestamp ? new Date(save.timestamp).toLocaleString() : 'Unknown date'}
+                        ${this.escapeHtml(save.playerName)} | Day ${save.day} | ${save.gold.toLocaleString()}g | ${this.escapeHtml(save.location)}
                     </span>
+                    <span class="save-slot-details">${new Date(save.timestamp).toLocaleString()}</span>
                 </div>
                 <div class="save-slot-actions">
                     <button class="save-slot-btn load-btn" onclick="SaveLoadSystem.loadFromSlot(${save.slot}); SettingsPanel.closePanel();">
                         Load
                     </button>
                     <button class="save-slot-btn delete-btn" onclick="SaveLoadSystem.deleteSlot(${save.slot}); SettingsPanel.refreshSaveLists();">
-                        Delete
+                        🗑️
                     </button>
                 </div>
             </div>
