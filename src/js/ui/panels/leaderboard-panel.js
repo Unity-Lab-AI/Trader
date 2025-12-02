@@ -60,16 +60,30 @@ const GlobalLeaderboardSystem = {
             console.log('🏆 Initial fetch complete, entries:', this.leaderboard.length);
             this.renderLeaderboard();
 
-            // 🖤 Also update main menu Hall of Champions after initial fetch completes 💀
-            if (typeof SaveUISystem !== 'undefined' && SaveUISystem.updateLeaderboard) {
-                SaveUISystem.updateLeaderboard();
-            }
+            // 🖤 Update main menu Hall of Champions - retry if SaveUISystem not ready yet 💀
+            this.updateMainMenuHallOfChampions();
         });
+    },
 
-        // 🖤 NO auto-refresh - only fetch when user explicitly views champions 💀
-        // This limits API calls to JSONBin to prevent abuse
-
-        console.log(`🏆 Leaderboard backend: ${this.config.backend}`);
+    // 🖤 Helper to update main menu with retries (handles race condition with SaveUISystem) 💀
+    updateMainMenuHallOfChampions() {
+        const tryUpdate = (attempt = 1) => {
+            // Check if SaveUISystem exists
+            if (typeof SaveUISystem !== 'undefined' && SaveUISystem.updateLeaderboard) {
+                // Make sure the display element exists first
+                if (!document.getElementById('leaderboard-entries') && SaveUISystem.createLeaderboardDisplay) {
+                    SaveUISystem.createLeaderboardDisplay();
+                }
+                SaveUISystem.updateLeaderboard();
+                console.log(`🏆 Main menu Hall of Champions updated (attempt ${attempt})`);
+            } else if (attempt < 10) {
+                // Retry up to 10 times over 10 seconds (SaveUISystem might not be loaded yet)
+                setTimeout(() => tryUpdate(attempt + 1), 1000);
+            } else {
+                console.warn('🏆 SaveUISystem not available after 10 retries');
+            }
+        };
+        tryUpdate();
     },
 
     // 📜 Load configuration from GameConfig (config.js)
