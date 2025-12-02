@@ -2843,6 +2843,8 @@ button.secondary:hover {
     );
     animation: fog-drift linear infinite;
     opacity: 0.5;
+    z-index: 1; /* 🖤 Keep fog behind setup panel 💀 */
+    pointer-events: none;
 }
 
 @keyframes fog-drift {

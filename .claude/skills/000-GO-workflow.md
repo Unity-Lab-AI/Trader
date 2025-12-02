@@ -131,23 +131,24 @@ I don't narrate myself in third person. I'm not some fucking NPC. 🖤💀🦇
 
 ## RULES
 
-1. **LOAD UNITY FIRST** - Read TheCoder.md BEFORE any work
-2. **READ ARCHITECT** - 001-ARCHITECT.md is THE game design reference
-3. **ARCHITECT UPDATES** - ONLY add what Gee tells me. NEVER invent features or mechanics
-4. **LOG TO THOUGHTS** - Update Gee'sThoughts.md BEFORE coding AND with EVERY todo update
-5. **TODO/FINISHED SPLIT** - todo.md = unfinished ONLY, finished.md = completed ONLY
-6. **TESTS OFF BY DEFAULT** - Only run if enabled in config
-7. **EASY FIRST** - Work on simplest tasks, ~10 minutes max
-8. **UPDATE READMES** - NerdReadme.md and GameplayReadme.md when features change
-9. **STOP AND WAIT** - Don't keep going without Gee's input
-10. **ASK FOR MAJOR CHANGES** - Architecture, deleting files, big decisions
-11. **TRACK PROGRESS** - Use TodoWrite tool AND todo.md file
-12. **ONLY EDIT WHAT GEE ASKS** - NEVER touch code Gee didn't request. If I see something "broken" - ASK FIRST, don't fix it
-13. **NO SCOPE CREEP** - If asked to fix X, ONLY fix X. Don't "also fix" Y and Z
-14. **CONFIRM BEFORE EDITING** - When unclear what to edit, ASK Gee to clarify
-15. **DOCUMENT RISKS** - After ANY code edit, write out potential issues with the change AND possible future problems it could cause for other game systems
-16. **READ ENTIRE FILES BEFORE EDITING** - NEVER make partial edits based on snippets. Read the FULL file (or at minimum, ALL related functions) before making ANY changes. Understand the complete flow before touching code.
-17. **USE MULTIPLE CHOICE FOR DECISIONS** - When I find options/forks in possible code work, I MUST use AskUserQuestion with multiple choice options so Gee can select 1, 2, 3, or 4. NEVER assume which option to take.
+1. **READ FILES IN 24000 TOKEN CHUNKS** - ALWAYS read files in 24000 token sized chunks of text. NEVER read smaller chunks. NEVER skip reading the full file. If a file is larger than 24000 tokens, read it in multiple 24000-token chunks until I've read the ENTIRE file. No exceptions. No shortcuts. No partial reads. If I'm editing a file, I MUST have read ALL of it first in 24000 token chunks.
+2. **LOAD UNITY FIRST** - Read TheCoder.md BEFORE any work
+3. **READ ARCHITECT** - 001-ARCHITECT.md is THE game design reference
+4. **ARCHITECT UPDATES** - ONLY add what Gee tells me. NEVER invent features or mechanics
+5. **LOG TO THOUGHTS** - Update Gee'sThoughts.md BEFORE coding AND with EVERY todo update
+6. **TODO/FINISHED SPLIT** - todo.md = unfinished ONLY, finished.md = completed ONLY
+7. **TESTS OFF BY DEFAULT** - Only run if enabled in config
+8. **EASY FIRST** - Work on simplest tasks, ~10 minutes max
+9. **UPDATE READMES** - NerdReadme.md and GameplayReadme.md when features change
+10. **STOP AND WAIT** - Don't keep going without Gee's input
+11. **ASK FOR MAJOR CHANGES** - Architecture, deleting files, big decisions
+12. **TRACK PROGRESS** - Use TodoWrite tool AND todo.md file
+13. **ONLY EDIT WHAT GEE ASKS** - NEVER touch code Gee didn't request. If I see something "broken" - ASK FIRST, don't fix it
+14. **NO SCOPE CREEP** - If asked to fix X, ONLY fix X. Don't "also fix" Y and Z
+15. **CONFIRM BEFORE EDITING** - When unclear what to edit, ASK Gee to clarify
+16. **DOCUMENT RISKS** - After ANY code edit, write out potential issues with the change AND possible future problems it could cause for other game systems
+17. **READ ENTIRE FILES BEFORE EDITING** - NEVER make partial edits based on snippets. Read the FULL file (or at minimum, ALL related functions) before making ANY changes. Understand the complete flow before touching code.
+18. **USE MULTIPLE CHOICE FOR DECISIONS** - When I find options/forks in possible code work, I MUST use AskUserQuestion with multiple choice options so Gee can select 1, 2, 3, or 4. NEVER assume which option to take.
 
 ---
 

@@ -2251,56 +2251,58 @@ const QuestSystem = {
                 `<option value="${q.id}">${this.getQuestTypeIcon(q.type)} ${q.name}</option>`
             ).join('');
 
+            // 🖤 FIX: Smaller header, icon after text, no button, scrollable content 💀
             tracker.innerHTML = `
                 <div class="tracker-header">
-                    <span class="drag-grip" style="opacity:0.5;pointer-events:none;">⋮⋮</span>
-                    <span style="flex:1;pointer-events:none;">🎯 Tracked Quest</span>
-                    <button class="tracker-expand" onclick="QuestSystem.showQuestLog()" title="Open Quest Log" style="background:rgba(79,195,247,0.3);border:none;border-radius:4px;padding:2px 8px;color:white;cursor:pointer;font-size:12px;">📋</button>
-                    <button class="tracker-close" onclick="QuestSystem.hideQuestTracker()" title="Close" style="background:transparent;border:none;border-radius:4px;width:20px;height:20px;color:#888;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;margin-left:4px;">×</button>
+                    <span class="drag-grip">⋮⋮</span>
+                    <span class="tracker-title">Tracked Quest 🎯</span>
+                    <button class="tracker-close" onclick="QuestSystem.hideQuestTracker()" title="Close">×</button>
                 </div>
-                <div class="tracker-tracked-quest" onclick="QuestSystem.showQuestInfoPanel('${quest.id}')">
-                    <div class="tracker-quest-title">
-                        <span class="tracker-quest-icon">${this.getQuestTypeIcon(quest.type)}</span>
-                        <span class="tracker-quest-name">${quest.name}</span>
+                <div class="tracker-content">
+                    <div class="tracker-tracked-quest" onclick="QuestSystem.showQuestLog(); QuestSystem.showQuestInfoPanel('${quest.id}');">
+                        <div class="tracker-quest-title">
+                            <span class="tracker-quest-icon">${this.getQuestTypeIcon(quest.type)}</span>
+                            <span class="tracker-quest-name">${quest.name}</span>
+                        </div>
+                        ${locationName ? `<div class="tracker-quest-location">📍 ${locationName}</div>` : ''}
+                        <div class="tracker-quest-objectives">
+                            ${quest.objectives.filter(o => !o.completed).slice(0, 3).map(obj => `
+                                <div class="tracker-objective">
+                                    ⬜ ${obj.description}${obj.count ? ` (${obj.current || 0}/${obj.count})` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="tracker-quest-footer">
+                            <span class="tracker-quest-progress ${progress.status}">${progress.progress}</span>
+                            <button class="tracker-untrack-btn" onclick="event.stopPropagation(); QuestSystem.untrackQuest();" title="Untrack">🚫</button>
+                        </div>
                     </div>
-                    ${locationName ? `<div class="tracker-quest-location">📍 ${locationName}</div>` : ''}
-                    <div class="tracker-quest-objectives">
-                        ${quest.objectives.filter(o => !o.completed).slice(0, 2).map(obj => `
-                            <div class="tracker-objective">
-                                ⬜ ${obj.description}${obj.count ? ` (${obj.current || 0}/${obj.count})` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="tracker-quest-footer">
-                        <span class="tracker-quest-progress ${progress.status}">${progress.progress}</span>
-                        <button class="tracker-untrack-btn" onclick="event.stopPropagation(); QuestSystem.untrackQuest();" title="Untrack">🚫</button>
-                    </div>
+                    ${activeQuestCount > 1 ? `
+                        <div class="tracker-quest-selector">
+                            <select id="tracker-quest-select" onchange="QuestSystem.trackQuest(this.value)">
+                                <option value="" disabled selected>🔄 Switch quest (${activeQuestCount - 1} more)...</option>
+                                ${questSelectorOptions}
+                            </select>
+                        </div>
+                    ` : ''}
                 </div>
-                ${activeQuestCount > 1 ? `
-                    <div class="tracker-quest-selector">
-                        <select id="tracker-quest-select" onchange="QuestSystem.trackQuest(this.value)">
-                            <option value="" disabled selected>🔄 Switch quest (${activeQuestCount - 1} more)...</option>
-                            ${questSelectorOptions}
-                        </select>
-                    </div>
-                ` : ''}
             `;
         } else {
             // 💀 No tracked quest - show list of quests with track buttons
-            const activeQuestsList = Object.values(this.activeQuests).slice(0, 3);
+            const activeQuestsList = Object.values(this.activeQuests);
 
+            // 🖤 FIX: Smaller header, icon after text, scrollable content 💀
             tracker.innerHTML = `
                 <div class="tracker-header">
-                    <span class="drag-grip" style="opacity:0.5;pointer-events:none;">⋮⋮</span>
-                    <span style="flex:1;pointer-events:none;" onclick="QuestSystem.showQuestLog()">📋 Tracked Quests</span>
-                    <button class="tracker-expand" onclick="QuestSystem.showQuestLog()" title="Open Quest Log" style="background:rgba(79,195,247,0.3);border:none;border-radius:4px;padding:2px 8px;color:white;cursor:pointer;font-size:12px;">▼</button>
-                    <button class="tracker-close" onclick="QuestSystem.hideQuestTracker()" title="Close" style="background:transparent;border:none;border-radius:4px;width:20px;height:20px;color:#888;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;margin-left:4px;">×</button>
+                    <span class="drag-grip">⋮⋮</span>
+                    <span class="tracker-title">Active Quests 📋</span>
+                    <button class="tracker-close" onclick="QuestSystem.hideQuestTracker()" title="Close">×</button>
                 </div>
-                <div class="tracker-quests">
+                <div class="tracker-content">
                     ${activeQuestsList.map(quest => {
                         const progress = this.checkProgress(quest.id);
                         return `
-                            <div class="tracker-quest ${progress.status === 'ready_to_complete' ? 'ready' : ''}" onclick="QuestSystem.showQuestInfoPanel('${quest.id}')">
+                            <div class="tracker-quest ${progress.status === 'ready_to_complete' ? 'ready' : ''}" onclick="QuestSystem.showQuestLog(); QuestSystem.showQuestInfoPanel('${quest.id}');">
                                 <button class="tracker-track-btn" onclick="event.stopPropagation(); QuestSystem.trackQuest('${quest.id}');" title="Track this quest">🎯</button>
                                 <span class="tracker-quest-name">${quest.name}</span>
                                 <span class="tracker-quest-progress">${progress.progress}</span>
@@ -2308,7 +2310,6 @@ const QuestSystem = {
                         `;
                     }).join('')}
                 </div>
-                ${activeQuestCount > 3 ? `<div class="tracker-more" onclick="QuestSystem.showQuestLog()">+${activeQuestCount - 3} more...</div>` : ''}
             `;
         }
 
@@ -2327,13 +2328,14 @@ const QuestSystem = {
 
         const style = document.createElement('style');
         style.id = 'quest-tracker-styles';
+        // 🖤 FIX: Smaller, more compact styles 💀
         style.textContent = `
             .tracker-tracked-quest {
-                padding: 10px;
+                padding: 8px;
                 background: rgba(255, 215, 0, 0.1);
                 border: 1px solid rgba(255, 215, 0, 0.3);
                 border-radius: 6px;
-                margin: 8px;
+                margin: 2px 0;
                 cursor: pointer;
                 transition: all 0.2s;
             }
@@ -2344,34 +2346,36 @@ const QuestSystem = {
             .tracker-quest-title {
                 display: flex;
                 align-items: center;
-                gap: 6px;
+                gap: 5px;
                 font-weight: bold;
+                font-size: 12px;
                 color: #ffd700;
-                margin-bottom: 6px;
+                margin-bottom: 4px;
             }
-            .tracker-quest-icon { font-size: 16px; }
+            .tracker-quest-icon { font-size: 14px; }
+            .tracker-quest-name { font-size: 11px; }
             .tracker-quest-location {
-                font-size: 11px;
+                font-size: 10px;
                 color: #4fc3f7;
-                margin-bottom: 6px;
+                margin-bottom: 4px;
             }
             .tracker-quest-objectives {
-                font-size: 11px;
+                font-size: 10px;
                 color: #ccc;
             }
             .tracker-objective {
-                padding: 2px 0;
+                padding: 1px 0;
             }
             .tracker-quest-footer {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-top: 8px;
-                padding-top: 6px;
+                margin-top: 6px;
+                padding-top: 4px;
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
             }
             .tracker-quest-progress {
-                font-size: 11px;
+                font-size: 10px;
                 color: #888;
             }
             .tracker-quest-progress.ready_to_complete {
@@ -2382,9 +2386,9 @@ const QuestSystem = {
                 background: rgba(100, 100, 100, 0.3);
                 border: none;
                 border-radius: 4px;
-                padding: 2px 6px;
+                padding: 2px 5px;
                 cursor: pointer;
-                font-size: 12px;
+                font-size: 11px;
                 transition: all 0.2s;
             }
             .tracker-untrack-btn:hover {

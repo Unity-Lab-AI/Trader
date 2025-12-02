@@ -90,6 +90,11 @@ body > #menu-weather-container {
     pointer-events: none !important;
 }
 
+/* 🖤 Ensure ALL weather children stay behind setup panel 💀 */
+body > #menu-weather-container * {
+    z-index: auto !important;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    🎮 GAME CONTAINER STATES
    🖤 Using body classes instead of :has() for performance 💀

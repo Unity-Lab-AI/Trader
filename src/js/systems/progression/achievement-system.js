@@ -1530,6 +1530,12 @@ const AchievementSystem = {
         this._achievementsEnabled = true;
         console.log('🏆 Player unpaused! Achievement checking now ENABLED 🖤💀');
 
+        // 🖤 FIX: Re-trigger MerchantRankSystem to unlock rank achievements that were deferred 💀
+        if (typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.checkForRankUp) {
+            console.log('🏆 Re-checking merchant rank for deferred achievements...');
+            MerchantRankSystem.checkForRankUp();
+        }
+
         // Now check achievements for the first time
         this.checkAchievements();
     },
@@ -1574,6 +1580,12 @@ const AchievementSystem = {
 
     // Unlock a single achievement directly (for manual unlocks)
     unlockAchievement(achievementId) {
+        // 🖤 FIX: Don't unlock achievements until player has unpaused at least once 💀
+        if (!this._achievementsEnabled) {
+            console.log(`🏆 Achievement ${achievementId} deferred - waiting for first unpause`);
+            return; // 🦇 Achievements not enabled yet - player hasn't unpaused
+        }
+
         const achievement = this.achievements[achievementId];
         if (!achievement || achievement.unlocked) return;
 

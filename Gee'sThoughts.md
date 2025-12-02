@@ -18,14 +18,128 @@ Each entry follows this format:
 
 ## 2025-12-02 - Current Session
 
-### Achievement Deferred Until First Unpause 🖤💀
+### Rapid Death Bug Fix - Multi-Frame Stat Decay 🖤💀
 
-**Request:** The 500 wealth (Peddler rank) achievement was triggering immediately on new game start before the player even unpaused. Make achievements wait until the player first unpauses the game.
+**Request:** Player dying of dehydration in 30 real minutes instead of 3 game days. Death events were spamming rapidly in console.
 
 **Status:** COMPLETE ✅
 
 **Root Cause:**
+- `processPlayerStatsOverTime()` in game.js runs every frame (~60fps)
+- The guard `timeInfo.minute % 5 !== 0` was supposed to only run decay every 5 game minutes
+- BUT: Multiple frames can exist within the same game minute!
+- Example: If game minute is 10 (divisible by 5), EVERY FRAME during that minute applied decay
+- This caused hunger/thirst to drain 60x faster than intended
+
+**The Math:**
+- Config: thirst drains 0.1157 per 5-minute update (3 days to drain 100%)
+- Bug: 60fps × 0.1157 per frame = 6.942 per second of real time
+- At 60fps, thirst drains 100% in ~14 seconds of real time per game minute!
+
+**Fix Applied:**
+1. **game.js:2070-2072** - Added `_lastProcessedMinute` and `_lastProcessedDay` tracking variables
+2. **game.js:2087-2091** - Added minuteKey guard that creates a unique key for each 5-minute interval
+   - `minuteKey = day * 10000 + hour * 100 + minute`
+   - If same minuteKey, return early (already processed this interval)
+3. **game.js:5553** - Reset tracker on new game: `GameLoop._lastProcessedMinute = -1`
+4. **game.js:2441** - Reset tracker on game load: `GameLoop._lastProcessedMinute = -1`
+
+**How It Works Now:**
+1. Frame 1 at minute 10: minuteKey = 12310 (day 1, hour 23, minute 10)
+2. Apply decay, store minuteKey
+3. Frame 2-60 at minute 10: minuteKey matches → skip (already processed)
+4. Minute advances to 15: new minuteKey = 12315 → process decay
+5. Decay now happens EXACTLY once per 5-minute interval as intended
+
+**Files Changed:**
+- `src/js/core/game.js`
+
+**Potential Risks:**
+- None - this is a pure bug fix
+- Time math includes day to handle day rollover edge cases
+- Resets properly on new game and load game
+
+---
+
+### Leaderboard Duplicate Entry Fix 🖤💀
+
+**Request:** Same character's multiple saves were appearing on the leaderboard instead of just ONE entry per character.
+
+**Status:** COMPLETE ✅
+
+**Root Cause:**
+- `characterId` was generated at character creation (line 6662 in game.js)
+- BUT it was NOT being saved in save-manager.js
+- When loading a save, `characterId` was `null`
+- Leaderboard deduplication failed because it couldn't match the character
+
+**Fix Applied:**
+- **save-manager.js:224** - Added `characterId` to the saved player data
+
+**How It Works Now:**
+1. New character created → gets unique `characterId` (e.g., `char_m5abc12_def456789`)
+2. Game saved → `characterId` persists in save data
+3. Game loaded → `characterId` restored to `game.player.characterId`
+4. Death/resignation → leaderboard checks `characterId`
+5. If `characterId` already exists → UPDATE that entry (keep highest score)
+6. If `characterId` is new → ADD new entry
+
+**Files Changed:**
+- `src/js/systems/save/save-manager.js`
+
+**Potential Risks:**
+- Old saves without `characterId` will continue to use fallback deduplication (playerName + isAlive)
+- New saves will properly deduplicate by character
+
+---
+
+### Quest Tracker Widget Improvements 🖤💀
+
+**Request:** Multiple improvements to the quest tracker widget:
+1. Header is too big - make it smaller
+2. Icon should be AFTER the "Tracked Quest" text, not before
+3. Remove the 📋 button from header
+4. Quest content should be scrollable
+5. Clicking quest info should open the quest panel
+
+**Status:** COMPLETE ✅
+
+**Fixes Applied:**
+1. **quest-system.js:2254-2313** - Rebuilt tracker HTML:
+   - Smaller header with `tracker-title` class
+   - Icon moved after text: "Tracked Quest 🎯" / "Active Quests 📋"
+   - Removed the expand button from header (no more 📋 button)
+   - Added `tracker-content` wrapper div for scrollable area
+   - Clicking quest info now calls `showQuestLog()` THEN `showQuestInfoPanel()` to open quest panel
+
+2. **npc-systems.css:893-968** - Updated CSS:
+   - Smaller header padding (6px 10px vs 10px 12px)
+   - Smaller font-size (11px)
+   - Added `.tracker-close` button styles (smaller, with hover effect)
+   - Added `.tracker-content` with scrollable area (max-height 200px, scrollbar styles)
+
+3. **quest-system.js:2332-2399** - Smaller dynamic styles:
+   - Reduced padding, margins, font-sizes across all tracker elements
+   - More compact overall appearance
+
+**Files Changed:**
+- `src/js/systems/progression/quest-system.js`
+- `src/css/npc-systems.css`
+
+**Potential Risks:**
+- None - purely UI/UX improvements
+
+---
+
+### Achievement Deferred Until First Unpause 🖤💀
+
+**Request:** The 500 wealth (Peddler rank) achievement was triggering immediately on new game start before the player even unpaused. Make achievements wait until the player first unpauses the game.
+
+**Status:** COMPLETE ✅ (UPDATED - added unlockAchievement guard)
+
+**Root Cause:**
 - `AchievementSystem.init()` was calling `checkAchievements()` immediately
+- `MerchantRankSystem.init()` calls `updateRank()` which calls `unlockAchievement()` directly
 - Player starts with 500+ gold (depending on difficulty/perks)
 - The `rank_peddler` achievement triggers at 500g wealth
 - Achievement popup appeared before player even started playing
@@ -35,14 +149,16 @@ Each entry follows this format:
 2. **achievement-system.js:1517-1522** - Modified `init()` to NOT call `checkAchievements()` immediately
 3. **achievement-system.js:1525-1535** - Added `enableAchievements()` method called on first unpause
 4. **achievement-system.js:1542-1545** - Added guard in `checkAchievements()` to return early if achievements not enabled
-5. **time-machine.js:450-454** - Added hook in `setSpeed()` to call `AchievementSystem.enableAchievements()` when player first unpauses
+5. **achievement-system.js:1577-1581** - Added guard in `unlockAchievement()` to block direct unlocks before first unpause
+6. **time-machine.js:450-454** - Added hook in `setSpeed()` to call `AchievementSystem.enableAchievements()` when player first unpauses
 
 **How It Works Now:**
 1. Game starts paused
 2. `AchievementSystem.init()` runs but does NOT check achievements
-3. Player unpauses the game (space bar, time control, etc.)
-4. `TimeMachine.setSpeed()` detects unpause and calls `AchievementSystem.enableAchievements()`
-5. NOW achievements start checking and awarding normally
+3. `MerchantRankSystem.init()` tries to unlock rank achievement but it's blocked
+4. Player unpauses the game (space bar, time control, etc.)
+5. `TimeMachine.setSpeed()` detects unpause and calls `AchievementSystem.enableAchievements()`
+6. NOW achievements start checking and awarding normally
 
 **Files Changed:**
 - `src/js/systems/progression/achievement-system.js`
@@ -51,6 +167,7 @@ Each entry follows this format:
 **Potential Risks:**
 - None - achievements will still fire normally once the player starts playing
 - The flag prevents any achievements from firing until intentional gameplay begins
+- Debooger cheat commands can still force-unlock achievements (bypasses the guard)
 
 ---
 

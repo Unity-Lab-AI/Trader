@@ -221,6 +221,7 @@ const SaveManager = {
                 state: game.state,
                 gameTick: game.gameTick,
                 player: game.player ? {
+                    characterId: game.player.characterId, // 🏆 Unique ID for leaderboard deduplication
                     name: game.player.name,
                     class: game.player.class,
                     difficulty: game.player.difficulty,

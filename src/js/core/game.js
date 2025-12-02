@@ -2067,6 +2067,10 @@ const game = {
         // }
     },
 
+    // 🖤 Track last processed minute to prevent multi-frame decay 💀
+    _lastProcessedMinute: -1,
+    _lastProcessedDay: -1,
+
     // 🖤 Update player stats over time - hunger, thirst, stamina decay and health regen
     // all values pulled from GameConfig.survival - the dark heart of balance
     processPlayerStatsOverTime() {
@@ -2079,6 +2083,12 @@ const game = {
 
         // Only update every few game minutes to avoid rapid changes
         if (timeInfo.minute % 5 !== 0) return;
+
+        // 🖤 FIX: Prevent multi-frame decay - only process ONCE per 5-minute interval 💀
+        // The game loop runs at 60fps, so multiple frames can hit the same minute
+        const minuteKey = timeInfo.day * 10000 + timeInfo.hour * 100 + timeInfo.minute;
+        if (minuteKey === this._lastProcessedMinute) return;
+        this._lastProcessedMinute = minuteKey;
 
         // 🖤 Pull survival config from GameConfig (or use defaults if config isn't loaded)
         const survivalConfig = (typeof GameConfig !== 'undefined' && GameConfig.survival) ? GameConfig.survival : {
@@ -2427,6 +2437,9 @@ const game = {
     
     // Load game state
     loadState(saveData) {
+        // 🖤 Reset stat decay tracker on load - prevents multi-frame decay from previous session 💀
+        this._lastProcessedMinute = -1;
+
         this.player = saveData.player;
         this.currentLocation = saveData.currentLocation;
         this.locations = saveData.locations || [];
@@ -5538,6 +5551,9 @@ function startNewGame() {
     if (typeof DeathCauseSystem !== 'undefined') {
         DeathCauseSystem.reset();
     }
+
+    // 🖤 Reset stat decay tracker for new game - so decay happens correctly from minute 0 💀
+    game._lastProcessedMinute = -1;
 
     // 🖤 Hide main menu content but keep weather effects visible behind setup
     const mainMenu = document.getElementById('main-menu');
