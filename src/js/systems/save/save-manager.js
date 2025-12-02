@@ -1371,7 +1371,12 @@ window.SaveUISystem = {
     closeLoadGameDialog: () => SaveManager.closeLoadDialog(),
     init: () => {
         SaveUISystem.createLeaderboardDisplay();
+        // 🖤 Initial update - may show empty if JSONBin fetch still in progress 💀
         SaveUISystem.updateLeaderboard();
+        // 🦇 Retry after 2 seconds in case initial fetch was slow (deployed version)
+        setTimeout(() => SaveUISystem.updateLeaderboard(), 2000);
+        // 🦇 And again at 5 seconds for really slow connections
+        setTimeout(() => SaveUISystem.updateLeaderboard(), 5000);
     },
 
     // 🏆 Create Hall of Champions display on main menu
@@ -1415,53 +1420,66 @@ window.SaveUISystem = {
         const container = document.getElementById('leaderboard-entries');
         if (!container) return;
 
-        const getOrdinal = (n) => {
-            const s = ['th', 'st', 'nd', 'rd'];
-            const v = n % 100;
-            return n + (s[(v - 20) % 10] || s[v] || s[0]);
+        // 🖤 Helper to render scores to the container 💀
+        const renderScores = (scores) => {
+            if (!scores || scores.length === 0) {
+                container.innerHTML = '<div class="leaderboard-empty">No champions have risen yet...</div>';
+                return;
+            }
+
+            const escapeHtml = (text) => {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = String(text);
+                return div.innerHTML;
+            };
+
+            let html = '';
+            scores.slice(0, 3).forEach((score, index) => {
+                const rank = index + 1;
+                let rankDisplay, rankClass = '';
+
+                if (rank === 1) { rankDisplay = '👑 1st'; rankClass = 'gold'; }
+                else if (rank === 2) { rankDisplay = '🥈 2nd'; rankClass = 'silver'; }
+                else if (rank === 3) { rankDisplay = '🥉 3rd'; rankClass = 'bronze'; }
+
+                const statusIcon = score.isAlive ? '💚' : '💀';
+                const statusText = score.isAlive ? 'still playing' : (score.causeOfDeath || 'unknown');
+
+                html += `
+                    <div class="leaderboard-entry ${rankClass}">
+                        <div class="entry-rank ${rankClass}">${rankDisplay}</div>
+                        <div class="entry-info">
+                            <div class="entry-name">${escapeHtml(score.playerName || 'Unknown')}</div>
+                            <div class="entry-stats">
+                                <span>💰 ${(score.score || 0).toLocaleString()}</span>
+                                <span>📅 ${score.daysSurvived || 0} days</span>
+                            </div>
+                            <div class="entry-status ${score.isAlive ? 'alive' : 'dead'}">${statusIcon} ${statusText}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (scores.length > 3) {
+                html += `<div class="leaderboard-more">+${scores.length - 3} more champions</div>`;
+            }
+
+            container.innerHTML = html;
         };
 
+        // 🖤 Check if GlobalLeaderboardSystem is available and has data 💀
         if (typeof GlobalLeaderboardSystem !== 'undefined') {
+            // 🦇 First try to use cached data directly (no network call)
+            if (GlobalLeaderboardSystem.leaderboard && GlobalLeaderboardSystem.leaderboard.length > 0) {
+                renderScores(GlobalLeaderboardSystem.leaderboard);
+                return;
+            }
+
+            // 🦇 If no cached data, wait for fetch (or trigger one if needed)
             GlobalLeaderboardSystem.fetchLeaderboard().then(scores => {
-                if (!scores || scores.length === 0) {
-                    container.innerHTML = '<div class="leaderboard-empty">No champions have risen yet...</div>';
-                    return;
-                }
-
-                let html = '';
-                scores.slice(0, 3).forEach((score, index) => {
-                    const rank = index + 1;
-                    let rankDisplay, rankClass = '';
-
-                    if (rank === 1) { rankDisplay = '👑 1st'; rankClass = 'gold'; }
-                    else if (rank === 2) { rankDisplay = '🥈 2nd'; rankClass = 'silver'; }
-                    else if (rank === 3) { rankDisplay = '🥉 3rd'; rankClass = 'bronze'; }
-
-                    const statusIcon = score.isAlive ? '💚' : '💀';
-                    const statusText = score.isAlive ? 'still playing' : (score.causeOfDeath || 'unknown');
-
-                    html += `
-                        <div class="leaderboard-entry ${rankClass}">
-                            <div class="entry-rank ${rankClass}">${rankDisplay}</div>
-                            <div class="entry-info">
-                                <div class="entry-name">${GlobalLeaderboardSystem.escapeHtml(score.playerName || 'Unknown')}</div>
-                                <div class="entry-stats">
-                                    <span>💰 ${(score.score || 0).toLocaleString()}</span>
-                                    <span>📅 ${score.daysSurvived || 0} days</span>
-                                </div>
-                                <div class="entry-status ${score.isAlive ? 'alive' : 'dead'}">${statusIcon} ${statusText}</div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                if (scores.length > 3) {
-                    html += `<div class="leaderboard-more">+${scores.length - 3} more champions</div>`;
-                }
-
-                container.innerHTML = html;
+                renderScores(scores);
             }).catch(err => {
-                // 🦇 Network issue - show friendly message, not console spam
                 container.innerHTML = '<div class="leaderboard-empty">Failed to load champions...</div>';
             });
         } else {
