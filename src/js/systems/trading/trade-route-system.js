@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // TRADE ROUTE SYSTEM - roads paved with broken dreams
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -10,13 +10,18 @@
 const TradeRouteSystem = {
     // Initialize trade route system
     init() {
+        // 🖤 Guard against early initialization when player doesn't exist yet 💀
+        if (!game || !game.player) {
+            console.log('🖤 TradeRouteSystem.init() called before player exists... routes await their merchants');
+            return;
+        }
         if (!game.player.tradeRoutes) {
             game.player.tradeRoutes = [];
         }
         if (!game.player.routeHistory) {
             game.player.routeHistory = [];
         }
-        
+
         // Setup route processing
         this.setupRouteProcessing();
     },

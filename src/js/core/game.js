@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // GAME - medieval trading where capitalism meets darkness
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -1740,7 +1740,16 @@ const EventSystem = {
     },
     
     // 🖤 Trigger random events - weather events removed, WeatherSystem handles all weather 💀
+    // Added cooldown to prevent spam - was triggering every frame at 5% = ~3 events/second!
+    lastEventCheck: 0,
+    eventCheckCooldown: 60000, // 🖤 Only check for random events once per minute 💀
+
     checkRandomEvents() {
+        const now = Date.now();
+        // 🖤 Cooldown check - don't spam events every frame!
+        if (now - this.lastEventCheck < this.eventCheckCooldown) return;
+        this.lastEventCheck = now;
+
         if (Math.random() < this.randomEventChance) {
             const eventTypes = Object.keys(this.eventTypes || {});
             if (eventTypes.length > 0) {
@@ -1796,7 +1805,7 @@ const EventSystem = {
         }
         
         // Handle special events
-        if (event.id === 'travel_complete' && event.data.destination) {
+        if (event.id === 'travel_complete' && event.data?.destination) {
             GameWorld.completeTravel(event.data.destination);
         }
         
@@ -1809,7 +1818,10 @@ const EventSystem = {
     refreshMarketItems() {
         Object.keys(GameWorld.locations).forEach(locationId => {
             const location = GameWorld.locations[locationId];
-            
+
+            // 🖤 Skip if location has no specialties array 💀
+            if (!location.specialties || !Array.isArray(location.specialties)) return;
+
             // Add new items based on location specialties
             location.specialties.forEach(specialty => {
                 if (!location.marketPrices[specialty]) {

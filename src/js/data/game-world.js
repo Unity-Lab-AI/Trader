@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // GAME WORLD SYSTEM - where dreams die and gold lives in darkness
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -77,7 +77,8 @@ const GameWorld = {
             connections: ['ironforge_city', 'jade_harbor', 'greendale', 'stonebridge', 'kings_inn'],
             mapPosition: { x: 400, y: 300 },
             sells: ['royal_goods', 'luxury_items', 'fine_clothes', 'jewelry', 'silk_garments', 'perfume', 'wine', 'spices'],
-            buys: ['artifacts', 'rare_gems', 'silk', 'gems', 'gold_bar', 'exotic_goods', 'furs', 'spices']
+            buys: ['artifacts', 'rare_gems', 'silk', 'gems', 'gold_bar', 'exotic_goods', 'furs', 'spices'],
+            npcs: ['noble', 'guard', 'captain', 'jeweler', 'tailor', 'banker', 'herald', 'merchant', 'elder'] // Quest: dungeon_ancient_tome needs elder
         },
 
         // ═══════════════════════════════════════════════════════════
@@ -95,7 +96,8 @@ const GameWorld = {
             connections: ['royal_capital', 'frostholm_village', 'iron_mines', 'northern_outpost'],
             mapPosition: { x: 400, y: 160 },
             sells: ['iron_sword', 'steel_sword', 'iron_armor', 'chainmail', 'plate_armor', 'helmet', 'shield', 'iron_bar', 'steel_bar', 'iron_tools'],
-            buys: ['iron_ore', 'coal', 'leather', 'wood', 'gold_ore']
+            buys: ['iron_ore', 'coal', 'leather', 'wood', 'gold_ore'],
+            npcs: ['blacksmith', 'guard', 'captain', 'apothecary', 'merchant', 'miner'] // Quest: main_preparation needs blacksmith, apothecary, guard
         },
         jade_harbor: {
             id: 'jade_harbor',
@@ -109,7 +111,8 @@ const GameWorld = {
             connections: ['royal_capital', 'fishermans_port', 'eastern_farm', 'silk_road_inn'],
             mapPosition: { x: 560, y: 280 },
             sells: ['silk', 'spices', 'tea', 'exotic_goods', 'porcelain', 'jade', 'perfume', 'rope', 'canvas', 'salt'],
-            buys: ['fish', 'grain', 'timber', 'furs', 'iron_bar', 'gems', 'wine']
+            buys: ['fish', 'grain', 'timber', 'furs', 'iron_bar', 'gems', 'wine'],
+            npcs: ['merchant', 'innkeeper', 'guard', 'sailor', 'ferryman'] // Quest: jade_harbor quests need merchant, innkeeper, guard
         },
         greendale: {
             id: 'greendale',
@@ -123,7 +126,8 @@ const GameWorld = {
             connections: ['royal_capital', 'vineyard_village', 'wheat_farm', 'riverside_inn'],
             mapPosition: { x: 400, y: 440 },
             sells: ['bread', 'ale', 'flour', 'cheese', 'butter', 'eggs', 'meat', 'vegetables', 'livestock'],
-            buys: ['wheat', 'grain', 'milk', 'honey', 'salt', 'herbs', 'wool']
+            buys: ['wheat', 'grain', 'milk', 'honey', 'salt', 'herbs', 'wool'],
+            npcs: ['elder', 'innkeeper', 'apothecary', 'merchant', 'farmer', 'guard'] // Quest: main_prologue needs elder; greendale quests need apothecary, merchant, innkeeper
         },
         stonebridge: {
             id: 'stonebridge',
@@ -137,7 +141,8 @@ const GameWorld = {
             connections: ['royal_capital', 'darkwood_village', 'stone_quarry', 'western_outpost'],
             mapPosition: { x: 240, y: 300 },
             sells: ['bricks', 'mortar', 'tools', 'hammer', 'pickaxe', 'nails', 'planks', 'furniture'],
-            buys: ['stone', 'timber', 'wood', 'iron_bar', 'clay', 'coal']
+            buys: ['stone', 'timber', 'wood', 'iron_bar', 'clay', 'coal'],
+            npcs: ['merchant', 'guard', 'blacksmith', 'mason'] // Quest: stonebridge quests need merchant, guard
         },
         silverkeep: {
             id: 'silverkeep',
@@ -151,7 +156,8 @@ const GameWorld = {
             connections: ['ironforge_city', 'silver_mine', 'mountain_pass_inn'],
             mapPosition: { x: 280, y: 160 },
             sells: ['jewelry', 'gemstone', 'mirror', 'crown', 'gold_bar', 'fine_clothes'],
-            buys: ['silver_ore', 'gold_ore', 'gems', 'raw_gems', 'coal']
+            buys: ['silver_ore', 'gold_ore', 'gems', 'raw_gems', 'coal'],
+            npcs: ['jeweler', 'merchant', 'guard', 'noble']
         },
         sunhaven: {
             id: 'sunhaven',
@@ -165,7 +171,8 @@ const GameWorld = {
             connections: ['greendale', 'sunny_farm', 'coastal_cave', 'lighthouse_inn'],
             mapPosition: { x: 520, y: 460 },
             sells: ['wine', 'fish', 'oil', 'salt', 'rope', 'canvas', 'rum'],
-            buys: ['grapes', 'olives', 'wheat', 'timber', 'iron_bar', 'glass']
+            buys: ['grapes', 'olives', 'wheat', 'timber', 'iron_bar', 'glass'],
+            npcs: ['merchant', 'fisherman', 'vintner', 'guard', 'sailor', 'villager'] // Quest: main_rumors, sunhaven_lighthouse needs villager
         },
 
         // ═══════════════════════════════════════════════════════════
@@ -183,7 +190,8 @@ const GameWorld = {
             connections: ['ironforge_city', 'frozen_cave', 'winterwatch_outpost'],
             mapPosition: { x: 460, y: 100 },
             sells: ['furs', 'leather', 'hide', 'winter_clothing', 'meat'],
-            buys: ['bread', 'ale', 'tools', 'rope', 'salt', 'grain']
+            buys: ['bread', 'ale', 'tools', 'rope', 'salt', 'grain'],
+            npcs: ['elder', 'merchant', 'guard', 'hunter', 'trapper'] // Quest: frostholm quests need elder, merchant, guard
         },
         vineyard_village: {
             id: 'vineyard_village',
@@ -197,7 +205,8 @@ const GameWorld = {
             connections: ['greendale', 'orchard_farm'],
             mapPosition: { x: 320, y: 480 },
             sells: ['wine', 'grapes', 'honey', 'wax', 'cider'],
-            buys: ['bread', 'cheese', 'tools', 'glass', 'barrels']
+            buys: ['bread', 'cheese', 'tools', 'glass', 'barrels'],
+            npcs: ['vintner', 'farmer', 'merchant']
         },
         darkwood_village: {
             id: 'darkwood_village',
@@ -211,7 +220,8 @@ const GameWorld = {
             connections: ['stonebridge', 'ancient_forest', 'hermit_grove'],
             mapPosition: { x: 160, y: 240 },
             sells: ['timber', 'planks', 'wood', 'mushrooms', 'herbs', 'rope'],
-            buys: ['axe', 'food', 'ale', 'nails', 'iron_tools']
+            buys: ['axe', 'food', 'ale', 'nails', 'iron_tools'],
+            npcs: ['lumberjack', 'miller', 'merchant']
         },
         riverwood: {
             id: 'riverwood',
@@ -225,7 +235,8 @@ const GameWorld = {
             connections: ['greendale', 'river_cave'],
             mapPosition: { x: 480, y: 500 },
             sells: ['fish', 'pearls', 'timber', 'rope'],
-            buys: ['bread', 'ale', 'salt', 'fishing_rod', 'canvas']
+            buys: ['bread', 'ale', 'salt', 'fishing_rod', 'canvas'],
+            npcs: ['fisherman', 'merchant', 'boatwright']
         },
         hillcrest: {
             id: 'hillcrest',
@@ -239,7 +250,8 @@ const GameWorld = {
             connections: ['jade_harbor', 'eastern_farm', 'shepherds_inn'],
             mapPosition: { x: 620, y: 200 },
             sells: ['wool', 'cheese', 'leather', 'milk', 'butter', 'wool_cloth'],
-            buys: ['bread', 'salt', 'dye', 'tools', 'grain']
+            buys: ['bread', 'salt', 'dye', 'tools', 'grain'],
+            npcs: ['shepherd', 'farmer', 'merchant']
         },
         miners_rest: {
             id: 'miners_rest',
@@ -253,7 +265,8 @@ const GameWorld = {
             connections: ['stone_quarry', 'deep_mine'],
             mapPosition: { x: 140, y: 380 },
             sells: ['coal', 'ale', 'simple_tools', 'torch', 'lamp'],
-            buys: ['food', 'bread', 'meat', 'pickaxe', 'rope', 'bandages']
+            buys: ['food', 'bread', 'meat', 'pickaxe', 'rope', 'bandages'],
+            npcs: ['miner', 'innkeeper', 'merchant']
         },
 
         // ═══════════════════════════════════════════════════════════
@@ -271,7 +284,8 @@ const GameWorld = {
             connections: ['ironforge_city', 'deep_cavern'],
             mapPosition: { x: 340, y: 100 },
             sells: ['iron_ore', 'coal', 'stone'],
-            buys: ['pickaxe', 'torch', 'lamp', 'rope', 'food', 'ale', 'bandages']
+            buys: ['pickaxe', 'torch', 'lamp', 'rope', 'food', 'ale', 'bandages'],
+            npcs: ['miner', 'foreman', 'merchant']
         },
         silver_mine: {
             id: 'silver_mine',
@@ -285,7 +299,8 @@ const GameWorld = {
             connections: ['silverkeep', 'crystal_cave'],
             mapPosition: { x: 200, y: 100 },
             sells: ['silver_ore', 'gems', 'stone'],
-            buys: ['pickaxe', 'torch', 'food', 'ale', 'rope', 'bandages']
+            buys: ['pickaxe', 'torch', 'food', 'ale', 'rope', 'bandages'],
+            npcs: ['miner', 'foreman', 'jeweler']
         },
         deep_mine: {
             id: 'deep_mine',
@@ -299,7 +314,8 @@ const GameWorld = {
             connections: ['miners_rest', 'shadow_dungeon'],
             mapPosition: { x: 100, y: 420 },
             sells: ['gold_ore', 'gems', 'rare_gems', 'coal'],
-            buys: ['steel_pickaxe', 'lamp', 'rope', 'food', 'bandages', 'ale']
+            buys: ['steel_pickaxe', 'lamp', 'rope', 'food', 'bandages', 'ale'],
+            npcs: ['miner', 'adventurer']
         },
 
         // ═══════════════════════════════════════════════════════════
@@ -317,7 +333,8 @@ const GameWorld = {
             connections: ['darkwood_village', 'druid_grove', 'forest_dungeon'],
             mapPosition: { x: 120, y: 180 },
             sells: ['herbs', 'medical_plants', 'mushrooms', 'timber', 'berries'],
-            buys: ['bread', 'cheese', 'ale', 'axe', 'rope']
+            buys: ['bread', 'cheese', 'ale', 'axe', 'rope'],
+            npcs: ['herbalist', 'hunter', 'forager']
         },
         whispering_woods: {
             id: 'whispering_woods',
@@ -331,7 +348,8 @@ const GameWorld = {
             connections: ['hillcrest', 'fairy_cave'],
             mapPosition: { x: 680, y: 160 },
             sells: ['herbs', 'medical_plants', 'mushrooms', 'honey', 'berries'],
-            buys: ['bread', 'salt', 'glass', 'cloth']
+            buys: ['bread', 'salt', 'glass', 'cloth'],
+            npcs: ['herbalist', 'alchemist', 'wanderer']
         },
         hunters_wood: {
             id: 'hunters_wood',
@@ -345,7 +363,8 @@ const GameWorld = {
             connections: ['vineyard_village', 'hunting_lodge'],
             mapPosition: { x: 260, y: 520 },
             sells: ['furs', 'leather', 'hide', 'meat', 'mutton'],
-            buys: ['bow', 'arrows', 'bread', 'ale', 'rope', 'salt']
+            buys: ['bow', 'arrows', 'bread', 'ale', 'rope', 'salt'],
+            npcs: ['hunter', 'trapper', 'merchant']
         },
 
         // ═══════════════════════════════════════════════════════════
@@ -363,7 +382,8 @@ const GameWorld = {
             connections: ['greendale', 'riverside_inn'],
             mapPosition: { x: 340, y: 380 },
             sells: ['wheat', 'grain', 'eggs', 'vegetables', 'straw'],
-            buys: ['scythe', 'tools', 'seeds', 'salt', 'cloth']
+            buys: ['scythe', 'tools', 'seeds', 'salt', 'cloth'],
+            npcs: ['farmer', 'miller', 'farmhand']
         },
         eastern_farm: {
             id: 'eastern_farm',
@@ -377,7 +397,8 @@ const GameWorld = {
             connections: ['jade_harbor', 'hillcrest'],
             mapPosition: { x: 620, y: 340 },
             sells: ['tea', 'silk', 'vegetables', 'herbs', 'eggs'],
-            buys: ['tools', 'seeds', 'cloth', 'salt', 'iron_tools']
+            buys: ['tools', 'seeds', 'cloth', 'salt', 'iron_tools'],
+            npcs: ['farmer', 'silkweaver', 'merchant']
         },
         orchard_farm: {
             id: 'orchard_farm',
@@ -391,7 +412,8 @@ const GameWorld = {
             connections: ['vineyard_village', 'hunters_wood'],
             mapPosition: { x: 220, y: 480 },
             sells: ['apples', 'fruits', 'cider', 'honey', 'wax'],
-            buys: ['tools', 'seeds', 'barrels', 'cloth']
+            buys: ['tools', 'seeds', 'barrels', 'cloth'],
+            npcs: ['farmer', 'beekeeper', 'orchardist']
         },
         sunny_farm: {
             id: 'sunny_farm',
@@ -405,7 +427,8 @@ const GameWorld = {
             connections: ['sunhaven', 'lighthouse_inn'],
             mapPosition: { x: 580, y: 520 },
             sells: ['grapes', 'oil', 'vegetables', 'herbs', 'honey'],
-            buys: ['tools', 'seeds', 'barrels', 'salt', 'cloth']
+            buys: ['tools', 'seeds', 'barrels', 'salt', 'cloth'],
+            npcs: ['farmer', 'vintner', 'olive_presser']
         },
 
         // ═══════════════════════════════════════════════════════════
@@ -423,7 +446,8 @@ const GameWorld = {
             connections: ['deep_mine'],
             mapPosition: { x: 60, y: 480 },
             sells: ['artifacts', 'gems', 'gold_bar', 'rare_gems'],
-            buys: ['torch', 'lamp', 'rope', 'bandages', 'food', 'weapons']
+            buys: ['torch', 'lamp', 'rope', 'bandages', 'food', 'weapons'],
+            npcs: ['adventurer', 'treasure_hunter'] // Quest: main_darkness_falls needs to enter here
         },
         forest_dungeon: {
             id: 'forest_dungeon',
@@ -437,7 +461,8 @@ const GameWorld = {
             connections: ['ancient_forest'],
             mapPosition: { x: 80, y: 120 },
             sells: ['artifacts', 'old_books', 'gems', 'jewelry'],
-            buys: ['torch', 'rope', 'bandages', 'food', 'weapons']
+            buys: ['torch', 'rope', 'bandages', 'food', 'weapons'],
+            npcs: ['adventurer', 'scholar']
         },
         ruins_of_eldoria: {
             id: 'ruins_of_eldoria',
@@ -451,7 +476,8 @@ const GameWorld = {
             connections: ['winterwatch_outpost', 'frozen_cave'],
             mapPosition: { x: 540, y: 60 },
             sells: ['artifacts', 'old_books', 'crystals', 'parchment'],
-            buys: ['torch', 'food', 'tools', 'ink', 'parchment']
+            buys: ['torch', 'food', 'tools', 'ink', 'parchment'],
+            npcs: ['scholar', 'explorer', 'archaeologist'] // Quest: hidden_history needs scholar
         },
 
         // ═══════════════════════════════════════════════════════════
@@ -469,7 +495,8 @@ const GameWorld = {
             connections: ['iron_mines'],
             mapPosition: { x: 300, y: 60 },
             sells: ['mushrooms', 'crystals', 'stone'],
-            buys: ['torch', 'lamp', 'rope', 'food']
+            buys: ['torch', 'lamp', 'rope', 'food'],
+            npcs: ['explorer', 'miner'] // Quest: hidden_riches needs to enter here
         },
         frozen_cave: {
             id: 'frozen_cave',
@@ -483,7 +510,8 @@ const GameWorld = {
             connections: ['frostholm_village', 'ruins_of_eldoria'],
             mapPosition: { x: 520, y: 40 },
             sells: ['crystals', 'fish', 'ice_goods'],
-            buys: ['torch', 'food', 'furs', 'ale']
+            buys: ['torch', 'food', 'furs', 'ale'],
+            npcs: ['explorer', 'ice_harvester'] // Quest: frostholm_secret needs to enter here
         },
         crystal_cave: {
             id: 'crystal_cave',
@@ -497,7 +525,8 @@ const GameWorld = {
             connections: ['silver_mine'],
             mapPosition: { x: 140, y: 60 },
             sells: ['crystals', 'gems', 'mushrooms', 'stone'],
-            buys: ['torch', 'lamp', 'rope', 'pickaxe', 'food']
+            buys: ['torch', 'lamp', 'rope', 'pickaxe', 'food'],
+            npcs: ['gem_collector', 'miner']
         },
         river_cave: {
             id: 'river_cave',
@@ -511,7 +540,8 @@ const GameWorld = {
             connections: ['riverwood'],
             mapPosition: { x: 540, y: 540 },
             sells: ['pearls', 'fish', 'stone', 'mushrooms'],
-            buys: ['torch', 'rope', 'food', 'ale']
+            buys: ['torch', 'rope', 'food', 'ale'],
+            npcs: ['diver', 'pearl_hunter']
         },
         coastal_cave: {
             id: 'coastal_cave',
@@ -525,7 +555,8 @@ const GameWorld = {
             connections: ['sunhaven', 'smugglers_cove'],
             mapPosition: { x: 640, y: 500 },
             sells: ['pearls', 'gems', 'gold_bar', 'artifacts'],
-            buys: ['torch', 'rope', 'food', 'weapons']
+            buys: ['torch', 'rope', 'food', 'weapons'],
+            npcs: ['treasure_hunter', 'diver']
         },
         fairy_cave: {
             id: 'fairy_cave',
@@ -539,7 +570,8 @@ const GameWorld = {
             connections: ['whispering_woods'],
             mapPosition: { x: 720, y: 120 },
             sells: ['mushrooms', 'herbs', 'medical_plants', 'crystals', 'honey'],
-            buys: ['bread', 'cheese', 'cloth', 'glass']
+            buys: ['bread', 'cheese', 'cloth', 'glass'],
+            npcs: ['herbalist', 'wanderer']
         },
 
         // ═══════════════════════════════════════════════════════════
@@ -557,7 +589,8 @@ const GameWorld = {
             connections: ['royal_capital', 'silk_road_inn'],
             mapPosition: { x: 460, y: 360 },
             sells: ['wine', 'ale', 'bread', 'cheese', 'meat', 'perfume'],
-            buys: ['grapes', 'wheat', 'milk', 'eggs', 'spices', 'honey']
+            buys: ['grapes', 'wheat', 'milk', 'eggs', 'spices', 'honey'],
+            npcs: ['innkeeper', 'noble', 'traveler', 'bard']
         },
         silk_road_inn: {
             id: 'silk_road_inn',
@@ -571,7 +604,8 @@ const GameWorld = {
             connections: ['jade_harbor', 'kings_inn'],
             mapPosition: { x: 520, y: 360 },
             sells: ['tea', 'ale', 'bread', 'spices', 'exotic_goods'],
-            buys: ['silk', 'wheat', 'vegetables', 'herbs', 'meat']
+            buys: ['silk', 'wheat', 'vegetables', 'herbs', 'meat'],
+            npcs: ['innkeeper', 'merchant', 'traveler', 'caravan_master']
         },
         riverside_inn: {
             id: 'riverside_inn',
@@ -585,7 +619,8 @@ const GameWorld = {
             connections: ['greendale', 'wheat_farm'],
             mapPosition: { x: 380, y: 500 },
             sells: ['fish', 'ale', 'bread', 'cheese', 'cider'],
-            buys: ['wheat', 'vegetables', 'salt', 'eggs', 'honey']
+            buys: ['wheat', 'vegetables', 'salt', 'eggs', 'honey'],
+            npcs: ['innkeeper', 'fisherman', 'traveler']
         },
         mountain_pass_inn: {
             id: 'mountain_pass_inn',
@@ -599,7 +634,8 @@ const GameWorld = {
             connections: ['silverkeep', 'northern_outpost'],
             mapPosition: { x: 220, y: 200 },
             sells: ['ale', 'bread', 'meat', 'furs', 'torch', 'rope'],
-            buys: ['wheat', 'vegetables', 'coal', 'wood', 'salt']
+            buys: ['wheat', 'vegetables', 'coal', 'wood', 'salt'],
+            npcs: ['innkeeper', 'traveler', 'mountain_guide']
         },
         shepherds_inn: {
             id: 'shepherds_inn',
@@ -613,7 +649,8 @@ const GameWorld = {
             connections: ['hillcrest'],
             mapPosition: { x: 680, y: 260 },
             sells: ['meat', 'cheese', 'ale', 'bread', 'wool', 'leather'],
-            buys: ['wheat', 'salt', 'vegetables', 'herbs', 'grain']
+            buys: ['wheat', 'salt', 'vegetables', 'herbs', 'grain'],
+            npcs: ['innkeeper', 'shepherd', 'farmer']
         },
         lighthouse_inn: {
             id: 'lighthouse_inn',
@@ -627,7 +664,8 @@ const GameWorld = {
             connections: ['sunhaven', 'sunny_farm'],
             mapPosition: { x: 640, y: 440 },
             sells: ['fish', 'ale', 'bread', 'salt', 'rope', 'canvas'],
-            buys: ['wheat', 'vegetables', 'oil', 'grapes', 'timber']
+            buys: ['wheat', 'vegetables', 'oil', 'grapes', 'timber'],
+            npcs: ['innkeeper', 'sailor', 'lighthouse_keeper']
         },
         hunting_lodge: {
             id: 'hunting_lodge',
@@ -641,7 +679,8 @@ const GameWorld = {
             connections: ['hunters_wood'],
             mapPosition: { x: 200, y: 560 },
             sells: ['meat', 'furs', 'leather', 'ale', 'bow', 'arrows'],
-            buys: ['bread', 'salt', 'rope', 'herbs', 'bandages']
+            buys: ['bread', 'salt', 'rope', 'herbs', 'bandages'],
+            npcs: ['innkeeper', 'hunter', 'trapper']
         },
 
         // ═══════════════════════════════════════════════════════════
@@ -659,7 +698,8 @@ const GameWorld = {
             connections: ['ironforge_city', 'mountain_pass_inn'],
             mapPosition: { x: 340, y: 200 },
             sells: ['iron_sword', 'shield', 'helmet', 'chainmail', 'bandages', 'torch'],
-            buys: ['food', 'bread', 'meat', 'ale', 'furs', 'leather', 'coal']
+            buys: ['food', 'bread', 'meat', 'ale', 'furs', 'leather', 'coal'],
+            npcs: ['guard', 'captain', 'sergeant', 'blacksmith']
         },
         winterwatch_outpost: {
             id: 'winterwatch_outpost',
@@ -673,7 +713,8 @@ const GameWorld = {
             connections: ['frostholm_village', 'ruins_of_eldoria'],
             mapPosition: { x: 480, y: 40 },
             sells: ['iron_sword', 'shield', 'iron_armor', 'rope', 'torch', 'bandages'],
-            buys: ['furs', 'food', 'meat', 'ale', 'coal', 'wood']
+            buys: ['furs', 'food', 'meat', 'ale', 'coal', 'wood'],
+            npcs: ['guard', 'captain', 'scout']
         },
         western_outpost: {
             id: 'western_outpost',
@@ -687,7 +728,8 @@ const GameWorld = {
             connections: ['stonebridge', 'stone_quarry'],
             mapPosition: { x: 160, y: 340 },
             sells: ['iron_sword', 'bow', 'arrows', 'rope', 'torch', 'bandages'],
-            buys: ['food', 'bread', 'ale', 'leather', 'timber', 'coal']
+            buys: ['food', 'bread', 'ale', 'leather', 'timber', 'coal'],
+            npcs: ['guard', 'scout', 'sergeant'] // Quest: main_frontier, main_shadow_key need guard
         },
 
         // ═══════════════════════════════════════════════════════════
@@ -705,7 +747,8 @@ const GameWorld = {
             connections: ['jade_harbor', 'smugglers_cove'],
             mapPosition: { x: 680, y: 340 },
             sells: ['fish', 'salt', 'rope', 'canvas', 'pearls', 'oil'],
-            buys: ['bread', 'ale', 'timber', 'iron_bar', 'cloth', 'grain']
+            buys: ['bread', 'ale', 'timber', 'iron_bar', 'cloth', 'grain'],
+            npcs: ['fisherman', 'sailor', 'harbormaster', 'merchant']
         },
         smugglers_cove: {
             id: 'smugglers_cove',
@@ -719,7 +762,8 @@ const GameWorld = {
             connections: ['fishermans_port', 'coastal_cave'],
             mapPosition: { x: 720, y: 420 },
             sells: ['exotic_goods', 'spices', 'rum', 'gems', 'silk', 'artifacts'],
-            buys: ['gold_bar', 'jewelry', 'weapons', 'furs', 'rare_gems']
+            buys: ['gold_bar', 'jewelry', 'weapons', 'furs', 'rare_gems'],
+            npcs: ['smuggler', 'merchant', 'fence'] // Quest: main_eastern_clues needs merchant
         },
 
         // ═══════════════════════════════════════════════════════════
@@ -737,7 +781,8 @@ const GameWorld = {
             connections: ['darkwood_village'],
             mapPosition: { x: 100, y: 280 },
             sells: ['herbs', 'medical_plants', 'mushrooms', 'honey', 'berries'],
-            buys: ['bread', 'cheese', 'cloth', 'parchment', 'ink']
+            buys: ['bread', 'cheese', 'cloth', 'parchment', 'ink'],
+            npcs: ['hermit', 'sage']
         },
         druid_grove: {
             id: 'druid_grove',
@@ -751,7 +796,8 @@ const GameWorld = {
             connections: ['ancient_forest'],
             mapPosition: { x: 60, y: 220 },
             sells: ['medical_plants', 'herbs', 'honey', 'berries', 'mushrooms'],
-            buys: ['bread', 'fruit', 'vegetables', 'cloth', 'glass']
+            buys: ['bread', 'fruit', 'vegetables', 'cloth', 'glass'],
+            npcs: ['druid', 'herbalist', 'acolyte'] // Quest: main_shadow_key needs druid
         },
         stone_quarry: {
             id: 'stone_quarry',
@@ -765,7 +811,8 @@ const GameWorld = {
             connections: ['stonebridge', 'western_outpost', 'miners_rest'],
             mapPosition: { x: 180, y: 420 },
             sells: ['stone', 'clay', 'sand', 'bricks'],
-            buys: ['pickaxe', 'tools', 'food', 'ale', 'rope', 'bandages']
+            buys: ['pickaxe', 'tools', 'food', 'ale', 'rope', 'bandages'],
+            npcs: ['quarry_foreman', 'stonecutter', 'merchant']
         }
     },
 
@@ -776,7 +823,7 @@ const GameWorld = {
     // This makes People panel actually show people, imagine that
     // 🖤 QUEST-ENABLED NPC SPAWNS - all quest givers now spawn somewhere! 💀
     npcSpawnsByLocationType: {
-        capital: ['innkeeper', 'blacksmith', 'jeweler', 'tailor', 'banker', 'guard', 'noble', 'general_store', 'apothecary', 'herald', 'steward', 'captain', 'sage'], // 🖤 Added quest NPCs
+        capital: ['innkeeper', 'blacksmith', 'jeweler', 'tailor', 'banker', 'guard', 'noble', 'general_store', 'apothecary', 'herald', 'steward', 'captain', 'sage'], // 🖤 Capital has sage for wisdom quests 💀
         city: ['innkeeper', 'blacksmith', 'general_store', 'apothecary', 'guard', 'merchant', 'tailor', 'elder', 'scholar', 'vintner'], // 🖤 Added elder + quest NPCs 💀
         town: ['innkeeper', 'blacksmith', 'general_store', 'farmer', 'guard', 'miller', 'mason'], // 🖤 Added craft quest givers
         village: ['innkeeper', 'farmer', 'general_store', 'elder'], // 🖤 Villages can have elders too
@@ -799,12 +846,15 @@ const GameWorld = {
         const location = this.locations[locationId];
         if (!location) return [];
 
-        // 💀 Check if location has explicit NPCs defined
+        // 💀 Check if location has explicit NPCs defined - ALL locations should have this now
         if (location.npcs && location.npcs.length > 0) {
             return location.npcs;
         }
 
-        // 🦇 Fall back to type-based spawns
+        // ⚠️ FALLBACK WARNING - Location is missing explicit NPCs array!
+        console.warn(`⚠️ Location "${locationId}" missing explicit npcs array! Using type-based fallback.`);
+
+        // 🦇 Fall back to type-based spawns (legacy - should not be needed)
         const typeNPCs = this.npcSpawnsByLocationType[location.type] || [];
 
         // 🖤 Scale number of NPCs based on population

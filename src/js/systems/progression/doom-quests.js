@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🖤 DOOM WORLD QUESTS - The Apocalyptic Reality 💀
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // 15 Doom World Exclusive Quests + Greedy Won Boss
 // Survival, Resistance, and Boss arcs
 // Access via defeating dungeon bosses (Shadow Tower/Ruins of Malachar)

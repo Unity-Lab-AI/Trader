@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // GAME WORLD RENDERER - main world map rendering engine
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -785,9 +785,9 @@ const GameWorldRenderer = {
 
         console.log('🗺️ Visibility calc - visited locations:', visited);
 
-        // If still no visited locations, show all as visible (fallback)
+        // If still no visited locations, show all as visible (fallback for new game)
         if (visited.length === 0) {
-            console.warn('🗺️ No visited locations found - showing all locations');
+            console.log('🗺️ No visited locations yet - new game, showing all locations');
             Object.keys(locations).forEach(locId => {
                 visibility[locId] = 'visible';
             });
@@ -1994,6 +1994,8 @@ const GameWorldRenderer = {
         this.mapState.lastOffsetX = this.mapState.offsetX;
         this.mapState.lastOffsetY = this.mapState.offsetY;
         this.mapElement.style.cursor = 'grabbing';
+        // 🖤 Disable any transitions during drag for instant response 💀
+        this.mapElement.classList.add('dragging');
     },
 
     onMouseMove(e) {
@@ -2005,14 +2007,30 @@ const GameWorldRenderer = {
         this.mapState.offsetX = this.mapState.lastOffsetX + dx;
         this.mapState.offsetY = this.mapState.lastOffsetY + dy;
 
-        this.updateTransform();
+        // 🖤 Use lightweight transform during drag for smooth panning 💀
+        this.updateTransformFast();
     },
 
     onMouseUp(e) {
         this.mapState.isDragging = false;
         if (this.mapElement) {
             this.mapElement.style.cursor = 'grab';
+            // 🖤 Re-enable transitions after drag 💀
+            this.mapElement.classList.remove('dragging');
         }
+        // 🖤 Full update with marker scaling and bounds after drag ends 💀
+        this.updateTransform();
+    },
+
+    // 🖤 Lightweight transform for smooth dragging - NO constraints, NO scaling 💀
+    // 🦇 Pure 1:1 mouse movement to map movement - pixel perfect smoothness
+    updateTransformFast() {
+        if (!this.mapElement) return;
+
+        // 🖤 NO constrainToBounds() during drag - that causes the snapping/jumping! 💀
+        // 🖤 NO marker scaling - that causes the stutter! 💀
+        // Just raw, pure CSS transform - exactly what the mouse dictates
+        this.mapElement.style.transform = `translate(${this.mapState.offsetX}px, ${this.mapState.offsetY}px) scale(${this.mapState.zoom})`;
     },
 
     // 🔍 zoom handlers - for when you need to see your problems closer or further away
@@ -2148,6 +2166,8 @@ const GameWorldRenderer = {
             this.mapState.dragStartY = touch.clientY;
             this.mapState.lastOffsetX = this.mapState.offsetX;
             this.mapState.lastOffsetY = this.mapState.offsetY;
+            // 🖤 Disable transitions during touch drag 💀
+            if (this.mapElement) this.mapElement.classList.add('dragging');
         }
     },
 
@@ -2162,11 +2182,15 @@ const GameWorldRenderer = {
         this.mapState.offsetX = this.mapState.lastOffsetX + dx;
         this.mapState.offsetY = this.mapState.lastOffsetY + dy;
 
-        this.updateTransform();
+        // 🖤 Use lightweight transform for smooth touch panning 💀
+        this.updateTransformFast();
     },
 
     onTouchEnd(e) {
         this.mapState.isDragging = false;
+        // 🖤 Re-enable transitions and do full update after touch drag 💀
+        if (this.mapElement) this.mapElement.classList.remove('dragging');
+        this.updateTransform();
     },
 
     // 💬 tooltip handlers - whispers of information when you hover over things

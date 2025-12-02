@@ -18,6 +18,178 @@ Each entry follows this format:
 
 ## 2025-12-02 - Current Session
 
+### Achievement Deferred Until First Unpause 🖤💀
+
+**Request:** The 500 wealth (Peddler rank) achievement was triggering immediately on new game start before the player even unpaused. Make achievements wait until the player first unpauses the game.
+
+**Status:** COMPLETE ✅
+
+**Root Cause:**
+- `AchievementSystem.init()` was calling `checkAchievements()` immediately
+- Player starts with 500+ gold (depending on difficulty/perks)
+- The `rank_peddler` achievement triggers at 500g wealth
+- Achievement popup appeared before player even started playing
+
+**Fix Applied:**
+1. **achievement-system.js:1511-1535** - Added `_firstUnpauseOccurred` and `_achievementsEnabled` flags
+2. **achievement-system.js:1517-1522** - Modified `init()` to NOT call `checkAchievements()` immediately
+3. **achievement-system.js:1525-1535** - Added `enableAchievements()` method called on first unpause
+4. **achievement-system.js:1542-1545** - Added guard in `checkAchievements()` to return early if achievements not enabled
+5. **time-machine.js:450-454** - Added hook in `setSpeed()` to call `AchievementSystem.enableAchievements()` when player first unpauses
+
+**How It Works Now:**
+1. Game starts paused
+2. `AchievementSystem.init()` runs but does NOT check achievements
+3. Player unpauses the game (space bar, time control, etc.)
+4. `TimeMachine.setSpeed()` detects unpause and calls `AchievementSystem.enableAchievements()`
+5. NOW achievements start checking and awarding normally
+
+**Files Changed:**
+- `src/js/systems/progression/achievement-system.js`
+- `src/js/core/time-machine.js`
+
+**Potential Risks:**
+- None - achievements will still fire normally once the player starts playing
+- The flag prevents any achievements from firing until intentional gameplay begins
+
+---
+
+### Quest System Audit & Wayfinder Fix 🖤💀
+
+**Request:**
+Verify and fix ALL quests:
+1. All quests correct and functional
+2. Wayfinder works when quest is tracked
+3. Quest markers lead to next quest location appropriately
+4. Main quests and side quest chains flow correctly
+
+**Status:** COMPLETE ✅
+
+**Audit Findings:**
+
+1. **Quest Definitions** - All quests properly structured with:
+   - `location` - where to get quest
+   - `objectives` - with type, location, count, description
+   - `nextQuest` - for chain linking
+   - `prerequisite` - for unlock requirements
+
+2. **Main Quest Chain** - 8 quests flow correctly:
+   - `main_prologue` → `main_rumors` → `main_eastern_clues` → `main_investigation`
+   - → `main_preparation` → `main_western_approach` → `main_shadow_key` → `main_tower_assault`
+
+3. **Wayfinder System** - Works correctly via `getTrackedQuestLocation()`:
+   - Finds first incomplete objective
+   - Returns location for `visit`, `talk`, `explore`, `collect` objectives
+   - Golden marker rendered on both main map and mini-map
+
+**Bug Found & Fixed:**
+
+🐛 **Next quest in chain wasn't auto-offered!**
+- `completeQuest()` only logged `nextQuest` to console
+- Now auto-starts main story quests and tracks them
+- Side quests notify player they're available
+
+**Files Changed:**
+1. `quest-system.js:1495-1516` - Auto-start and track next main quest in chain
+2. `initial-encounter.js:294-298` - Auto-track `main_prologue` when game starts
+
+**How Quest Chain Now Works:**
+1. Complete a main quest → next main quest auto-starts AND auto-tracks
+2. Wayfinder immediately points to new quest objective
+3. Player never loses the main story thread
+
+---
+
+### NPC Communication System Overhaul 🖤💀
+
+**Request:**
+Complete rework of NPC communication system so that:
+1. ALL NPC API interactions ("browse goods", "goodbye", etc.) send correct standardized instructions
+2. Each NPC type has their own specification file with attributes, items, quests, voice, personality
+3. Instructions to text API are auto-populated with NPC-specific modifiers
+4. Covers ALL NPCs: merchants, bosses, criminals, elders, guards, etc.
+5. TTS playback receives properly formatted responses
+
+**Context:**
+- Current system has NPCPersonaDatabase in npc-voice.js with personas per type
+- NPCWorkflowSystem in npc-workflow.js handles interaction types
+- NPCPromptBuilder builds prompts but instructions aren't fully standardized per action
+- Buttons like "browse goods" send raw text without NPC-specific context
+- Need complete standardization across all 30+ NPC types
+
+**Architecture Chosen (per Gee):**
+1. **Hybrid approach:** JSON files for NPC data/stats + JS file for instruction templates
+2. **Template strings with placeholders:** Like `"You are {npc.name}, a {npc.type}..."`
+
+**Planned Structure:**
+```
+src/
+  data/
+    npcs/
+      merchants.json      - All merchant-type NPCs
+      criminals.json      - Thieves, bandits, smugglers
+      authorities.json    - Guards, elders, nobles
+      service.json        - Healers, innkeepers, blacksmiths
+      bosses.json         - Boss encounter NPCs
+  js/
+    npc/
+      npc-instruction-templates.js  - Template system with placeholders
+      npc-data-loader.js           - Loads JSON, resolves templates
+```
+
+**Status:** COMPLETE ✅
+
+**Files Created:**
+1. `src/data/npcs/merchants.json` - Merchant NPCs (merchant, general_store, blacksmith, apothecary, innkeeper, jeweler, tailor, baker, farmer, fisherman)
+2. `src/data/npcs/service.json` - Service NPCs (healer, banker, stablemaster, ferryman, priest, scholar, herbalist)
+3. `src/data/npcs/authorities.json` - Authority NPCs (guard, elder, noble, guild_master, captain)
+4. `src/data/npcs/criminals.json` - Criminal NPCs (thief, robber, bandit, smuggler, informant, loan_shark)
+5. `src/data/npcs/bosses.json` - Boss NPCs (dark_lord, bandit_chief, dragon, necromancer, goblin_king, alpha_wolf)
+6. `src/data/npcs/common.json` - Common NPCs (traveler, beggar, drunk, courier, miner, hunter, woodcutter, sailor, adventurer)
+7. `src/js/npc/npc-instruction-templates.js` - Template system with placeholder resolution
+
+**Files Modified:**
+1. `src/js/npc/npc-voice.js:332` - Modified `generateNPCResponse()` to accept `options.action` parameter and use NPCInstructionTemplates when action specified
+2. `src/js/ui/panels/people-panel.js` - Rewrote action methods to use `sendActionMessage()` with standardized action types:
+   - `askAboutWares()` → action: 'browse_goods'
+   - `askAboutWork()` → action: 'ask_quest'
+   - `mentionDelivery()` → action: 'turn_in_quest'
+   - `askDirections()` → action: 'ask_directions'
+   - `sayGoodbye()` → action: 'farewell'
+   - `sendGreeting()` → action: 'greeting'
+3. `index.html:1252` - Added npc-instruction-templates.js script load
+
+**How It Works:**
+1. Each NPC type has a JSON spec file with: voice, personality, speakingStyle, background, traits, greetings[], farewells[], browseGoods{instruction, responses[]}, etc.
+2. When player clicks an action button, `sendActionMessage(actionType, displayMessage)` is called
+3. This passes `options.action` to `NPCVoiceChatSystem.generateNPCResponse()`
+4. If action is specified AND `NPCInstructionTemplates._loaded` is true, it builds a standardized instruction using `NPCInstructionTemplates.buildInstruction(npcType, action, context)`
+5. The template system resolves {placeholders} like {npc.name}, {location.name}, {player.gold}, etc.
+6. Fallback to existing NPCPromptBuilder if templates not loaded
+
+**Action Types Supported:**
+- `greeting` - First contact greeting
+- `farewell` - Saying goodbye
+- `browse_goods` - Show me what you sell
+- `buy` - Player buying items
+- `sell` - Player selling items
+- `haggle` - Negotiating prices
+- `ask_quest` - Ask about work/quests
+- `turn_in_quest` - Deliver quest items
+- `ask_rumors` - Local gossip
+- `ask_directions` - Navigation help
+- `rest` - Inn rest service
+- `heal` - Healer service
+- `combat_taunt` - Boss taunts in combat
+- `robbery_demand` - Criminal robbery
+
+**Potential Risks:**
+- JSON files loaded via fetch() - may fail if CORS issues or file not found
+- Falls back gracefully to existing NPCPromptBuilder if templates fail to load
+- New system is additive - doesn't break existing functionality
+
+---
+
 ### Fix Save/Load Tab - Actually Show Saves 🖤💀
 
 **Request:**
@@ -1509,6 +1681,31 @@ The weather transfer was happening before the setup panel was hidden. CSS rule w
 ### Version System
 **Request:** All files v0.88+, display in Settings > About
 **Status:** DONE ✅
+
+---
+
+## 2025-12-02 - Bug Fixes Session 🖤💀
+
+### Console Error Cleanup
+**Request:** Fix various console errors/warnings on game load
+**Status:** COMPLETE ✅
+
+**Fixed:**
+1. `game-controls element not found` - Commented out dead code calls in ui-enhancements.js
+2. `skill-system.js syntax error` - Fixed broken comment syntax (had `* -` without opening `/*`)
+3. `property-system-facade.js null error` - Added null guard for game.player
+4. `employee-system.js null error` - Added null guard for game.player
+5. `trade-route-system.js null error` - Added null guard for game.player
+6. `CORS errors loading NPC JSON files` - Created npc-data-embedded.js with all NPC data inline
+7. `inventory-btn` and `menu-btn` warnings - Marked as optional (UI uses bottom action bar now)
+8. `No visited locations found` warning - Changed to console.log (expected on new game)
+
+---
+
+### Map Dragging - Smooth Panning 🗺️
+**Request:** Fix laggy/jerky map dragging - remove snap-to-view, make smooth continuous panning
+**Context:** Map drag has predefined snap points that feel jerky. Need smooth incremental movement.
+**Status:** IN PROGRESS 🔧
 
 ---
 

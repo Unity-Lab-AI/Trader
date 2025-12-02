@@ -785,31 +785,50 @@ const PeoplePanel = {
         if (goldTradedValue) goldTradedValue.textContent = tradeStats.totalGoldTraded.toLocaleString();
     },
 
-    // 💬 SEND GREETING
+    // 💬 SEND GREETING - 🖤 Now uses NPCInstructionTemplates for NPC-specific greetings 💀
     async sendGreeting(npcData) {
         this.addChatMessage('*Approaching...*', 'system');
 
-        // 🖤 Generate greeting via API
+        // 🖤 Generate greeting via API with standardized GREETING action 💀
         if (typeof NPCVoiceChatSystem !== 'undefined') {
             NPCVoiceChatSystem.startConversation(npcData.id, npcData);
 
             try {
+                // 🦇 Use GREETING action type for proper NPC-specific instructions
+                const options = {
+                    action: 'greeting',
+                    availableQuests: this.getAvailableQuestsForNPC(),
+                    activeQuests: this.getActiveQuestsForNPC(),
+                    rumors: this.getRumors(),
+                    nearbyLocations: this.getNearbyLocations()
+                };
+
+                console.log(`🎭 PeoplePanel: Sending greeting for ${npcData.type || npcData.id}`);
+
                 const response = await NPCVoiceChatSystem.generateNPCResponse(
                     npcData,
                     '[GREETING]',
-                    []
+                    [],
+                    options
                 );
 
-                this.addChatMessage(response.text, 'npc');
+                if (!response || !response.text) {
+                    throw new Error('Empty greeting response');
+                }
 
-                // 🔊 Play TTS
+                this.addChatMessage(response.text, 'npc');
+                this.chatHistory.push({ role: 'assistant', content: response.text });
+
+                // 🔊 Play TTS with NPC-specific voice from templates
                 if (NPCVoiceChatSystem.settings?.voiceEnabled) {
-                    const voice = npcData.voice || 'nova';
+                    const voice = this.getNPCVoice(npcData);
                     NPCVoiceChatSystem.playVoice(response.text, voice);
                 }
             } catch (e) {
+                console.error('🖤 Greeting error:', e);
                 const fallback = this.getFallbackGreeting(npcData);
                 this.addChatMessage(fallback, 'npc');
+                this.chatHistory.push({ role: 'assistant', content: fallback });
             }
         } else {
             const fallback = this.getFallbackGreeting(npcData);
@@ -906,23 +925,34 @@ const PeoplePanel = {
         const npcType = npcData.type || npcData.id;
         const actions = [];
 
-        // 🖤 Trade-related actions
+        // 🖤 Trade-related actions - vendors and service NPCs
         if (this.npcCanTrade(npcType)) {
             actions.push({ label: '💰 Browse wares', action: () => this.askAboutWares() });
             actions.push({ label: '🛒 Open market', action: () => this.openFullTrade() });
         }
 
-        // 🖤 Quest-related actions
-        if (this.npcHasQuest(npcType)) {
-            actions.push({ label: '📜 Ask about work', action: () => this.askAboutWork() });
-        }
-
-        // 🖤 Delivery actions
+        // 🖤 Delivery actions - ONLY show if player has active delivery quest for THIS NPC
         if (this.npcHasDeliveryForThem(npcType)) {
             actions.push({ label: '📦 I have a delivery', action: () => this.mentionDelivery() });
         }
 
-        // 🖤 Generic actions
+        // 🖤 Rumors - innkeepers, travelers, merchants know gossip
+        const gossipNPCs = ['innkeeper', 'merchant', 'traveler', 'drunk', 'sailor', 'informant'];
+        if (gossipNPCs.includes(npcType)) {
+            actions.push({ label: '🗣️ Ask for rumors', action: () => this.askRumors() });
+        }
+
+        // 🖤 Rest action - innkeeper only
+        if (npcType === 'innkeeper') {
+            actions.push({ label: '🛏️ I need rest', action: () => this.askForRest() });
+        }
+
+        // 🖤 Heal action - healers only
+        if (['healer', 'priest', 'apothecary'].includes(npcType)) {
+            actions.push({ label: '💚 I need healing', action: () => this.askForHealing() });
+        }
+
+        // 🖤 Generic actions - always available
         actions.push({ label: '❓ Ask for directions', action: () => this.askDirections() });
         actions.push({ label: '👋 Say goodbye', action: () => this.sayGoodbye() });
 
@@ -1097,44 +1127,242 @@ const PeoplePanel = {
         });
     },
 
-    // 🎯 QUICK ACTION METHODS
-    askAboutWares() {
-        // 🖤 Open NPC trade window directly to show their wares 💀
-        if (!this.currentNPC) {
-            document.getElementById('people-chat-input').value = "What do you have for sale?";
-            this.sendMessage();
-            return;
-        }
+    // 🎯 QUICK ACTION METHODS - 🖤 Now use NPCInstructionTemplates for proper API instructions 💀
+    async askAboutWares() {
+        if (!this.currentNPC) return;
 
-        // 🛒 Open the NPC trade window
-        if (typeof NPCTradeWindow !== 'undefined') {
-            NPCTradeWindow.open(this.currentNPC, 'shop');
-        } else {
-            // 🖤 Fallback to chat
-            document.getElementById('people-chat-input').value = "What do you have for sale?";
-            this.sendMessage();
-        }
+        // 🖤 Send standardized BROWSE_GOODS instruction to API 💀
+        await this.sendActionMessage('browse_goods', "Show me what you have for sale.");
     },
 
-    askAboutWork() {
-        document.getElementById('people-chat-input').value = "Do you have any work for me?";
-        this.sendMessage();
+    async askAboutWork() {
+        if (!this.currentNPC) return;
+
+        // 🖤 Send standardized ASK_QUEST instruction to API 💀
+        await this.sendActionMessage('ask_quest', "Do you have any work for me?");
     },
 
-    mentionDelivery() {
-        document.getElementById('people-chat-input').value = "I have a delivery for you.";
-        this.sendMessage();
+    async mentionDelivery() {
+        if (!this.currentNPC) return;
+
+        // 🖤 Send standardized TURN_IN_QUEST instruction to API 💀
+        await this.sendActionMessage('turn_in_quest', "I have a delivery for you.");
     },
 
-    askDirections() {
-        document.getElementById('people-chat-input').value = "Can you tell me about nearby places?";
-        this.sendMessage();
+    async askDirections() {
+        if (!this.currentNPC) return;
+
+        // 🖤 Send standardized ASK_DIRECTIONS instruction to API 💀
+        await this.sendActionMessage('ask_directions', "Can you tell me about nearby places?");
     },
 
-    sayGoodbye() {
-        document.getElementById('people-chat-input').value = "I should be going. Farewell.";
-        this.sendMessage();
+    async sayGoodbye() {
+        if (!this.currentNPC) return;
+
+        // 🖤 Send standardized FAREWELL instruction to API 💀
+        await this.sendActionMessage('farewell', "I should be going. Farewell.");
         setTimeout(() => this.showListView(), 2000);
+    },
+
+    async askRumors() {
+        if (!this.currentNPC) return;
+
+        // 🖤 Send standardized ASK_RUMORS instruction to API 💀
+        await this.sendActionMessage('ask_rumors', "Heard any interesting rumors lately?");
+    },
+
+    async askForRest() {
+        if (!this.currentNPC) return;
+
+        // 🖤 Send standardized REST instruction to API 💀
+        await this.sendActionMessage('rest', "I need a room to rest.");
+    },
+
+    async askForHealing() {
+        if (!this.currentNPC) return;
+
+        // 🖤 Send standardized HEAL instruction to API 💀
+        await this.sendActionMessage('heal', "I'm injured. Can you help me?");
+    },
+
+    // 🖤 NEW: Send message with standardized action type to NPCInstructionTemplates 💀
+    async sendActionMessage(actionType, displayMessage) {
+        if (this.isWaitingForResponse || !this.currentNPC) return;
+
+        this.addChatMessage(displayMessage, 'player');
+        this.chatHistory.push({ role: 'user', content: displayMessage });
+
+        this.isWaitingForResponse = true;
+        this.addChatMessage('...', 'npc typing-indicator');
+
+        try {
+            // 🖤 Check if NPCVoiceChatSystem is available
+            if (typeof NPCVoiceChatSystem === 'undefined') {
+                throw new Error('NPCVoiceChatSystem not available');
+            }
+
+            // 🦇 Build context for instruction templates
+            const options = {
+                action: actionType,
+                availableQuests: this.getAvailableQuestsForNPC(),
+                activeQuests: this.getActiveQuestsForNPC(),
+                rumors: this.getRumors(),
+                nearbyLocations: this.getNearbyLocations()
+            };
+
+            console.log(`🎭 PeoplePanel: Sending ${actionType} action for ${this.currentNPC.type || this.currentNPC.id}`);
+            console.log('🎭 Options:', options);
+
+            const response = await NPCVoiceChatSystem.generateNPCResponse(
+                this.currentNPC,
+                displayMessage,
+                this.chatHistory,
+                options
+            );
+
+            // 🖤 Remove typing indicator
+            const messages = document.getElementById('people-chat-messages');
+            const typing = messages?.querySelector('.typing-indicator');
+            if (typing) typing.remove();
+
+            // 🦇 Check if we got a valid response
+            if (!response || !response.text) {
+                throw new Error('Empty response from API');
+            }
+
+            this.addChatMessage(response.text, 'npc');
+            this.chatHistory.push({ role: 'assistant', content: response.text });
+
+            // 🔊 Play TTS with NPC-specific voice
+            if (NPCVoiceChatSystem.settings?.voiceEnabled) {
+                const voice = this.getNPCVoice(this.currentNPC);
+                NPCVoiceChatSystem.playVoice(response.text, voice);
+            }
+
+            // 🖤 Update quest items in case something changed
+            this.updateQuestItems();
+
+        } catch (e) {
+            console.error('🖤 Action message error:', e);
+            console.error('🖤 NPC:', this.currentNPC);
+            console.error('🖤 Action:', actionType);
+
+            const messages = document.getElementById('people-chat-messages');
+            const typing = messages?.querySelector('.typing-indicator');
+            if (typing) typing.remove();
+
+            // 🦇 Use action-specific fallback responses
+            const fallback = this.getActionFallback(actionType, this.currentNPC);
+            this.addChatMessage(fallback, 'npc');
+            this.chatHistory.push({ role: 'assistant', content: fallback });
+        }
+
+        this.isWaitingForResponse = false;
+    },
+
+    // 🖤 Get fallback response based on action type 💀
+    getActionFallback(actionType, npcData) {
+        const npcType = npcData?.type || npcData?.id || 'stranger';
+        const fallbacks = {
+            browse_goods: `*gestures at wares* Take a look around. Let me know if something catches your eye.`,
+            ask_quest: `*thinks for a moment* I don't have any work right now, but check back later.`,
+            turn_in_quest: `*looks confused* I wasn't expecting any deliveries. Are you sure you have the right person?`,
+            ask_rumors: `*leans in* Things have been quiet lately. Nothing worth mentioning.`,
+            ask_directions: `*points down the road* Most places are connected by the main roads. Just follow them.`,
+            farewell: `Safe travels, friend.`,
+            rest: `*nods* A room will cost you. We have beds available.`,
+            heal: `*examines you* Let me see what I can do for you.`,
+            greeting: `*nods* What brings you here today?`
+        };
+        return fallbacks[actionType] || `*looks at you expectantly*`;
+    },
+
+    // 🖤 Get NPC voice from new template system or fallback 💀
+    getNPCVoice(npcData) {
+        if (typeof NPCInstructionTemplates !== 'undefined' && NPCInstructionTemplates._loaded) {
+            return NPCInstructionTemplates.getVoice(npcData.type || npcData.id);
+        }
+        return npcData.voice || 'nova';
+    },
+
+    // 🖤 Get available quests for current NPC 💀
+    getAvailableQuestsForNPC() {
+        if (typeof QuestSystem === 'undefined' || !this.currentNPC) return [];
+
+        const npcType = this.currentNPC.type || this.currentNPC.id;
+        return Object.values(QuestSystem.quests || {}).filter(q => {
+            const giverMatches = q.giver === npcType;
+            const notActive = !QuestSystem.activeQuests?.[q.id];
+            const notCompleted = !QuestSystem.completedQuests?.includes(q.id) || q.repeatable;
+            const prereqMet = !q.prerequisite || QuestSystem.completedQuests?.includes(q.prerequisite);
+            return giverMatches && notActive && notCompleted && prereqMet;
+        });
+    },
+
+    // 🖤 Get active quests that can be turned in to current NPC 💀
+    getActiveQuestsForNPC() {
+        if (typeof QuestSystem === 'undefined' || !this.currentNPC) return [];
+
+        const npcType = this.currentNPC.type || this.currentNPC.id;
+        return Object.values(QuestSystem.activeQuests || {}).filter(q => {
+            // 🦇 Quest giver matches OR has a turn-in objective for this NPC
+            const giverMatches = q.giver === npcType;
+            const hasTurnInObj = q.objectives?.some(o =>
+                (o.type === 'talk' || o.type === 'deliver') && o.npc === npcType
+            );
+            return giverMatches || hasTurnInObj;
+        });
+    },
+
+    // 🖤 Get rumors from game context 💀
+    getRumors() {
+        // 🦇 Try to get rumors from various sources
+        const rumors = [];
+
+        // Check QuestSystem for rumors
+        if (typeof QuestSystem !== 'undefined' && QuestSystem.getRumors) {
+            rumors.push(...(QuestSystem.getRumors() || []));
+        }
+
+        // Check game events
+        if (typeof game !== 'undefined' && game.recentEvents) {
+            rumors.push(...game.recentEvents.slice(-3));
+        }
+
+        return rumors.length > 0 ? rumors : ['Things are quiet around here lately.'];
+    },
+
+    // 🖤 Get nearby locations for directions 💀
+    getNearbyLocations() {
+        if (typeof GameWorld === 'undefined' || !game?.currentLocation?.id) return [];
+
+        const currentId = game.currentLocation.id;
+        const currentLoc = GameWorld.locations?.[currentId];
+
+        if (!currentLoc?.connections) return [];
+
+        return currentLoc.connections.map(connId => {
+            const connLoc = GameWorld.locations?.[connId];
+            return {
+                name: connLoc?.name || connId,
+                id: connId,
+                direction: this.getDirectionTo(currentLoc, connLoc)
+            };
+        }).slice(0, 5);
+    },
+
+    // 🖤 Calculate direction to a location (basic) 💀
+    getDirectionTo(from, to) {
+        if (!from?.x || !to?.x) return 'nearby';
+
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            return dx > 0 ? 'east' : 'west';
+        } else {
+            return dy > 0 ? 'south' : 'north';
+        }
     },
 
     openFullTrade() {

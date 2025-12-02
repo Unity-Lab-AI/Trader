@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // QUEST SYSTEM - tasks that pretend to matter
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -183,17 +183,18 @@ const QuestSystem = {
         main_prologue: {
             id: 'main_prologue',
             name: 'A New Beginning',
-            description: 'Establish yourself as a trader. Complete your first trade and speak with the village elder.',
+            description: 'Establish yourself as a trader. Make your first purchase from any merchant, then travel to Greendale to speak with Elder Morin about the strange rumors.',
             giver: 'elder',
             giverName: 'Elder Morin',
-            location: 'greendale',
+            location: 'greendale', // 🖤 Fixed location - players must travel here 💀
             type: 'main',
             chain: 'shadow_rising',
             chainOrder: 1,
             difficulty: 'easy',
             objectives: [
-                { type: 'buy', count: 1, current: 0, description: 'Make your first purchase' },
-                { type: 'talk', npc: 'elder', completed: false, description: 'Speak with Elder Morin' }
+                { type: 'buy', count: 1, current: 0, description: 'Make your first purchase from any merchant' },
+                { type: 'visit', location: 'greendale', completed: false, description: 'Travel to Greendale' },
+                { type: 'talk', npc: 'elder', completed: false, description: 'Speak with Elder Morin in Greendale' }
             ],
             rewards: { gold: 25, reputation: 10, experience: 20 },
             timeLimit: null,
@@ -201,9 +202,9 @@ const QuestSystem = {
             prerequisite: null,
             nextQuest: 'main_rumors',
             dialogue: {
-                offer: "Welcome to Greendale, young one. Before we discuss important matters, prove yourself as a trader. Make a purchase, then return to me.",
-                progress: "Have you completed a trade yet? The merchants await your coin.",
-                complete: "Good. You have the makings of a capable trader. Now, let me tell you of darker things..."
+                offer: "Welcome to Greendale, young trader. I've been expecting someone like you. Dark rumors spread across the realm... but first, show me you can handle yourself. Make a trade, then return.",
+                progress: "Have you completed a trade yet? The merchants await.",
+                complete: "Good. You have the makings of a capable trader. Now, let me tell you of darker things stirring in the realm..."
             }
         },
 
@@ -1141,6 +1142,12 @@ const QuestSystem = {
                 // 🖤 v0.90+ Restore tracked quest
                 if (data.trackedQuestId && this.activeQuests[data.trackedQuestId]) {
                     this.trackedQuestId = data.trackedQuestId;
+                    console.log(`🎯 Restored tracked quest: ${this.activeQuests[data.trackedQuestId].name}`);
+                    // 🖤 Schedule marker update after maps are rendered 💀
+                    setTimeout(() => {
+                        this.updateQuestMapMarker();
+                        this.updateQuestTracker();
+                    }, 1000);
                 }
 
                 // Log quest metrics
@@ -1218,6 +1225,14 @@ const QuestSystem = {
         return false;
     },
 
+    // 🖤 Helper: Check if NPC type matches objective (handles arrays) 💀
+    _npcMatchesObjective(npcType, objectiveNpc) {
+        if (Array.isArray(objectiveNpc)) {
+            return objectiveNpc.includes(npcType);
+        }
+        return objectiveNpc === npcType;
+    },
+
     // ═══════════════════════════════════════════════════════════════
     // 📜 QUEST MANAGEMENT - the bureaucracy of adventure
     // ═══════════════════════════════════════════════════════════════
@@ -1258,6 +1273,12 @@ const QuestSystem = {
             assignedBy: giverNPC?.name || quest.giverName || quest.giver
             // 💀 No expiresAt - quests don't expire, take your sweet time loser
         };
+
+        // 🖤 Handle dynamic location quests - use player's current location 💀
+        if (quest.dynamicLocation && typeof game !== 'undefined' && game.currentLocation) {
+            activeQuest.location = game.currentLocation.id;
+            console.log(`📜 Dynamic quest location set to: ${activeQuest.location}`);
+        }
 
         activeQuest.objectives.forEach(obj => {
             if (obj.current !== undefined) obj.current = 0;
@@ -1492,9 +1513,27 @@ const QuestSystem = {
         document.dispatchEvent(new CustomEvent('quest-completed', { detail: { quest, rewards: rewardsGiven } }));
         this.updateQuestLogUI();
 
-        // auto-offer next quest in chain
-        if (quest.nextQuest) {
-            console.log(`📜 Next quest in chain: ${quest.nextQuest}`);
+        // 🖤 Auto-offer next quest in chain - keep the story moving! 💀
+        if (quest.nextQuest && this.quests[quest.nextQuest]) {
+            const nextQuest = this.quests[quest.nextQuest];
+            console.log(`📜 Next quest in chain: ${quest.nextQuest} (${nextQuest.name})`);
+
+            // 🦇 Auto-start the next quest if it's a main story quest
+            if (nextQuest.type === 'main' || quest.type === 'main') {
+                const startResult = this.startQuest(quest.nextQuest);
+                if (startResult.success) {
+                    // 🖤 Auto-track main story quests so wayfinder always points the way
+                    this.trackQuest(quest.nextQuest);
+                    if (typeof addMessage === 'function') {
+                        addMessage(`📜 New Quest: ${nextQuest.name}`, 'info');
+                    }
+                }
+            } else {
+                // 🦇 Side quests - just notify player it's available
+                if (typeof addMessage === 'function') {
+                    addMessage(`📜 New quest available: ${nextQuest.name}`, 'info');
+                }
+            }
         }
 
         return { success: true, quest, rewards: rewardsGiven, nextQuest: quest.nextQuest };
@@ -1582,9 +1621,9 @@ const QuestSystem = {
 
         // also find quests where this NPC is the delivery TARGET (not the giver)
         const deliveriesToReceive = Object.values(this.activeQuests).filter(q => {
-            // look for talk objectives that target this NPC type
+            // look for talk objectives that target this NPC type (handles arrays)
             return q.objectives?.some(obj =>
-                obj.type === 'talk' && obj.npc === npcType && !obj.completed
+                obj.type === 'talk' && this._npcMatchesObjective(npcType, obj.npc) && !obj.completed
             );
         });
 
@@ -1631,7 +1670,7 @@ const QuestSystem = {
         if (deliveriesToReceive.length > 0) {
             context += '\n📦 DELIVERIES COMING TO YOU (player may be delivering):\n';
             deliveriesToReceive.forEach(q => {
-                const talkObj = q.objectives.find(o => o.type === 'talk' && o.npc === npcType);
+                const talkObj = q.objectives.find(o => o.type === 'talk' && this._npcMatchesObjective(npcType, o.npc));
                 if (!talkObj) return;
 
                 context += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
@@ -2132,6 +2171,24 @@ const QuestSystem = {
         return names[locationId] || locationId;
     },
 
+    // 🖤 Get icon for quest type 💀
+    getQuestTypeIcon(questType) {
+        const icons = {
+            'main': '⚔️',
+            'side': '📜',
+            'doom': '💀',
+            'trade': '💰',
+            'combat': '🗡️',
+            'exploration': '🗺️',
+            'delivery': '📦',
+            'escort': '🛡️',
+            'bounty': '🎯',
+            'mystery': '🔮',
+            'repeatable': '🔄'
+        };
+        return icons[questType] || '📋';
+    },
+
     getObjectiveText(objective) {
         switch (objective.type) {
             case 'collect': return `Collect ${objective.item}`;
@@ -2519,8 +2576,12 @@ const QuestSystem = {
             // 🦇 Talk objective - need to find where that NPC is
             if (obj.type === 'talk' && obj.npc) {
                 // NPCs are typically at the quest giver location or specific spots
-                // For now, use the quest's location as fallback
-                return quest.location;
+                // Use quest location, or if null (dynamic), use player's current location
+                if (quest.location) {
+                    return quest.location;
+                } else if (typeof game !== 'undefined' && game.currentLocation) {
+                    return game.currentLocation.id;
+                }
             }
 
             // 💀 Explore dungeon - return the dungeon location
@@ -2544,7 +2605,11 @@ const QuestSystem = {
         this.removeQuestMapMarker();
 
         const targetLocation = this.getTrackedQuestLocation();
-        if (!targetLocation) return;
+        console.log(`🎯 updateQuestMapMarker called - target: ${targetLocation}, trackedQuestId: ${this.trackedQuestId}`);
+        if (!targetLocation) {
+            console.log('🎯 No target location found for quest marker');
+            return;
+        }
 
         // 🖤 Add animation styles first - needed either way 💀
         this.addQuestMarkerStyles();
@@ -2554,12 +2619,19 @@ const QuestSystem = {
         const mainMapLocationEl = document.querySelector(`.map-location[data-location-id="${targetLocation}"]`);
         const miniMapLocationEl = document.querySelector(`.mini-map-location[data-location-id="${targetLocation}"]`);
 
+        // 🖤 Debug: Check if map containers exist 💀
+        const mainMapContainer = document.getElementById('world-map-html');
+        const miniMapContainer = document.getElementById('travel-mini-map');
+        console.log(`🎯 Map containers: main=${!!mainMapContainer}, mini=${!!miniMapContainer}`);
+        console.log(`🎯 Location elements found: main=${!!mainMapLocationEl}, mini=${!!miniMapLocationEl}`);
+
         // 🖤 Add marker to MAIN WORLD MAP if location is visible 💀
         if (mainMapLocationEl) {
             this.addQuestMarkerToElement(mainMapLocationEl, 'main');
             console.log(`🎯 Quest marker attached to main map location: ${targetLocation}`);
         } else {
             // Location is HIDDEN/UNEXPLORED on main map - create floating marker
+            console.log(`🎯 Creating floating marker for main map (location not found)`);
             this.createFloatingQuestMarker(targetLocation, 'main');
         }
 
@@ -2569,6 +2641,7 @@ const QuestSystem = {
             console.log(`🎯 Quest marker attached to mini map location: ${targetLocation}`);
         } else {
             // Location is HIDDEN/UNEXPLORED on mini map - create floating marker
+            console.log(`🎯 Creating floating marker for mini map (location not found)`);
             this.createFloatingQuestMarker(targetLocation, 'mini');
         }
     },
@@ -2626,7 +2699,9 @@ const QuestSystem = {
             mapContainer = document.getElementById('travel-mini-map') ||
                           document.querySelector('.travel-mini-map');
         } else {
-            mapContainer = document.getElementById('world-map');
+            // 🖤 Main map uses world-map-html as the container 💀
+            mapContainer = document.getElementById('world-map-html') ||
+                          document.querySelector('.world-map-html');
         }
 
         if (!mapContainer) {
@@ -2643,16 +2718,11 @@ const QuestSystem = {
                 scaledPos = GameWorldRenderer.scalePosition(location.mapPosition);
             }
         } else {
-            // Mini map needs different scaling - uses percentage-based positioning
-            // The mini map is smaller, so we need to scale coordinates differently
-            const mapRect = mapContainer.getBoundingClientRect();
-            // TravelPanelMap uses a 1600x1200 base coordinate system
-            const baseWidth = 1600;
-            const baseHeight = 1200;
-            scaledPos = {
-                x: (location.mapPosition.x / baseWidth) * mapRect.width,
-                y: (location.mapPosition.y / baseHeight) * mapRect.height
-            };
+            // 🖤 Mini map uses RAW coordinates directly - no scaling needed! 💀
+            // TravelPanelMap.createLocationElement uses location.mapPosition.x/y directly
+            // The map container size is 800x600 and coordinates fit within that range
+            scaledPos = { ...location.mapPosition };
+            console.log(`🎯 Mini map floating marker at raw position: (${scaledPos.x}, ${scaledPos.y})`);
         }
 
         if (!scaledPos) return;
@@ -3037,6 +3107,23 @@ const QuestSystem = {
         document.addEventListener('dungeon-room-explored', (e) => {
             this.updateProgress('explore', { dungeon: e.detail.dungeon, rooms: 1 });
         });
+
+        // 🖤 Refresh quest markers when world map overlay is shown 💀
+        const worldMapOverlay = document.getElementById('world-map-overlay');
+        if (worldMapOverlay) {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.attributeName === 'class') {
+                        const isActive = worldMapOverlay.classList.contains('active');
+                        if (isActive && this.trackedQuestId) {
+                            // 🎯 Map is now visible - refresh markers
+                            setTimeout(() => this.updateQuestMapMarker(), 100);
+                        }
+                    }
+                });
+            });
+            observer.observe(worldMapOverlay, { attributes: true });
+        }
 
         // 💀 No expiration check - quests are IMMORTAL, unlike my sleep schedule
     },

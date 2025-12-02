@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // EMPLOYEE SYSTEM - medieval wage slavery simulator
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -89,6 +89,11 @@ const EmployeeSystem = {
     
     // Initialize employee system
     init() {
+        // 🖤 Guard against early initialization when player doesn't exist yet 💀
+        if (!game || !game.player) {
+            console.log('🖤 EmployeeSystem.init() called before player exists... waiting in the shadows');
+            return;
+        }
         if (!game.player.ownedEmployees) {
             game.player.ownedEmployees = [];
         }

@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // BUTTON FIX - event listener repair shop
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -33,10 +33,11 @@ function safeAddEventListener(elementId, eventType, handler, optional = false) {
         console.log(`✓ Added ${eventType} listener to ${elementId}`);
         return true;
     } else {
-        // Only log error for required buttons, silently skip optional ones
+        // 🖤 Silently skip optional buttons, only log for required ones 💀
         if (!optional) {
-            console.warn(`⚠️ Optional element not found: ${elementId}`);
+            console.warn(`⚠️ Required element not found: ${elementId}`);
         }
+        // Optional buttons get no warning - they just don't exist in this UI config
         return false;
     }
 }
@@ -87,6 +88,7 @@ function initializeButtonListeners() {
         }
     }, true); // true = optional
     
+    // 🖤 Optional - UI uses bottom-inventory-btn instead 💀
     safeAddEventListener('inventory-btn', 'click', function() {
         console.log('Inventory button clicked');
         if (typeof openInventory === 'function') {
@@ -94,7 +96,7 @@ function initializeButtonListeners() {
         } else {
             deboogerWarn('🔧 openInventory function not found');
         }
-    });
+    }, true); // true = optional
     
     // Optional button - UI uses bottom-save-btn instead
     safeAddEventListener('save-btn', 'click', function() {
@@ -106,6 +108,7 @@ function initializeButtonListeners() {
         }
     }, true); // true = optional
     
+    // 🖤 Optional - UI uses bottom-menu-btn instead 💀
     safeAddEventListener('menu-btn', 'click', function() {
         console.log('Menu button clicked');
         if (typeof toggleMenu === 'function') {
@@ -113,7 +116,7 @@ function initializeButtonListeners() {
         } else {
             deboogerWarn('🔧 toggleMenu function not found');
         }
-    });
+    }, true); // true = optional
     
     // Character Creation Buttons - optional, handled by form submit
     safeAddEventListener('create-character-btn', 'click', function(e) {

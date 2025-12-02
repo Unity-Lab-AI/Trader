@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // TIME MACHINE - all of existence, unified in one dark engine
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -445,6 +445,12 @@ const TimeMachine = {
         // 🗺️ Auto-travel: start pending travel when unpausing
         if (wasAtDestinationReady && !this.isPaused) {
             this.checkAndStartPendingTravel();
+        }
+
+        // 🖤 FIX: Enable achievements on first unpause 💀
+        // This prevents starting wealth achievements from firing before player starts playing
+        if (speed !== 'PAUSED' && typeof AchievementSystem !== 'undefined' && AchievementSystem.enableAchievements) {
+            AchievementSystem.enableAchievements();
         }
 
         // 🎨 Update UI

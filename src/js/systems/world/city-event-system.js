@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // CITY EVENT SYSTEM - disrupting your plans daily
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com

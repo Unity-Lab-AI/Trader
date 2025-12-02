@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // UI ENHANCEMENTS - polish for your trading empire
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -142,13 +142,13 @@ const KeyboardShortcuts = {
         this.setupEventListeners();
         this.createHelpOverlay();
         // ⚰️ this.createSettingsPanel(); - DEAD, now handled by settings-panel.js
-        this.createQuickActionButtons();
+        // ⚰️ this.createQuickActionButtons(); - DEAD, bottom-action-bar handles this
         this.createNotificationSystem();
         this.createLoadingIndicators();
         this.createAccessibilityOptions();
         this.createVisualEffects();
         // ⚰️ this.createMinimap(); - disabled, never fully implemented
-        this.createGameStats();
+        // ⚰️ this.createGameStats(); - DEAD, no game-controls container exists
         this.createConfirmationDialogs();
     },
     
@@ -385,7 +385,7 @@ const KeyboardShortcuts = {
         const gameControls = document.getElementById('game-controls');
         if (!gameControls) {
             // the void consumed our container... how very on brand
-            console.warn('🖤 game-controls element not found... quick actions drift into the ether');
+            console.log('🖤 game-controls element not found... quick actions drift into the ether');
             return;
         }
 
@@ -779,7 +779,7 @@ const KeyboardShortcuts = {
         // 🖤 check if container exists before spawning stats into the void
         const gameControls = document.getElementById('game-controls');
         if (!gameControls) {
-            console.warn('🖤 game-controls element not found... stats fade into darkness');
+            console.log('🖤 game-controls element not found... stats fade into darkness');
             return;
         }
 

@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    MEDIEVAL TRADING GAME - main stylesheet of darkness
    ═══════════════════════════════════════════════════════════════
-   Version: 0.89.5 | Unity AI Lab
+   Version: 0.89.9 | Unity AI Lab
    Creators: Hackall360, Sponge, GFourteen
    www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
    unityailabcontact@gmail.com
@@ -260,6 +260,7 @@ body:has(#main-menu:not(.hidden)) #game-container {
 }
 
 /* New HTML-based world map - MASSIVE INFINITE SCROLL */
+/* 🖤 GPU-accelerated smooth panning - no more jerky drags! 💀 */
 #world-map-html {
     position: absolute;
     top: 0;
@@ -276,10 +277,22 @@ body:has(#main-menu:not(.hidden)) #game-container {
     border-radius: 0;
     overflow: visible;
     transform-origin: 0 0;
+    /* 🦇 GPU acceleration for buttery smooth transforms */
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
 }
 
 #world-map-html:active {
     cursor: grabbing;
+}
+
+/* 🖤 Dragging state - disable ALL transitions for instant 1:1 mouse tracking 💀 */
+#world-map-html.dragging,
+#world-map-html.dragging * {
+    transition: none !important;
+    animation: none !important;
 }
 
 /* Map location markers */

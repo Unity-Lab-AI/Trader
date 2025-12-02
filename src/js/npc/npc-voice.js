@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // NPC VOICE CHAT SYSTEM - digital souls learn to speak
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -329,10 +329,58 @@ const NPCVoiceChatSystem = {
     // 💬 TEXT GENERATION - summoning NPC responses from the AI void
     // ═══════════════════════════════════════════════════════════
 
-    async generateNPCResponse(npcData, playerMessage, conversationHistory = []) {
+    async generateNPCResponse(npcData, playerMessage, conversationHistory = [], options = {}) {
         try {
-            // build system prompt for this NPC - pass player message for context detection
-            let systemPrompt = NPCPromptBuilder.buildPrompt(npcData, this.getGameContext(), playerMessage);
+            // 🖤 Use new NPCInstructionTemplates if action type specified, otherwise fallback to NPCPromptBuilder 💀
+            let systemPrompt;
+
+            // 🦇 If action specified but templates not loaded yet, try to load them
+            if (options.action && typeof NPCInstructionTemplates !== 'undefined' && !NPCInstructionTemplates._loaded) {
+                console.log('🎙️ NPCInstructionTemplates not loaded yet, loading now...');
+                await NPCInstructionTemplates.loadAllNPCData();
+            }
+
+            if (options.action && typeof NPCInstructionTemplates !== 'undefined' && NPCInstructionTemplates._loaded) {
+                // 🦇 Build standardized instruction from new template system
+                const context = {
+                    npcName: npcData.name || npcData.type,
+                    message: playerMessage,
+                    location: {
+                        name: game?.currentLocation?.name || 'this place',
+                        id: game?.currentLocation?.id
+                    },
+                    player: {
+                        name: game?.player?.name || 'Traveler',
+                        gold: game?.player?.gold || 0,
+                        health: game?.player?.health || 100,
+                        reputation: game?.player?.reputation?.[game?.currentLocation?.id] || 0,
+                        questItems: game?.player?.questItems || {},
+                        inventory: game?.player?.inventory || {}
+                    },
+                    game: {
+                        timeOfDay: this.getGameContext()?.timeOfDay || 'day',
+                        weather: this.getGameContext()?.weather || 'clear'
+                    },
+                    npc: {
+                        inventory: npcData.currentStock || npcData.inventory || []
+                    },
+                    availableQuests: options.availableQuests || [],
+                    activeQuests: options.activeQuests || [],
+                    rumors: options.rumors || [],
+                    nearbyLocations: options.nearbyLocations || []
+                };
+
+                systemPrompt = NPCInstructionTemplates.buildInstruction(
+                    npcData.type || npcData.id,
+                    options.action,
+                    context
+                );
+                console.log(`🎙️ Using NPCInstructionTemplates for action: ${options.action}`);
+                console.log(`🎙️ Generated systemPrompt (first 200 chars): ${systemPrompt?.substring(0, 200)}...`);
+            } else {
+                // 🦇 Fallback to existing NPCPromptBuilder
+                systemPrompt = NPCPromptBuilder.buildPrompt(npcData, this.getGameContext(), playerMessage);
+            }
 
             // Add returning visitor context if this is someone we've met before
             if (conversationHistory.length > 0 && typeof NPCRelationshipSystem !== 'undefined') {
@@ -679,8 +727,14 @@ RELATIONSHIP MEMORY:
         }
 
         try {
+            // 🖤 Clear any queued voice to prevent old text playing
+            this.voiceQueue = [];
+
             // clean text for TTS
             const cleanText = this.cleanTextForTTS(text);
+
+            console.log(`🎙️ TTS Input: "${text.substring(0, 50)}..."`);
+            console.log(`🎙️ TTS Clean: "${cleanText.substring(0, 50)}..."`);
 
             if (!cleanText || cleanText.length === 0) {
                 console.log('🎙️ No text to speak after cleaning');

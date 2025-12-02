@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // ACHIEVEMENT SYSTEM - hollow victories for hollow souls
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -1508,9 +1508,29 @@ const AchievementSystem = {
     isShowingPopup: false,
     wasGamePaused: false,
 
+    // 🖤 FIX: Don't award achievements until player first unpauses the game 💀
+    // This prevents starting gold/wealth achievements from triggering immediately
+    _firstUnpauseOccurred: false,
+    _achievementsEnabled: false,
+
     // wake up this monument to your gaming addiction
     init() {
-        console.log('🏆 Achievement System awakened from its slumber... time to validate your existence');
+        console.log('🏆 Achievement System awakened from its slumber... waiting for first unpause to validate your existence');
+        // 🖤 DON'T check achievements immediately - wait for first unpause 💀
+        // this.checkAchievements(); // REMOVED - achievements deferred until player unpauses
+        this._firstUnpauseOccurred = false;
+        this._achievementsEnabled = false;
+    },
+
+    // 🖤 Called when player first unpauses the game - NOW we can start checking achievements 💀
+    enableAchievements() {
+        if (this._achievementsEnabled) return; // 🦇 Already enabled, don't double-fire
+
+        this._firstUnpauseOccurred = true;
+        this._achievementsEnabled = true;
+        console.log('🏆 Player unpaused! Achievement checking now ENABLED 🖤💀');
+
+        // Now check achievements for the first time
         this.checkAchievements();
     },
 
@@ -1518,6 +1538,11 @@ const AchievementSystem = {
     // collects all newly unlocked achievements like pokemon cards of sadness
     checkAchievements() {
         if (!game.player) return;
+
+        // 🖤 FIX: Don't check achievements until player has unpaused at least once 💀
+        if (!this._achievementsEnabled) {
+            return; // 🦇 Achievements not enabled yet - player hasn't unpaused
+        }
 
         const newlyUnlocked = [];
 

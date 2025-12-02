@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 🖤 REGIONAL SIDE QUESTS - Combat & Trade Chains 💀
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // 14 Quest Chains (2 per region) | ~50 Total Quests
 // Combat chains: Fight threats, protect civilians
 // Trade chains: Economic opportunities, merchant relationships

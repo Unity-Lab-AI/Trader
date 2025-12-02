@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // INITIAL ENCOUNTER - where your nightmare begins
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
@@ -47,10 +47,49 @@ const InitialEncounterSystem = {
         this.hasShownEncounter = true;
         console.log(`🌟 Preparing initial encounter for ${playerName} at ${startLocation}... destiny calls 🦇`);
 
-        // 🌙 Delay for dramatic effect - let the player see the world first
-        setTimeout(() => {
-            this.showIntroductionSequence(playerName, startLocation);
-        }, this.encounterDelay);
+        // 🖤 Store params for later use
+        this._pendingPlayerName = playerName;
+        this._pendingStartLocation = startLocation;
+
+        // 🦇 Wait for rank-up celebration to finish BEFORE showing intro
+        this._waitForRankUpThenShowIntro();
+    },
+
+    // 🖤 Wait for rank-up overlay to be dismissed, then show intro 💀
+    _waitForRankUpThenShowIntro() {
+        const rankUpOverlay = document.querySelector('.rank-up-celebration');
+
+        if (rankUpOverlay) {
+            console.log('🌟 Rank-up celebration active - waiting before showing intro... 🕯️');
+
+            // 🖤 Watch for the overlay to be removed from DOM
+            const observer = new MutationObserver((mutations, obs) => {
+                if (!document.querySelector('.rank-up-celebration')) {
+                    obs.disconnect();
+                    console.log('🌟 Rank-up dismissed - now showing intro sequence 💀');
+                    // 🦇 Small delay for smooth transition after rank-up fades
+                    setTimeout(() => {
+                        this.showIntroductionSequence(this._pendingPlayerName, this._pendingStartLocation);
+                    }, 800);
+                }
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            // 🖤 Fallback: if observer fails, show intro after 5 seconds anyway
+            setTimeout(() => {
+                observer.disconnect();
+                if (!document.querySelector('.initial-encounter-shown')) {
+                    console.log('🌟 Fallback timeout - showing intro anyway 💀');
+                    this.showIntroductionSequence(this._pendingPlayerName, this._pendingStartLocation);
+                }
+            }, 5500);
+        } else {
+            // 🖤 No rank-up showing - use normal delay
+            setTimeout(() => {
+                this.showIntroductionSequence(this._pendingPlayerName, this._pendingStartLocation);
+            }, this.encounterDelay);
+        }
     },
 
     // 📖 INTRODUCTION SEQUENCE - the story begins
@@ -284,17 +323,63 @@ const InitialEncounterSystem = {
     },
 
     // 📜 UNLOCK MAIN QUEST - actually START the prologue quest (not just discover it)
+    // 🖤 Waits for rank-up celebration to be dismissed first so popups don't overlap 💀
     unlockMainQuest() {
+        // 🦇 Check if rank-up celebration is showing - wait for it to be dismissed
+        const rankUpOverlay = document.querySelector('.rank-up-celebration');
+        if (rankUpOverlay) {
+            console.log('🌟 Rank-up celebration active - waiting for dismissal before showing quest... 🕯️');
+
+            // 🖤 Watch for the overlay to be removed from DOM
+            const observer = new MutationObserver((mutations, obs) => {
+                if (!document.querySelector('.rank-up-celebration')) {
+                    obs.disconnect();
+                    console.log('🌟 Rank-up dismissed - now showing main quest 💀');
+                    // 🦇 Small delay for smooth transition
+                    setTimeout(() => this._doUnlockMainQuest(), 500);
+                }
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            // 🖤 Fallback: if somehow observer fails, unlock after 5 seconds anyway
+            setTimeout(() => {
+                observer.disconnect();
+                if (!this._mainQuestUnlocked) {
+                    console.log('🌟 Fallback timeout - unlocking main quest anyway 💀');
+                    this._doUnlockMainQuest();
+                }
+            }, 5000);
+        } else {
+            // 🖤 No rank-up showing - proceed immediately
+            this._doUnlockMainQuest();
+        }
+    },
+
+    // 🖤 Internal: Actually unlock the main quest 💀
+    _doUnlockMainQuest() {
+        if (this._mainQuestUnlocked) return; // 🦇 Prevent double-unlock
+        this._mainQuestUnlocked = true;
+
         if (typeof QuestSystem !== 'undefined') {
             // 🖤 Actually ASSIGN the quest so it becomes active, not just discovered
             if (QuestSystem.assignQuest) {
                 const result = QuestSystem.assignQuest('main_prologue', { name: 'The Hooded Stranger' });
                 if (result.success) {
                     console.log('🌟 main_prologue quest STARTED - the darkness beckons, no turning back 🦇');
+                    // 🖤 Auto-track main quest so wayfinder shows where to go 💀
+                    if (QuestSystem.trackQuest) {
+                        QuestSystem.trackQuest('main_prologue');
+                        console.log('🎯 main_prologue auto-tracked - wayfinder activated');
+                    }
                 } else {
-                    console.log('🌟 main_prologue assignment failed, darkness confused:', result.error, '💔');
-                    // Fallback to discover if already active or other issue
-                    if (QuestSystem.discoverQuest) {
+                    console.log('🌟 main_prologue assignment failed:', result.error, '💔');
+                    // 🖤 If quest is already active, we STILL need to track it for the wayfinder! 💀
+                    if (result.error === 'Quest already active' && QuestSystem.trackQuest) {
+                        QuestSystem.trackQuest('main_prologue');
+                        console.log('🎯 main_prologue already active - tracking it now for wayfinder');
+                    } else if (QuestSystem.discoverQuest) {
+                        // Fallback to discover for other issues
                         QuestSystem.discoverQuest('main_prologue');
                     }
                 }

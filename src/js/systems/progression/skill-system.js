@@ -1,35 +1,34 @@
 // ═══════════════════════════════════════════════════════════════
 // SKILL SYSTEM - power through practice and pain
 // ═══════════════════════════════════════════════════════════════
-// Version: 0.89.5 | Unity AI Lab
+// Version: 0.89.9 | Unity AI Lab
 // Creators: Hackall360, Sponge, GFourteen
 // www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
 // unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 //
 // 🗡️ THE SACRED TREES:
- * - Trading: The art of turning copper into gold
- * - Combat: When words fail, steel speaks
- * - Crafting: Creation from destruction
- * - Exploration: The world reveals its secrets to the worthy
- * - Social: Manipulation wrapped in velvet words
- *
- * ⚰️ DEPENDENCIES (The chains that bind):
- * - EventBus (optional): For the whispers between systems
- * - game.player: The vessel of all progression
- * - AudioSystem (optional): The sounds of triumph
- *
- * 🌙 INTEGRATION POINTS:
- * - Character Creation: Starting skills feed into this system
- * - Combat System: getCombatBonuses() fuels the violence
- * - Trading: getBuyPriceModifier() / getSellPriceModifier()
- * - Travel: getTravelBonuses() for the wanderer
- * - Crafting: getCraftingBonuses() for the maker
- *
- * @author Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
- * @version 0.81
- * ========================================
- */
+// - Trading: The art of turning copper into gold
+// - Combat: When words fail, steel speaks
+// - Crafting: Creation from destruction
+// - Exploration: The world reveals its secrets to the worthy
+// - Social: Manipulation wrapped in velvet words
+//
+// ⚰️ DEPENDENCIES (The chains that bind):
+// - EventBus (optional): For the whispers between systems
+// - game.player: The vessel of all progression
+// - AudioSystem (optional): The sounds of triumph
+//
+// 🌙 INTEGRATION POINTS:
+// - Character Creation: Starting skills feed into this system
+// - Combat System: getCombatBonuses() fuels the violence
+// - Trading: getBuyPriceModifier() / getSellPriceModifier()
+// - Travel: getTravelBonuses() for the wanderer
+// - Crafting: getCraftingBonuses() for the maker
+//
+// @author Unity AI Lab by Hackall360 Sponge GFourteen www.unityailab.com
+// @version 0.89.9
+// ═══════════════════════════════════════════════════════════════
 
 const SkillSystem = {
     /**
