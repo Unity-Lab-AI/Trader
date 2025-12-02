@@ -19,6 +19,23 @@ const APICommandSystem = {
     lastExecutedCommand: null,
     deboogerMode: false,
 
+    // 🖤 Safe param extraction - prevents undefined access and sanitizes input 💀
+    safeParam(params, index, defaultValue = null) {
+        if (!Array.isArray(params) || index < 0 || index >= params.length) {
+            return defaultValue;
+        }
+        const val = params[index];
+        // Return default if undefined, null, or empty string
+        if (val === undefined || val === null || val === '') {
+            return defaultValue;
+        }
+        // Basic sanitization - remove any HTML-like tags
+        if (typeof val === 'string') {
+            return val.replace(/<[^>]*>/g, '').trim();
+        }
+        return val;
+    },
+
     // ═══════════════════════════════════════════════════════════════
     // 🚀 INITIALIZATION - wake up the command processor
     // ═══════════════════════════════════════════════════════════════

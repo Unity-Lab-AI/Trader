@@ -886,6 +886,46 @@ const GreedyWon = {
 
 *"100 quests to tell the tale of a merchant's rise... or fall."*
 
+### Unified Quest Info Panel
+
+*"One panel to rule them all."*
+
+All quest displays now use a single unified `showQuestInfoPanel()` function. This ensures consistent quest information display across the entire game.
+
+```javascript
+// 🖤 Unified Quest Info Panel - used for ALL quest displays 💀
+QuestSystem.showQuestInfoPanel(questId, options);
+
+// Options:
+// - isNewQuest: boolean - Shows "✨ New Quest!" animated banner
+// - onClose: function - Callback when panel is closed
+// - showTrackButton: boolean - Show track/untrack button
+
+// Usage examples:
+QuestSystem.showQuestInfoPanel('main_prologue');  // Basic view
+QuestSystem.showQuestInfoPanel('main_prologue', { isNewQuest: true });  // New quest banner
+QuestSystem.showQuestInfoPanel('main_prologue', {
+    isNewQuest: true,
+    onClose: () => showTutorialPrompt()
+});  // Callback on close
+```
+
+**Where It's Used:**
+- **Initial Encounter** - When accepting the first quest
+- **Quest Tracker Widget** - Clicking on tracked quest
+- **Quest Log** - Clicking on any quest card
+- **Quest Completion** - When a new quest in a chain starts
+
+### Location Tooltips with Quest Info
+
+When hovering over locations on the map, if a tracked quest points to that location, the tooltip shows quest information:
+
+```javascript
+// 🖤 Get quest info for tooltips 💀
+QuestSystem.getQuestInfoForLocation(locationId);
+// Returns: { questName, questId, objective, isTracked } or null
+```
+
 ### Quest Structure: 100 Total Quests
 
 ```javascript
@@ -1370,6 +1410,13 @@ It started small. It grew. Now it contains multitudes. Refactoring would require
 
 ### Multiple UI Systems
 There are like 4 different systems that update the UI. They mostly don't conflict. Mostly.
+
+### Unified Modal Theme (Purple/Gold)
+All modals now use a unified dark purple/gold theme matching the quest panel:
+- **Background:** `rgba(40, 40, 70)` to `rgba(25, 25, 45)` gradient
+- **Border:** `#ffd700` (gold) with glow effect
+- **Header:** Gold gradient with gold text
+- **Buttons:** Gold for primary, purple/gray for secondary
 
 ### The Bridge Files
 `property-employee-bridge.js` exists because two systems grew apart and needed couples therapy. It works.

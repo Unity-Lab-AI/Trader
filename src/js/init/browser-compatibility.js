@@ -310,12 +310,33 @@ const BrowserCompatibility = {
     
     // Setup storage compatibility
     setupStorageCompatibility() {
+        // 🖤 Fallback storage size limit (5MB like real localStorage) 💀
+        const MAX_FALLBACK_SIZE = 5 * 1024 * 1024;
+
+        // Helper to check storage size
+        const getStorageSize = (data) => {
+            let size = 0;
+            for (const key in data) {
+                if (data.hasOwnProperty(key)) {
+                    size += key.length + data[key].length;
+                }
+            }
+            return size * 2; // UTF-16 = 2 bytes per char
+        };
+
         // Fallback for localStorage
         if (!this.features.localStorage) {
             window.localStorage = {
                 _data: {},
                 setItem: function(id, val) {
-                    this._data[id] = String(val);
+                    const strVal = String(val);
+                    // 🖤 Check size before adding 💀
+                    const newSize = getStorageSize(this._data) + (id.length + strVal.length) * 2;
+                    if (newSize > MAX_FALLBACK_SIZE) {
+                        console.warn('🖤 Fallback localStorage full, cannot store:', id);
+                        return;
+                    }
+                    this._data[id] = strVal;
                 },
                 getItem: function(id) {
                     return this._data.hasOwnProperty(id) ? this._data[id] : null;
@@ -328,13 +349,20 @@ const BrowserCompatibility = {
                 }
             };
         }
-        
+
         // Fallback for sessionStorage
         if (!this.features.sessionStorage) {
             window.sessionStorage = {
                 _data: {},
                 setItem: function(id, val) {
-                    this._data[id] = String(val);
+                    const strVal = String(val);
+                    // 🖤 Check size before adding 💀
+                    const newSize = getStorageSize(this._data) + (id.length + strVal.length) * 2;
+                    if (newSize > MAX_FALLBACK_SIZE) {
+                        console.warn('🖤 Fallback sessionStorage full, cannot store:', id);
+                        return;
+                    }
+                    this._data[id] = strVal;
                 },
                 getItem: function(id) {
                     return this._data.hasOwnProperty(id) ? this._data[id] : null;
@@ -354,11 +382,15 @@ const BrowserCompatibility = {
         // Fix for IE console.log
         if (this.browser.isIE && window.console) {
             const originalLog = console.log;
+            const originalError = console.error;
             console.log = function(message) {
                 try {
                     originalLog.apply(console, arguments);
                 } catch (e) {
-                    // Silently fail in IE
+                    // 🖤 Don't completely suppress - log to error stream if available 💀
+                    if (originalError) {
+                        try { originalError.call(console, '[IE console.log failed]', e.message); } catch (_) {}
+                    }
                 }
             };
         }

@@ -18,6 +18,10 @@ const EventBus = {
     history: [],
     maxHistory: 100,
 
+    // 🖤 Track failed events for debugging - the error graveyard 💀
+    _failedEvents: [],
+    _maxFailedEvents: 50,
+
     // 🦇 Whether to log events - paranoid mode for the curious
     verbose: false,
 
@@ -92,6 +96,8 @@ const EventBus = {
                 } catch (error) {
                     // event handler crashed - sanitize this shit or the XSS demons will feast
                     console.warn(`❌ EventBus: Handler error for '${event}':`, error.message);
+                    // 🖤 Track the failure for debugging 💀
+                    this._trackFailedEvent(event, data, error);
                 }
             });
         }
@@ -104,6 +110,8 @@ const EventBus = {
                 } catch (error) {
                     // 🦇 Wildcard handler crashed
                     console.warn(`❌ EventBus: Wildcard handler error:`, error.message);
+                    // 🖤 Track wildcard failures too 💀
+                    this._trackFailedEvent('*', { event, data }, error);
                 }
             });
         }
@@ -129,11 +137,16 @@ const EventBus = {
             try {
                 const result = callback(data);
                 if (result instanceof Promise) {
-                    promises.push(result);
+                    // 🖤 Wrap promise to catch async failures 💀
+                    promises.push(result.catch(error => {
+                        console.warn(`❌ EventBus: Async handler error for '${event}':`, error.message);
+                        this._trackFailedEvent(event, data, error, true);
+                    }));
                 }
             } catch (error) {
                 // 🦇 Async event handler crashed
                 console.warn(`❌ EventBus: Async handler error for '${event}':`, error.message);
+                this._trackFailedEvent(event, data, error, true);
             }
         });
 
@@ -236,6 +249,61 @@ const EventBus = {
             console.log(`  ${event}: ${callbacks.size} listeners`);
         });
         console.log('  History length:', this.history.length);
+        console.log('  Failed events:', this._failedEvents.length);
+    },
+
+    // ═══════════════════════════════════════════════════════════
+    // 💀 FAILED EVENT TRACKING - When handlers crash and burn
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Track a failed event handler for debugging 🖤
+     * @param {string} event - Event that failed
+     * @param {*} data - Data passed to handler
+     * @param {Error} error - The error that occurred
+     * @param {boolean} isAsync - Whether it was an async handler
+     */
+    _trackFailedEvent(event, data, error, isAsync = false) {
+        this._failedEvents.push({
+            event,
+            data,
+            error: error.message,
+            stack: error.stack,
+            isAsync,
+            timestamp: Date.now()
+        });
+
+        // 💀 Keep bounded - can't hoard errors forever
+        while (this._failedEvents.length > this._maxFailedEvents) {
+            this._failedEvents.shift();
+        }
+    },
+
+    /**
+     * Get all failed events for debugging
+     * @param {string} filterEvent - Optional event name to filter by
+     * @returns {Array} Array of failed event records
+     */
+    getFailedEvents(filterEvent = null) {
+        if (filterEvent) {
+            return this._failedEvents.filter(f => f.event === filterEvent);
+        }
+        return [...this._failedEvents];
+    },
+
+    /**
+     * Clear failed events history
+     */
+    clearFailedEvents() {
+        this._failedEvents = [];
+    },
+
+    /**
+     * Check if there are any failed events
+     * @returns {boolean}
+     */
+    hasFailedEvents() {
+        return this._failedEvents.length > 0;
     }
 };
 

@@ -819,20 +819,42 @@ const AnimationSystem = {
         this.activeAnimations = [];
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null; // 🖤 Clear reference after cancel 💀
         }
     },
-    
+
     // 🧹 Cleanup - erasing all traces of our dark enchantments
     cleanup() {
         this.stopAllAnimations();
-        
+
         // 💀 Remove any animation-related elements - cleaning up the corpses
         const animationElements = document.querySelectorAll('.item-effect, .impact-effect, .travel-effect, .arrival-effect, .sparkle');
         animationElements.forEach(element => element.remove());
-        
+
         // 🌑 Remove loading overlay - dispelling the darkness
         const loadingOverlay = document.getElementById('loading-overlay');
         if (loadingOverlay) loadingOverlay.remove();
+    },
+
+    // 💀 Full destroy - complete teardown for memory leak prevention 🖤
+    destroy() {
+        // 🛑 Cancel the animation frame loop
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
+        }
+
+        // 🧹 Clear all active animations
+        this.activeAnimations = [];
+
+        // 💀 Remove all animation DOM elements
+        const animationElements = document.querySelectorAll('.item-effect, .impact-effect, .travel-effect, .arrival-effect, .sparkle, #loading-overlay');
+        animationElements.forEach(element => element.remove());
+
+        // 🖤 Reset animation ID counter
+        this.animationId = 0;
+
+        console.log('🎬 Animation system destroyed... the dance ends 💀');
     }
 };
 

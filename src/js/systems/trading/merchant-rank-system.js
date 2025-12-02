@@ -7,6 +7,10 @@
 // ═══════════════════════════════════════════════════════════════
 
 const MerchantRankSystem = {
+    // 🖤 FIX: Don't show rank-up celebrations until player has unpaused at least once 💀
+    _firstUnpauseOccurred: false,
+    _pendingRankUp: null, // 🦇 Store pending rank-up to show after unpause
+
     // ═══════════════════════════════════════════════════════════════
     // 👑 RANK DEFINITIONS - 10 levels of commercial existence
     // ═══════════════════════════════════════════════════════════════
@@ -353,6 +357,15 @@ const MerchantRankSystem = {
 
         // 🖤 Ranks are PERMANENT - only promotions happen, never demotions
         if (result.changed && result.previousRank) {
+            // 🖤 FIX: Don't show celebration until player has unpaused at least once 💀
+            if (!this._firstUnpauseOccurred) {
+                console.log('👑 Rank up detected but game not unpaused yet - deferring celebration');
+                this._pendingRankUp = result.newRank;
+                // Still update name displays silently
+                this.updateAllNameDisplays();
+                return result;
+            }
+
             // rank up notification
             if (typeof addMessage === 'function') {
                 addMessage(`👑 RANK UP! You are now ${result.newRank.title}!`, 'success');
@@ -372,6 +385,35 @@ const MerchantRankSystem = {
         }
 
         return result;
+    },
+
+    // 🖤 FIX: Called when player first unpauses the game - NOW we can show deferred rank-ups 💀
+    enableRankCelebrations() {
+        if (this._firstUnpauseOccurred) return; // 🦇 Already enabled
+
+        this._firstUnpauseOccurred = true;
+        console.log('👑 Player unpaused! Rank celebrations now ENABLED 🖤💀');
+
+        // Show any pending rank-up celebration that was deferred
+        if (this._pendingRankUp) {
+            console.log('👑 Showing deferred rank-up celebration for:', this._pendingRankUp.name);
+
+            // rank up notification
+            if (typeof addMessage === 'function') {
+                addMessage(`👑 RANK UP! You are now ${this._pendingRankUp.title}!`, 'success');
+                addMessage(`${this._pendingRankUp.icon} ${this._pendingRankUp.description}`, 'info');
+            }
+
+            // unlock achievement
+            if (typeof AchievementSystem !== 'undefined' && AchievementSystem.unlockAchievement && this._pendingRankUp.achievement) {
+                AchievementSystem.unlockAchievement(this._pendingRankUp.achievement.id);
+            }
+
+            // show celebration
+            this.celebrateRankUp(this._pendingRankUp);
+
+            this._pendingRankUp = null;
+        }
     },
 
     celebrateRankUp(rank) {

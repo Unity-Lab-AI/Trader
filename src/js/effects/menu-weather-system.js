@@ -14,6 +14,9 @@ const MenuWeatherSystem = {
     lightningInterval: null,
     meteorInterval: null,
     isActive: false,
+    // 🖤 Track init retries to prevent infinite loop 💀
+    _initRetries: 0,
+    _maxInitRetries: 10,
 
     // 🌦️ Available seasons with their weights (higher = more likely)
     seasons: {
@@ -52,10 +55,18 @@ const MenuWeatherSystem = {
         console.log('🌦️ MenuWeatherSystem.init() called');
         this.container = document.getElementById('menu-weather-container');
         if (!this.container) {
-            console.warn('🌦️ Menu weather container not found - retrying in 500ms');
+            // 🖤 Check retry counter to prevent infinite loop 💀
+            this._initRetries++;
+            if (this._initRetries >= this._maxInitRetries) {
+                console.warn(`🌦️ Menu weather container not found after ${this._maxInitRetries} retries - giving up`);
+                return;
+            }
+            console.warn(`🌦️ Menu weather container not found - retry ${this._initRetries}/${this._maxInitRetries} in 500ms`);
             setTimeout(() => this.init(), 500);
             return;
         }
+        // 🖤 Reset retry counter on success 💀
+        this._initRetries = 0;
 
         // 🖤 Inject keyframe animations if not already done
         this.injectKeyframes();
@@ -154,6 +165,7 @@ const MenuWeatherSystem = {
         this.container.appendChild(skyOverlay);
 
         // Add apocalypse keyframes if not exists
+        // 🖤 Removed duplicate menu-bolt-strike, menu-fire-flicker, menu-spark-pulse - already in injectKeyframes() 💀
         if (!document.getElementById('apocalypse-keyframes')) {
             const style = document.createElement('style');
             style.id = 'apocalypse-keyframes';
@@ -169,21 +181,6 @@ const MenuWeatherSystem = {
                 @keyframes emberFloat {
                     0% { transform: translateY(0) scale(1); opacity: 0.8; }
                     100% { transform: translateY(-100px) scale(0.5); opacity: 0; }
-                }
-                /* ⚡ Menu lightning bolt strike animation */
-                @keyframes menu-bolt-strike {
-                    0% { height: 0; opacity: 1; }
-                    100% { height: var(--bolt-height, 60%); opacity: 1; }
-                }
-                /* 🔥 Menu fire flicker animation */
-                @keyframes menu-fire-flicker {
-                    0% { transform: scale(1); opacity: 0.9; }
-                    100% { transform: scale(1.15); opacity: 1; }
-                }
-                /* ✦ Menu spark pulse animation */
-                @keyframes menu-spark-pulse {
-                    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.7; }
-                    100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
                 }
                 /* ☄️ Menu meteor fire flicker animation */
                 @keyframes menu-meteor-fire-flicker {

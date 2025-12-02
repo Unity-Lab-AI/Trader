@@ -19,6 +19,14 @@ const PeoplePanel = {
     init() {
         this.createPanelHTML();
         this.setupEventListeners();
+
+        // 🖤 Stop voice playback on page unload to prevent memory leaks 💀
+        window.addEventListener('beforeunload', () => {
+            if (typeof NPCVoiceChatSystem !== 'undefined' && NPCVoiceChatSystem.stopVoicePlayback) {
+                NPCVoiceChatSystem.stopVoicePlayback();
+            }
+        });
+
         console.log('👥 PeoplePanel: unified interface ready... talk, trade, quest, all in one place 🖤');
     },
 
@@ -115,9 +123,6 @@ const PeoplePanel = {
 
                 <!-- ✍️ Chat input area -->
                 <div class="chat-input-area">
-                    <div class="chat-suggestions" id="chat-suggestions">
-                        <!-- Quick reply suggestions -->
-                    </div>
                     <div class="chat-input-row">
                         <input type="text" id="people-chat-input" placeholder="Say something..."
                                onkeypress="if(event.key==='Enter')PeoplePanel.sendMessage()">
@@ -378,6 +383,18 @@ const PeoplePanel = {
                 border-color: rgba(255,215,0,0.4);
             }
 
+            /* 🖤 Quest Action Buttons - special styling 💀 */
+            .quick-action-btn.quest-action-btn {
+                background: rgba(255,215,0,0.15);
+                border-color: rgba(255,215,0,0.4);
+                color: #ffd700;
+            }
+            .quick-action-btn.quest-action-btn:hover {
+                background: rgba(255,215,0,0.3);
+                border-color: rgba(255,215,0,0.6);
+                box-shadow: 0 0 8px rgba(255,215,0,0.3);
+            }
+
             /* 📦 Quest Items Section */
             .quest-items-section {
                 padding: 8px 12px;
@@ -458,27 +475,6 @@ const PeoplePanel = {
             .chat-input-area {
                 border-top: 1px solid rgba(255,255,255,0.1);
                 padding: 8px 12px;
-            }
-
-            .chat-suggestions {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 6px;
-                margin-bottom: 8px;
-            }
-
-            .suggestion-btn {
-                padding: 4px 10px;
-                background: rgba(255,255,255,0.1);
-                border: 1px solid rgba(255,255,255,0.15);
-                color: #ccc;
-                border-radius: 12px;
-                cursor: pointer;
-                font-size: 0.8em;
-            }
-            .suggestion-btn:hover {
-                background: rgba(255,215,0,0.15);
-                border-color: rgba(255,215,0,0.3);
             }
 
             .chat-input-row {
@@ -605,7 +601,6 @@ const PeoplePanel = {
         this.updateQuickActions(npcData);
         this.updateQuestItems();
         this.updateTradeSection(npcData);
-        this.updateSuggestions(npcData);
 
         // 🖤 Start conversation with greeting
         this.sendGreeting(npcData);
@@ -923,49 +918,184 @@ const PeoplePanel = {
         if (!container) return;
 
         const npcType = npcData.type || npcData.id;
+        const npcName = npcData.name || npcType;
         const actions = [];
+        const location = game?.currentLocation?.id;
+
+        // 🖤 QUEST ACTIONS - Check what quests are available with this NPC 💀
+        if (typeof QuestSystem !== 'undefined') {
+            // 🎉 TURN IN QUEST - Player has completed quest objectives, NPC is the giver
+            const readyToComplete = this.getQuestsReadyToComplete(npcType);
+            if (readyToComplete.length > 0) {
+                readyToComplete.forEach(quest => {
+                    const label = quest.type === 'delivery' ? '📦 Complete Delivery' :
+                                  quest.type === 'collect' ? '🎒 Turn In Items' :
+                                  '✅ Complete Quest';
+                    actions.push({
+                        label: `${label}: ${quest.name}`,
+                        action: () => this.askToCompleteQuest(quest),
+                        priority: 1, // High priority - show first
+                        questRelated: true
+                    });
+                });
+            }
+
+            // 📦 DELIVERY - Player has delivery FOR this NPC (different from completing AT quest giver)
+            const deliveriesForNPC = this.getDeliveriesForNPC(npcType);
+            if (deliveriesForNPC.length > 0) {
+                deliveriesForNPC.forEach(quest => {
+                    actions.push({
+                        label: `📦 Deliver: ${quest.itemName || 'Package'}`,
+                        action: () => this.deliverQuestItem(quest),
+                        priority: 2,
+                        questRelated: true
+                    });
+                });
+            }
+
+            // 📋 START QUEST - NPC has quests to offer
+            const availableQuests = QuestSystem.getQuestsForNPC(npcType, location);
+            if (availableQuests.length > 0) {
+                availableQuests.forEach(quest => {
+                    actions.push({
+                        label: `📜 Ask about: ${quest.name}`,
+                        action: () => this.askAboutQuest(quest),
+                        priority: 3,
+                        questRelated: true
+                    });
+                });
+            }
+
+            // ⏳ CHECK PROGRESS - Player has active quests from this NPC
+            const activeFromNPC = QuestSystem.getActiveQuestsForNPC(npcType);
+            const inProgress = activeFromNPC.filter(q => {
+                const progress = QuestSystem.checkProgress(q.id);
+                return progress.status === 'in_progress';
+            });
+            if (inProgress.length > 0) {
+                actions.push({
+                    label: '⏳ Check quest progress',
+                    action: () => this.askQuestProgress(),
+                    priority: 4,
+                    questRelated: true
+                });
+            }
+        }
 
         // 🖤 Trade-related actions - vendors and service NPCs
         if (this.npcCanTrade(npcType)) {
-            actions.push({ label: '💰 Browse wares', action: () => this.askAboutWares() });
-            actions.push({ label: '🛒 Open market', action: () => this.openFullTrade() });
-        }
-
-        // 🖤 Delivery actions - ONLY show if player has active delivery quest for THIS NPC
-        if (this.npcHasDeliveryForThem(npcType)) {
-            actions.push({ label: '📦 I have a delivery', action: () => this.mentionDelivery() });
+            actions.push({ label: '💰 Browse wares', action: () => this.askAboutWares(), priority: 10 });
+            actions.push({ label: '🛒 Open market', action: () => this.openFullTrade(), priority: 11 });
         }
 
         // 🖤 Rumors - innkeepers, travelers, merchants know gossip
         const gossipNPCs = ['innkeeper', 'merchant', 'traveler', 'drunk', 'sailor', 'informant'];
         if (gossipNPCs.includes(npcType)) {
-            actions.push({ label: '🗣️ Ask for rumors', action: () => this.askRumors() });
+            actions.push({ label: '🗣️ Ask for rumors', action: () => this.askRumors(), priority: 20 });
         }
 
         // 🖤 Rest action - innkeeper only
         if (npcType === 'innkeeper') {
-            actions.push({ label: '🛏️ I need rest', action: () => this.askForRest() });
+            actions.push({ label: '🛏️ I need rest', action: () => this.askForRest(), priority: 21 });
         }
 
         // 🖤 Heal action - healers only
         if (['healer', 'priest', 'apothecary'].includes(npcType)) {
-            actions.push({ label: '💚 I need healing', action: () => this.askForHealing() });
+            actions.push({ label: '💚 I need healing', action: () => this.askForHealing(), priority: 22 });
         }
 
         // 🖤 Generic actions - always available
-        actions.push({ label: '❓ Ask for directions', action: () => this.askDirections() });
-        actions.push({ label: '👋 Say goodbye', action: () => this.sayGoodbye() });
+        actions.push({ label: '❓ Ask for directions', action: () => this.askDirections(), priority: 50 });
+        actions.push({ label: '👋 Say goodbye', action: () => this.sayGoodbye(), priority: 100 });
+
+        // 🖤 Sort by priority (quest actions first) 💀
+        actions.sort((a, b) => (a.priority || 50) - (b.priority || 50));
 
         container.innerHTML = '';
         actions.forEach(a => {
             const btn = document.createElement('button');
             btn.className = 'quick-action-btn';
+            if (a.questRelated) btn.classList.add('quest-action-btn');
             btn.textContent = a.label;
             btn.addEventListener('click', a.action);
             container.appendChild(btn);
         });
 
         container.classList.remove('hidden');
+    },
+
+    // 🎉 GET QUESTS READY TO COMPLETE - where this NPC is the quest GIVER
+    getQuestsReadyToComplete(npcType) {
+        if (typeof QuestSystem === 'undefined') return [];
+        const activeFromNPC = QuestSystem.getActiveQuestsForNPC(npcType);
+        return activeFromNPC.filter(q => {
+            const progress = QuestSystem.checkProgress(q.id);
+            return progress.status === 'ready_to_complete';
+        });
+    },
+
+    // 📦 GET DELIVERIES FOR NPC - where this NPC is the RECIPIENT (not the giver)
+    getDeliveriesForNPC(npcType) {
+        if (typeof QuestSystem === 'undefined') return [];
+        const deliveries = [];
+        Object.values(QuestSystem.activeQuests || {}).forEach(quest => {
+            // Find talk objectives targeting this NPC that aren't completed
+            const talkObj = quest.objectives?.find(o =>
+                o.type === 'talk' &&
+                QuestSystem._npcMatchesObjective(npcType, o.npc) &&
+                !o.completed
+            );
+            if (talkObj && quest.givesQuestItem) {
+                const itemInfo = QuestSystem.questItems?.[quest.givesQuestItem] || {};
+                // Check if player has the quest item
+                const hasItem = game?.player?.questItems?.[quest.givesQuestItem];
+                if (hasItem) {
+                    deliveries.push({
+                        ...quest,
+                        itemId: quest.givesQuestItem,
+                        itemName: itemInfo.name || quest.givesQuestItem,
+                        itemIcon: itemInfo.icon || '📦'
+                    });
+                }
+            }
+        });
+        return deliveries;
+    },
+
+    // 📜 ASK ABOUT QUEST - Prompt NPC to offer this quest
+    async askAboutQuest(quest) {
+        const message = `I heard you might have work available? Tell me about "${quest.name}".`;
+        document.getElementById('people-chat-input').value = message;
+        await this.sendMessage();
+    },
+
+    // ✅ ASK TO COMPLETE QUEST - Tell NPC we've finished
+    async askToCompleteQuest(quest) {
+        let message;
+        if (quest.type === 'delivery') {
+            message = `I've completed the delivery you asked for. The "${quest.name}" task is done.`;
+        } else if (quest.type === 'collect') {
+            const collectObj = quest.objectives?.find(o => o.type === 'collect');
+            message = `I've gathered everything you asked for. Here's the ${collectObj?.count || ''} ${collectObj?.item || 'items'}.`;
+        } else {
+            message = `I've completed "${quest.name}" as you requested. The task is done.`;
+        }
+        document.getElementById('people-chat-input').value = message;
+        await this.sendMessage();
+    },
+
+    // 📦 DELIVER QUEST ITEM - Hand over delivery to recipient NPC
+    async deliverQuestItem(quest) {
+        const message = `I have a delivery for you - a ${quest.itemName} from ${quest.giverName || 'someone'}.`;
+        document.getElementById('people-chat-input').value = message;
+        await this.sendMessage();
+    },
+
+    // ⏳ ASK QUEST PROGRESS - Check status of active quests
+    async askQuestProgress() {
+        const message = `How am I doing on the tasks you gave me?`;
+        document.getElementById('people-chat-input').value = message;
+        await this.sendMessage();
     },
 
     // 📦 UPDATE QUEST ITEMS SECTION
@@ -1091,40 +1221,6 @@ const PeoplePanel = {
         } else {
             container.classList.add('hidden');
         }
-    },
-
-    // 💡 UPDATE SUGGESTIONS
-    updateSuggestions(npcData) {
-        const container = document.getElementById('chat-suggestions');
-        if (!container) return;
-
-        const npcType = npcData.type || npcData.id;
-        const suggestions = [];
-
-        // 🖤 Context-specific suggestions
-        if (this.npcCanTrade(npcType)) {
-            suggestions.push("What's for sale?");
-        }
-        if (this.npcHasQuest(npcType)) {
-            suggestions.push("Need any help?");
-        }
-        if (this.npcHasDeliveryForThem(npcType)) {
-            suggestions.push("I have something for you");
-        }
-        suggestions.push("Tell me about this place");
-        suggestions.push("Any news?");
-
-        container.innerHTML = '';
-        suggestions.slice(0, 4).forEach(text => {
-            const btn = document.createElement('button');
-            btn.className = 'suggestion-btn';
-            btn.textContent = text;
-            btn.addEventListener('click', () => {
-                document.getElementById('people-chat-input').value = text;
-                this.sendMessage();
-            });
-            container.appendChild(btn);
-        });
     },
 
     // 🎯 QUICK ACTION METHODS - 🖤 Now use NPCInstructionTemplates for proper API instructions 💀

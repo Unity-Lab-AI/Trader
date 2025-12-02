@@ -375,6 +375,11 @@ const MountSystem = {
         }
 
         const stats = this.mountStats[instanceId];
+        // 🖤 Validate mountStats exists before accessing health 💀
+        if (!stats) {
+            this.showNotification('Mount stats not found!', 'error');
+            return false;
+        }
         if (stats.health <= 0) {
             this.showNotification('This mount is too injured to ride!', 'error');
             return false;

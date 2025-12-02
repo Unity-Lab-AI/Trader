@@ -131,6 +131,9 @@ const TimeMachine = {
     // 🖤 DOM element cache - query once, use forever 💀
     _domCache: null,
 
+    // 🖤 Cache for getTotalDays() calculation - avoids expensive loops 💀
+    _totalDaysCache: { year: null, month: null, day: null, result: null },
+
     // ═══════════════════════════════════════════════════════════════
     // 🖤 INITIALIZATION - The beginning of time itself
     // ═══════════════════════════════════════════════════════════════
@@ -369,7 +372,15 @@ const TimeMachine = {
                 console.log(`🌦️ Seasonal transition: forcing ${transitionWeather} weather for ${newSeason}`);
                 WeatherSystem.setWeather(transitionWeather);
                 // 🦇 Lock weather for ~1 in-game day (1440 minutes) to match backdrop fade
-                WeatherSystem.lockWeatherUntil = this.getTotalMinutes() + 1440;
+                // 🖤 Guard against race condition where getTotalMinutes returns invalid value 💀
+                const currentMinutes = this.getTotalMinutes();
+                if (currentMinutes && currentMinutes > 0) {
+                    WeatherSystem.lockWeatherUntil = currentMinutes + 1440;
+                } else {
+                    // 🖤 Fallback: lock for 24 hours from now using timestamp 💀
+                    WeatherSystem.lockWeatherUntil = Date.now() + (24 * 60 * 60 * 1000);
+                    console.warn('🌦️ Time not ready, using timestamp fallback for weather lock');
+                }
             }
         } else if (typeof WeatherSystem !== 'undefined' && WeatherSystem.generateWeather) {
             // 💀 Fallback to random generation if setWeather not available
@@ -451,6 +462,13 @@ const TimeMachine = {
         // This prevents starting wealth achievements from firing before player starts playing
         if (speed !== 'PAUSED' && typeof AchievementSystem !== 'undefined' && AchievementSystem.enableAchievements) {
             AchievementSystem.enableAchievements();
+        }
+
+        // 🖤 FIX: Enable merchant rank celebrations AFTER achievements (with delay to prevent overlap) 💀
+        if (speed !== 'PAUSED' && typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.enableRankCelebrations) {
+            setTimeout(() => {
+                MerchantRankSystem.enableRankCelebrations();
+            }, 1500); // 🦇 1.5s delay so achievement popups clear first
         }
 
         // 🎨 Update UI
@@ -698,6 +716,16 @@ const TimeMachine = {
 
     // 🖤 Total days since game start (uses GameConfig for start date) 💀
     getTotalDays() {
+        const currYear = this.currentTime.year;
+        const currMonth = this.currentTime.month;
+        const currDay = this.currentTime.day;
+
+        // 🖤 Check cache first - avoid expensive loops on every call 💀
+        const cache = this._totalDaysCache;
+        if (cache.year === currYear && cache.month === currMonth && cache.day === currDay) {
+            return cache.result;
+        }
+
         // 🦇 Get start date from GameConfig (single source of truth)
         const startDate = typeof GameConfig !== 'undefined'
             ? GameConfig.time.startingDate
@@ -706,10 +734,6 @@ const TimeMachine = {
         const startYear = startDate.year;
         const startMonth = startDate.month;
         const startDay = startDate.day;
-
-        const currYear = this.currentTime.year;
-        const currMonth = this.currentTime.month;
-        const currDay = this.currentTime.day;
 
         // 🖤 Convert both dates to "days since epoch" then subtract
         // This is cleaner than the previous branching logic
@@ -735,7 +759,12 @@ const TimeMachine = {
         currDays += currDay;
 
         // 💀 Simple subtraction - no edge cases to worry about
-        return currDays - startDays;
+        const result = currDays - startDays;
+
+        // 🖤 Update cache for next call 💀
+        this._totalDaysCache = { year: currYear, month: currMonth, day: currDay, result };
+
+        return result;
     },
 
     // 🔄 Convenience getter for backward compatibility
@@ -754,7 +783,16 @@ const TimeMachine = {
 
     // 🖤 Initialize DOM cache - query once, not 60 times per second 💀
     _initDomCache() {
-        if (this._domCache) return this._domCache;
+        // 🖤 Check if cache exists AND elements are still in DOM 💀
+        // If any cached element was removed (panel reload), invalidate cache
+        if (this._domCache) {
+            const anyInvalid = this._domCache.timeDisplay && !document.contains(this._domCache.timeDisplay);
+            if (anyInvalid) {
+                this._domCache = null;
+            } else {
+                return this._domCache;
+            }
+        }
 
         this._domCache = {
             timeDisplay: document.getElementById('game-time') ||

@@ -24,7 +24,8 @@ const SettingsPanel = {
             animation: { animationsEnabled: true, animationSpeed: 1.0, reducedMotion: false, quality: 'medium' },
             ui: { animationsEnabled: true, hoverEffectsEnabled: true, transitionsEnabled: true, reducedMotion: false, highContrast: false, fontSize: 'medium', theme: 'default' },
             environmental: { weatherEffectsEnabled: true, lightingEnabled: true, seasonalEffectsEnabled: true, quality: 'medium', reducedEffects: false },
-            accessibility: { reducedMotion: false, highContrast: false, screenReaderEnabled: false, flashWarnings: true, colorBlindMode: 'none', fontSize: 'medium', keyboardNavigation: true }
+            accessibility: { reducedMotion: false, highContrast: false, screenReaderEnabled: false, flashWarnings: true, colorBlindMode: 'none', fontSize: 'medium', keyboardNavigation: true },
+            gameplay: { showTutorialOnStart: true }
         };
 
         // use GameConfig.settings if available, otherwise fallback
@@ -105,6 +106,7 @@ const SettingsPanel = {
                             <button class="settings-tab" data-tab="ui">🖥️ UI</button>
                             <button class="settings-tab" data-tab="environmental">🌍 Environment</button>
                             <button class="settings-tab" data-tab="accessibility">♿ Access</button>
+                            <button class="settings-tab" data-tab="gameplay">🎮 Gameplay</button>
                             <button class="settings-tab" data-tab="aivoice">🎙️ AI Voice</button>
                             <button class="settings-tab" data-tab="controls">⌨️ Controls</button>
                             <button class="settings-tab" data-tab="saveload">💾 Save/Load</button>
@@ -388,6 +390,20 @@ const SettingsPanel = {
                                         Enhanced Keyboard Navigation
                                     </label>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- 🎮 Gameplay Tab - tweak the torture experience -->
+                        <div class="settings-tab-content" data-tab="gameplay">
+                            <h3>Gameplay Settings</h3>
+                            <div class="settings-group">
+                                <div class="setting-item">
+                                    <label>
+                                        <input type="checkbox" id="tutorial-on-start" checked>
+                                        Show Tutorial Prompt on New Game
+                                    </label>
+                                </div>
+                                <p class="settings-description">When enabled, you'll be asked if you want to see the tutorial each time you start a new game. Turn OFF if you restart often and don't want to be asked every time.</p>
                             </div>
                         </div>
 
@@ -1750,9 +1766,12 @@ const SettingsPanel = {
         this.setupCheckboxControl('access-screen-reader', 'accessibility', 'screenReaderEnabled');
         this.setupCheckboxControl('access-flash-warnings', 'accessibility', 'flashWarnings');
         this.setupCheckboxControl('access-keyboard-nav', 'accessibility', 'keyboardNavigation');
-        
+
         this.setupSelectControl('access-colorblind', 'accessibility', 'colorBlindMode');
         this.setupSelectControl('access-font-size', 'accessibility', 'fontSize');
+
+        // 🎮 gameplay settings - tweak the torture experience
+        this.setupCheckboxControl('tutorial-on-start', 'gameplay', 'showTutorialOnStart');
     },
 
     // 🖤 setup tab scroll buttons - for when you have too many settings (which is always)
@@ -3511,6 +3530,9 @@ const SettingsPanel = {
                 'keyboardNavigation': 'access-keyboard-nav',
                 'colorBlindMode': 'access-colorblind',
                 'fontSize': 'access-font-size'
+            },
+            'gameplay': {
+                'showTutorialOnStart': 'tutorial-on-start'
             }
         };
         

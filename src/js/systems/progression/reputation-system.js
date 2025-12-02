@@ -204,6 +204,10 @@ const ReputationSystem = {
     // Per-location reputation modifiers
     locationReputation: {},
 
+    // 🖤 LRU tracking for location reputation cleanup 💀
+    _locationAccessOrder: [],
+    _maxLocationRepEntries: 50, // Keep reputation for last 50 visited locations
+
     // Bounty system
     bounty: 0,
     activeBounties: [],
@@ -306,6 +310,8 @@ const ReputationSystem = {
         // Update location-specific reputation
         if (locationId) {
             this.locationReputation[locationId] = (this.locationReputation[locationId] || 0) + finalChange;
+            // 🖤 LRU tracking - move this location to end of access order 💀
+            this._updateLocationAccessOrder(locationId);
         }
 
         // Add to history
@@ -387,6 +393,23 @@ const ReputationSystem = {
         }
 
         return modifier;
+    },
+
+    // 🖤 LRU tracking for locationReputation cleanup 💀
+    _updateLocationAccessOrder(locationId) {
+        // Remove if already in list
+        const idx = this._locationAccessOrder.indexOf(locationId);
+        if (idx > -1) {
+            this._locationAccessOrder.splice(idx, 1);
+        }
+        // Add to end (most recently used)
+        this._locationAccessOrder.push(locationId);
+
+        // Cleanup if over limit
+        while (this._locationAccessOrder.length > this._maxLocationRepEntries) {
+            const oldest = this._locationAccessOrder.shift();
+            delete this.locationReputation[oldest];
+        }
     },
 
     // Check if player can access certain content

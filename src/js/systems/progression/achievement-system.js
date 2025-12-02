@@ -1530,11 +1530,8 @@ const AchievementSystem = {
         this._achievementsEnabled = true;
         console.log('🏆 Player unpaused! Achievement checking now ENABLED 🖤💀');
 
-        // 🖤 FIX: Re-trigger MerchantRankSystem to unlock rank achievements that were deferred 💀
-        if (typeof MerchantRankSystem !== 'undefined' && MerchantRankSystem.checkForRankUp) {
-            console.log('🏆 Re-checking merchant rank for deferred achievements...');
-            MerchantRankSystem.checkForRankUp();
-        }
+        // 🖤 NOTE: MerchantRankSystem now has its own enableRankCelebrations() called separately
+        // with a 1.5s delay to prevent overlap with achievement popups 💀
 
         // Now check achievements for the first time
         this.checkAchievements();
@@ -1732,7 +1729,7 @@ const AchievementSystem = {
                     ${remainingCount > 1
                         ? `<div class="achievement-popup-more">+${remainingCount - 1} more achievement${remainingCount > 2 ? 's' : ''} unlocked!</div>`
                         : ''}
-                    <button id="achievement-popup-continue-btn" class="achievement-popup-btn">
+                    <button id="achievement-popup-continue-btn" class="achievement-popup-btn" onclick="AchievementSystem.closeAchievementPopup()">
                         ${remainingCount > 1 ? '➡️ Next Achievement' : '✓ Continue'}
                     </button>
                     <div class="achievement-popup-hint">Press ENTER or click to continue</div>
@@ -1759,11 +1756,8 @@ const AchievementSystem = {
         // Add styles if not present
         this.addAchievementPopupStyles();
 
-        // Add click handler to continue button
-        const continueBtn = document.getElementById('achievement-popup-continue-btn');
-        if (continueBtn) {
-            continueBtn.addEventListener('click', () => this.closeAchievementPopup());
-        }
+        // 🖤 Button has onclick attribute - don't add duplicate listener 💀
+        // The inline onclick="AchievementSystem.closeAchievementPopup()" handles clicks
 
         // Add keyboard handler for Enter/Escape/Space
         this._popupKeyHandler = (e) => {
@@ -1794,23 +1788,48 @@ const AchievementSystem = {
 
     // Close the current achievement popup and show next (if any)
     closeAchievementPopup() {
-        // Remove keyboard handler
-        if (this._popupKeyHandler) {
-            document.removeEventListener('keydown', this._popupKeyHandler, true);
-            this._popupKeyHandler = null;
+        // 🖤 Guard against double-clicks or rapid calls 💀
+        if (this._isClosingPopup) {
+            console.log('🏆 Achievement popup already closing, ignoring duplicate call');
+            return;
         }
+        this._isClosingPopup = true;
 
-        // Animate out and remove
-        const overlay = document.getElementById('achievement-popup-overlay');
-        if (overlay) {
-            overlay.style.animation = 'achievementFadeOut 0.2s ease-in';
-            setTimeout(() => {
-                overlay.remove();
-                // Show next achievement or finish
+        try {
+            // Remove keyboard handler
+            if (this._popupKeyHandler) {
+                document.removeEventListener('keydown', this._popupKeyHandler, true);
+                this._popupKeyHandler = null;
+            }
+
+            // Animate out and remove
+            const overlay = document.getElementById('achievement-popup-overlay');
+            if (overlay) {
+                overlay.style.animation = 'achievementFadeOut 0.2s ease-in';
+                overlay.style.pointerEvents = 'none'; // 🖤 Prevent clicks during animation 💀
+                setTimeout(() => {
+                    try {
+                        if (overlay.parentNode) {
+                            overlay.remove();
+                        }
+                    } catch (e) {
+                        console.warn('🏆 Error removing overlay:', e);
+                    }
+                    this._isClosingPopup = false;
+                    // Show next achievement or finish
+                    this.showNextAchievementPopup();
+                }, 200);
+            } else {
+                this._isClosingPopup = false;
                 this.showNextAchievementPopup();
-            }, 200);
-        } else {
-            this.showNextAchievementPopup();
+            }
+        } catch (err) {
+            console.error('🏆 Error in closeAchievementPopup:', err);
+            this._isClosingPopup = false;
+            // Force cleanup - remove overlay if it exists
+            const overlay = document.getElementById('achievement-popup-overlay');
+            if (overlay) overlay.remove();
+            this.isShowingPopup = false;
         }
     },
 
@@ -1864,10 +1883,12 @@ const AchievementSystem = {
                 height: 100%;
                 background: rgba(0, 0, 0, 0.85);
                 backdrop-filter: blur(5px);
+                z-index: 1; /* 🖤 Below container so clicks reach the button 💀 */
             }
 
             .achievement-popup-container {
                 position: relative;
+                z-index: 2; /* 🖤 ABOVE backdrop so button is clickable 💀 */
                 background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f0f1a 100%);
                 border: 3px solid #ffd700;
                 border-radius: 16px;
@@ -2052,6 +2073,9 @@ const AchievementSystem = {
                 cursor: pointer;
                 transition: all 0.2s ease;
                 box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+                pointer-events: auto !important; /* 🖤 Ensure button is always clickable 💀 */
+                position: relative;
+                z-index: 10; /* 🖤 Above everything in the popup 💀 */
             }
 
             .achievement-popup-btn:hover {
@@ -2252,7 +2276,10 @@ const AchievementSystem = {
                 this.stats = {
                     ...this.stats,
                     ...saveData.stats,
-                    uniqueLocationsVisited: new Set(saveData.stats.uniqueLocationsVisited || [])
+                    // 🖤 Defensive initialization for special types 💀
+                    uniqueLocationsVisited: new Set(saveData.stats.uniqueLocationsVisited || []),
+                    dungeonVisitLog: Array.isArray(saveData.stats.dungeonVisitLog) ? saveData.stats.dungeonVisitLog : [],
+                    merchantTradeCount: saveData.stats.merchantTradeCount || {}
                 };
                 AchievementSystem.stats.locationsVisited = AchievementSystem.stats.uniqueLocationsVisited.size;
             }

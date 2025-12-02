@@ -1032,6 +1032,22 @@ Wandering traders carry items appropriate to their profession:
 
 The game features **100 quests** spanning from humble beginnings to the final confrontation with ultimate evil.
 
+### Quest Tracking & Wayfinder
+
+**Track your quests** to see where to go next:
+- **🎯 Quest Tracker Widget** - Shows your tracked quest in the corner of the screen
+- **Click the quest** in the tracker to see full details
+- **Golden glow** on the map shows where to go next
+- **Hover over locations** - If a tracked quest points there, you'll see quest info in the tooltip!
+
+### Tutorial Flow
+
+When you start a new game:
+1. **Meet the stranger** - Accept your first quest with a single button
+2. **Quest accepted!** - See the unified quest info panel with details
+3. **Optional tutorial** - Choose "Yes" or "No" for the tutorial (coming soon!)
+4. **Start trading** - The game begins!
+
 ### Main Story (35 Quests - 5 Acts)
 
 | Act | Name | Description | Wealth Gate |

@@ -29,11 +29,17 @@ const AudioSystem = {
     currentMusic: null,
     musicNodes: [],
     ambientNodes: [],
-    
+
+    // 🖤 Track active oscillators for cleanup 💀
+    _activeOscillators: [],
+
     // Sound definitions
     sounds: {},
     musicTracks: {},
     ambientSounds: {},
+
+    // 🖤 Noise buffer cache - avoid regenerating the same buffers 💀
+    _noiseBufferCache: {},
     
     // Initialize audio system
     init() {
@@ -236,21 +242,36 @@ const AudioSystem = {
     createOscillator(frequency, type = 'sine', duration = 0.1) {
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
-        
+
         oscillator.type = type;
         oscillator.frequency.value = frequency;
-        
+
         oscillator.connect(gainNode);
         gainNode.connect(this.sfxGainNode);
-        
+
+        // 🖤 Track oscillator for cleanup 💀
+        this._activeOscillators.push(oscillator);
+
+        // 🖤 Auto-remove from tracking when oscillator ends 💀
+        oscillator.onended = () => {
+            const idx = this._activeOscillators.indexOf(oscillator);
+            if (idx > -1) this._activeOscillators.splice(idx, 1);
+        };
+
         return { oscillator, gainNode };
     },
     
     createNoiseBuffer(duration = 0.1, type = 'white') {
+        // 🖤 Check cache first - avoid regenerating identical buffers 💀
+        const cacheKey = `${type}_${duration}`;
+        if (this._noiseBufferCache[cacheKey]) {
+            return this._noiseBufferCache[cacheKey];
+        }
+
         const bufferSize = this.audioContext.sampleRate * duration;
         const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
         const output = buffer.getChannelData(0);
-        
+
         for (let i = 0; i < bufferSize; i++) {
             if (type === 'white') {
                 output[i] = Math.random() * 2 - 1;
@@ -258,7 +279,9 @@ const AudioSystem = {
                 output[i] = (Math.random() * 2 - 1) * 0.5;
             }
         }
-        
+
+        // 🖤 Cache the buffer 💀
+        this._noiseBufferCache[cacheKey] = buffer;
         return buffer;
     },
     
@@ -983,10 +1006,25 @@ const AudioSystem = {
         }
     },
     
+    // 🖤 Stop all active oscillators 💀
+    stopAllOscillators() {
+        this._activeOscillators.forEach(osc => {
+            try {
+                osc.stop();
+                osc.disconnect();
+            } catch (e) {
+                // Ignore already stopped oscillators
+            }
+        });
+        this._activeOscillators = [];
+    },
+
     // Cleanup - call this when changing locations or stopping audio
     cleanup() {
         this.stopMusic();
         this.stopAmbient();
+        // 🖤 Stop all tracked oscillators 💀
+        this.stopAllOscillators();
 
         if (this.musicLoopInterval) {
             if (typeof TimerManager !== 'undefined') {

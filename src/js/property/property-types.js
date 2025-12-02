@@ -262,10 +262,14 @@ const PropertyTypes = {
 
     // 🎯 Getters for compatibility with PropertySystem 🖤
     get(typeId) {
+        // 🖤 Validate typeId is a string to prevent object key coercion bugs 💀
+        if (typeof typeId !== 'string') return null;
         return this.types[typeId] || null;
     },
 
     getUpgrade(upgradeId) {
+        // 🖤 Validate upgradeId is a string 💀
+        if (typeof upgradeId !== 'string') return null;
         return this.upgrades[upgradeId] || null;
     },
 

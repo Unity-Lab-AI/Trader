@@ -7,6 +7,31 @@
 // unityailabcontact@gmail.com
 // ═══════════════════════════════════════════════════════════════
 
+// 🖤 Custom error types for save/load operations - differentiate error handling 💀
+class SaveError extends Error {
+    constructor(message, code, details = {}) {
+        super(message);
+        this.name = 'SaveError';
+        this.code = code;
+        this.details = details;
+    }
+}
+
+// 🖤 Error codes for save operations 💀
+const SaveErrorCodes = {
+    INVALID_SLOT: 'INVALID_SLOT',
+    STORAGE_FULL: 'STORAGE_FULL',
+    COMPRESSION_FAILED: 'COMPRESSION_FAILED',
+    SERIALIZATION_FAILED: 'SERIALIZATION_FAILED',
+    SLOT_EMPTY: 'SLOT_EMPTY',
+    DATA_NOT_FOUND: 'DATA_NOT_FOUND',
+    DATA_CORRUPTED: 'DATA_CORRUPTED',
+    VALIDATION_FAILED: 'VALIDATION_FAILED',
+    DECOMPRESSION_FAILED: 'DECOMPRESSION_FAILED',
+    GAME_STATE_ERROR: 'GAME_STATE_ERROR',
+    PERMISSION_DENIED: 'PERMISSION_DENIED'
+};
+
 const SaveManager = {
     // ═══════════════════════════════════════════════════════════════
     // CONFIGURATION
@@ -286,6 +311,10 @@ const SaveManager = {
                 factionState: typeof FactionSystem !== 'undefined' && FactionSystem.getState
                     ? FactionSystem.getState()
                     : null,
+                // 🖤 NPC relationships - per-slot isolation (fixes global localStorage bug) 💀
+                npcRelationships: typeof NPCRelationshipSystem !== 'undefined' && NPCRelationshipSystem.getSaveData
+                    ? NPCRelationshipSystem.getSaveData()
+                    : null,
                 marketData: {
                     marketPrices: game.marketPrices || {},
                     marketPriceModifier: game.marketPriceModifier || 1
@@ -436,29 +465,29 @@ const SaveManager = {
     },
 
     loadFromSlot(slotNumber) {
-        if (slotNumber < 1 || slotNumber > this.maxSaveSlots) {
-            if (typeof addMessage === 'function') addMessage('Invalid save slot!', 'error');
-            return false;
-        }
-
-        const slot = this.saveSlots[slotNumber];
-        if (!slot?.exists) {
-            if (typeof addMessage === 'function') addMessage('No save in this slot!', 'error');
-            return false;
-        }
-
+        // 🖤 Use typed errors for better error differentiation 💀
         try {
+            if (slotNumber < 1 || slotNumber > this.maxSaveSlots) {
+                throw new SaveError('Invalid save slot!', SaveErrorCodes.INVALID_SLOT, { slotNumber });
+            }
+
+            const slot = this.saveSlots[slotNumber];
+            if (!slot?.exists) {
+                throw new SaveError('No save in this slot!', SaveErrorCodes.SLOT_EMPTY, { slotNumber });
+            }
+
             const compressedData = localStorage.getItem(`tradingGameSave_${slotNumber}`);
             if (!compressedData) {
-                if (typeof addMessage === 'function') addMessage('Save data not found!', 'error');
-                return false;
+                throw new SaveError('Save data not found!', SaveErrorCodes.DATA_NOT_FOUND, { slotNumber });
             }
 
             const saveData = this.decompressSaveData(compressedData);
             const validation = this.validateSaveData(saveData);
             if (!validation.valid) {
-                if (typeof addMessage === 'function') addMessage('Save data corrupted', 'error');
-                return false;
+                throw new SaveError('Save data corrupted', SaveErrorCodes.DATA_CORRUPTED, {
+                    slotNumber,
+                    validationErrors: validation.errors
+                });
             }
 
             this.loadGameState(saveData.gameData);
@@ -469,8 +498,10 @@ const SaveManager = {
             }
             return true;
         } catch (e) {
-            console.error('Load failed:', e);
-            if (typeof addMessage === 'function') addMessage('Load failed: ' + e.message, 'error');
+            // 🖤 Log with error code for debugging 💀
+            const errorCode = e instanceof SaveError ? e.code : 'UNKNOWN';
+            console.error(`Load failed [${errorCode}]:`, e.message, e.details || {});
+            if (typeof addMessage === 'function') addMessage(e.message, 'error');
             return false;
         }
     },
@@ -535,6 +566,16 @@ const SaveManager = {
         // 🖤 Restore faction reputation - alliances from the darkness 💀
         if (gameData.factionState && typeof FactionSystem !== 'undefined' && FactionSystem.loadState) {
             FactionSystem.loadState(gameData.factionState);
+        }
+
+        // 🖤 Restore NPC relationships - per-slot isolation 💀
+        if (gameData.npcRelationships && typeof NPCRelationshipSystem !== 'undefined' && NPCRelationshipSystem.loadSaveData) {
+            NPCRelationshipSystem.loadSaveData(gameData.npcRelationships);
+        }
+
+        // 🖤 Restore EventSystem events - fixes events lost after reload 💀
+        if (gameData.eventState && typeof EventSystem !== 'undefined' && EventSystem.loadSaveData) {
+            EventSystem.loadSaveData(gameData.eventState);
         }
 
         // Show game UI (wrap in try-catch for robustness)
@@ -789,6 +830,7 @@ const SaveManager = {
 
             const scoreData = {
                 playerName: player.name || 'Unknown',
+                characterId: player.characterId || null, // 🏆 CRITICAL: Prevents duplicate leaderboard entries 💀
                 score,
                 gold: player.gold || 0,
                 daysSurvived,

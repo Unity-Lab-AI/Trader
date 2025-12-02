@@ -1091,8 +1091,32 @@ const SkillSystem = {
             this.playerSkills = data.playerSkills || {};
             this.skillPoints = data.skillPoints || 0;
             this.totalSkillPoints = data.totalSkillPoints || 0;
+
+            // 🖤 Sync skills back to game.player for other systems 💀
+            this._syncSkillsToPlayer();
+
             this.saveSkills();
         }
+    },
+
+    /**
+     * 🖤 Sync SkillSystem.playerSkills to game.player.skills 💀
+     * Other systems read game.player.skills directly, so we need to keep them in sync
+     */
+    _syncSkillsToPlayer() {
+        if (typeof game === 'undefined' || !game.player) return;
+
+        // 🦇 Ensure game.player.skills exists
+        if (!game.player.skills) {
+            game.player.skills = {};
+        }
+
+        // 🗡️ Map skill levels back to game.player.skills format
+        for (const [skillId, level] of Object.entries(this.playerSkills)) {
+            game.player.skills[skillId] = level;
+        }
+
+        console.log('🖤 Skills synced to game.player:', Object.keys(this.playerSkills).length, 'skills');
     }
 };
 

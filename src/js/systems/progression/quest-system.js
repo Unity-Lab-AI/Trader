@@ -2022,6 +2022,14 @@ const QuestSystem = {
 
         card.className = `quest-card ${stateClass} ${isMain ? 'main-quest' : ''} ${quest.difficulty || ''}`;
 
+        // 🖤 Add click handler to open unified quest info panel 💀
+        if (isActive || isCompleted || isDiscovered || isAvailable) {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', () => {
+                this.showQuestInfoPanel(quest.id);
+            });
+        }
+
         // get quest icon based on type
         const icon = this.getQuestIcon(quest);
 
@@ -2231,11 +2239,14 @@ const QuestSystem = {
 
         tracker.classList.remove('hidden');
 
-        // 🖤 Position quest tracker below player info panel (side-panel)
+        // 🖤 Position quest tracker below player info panel (side-panel) - ONLY if not dragged 💀
         const sidePanel = document.getElementById('side-panel');
-        if (sidePanel && !tracker.dataset.draggable) {
+        if (sidePanel && !tracker.dataset.userDragged) {
             const sidePanelRect = sidePanel.getBoundingClientRect();
+            // 🖤 Position directly below the side-panel, aligned to the right edge
             tracker.style.top = (sidePanelRect.bottom + 10) + 'px'; // 10px gap below side panel
+            tracker.style.right = (window.innerWidth - sidePanelRect.right) + 'px'; // Align right edge with side-panel
+            tracker.style.left = 'auto'; // Clear left so right positioning works
         }
 
         // 🎯 If a quest is tracked, show only that quest prominently
@@ -2259,7 +2270,7 @@ const QuestSystem = {
                     <button class="tracker-close" onclick="QuestSystem.hideQuestTracker()" title="Close">×</button>
                 </div>
                 <div class="tracker-content">
-                    <div class="tracker-tracked-quest" onclick="QuestSystem.showQuestLog(); QuestSystem.showQuestInfoPanel('${quest.id}');">
+                    <div class="tracker-tracked-quest" onclick="QuestSystem.showQuestInfoPanel('${quest.id}');">
                         <div class="tracker-quest-title">
                             <span class="tracker-quest-icon">${this.getQuestTypeIcon(quest.type)}</span>
                             <span class="tracker-quest-name">${quest.name}</span>
@@ -2302,7 +2313,7 @@ const QuestSystem = {
                     ${activeQuestsList.map(quest => {
                         const progress = this.checkProgress(quest.id);
                         return `
-                            <div class="tracker-quest ${progress.status === 'ready_to_complete' ? 'ready' : ''}" onclick="QuestSystem.showQuestLog(); QuestSystem.showQuestInfoPanel('${quest.id}');">
+                            <div class="tracker-quest ${progress.status === 'ready_to_complete' ? 'ready' : ''}" onclick="QuestSystem.showQuestInfoPanel('${quest.id}');">
                                 <button class="tracker-track-btn" onclick="event.stopPropagation(); QuestSystem.trackQuest('${quest.id}');" title="Track this quest">🎯</button>
                                 <span class="tracker-quest-name">${quest.name}</span>
                                 <span class="tracker-quest-progress">${progress.progress}</span>
@@ -2603,6 +2614,33 @@ const QuestSystem = {
         return quest.location;
     },
 
+    // 🖤 Get quest info for a specific location (for tooltips) 💀
+    getQuestInfoForLocation(locationId) {
+        if (!this.trackedQuestId) return null;
+
+        const quest = this.activeQuests[this.trackedQuestId];
+        if (!quest || !quest.objectives) return null;
+
+        const targetLocation = this.getTrackedQuestLocation();
+        if (targetLocation !== locationId) return null;
+
+        // 🖤 Find the current objective description
+        let currentObjective = null;
+        for (const obj of quest.objectives) {
+            if (!obj.completed) {
+                currentObjective = this.getObjectiveDescription(obj);
+                break;
+            }
+        }
+
+        return {
+            questName: quest.name,
+            questId: quest.id,
+            objective: currentObjective,
+            isTracked: true
+        };
+    },
+
     // 🖤 Update the glowing quest marker on the map
     updateQuestMapMarker() {
         // 💀 Remove old marker first
@@ -2853,7 +2891,7 @@ const QuestSystem = {
                 }
             }
             .quest-target-glow {
-                z-index: 15 !important;
+                z-index: 35 !important; /* 🖤 ABOVE weather (15) so quest targets are visible 💀 */
             }
             /* 🖤 Floating marker for unexplored quest locations - extra bounce for visibility 💀 */
             .floating-quest-marker {
@@ -2863,37 +2901,60 @@ const QuestSystem = {
         document.head.appendChild(style);
     },
 
-    // 🎯 Show quest info panel for tracked quest
-    showQuestInfoPanel(questId = null) {
+    // 🎯 Unified Quest Info Panel - used for ALL quest displays 🖤💀
+    // Options: { isNewQuest: bool, onClose: function, showTrackButton: bool }
+    showQuestInfoPanel(questId = null, options = {}) {
         const qId = questId || this.trackedQuestId;
         if (!qId) return;
 
         const quest = this.activeQuests[qId] || this.quests[qId];
         if (!quest) return;
 
+        // 🖤 Store onClose callback for later
+        this._questInfoPanelOnClose = options.onClose || null;
+
         // 💀 Remove existing panel
         const existing = document.getElementById('quest-info-panel');
         if (existing) existing.remove();
 
         const progress = this.checkProgress(qId);
-        const targetLocation = this.getTrackedQuestLocation();
+        // 🖤 Get location from quest data, not just tracked quest 💀
+        const targetLocation = quest.location || this.getTrackedQuestLocation();
+
+        // 🖤 Store the displayed quest's target location for "Show on Map" button 💀
+        this._displayedQuestTargetLocation = targetLocation;
         const locationName = targetLocation ? this.getLocationDisplayName(targetLocation) : 'Unknown';
 
-        // 🖤 Create the info panel
+        // 🖤 Determine header based on context
+        const isNewQuest = options.isNewQuest || false;
+        const headerTitle = isNewQuest ? '📜 New Quest!' : quest.name;
+        const headerClass = isNewQuest ? 'quest-info-header new-quest' : 'quest-info-header';
+
+        // 🖤 Build rewards string
+        const rewardParts = [];
+        if (quest.rewards?.gold) rewardParts.push(`💰 ${quest.rewards.gold}g`);
+        if (quest.rewards?.experience) rewardParts.push(`⭐ ${quest.rewards.experience}xp`);
+        if (quest.rewards?.reputation) rewardParts.push(`👑 +${quest.rewards.reputation} rep`);
+        const rewardsStr = rewardParts.length > 0 ? rewardParts.join(' • ') : 'None';
+
+        // 🖤 Create the unified info panel
         const panel = document.createElement('div');
         panel.id = 'quest-info-panel';
-        panel.className = 'quest-info-panel';
+        panel.className = 'quest-info-panel' + (isNewQuest ? ' new-quest-panel' : '');
         panel.innerHTML = `
-            <div class="quest-info-header">
+            <div class="${headerClass}">
                 <span class="quest-info-icon">${this.getQuestTypeIcon(quest.type)}</span>
-                <h3>${quest.name}</h3>
+                <h3>${isNewQuest ? quest.name : headerTitle}</h3>
                 <button class="quest-info-close" onclick="QuestSystem.hideQuestInfoPanel()">×</button>
             </div>
+            ${isNewQuest ? '<div class="quest-info-new-banner">✨ Quest Started! ✨</div>' : ''}
             <div class="quest-info-body">
                 <p class="quest-info-desc">${quest.description}</p>
+                ${targetLocation ? `
                 <div class="quest-info-section">
-                    <strong>🎯 Go to:</strong> ${locationName}
+                    <strong>📍 Location:</strong> ${locationName}
                 </div>
+                ` : ''}
                 <div class="quest-info-section">
                     <strong>📋 Objectives:</strong>
                     <ul class="quest-info-objectives">
@@ -2906,23 +2967,20 @@ const QuestSystem = {
                     </ul>
                 </div>
                 <div class="quest-info-section">
-                    <strong>💰 Rewards:</strong>
-                    <span class="quest-rewards">
-                        ${quest.rewards.gold ? `${quest.rewards.gold}g` : ''}
-                        ${quest.rewards.experience ? ` ${quest.rewards.experience}xp` : ''}
-                        ${quest.rewards.reputation ? ` +${quest.rewards.reputation} rep` : ''}
-                    </span>
+                    <strong>💎 Rewards:</strong>
+                    <span class="quest-rewards">${rewardsStr}</span>
                 </div>
                 <div class="quest-info-status">
-                    Status: <span class="${progress.status}">${progress.status.replace(/_/g, ' ')}</span>
+                    Status: <span class="status-${progress.status}">${progress.status.replace(/_/g, ' ')}</span>
                 </div>
             </div>
             <div class="quest-info-actions">
                 ${this.trackedQuestId === qId
-                    ? `<button onclick="QuestSystem.untrackQuest()">🚫 Untrack</button>`
-                    : `<button onclick="QuestSystem.trackQuest('${qId}')">🎯 Track Quest</button>`
+                    ? `<button class="quest-action-btn" onclick="QuestSystem.untrackQuest(); QuestSystem.hideQuestInfoPanel();">🚫 Untrack</button>`
+                    : `<button class="quest-action-btn primary" onclick="QuestSystem.trackQuest('${qId}'); QuestSystem.hideQuestInfoPanel();">🎯 Track Quest</button>`
                 }
-                <button onclick="QuestSystem.centerMapOnQuestTarget()">🗺️ Show on Map</button>
+                <button class="quest-action-btn" onclick="QuestSystem.showOnMapAndClose();">🗺️ Show on Map</button>
+                ${isNewQuest ? `<button class="quest-action-btn primary" onclick="QuestSystem.hideQuestInfoPanel();">✅ Got it!</button>` : ''}
             </div>
         `;
 
@@ -2951,10 +3009,17 @@ const QuestSystem = {
         this.addQuestInfoPanelStyles();
     },
 
-    // 💀 Hide the quest info panel
+    // 💀 Hide the quest info panel and call onClose callback if set
     hideQuestInfoPanel() {
         const panel = document.getElementById('quest-info-panel');
         if (panel) panel.remove();
+
+        // 🖤 Call onClose callback if it was set 💀
+        if (this._questInfoPanelOnClose) {
+            const callback = this._questInfoPanelOnClose;
+            this._questInfoPanelOnClose = null; // Clear it first to prevent loops
+            callback();
+        }
     },
 
     // 🖤 Center the map on the quest target location
@@ -2969,6 +3034,30 @@ const QuestSystem = {
             GameWorldRenderer.centerOnLocation(targetLocation);
             console.log(`🎯 Centered map on ${targetLocation}`);
         }
+    },
+
+    // 🖤 Show on Map button - centers map and closes panel WITHOUT triggering onClose callback 💀
+    showOnMapAndClose() {
+        // 🖤 Clear the callback BEFORE closing so it doesn't trigger
+        this._questInfoPanelOnClose = null;
+
+        // 🖤 Get the displayed quest's target location (stored when panel was opened)
+        const targetLocation = this._displayedQuestTargetLocation;
+
+        // 🖤 Center map on the quest's location (not just tracked quest!)
+        if (targetLocation && typeof GameWorldRenderer !== 'undefined' && GameWorldRenderer.centerOnLocation) {
+            GameWorldRenderer.centerOnLocation(targetLocation);
+            console.log(`🗺️ Centered map on quest location: ${targetLocation} 💀`);
+        } else {
+            console.log('🗺️ No target location to center on');
+        }
+
+        // 🖤 Clear the stored location
+        this._displayedQuestTargetLocation = null;
+
+        // 🖤 Close the panel (callback already cleared, won't trigger)
+        const panel = document.getElementById('quest-info-panel');
+        if (panel) panel.remove();
     },
 
     // 🦇 Get display name for a location
@@ -3076,6 +3165,58 @@ const QuestSystem = {
                 background: rgba(79, 195, 247, 0.4);
                 border-color: #4fc3f7;
             }
+
+            /* 🖤 New Quest Panel Styles 💀 */
+            .quest-info-panel.new-quest-panel {
+                border-color: #90EE90;
+                box-shadow: 0 0 30px rgba(144, 238, 144, 0.4), 0 10px 40px rgba(0, 0, 0, 0.5);
+            }
+            .quest-info-header.new-quest {
+                background: linear-gradient(90deg, rgba(144, 238, 144, 0.3) 0%, transparent 100%);
+                border-bottom-color: rgba(144, 238, 144, 0.3);
+            }
+            .quest-info-header.new-quest h3 {
+                color: #90EE90;
+            }
+            .quest-info-new-banner {
+                text-align: center;
+                padding: 8px;
+                background: linear-gradient(90deg, transparent, rgba(144, 238, 144, 0.2), transparent);
+                color: #90EE90;
+                font-weight: bold;
+                font-size: 14px;
+                animation: quest-new-pulse 2s ease-in-out infinite;
+            }
+            @keyframes quest-new-pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.7; }
+            }
+            .quest-action-btn {
+                flex: 1;
+                padding: 8px 12px;
+                border: 1px solid rgba(79, 195, 247, 0.5);
+                border-radius: 6px;
+                background: rgba(79, 195, 247, 0.2);
+                color: white;
+                cursor: pointer;
+                font-size: 12px;
+                transition: all 0.2s;
+            }
+            .quest-action-btn:hover {
+                background: rgba(79, 195, 247, 0.4);
+                border-color: #4fc3f7;
+            }
+            .quest-action-btn.primary {
+                background: rgba(144, 238, 144, 0.3);
+                border-color: rgba(144, 238, 144, 0.6);
+            }
+            .quest-action-btn.primary:hover {
+                background: rgba(144, 238, 144, 0.5);
+                border-color: #90EE90;
+            }
+            .status-ready_to_complete { color: #81c784; font-weight: bold; }
+            .status-in_progress { color: #ffc107; }
+            .status-not_started { color: #888; }
         `;
         document.head.appendChild(style);
     },
@@ -3164,6 +3305,8 @@ const QuestSystem = {
                 tracker.style.top = pos.top;
                 tracker.style.right = 'auto';
                 tracker.style.bottom = 'auto';
+                // 🖤 If there's a saved position, user dragged it before - respect that 💀
+                tracker.dataset.userDragged = 'true';
             }
             console.log('🖤 Quest tracker drag setup complete');
         }

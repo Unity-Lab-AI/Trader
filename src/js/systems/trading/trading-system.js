@@ -13,6 +13,17 @@ const TradingSystem = {
     selectedTradeItems: new Map(),
     tradeHistory: [],
     priceAlerts: [],
+
+    // 🖤 Escape HTML to prevent XSS - sanitize or die 💀
+    _escapeHTML(str) {
+        if (str == null) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    },
     
     // 🌙 Initialize - let the exploitation begin
     init() {
@@ -273,12 +284,13 @@ const TradingSystem = {
             return;
         }
         
+        // 🖤 Escape all user-facing data to prevent XSS 💀
         historyContainer.innerHTML = this.tradeHistory.map(trade => `
             <div class="trade-history-item">
-                <div class="trade-type">${trade.type.toUpperCase()}</div>
-                <div class="trade-items">${trade.items.map(item => `${item.itemName} ×${item.quantity}`).join(', ')}</div>
-                <div class="trade-location">${trade.location}</div>
-                <div class="trade-time">${new Date(trade.timestamp).toLocaleString()}</div>
+                <div class="trade-type">${this._escapeHTML(trade.type).toUpperCase()}</div>
+                <div class="trade-items">${trade.items.map(item => `${this._escapeHTML(item.itemName)} ×${this._escapeHTML(item.quantity)}`).join(', ')}</div>
+                <div class="trade-location">${this._escapeHTML(trade.location)}</div>
+                <div class="trade-time">${this._escapeHTML(new Date(trade.timestamp).toLocaleString())}</div>
             </div>
         `).join('');
     },

@@ -155,6 +155,7 @@ const GameOverSystem = {
 
         return {
             playerName: player.name || 'Anonymous Merchant',
+            characterId: player.characterId || null, // 🏆 CRITICAL: Unique ID for leaderboard deduplication 💀
             causeOfDeath,
             gold: player.gold || 0,
             daysSurvived,
@@ -221,6 +222,7 @@ const GameOverSystem = {
             try {
                 const scoreData = {
                     playerName: this.finalStats.playerName,
+                    characterId: this.finalStats.characterId, // 🏆 CRITICAL: Prevents duplicate leaderboard entries 💀
                     score: this.finalStats.score,
                     gold: this.finalStats.gold,
                     daysSurvived: this.finalStats.daysSurvived,

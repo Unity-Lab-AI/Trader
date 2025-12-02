@@ -47,6 +47,10 @@ const PerformanceOptimizer = {
         events: [],
         timers: []
     },
+
+    // 🖤 Track timer/interval references for cleanup 💀
+    _monitoringFrameId: null,
+    _panelUpdateIntervalId: null,
     
     // Pool configuration
     poolConfig: {
@@ -92,29 +96,31 @@ const PerformanceOptimizer = {
             frameCount++;
             const currentTime = performance.now();
             const deltaTime = currentTime - lastTime;
-            
+
             if (deltaTime >= 1000) {
                 fps = Math.round((frameCount * 1000) / deltaTime);
                 frameTime = deltaTime / frameCount;
-                
+
                 this.metrics.currentFPS = fps;
                 this.metrics.frameTime = frameTime;
-                
+
                 // Reset counters
                 frameCount = 0;
                 lastTime = currentTime;
-                
+
                 // Check if optimization is needed
                 this.checkOptimizationNeeds();
-                
+
                 // Update performance display
                 this.updatePerformanceDisplay();
             }
-            
-            requestAnimationFrame(measurePerformance);
+
+            // 🖤 Store frame ID for cleanup 💀
+            this._monitoringFrameId = requestAnimationFrame(measurePerformance);
         };
-        
-        requestAnimationFrame(measurePerformance);
+
+        // 🖤 Store initial frame ID 💀
+        this._monitoringFrameId = requestAnimationFrame(measurePerformance);
         
         // Monitor memory usage if available
         this.monitorMemoryUsage();
@@ -797,8 +803,19 @@ const PerformanceOptimizer = {
         });
         
         // Update info display
-        TimerManager.setInterval(() => {
-            panel.querySelector('#perf-current-fps').textContent = this.metrics.currentFPS;
+        // 🖤 Store interval ID for cleanup 💀
+        if (this._panelUpdateIntervalId) {
+            TimerManager.clearInterval(this._panelUpdateIntervalId);
+        }
+        this._panelUpdateIntervalId = TimerManager.setInterval(() => {
+            // 🖤 Guard against panel being removed 💀
+            const fpsEl = panel.querySelector('#perf-current-fps');
+            if (!fpsEl) {
+                TimerManager.clearInterval(this._panelUpdateIntervalId);
+                this._panelUpdateIntervalId = null;
+                return;
+            }
+            fpsEl.textContent = this.metrics.currentFPS;
             panel.querySelector('#perf-memory-usage').textContent = this.metrics.memoryUsage.toFixed(1);
             panel.querySelector('#perf-active-particles').textContent = this.metrics.particleCount;
             panel.querySelector('#perf-active-animations').textContent = this.metrics.animationCount;
@@ -966,12 +983,13 @@ const PerformanceOptimizer = {
                 object.maxLife = 100;
                 object.size = 1;
                 object.color = '#ffffff';
-                if (object.element && object.element.parentNode) {
+                // 🖤 Check parentNode exists before removeChild 💀
+                if (object.element?.parentNode) {
                     object.element.parentNode.removeChild(object.element);
                 }
                 object.element = null;
                 break;
-                
+
             case 'animations':
                 object.element = null;
                 object.property = '';
@@ -982,14 +1000,18 @@ const PerformanceOptimizer = {
                 object.easing = 'linear';
                 object.onComplete = null;
                 break;
-                
+
             case 'domElements':
-                if (object.element && object.element.parentNode) {
+                // 🖤 Check parentNode exists before removeChild 💀
+                if (object.element?.parentNode) {
                     object.element.parentNode.removeChild(object.element);
                 }
-                object.element.style.display = 'none';
-                object.element.innerHTML = '';
-                object.element.className = 'pooled-element';
+                // 🖤 Guard against null element 💀
+                if (object.element) {
+                    object.element.style.display = 'none';
+                    object.element.innerHTML = '';
+                    object.element.className = 'pooled-element';
+                }
                 break;
                 
             case 'events':
@@ -1016,7 +1038,8 @@ const PerformanceOptimizer = {
             // Remove unused objects beyond max pool size
             while (pool.length > this.poolConfig.maxPoolSize) {
                 const object = pool.pop();
-                if (object.element && object.element.parentNode) {
+                // 🖤 Check parentNode exists before removeChild 💀
+                if (object.element?.parentNode) {
                     object.element.parentNode.removeChild(object.element);
                 }
             }
@@ -1120,18 +1143,30 @@ const PerformanceOptimizer = {
     
     // Cleanup
     cleanup() {
+        // 🖤 Cancel animation frame monitoring 💀
+        if (this._monitoringFrameId) {
+            cancelAnimationFrame(this._monitoringFrameId);
+            this._monitoringFrameId = null;
+        }
+
+        // 🖤 Clear panel update interval 💀
+        if (this._panelUpdateIntervalId) {
+            TimerManager.clearInterval(this._panelUpdateIntervalId);
+            this._panelUpdateIntervalId = null;
+        }
+
         // Remove performance display
         const performanceDisplay = document.getElementById('performance-display');
         if (performanceDisplay) {
             performanceDisplay.remove();
         }
-        
+
         // Remove performance panel
         const performancePanel = document.getElementById('performance-panel');
         if (performancePanel) {
             performancePanel.remove();
         }
-        
+
         // Clean up object pools
         this.cleanupPools();
     }

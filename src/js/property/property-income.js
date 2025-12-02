@@ -8,43 +8,68 @@
 // ═══════════════════════════════════════════════════════════════
 
 const PropertyIncome = {
-    // 💵 Calculate income for a single property ⚰️
-    calculateIncome(property) {
-        const propertyType = PropertyTypes.get(property.type);
-        if (!propertyType) return 0;
+    // 🖤 Configurable multipliers - no more magic numbers scattered everywhere 💀
+    config: {
+        levelIncomeMultiplier: 0.2,    // 20% income boost per level
+        taxRate: 0.1,                   // 10% tax on gross income
+        conditionPenaltyThreshold: 50,  // Below this condition, maintenance increases
+        conditionPenaltyMultiplier: 2,  // Max maintenance multiplier at 0 condition
+    },
 
-        let income = propertyType.baseIncome;
-
-        // 🖤 Default level to 1 and condition to 100 to prevent NaN 💀
+    // 🖤 Shared income calculation helper - DRY'd the fuck up 💀
+    _calculateBaseIncome(property, propertyType) {
         const level = property.level ?? 1;
         const condition = property.condition ?? 100;
-
-        // 📈 Level multiplier (20% per level) 🦇
-        income *= (1 + (level - 1) * 0.2);
-
-        // 🔧 Upgrade bonuses 🗡️ - 🖤 with null guard 💀
         const upgrades = property.upgrades || [];
+
+        // 💵 Base income with level multiplier
+        let income = propertyType.baseIncome * (1 + (level - 1) * this.config.levelIncomeMultiplier);
+
+        // 🔧 Upgrade income bonuses
         upgrades.forEach(upgradeId => {
             const upgrade = PropertyTypes.getUpgrade(upgradeId);
-            if (upgrade && upgrade.effects.incomeBonus) {
+            if (upgrade?.effects?.incomeBonus) {
                 income *= upgrade.effects.incomeBonus;
             }
         });
 
-        // 🔨 Condition modifier 🌙
+        // 🔨 Condition modifier
         income *= (condition / 100);
 
-        // 🛠️ Calculate maintenance 🔮 - 🖤 with null guard 💀
+        return { income, level, condition, upgrades };
+    },
+
+    // 🖤 Shared maintenance calculation helper 💀
+    _calculateMaintenance(propertyType, upgrades, condition, includeConditionPenalty = false) {
         let maintenance = propertyType.maintenanceCost;
+
+        // 🔧 Upgrade maintenance reductions
         upgrades.forEach(upgradeId => {
             const upgrade = PropertyTypes.getUpgrade(upgradeId);
-            if (upgrade && upgrade.effects.maintenanceReduction) {
+            if (upgrade?.effects?.maintenanceReduction) {
                 maintenance *= upgrade.effects.maintenanceReduction;
             }
         });
 
-        // 💀 Tax (10% of gross) 🖤
-        const tax = Math.round(income * 0.1);
+        // 🔨 Poor condition increases maintenance (only in daily processing)
+        const threshold = this.config.conditionPenaltyThreshold;
+        if (includeConditionPenalty && condition < threshold) {
+            maintenance *= (this.config.conditionPenaltyMultiplier - condition / threshold);
+        }
+
+        return maintenance;
+    },
+
+    // 💵 Calculate income for a single property (preview/UI purposes) ⚰️
+    calculateIncome(property) {
+        const propertyType = PropertyTypes.get(property.type);
+        if (!propertyType) return 0;
+
+        const { income, upgrades, condition } = this._calculateBaseIncome(property, propertyType);
+        const maintenance = this._calculateMaintenance(propertyType, upgrades, condition, false);
+
+        // 💀 Tax 🖤
+        const tax = Math.round(income * this.config.taxRate);
         const netIncome = Math.round(income - maintenance - tax);
 
         return Math.max(0, netIncome);
@@ -74,28 +99,11 @@ const PropertyIncome = {
             // 📤 Auto-store produced items 🗡️
             PropertyStorage.autoStoreProducedItems(property.id);
 
-            // 💵 Calculate income 🌙
-            let income = propertyType.baseIncome;
+            // 🖤 Use shared helpers for base calculations - DRY 💀
+            const { income: baseIncome, condition, upgrades: propUpgrades } = this._calculateBaseIncome(property, propertyType);
+            let income = baseIncome;
 
-            // 🖤 Default level to 1 and condition to 100 to prevent NaN 💀
-            const level = property.level ?? 1;
-            const condition = property.condition ?? 100;
-
-            income *= (1 + (level - 1) * 0.2);
-
-            // 🔧 Upgrade bonuses 🔮 - 🖤 with null guard 💀
-            const propUpgrades = property.upgrades || [];
-            propUpgrades.forEach(upgradeId => {
-                const upgrade = PropertyTypes.getUpgrade(upgradeId);
-                if (upgrade && upgrade.effects.incomeBonus) {
-                    income *= upgrade.effects.incomeBonus;
-                }
-            });
-
-            // 🔨 Condition modifier 💀
-            income *= (condition / 100);
-
-            // 👥 Employee bonuses 🖤 - 🖤 with null guard 💀
+            // 👥 Employee bonuses (only in daily processing)
             const propEmployees = property.employees || [];
             const assignedEmployees = propEmployees.map(empId =>
                 PropertyEmployeeBridge?.getEmployee?.(empId)
@@ -103,28 +111,17 @@ const PropertyIncome = {
 
             let employeeBonus = 1;
             assignedEmployees.forEach(employee => {
-                if (employee.skills && employee.skills.management) {
+                if (employee.skills?.management) {
                     employeeBonus += employee.skills.management * 0.05;
                 }
-                if (employee.skills && employee.skills.trading) {
+                if (employee.skills?.trading) {
                     employeeBonus += employee.skills.trading * 0.03;
                 }
             });
             income *= employeeBonus;
 
-            // 🛠️ Calculate maintenance ⚰️ - 🖤 with null guard 💀
-            let maintenance = propertyType.maintenanceCost;
-            propUpgrades.forEach(upgradeId => {
-                const upgrade = PropertyTypes.getUpgrade(upgradeId);
-                if (upgrade && upgrade.effects.maintenanceReduction) {
-                    maintenance *= upgrade.effects.maintenanceReduction;
-                }
-            });
-
-            // 🔨 Poor condition increases maintenance 🦇
-            if (condition < 50) {
-                maintenance *= (2 - condition / 50);
-            }
+            // 🛠️ Use shared maintenance helper with condition penalty enabled 💀
+            const maintenance = this._calculateMaintenance(propertyType, propUpgrades, condition, true);
 
             // 💀 Tax 🗡️
             const tax = Math.round(income * 0.1);

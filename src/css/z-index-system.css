@@ -6,38 +6,41 @@
    www.unityailab.com | github.com/Unity-Lab-AI/Medieval-Trading-Game
    unityailabcontact@gmail.com
    ═══════════════════════════════════════════════════════════════
-   MASTER Z-INDEX REFERENCE - All z-index values in one place
 
-   Layer 0    : Background effects (menu weather during setup)
-   Layer 1-9  : Game world elements (map, locations)
-   Layer 10-49: Game overlays (weather overlay in-game)
-   Layer 50-99: UI Panels (side panel, location panel, message log)
-   Layer 100-199: Floating panels (setup panel, quest tracker, draggable panels)
-   Layer 200-499: Dropdowns, tooltips, popovers
-   Layer 500-999: Modal backdrops
-   Layer 1000-1999: Modals and overlays
-   Layer 2000+: Critical UI (loading screen, error messages)
+   🖤 MASTER Z-INDEX HIERARCHY (Gee's Order) 💀
+
+   LAYER 0     : Background Image (terrain, map base)
+   LAYER 1-5   : Weather Effects (rain, snow, fog - DIRECTLY above background)
+   LAYER 10-40 : Game World UI (names, icons, locations, paths)
+   LAYER 50-99 : All Panels (side panel, location panel, etc.)
+   LAYER 100-199: Floating Panels (setup panel, quest tracker, draggables)
+   LAYER 200-499: Tooltips, Dropdowns
+   LAYER 500-999: Modal Backdrops
+   LAYER 1000-1999: Modals, Overlays
+   LAYER 2000+  : Menu, Settings
+   LAYER 3000+  : Debooger (always on top)
 
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-    /* 🖤 LAYER 0: Background Effects */
-    --z-background-effects: 1;
+    /* 🖤 LAYER 0: Background Image / Game Map Base */
+    --z-background-image: 0;
+    --z-game-map: 0;
 
-    /* 🗺️ LAYER 1-9: Game World Base */
-    --z-game-map: 2;
-    --z-map-connections: 3;
+    /* 🌧️ LAYER 1-5: Weather Effects (DIRECTLY above background, below EVERYTHING else) */
+    --z-weather-overlay: 2;
+    --z-day-night-overlay: 3;
+    --z-menu-weather: 1;
 
-    /* 🌧️ LAYER 10-19: Weather Overlays (BELOW map markers) */
-    --z-day-night-overlay: 12;
-    --z-weather-overlay: 15;
+    /* 📍 LAYER 10-40: Game World UI Elements (ABOVE weather) */
+    --z-map-connections: 10;      /* Path lines between locations */
+    --z-map-locations: 15;        /* Location icons */
+    --z-map-labels: 18;           /* Location names */
+    --z-player-marker: 20;        /* "You are here" marker */
+    --z-quest-wayfinder: 25;      /* Quest objective glow */
+    --z-traveling-indicator: 28;  /* Traveling... animation */
 
-    /* 📍 LAYER 20-40: Map Markers (ABOVE weather so they don't get rained on) */
-    --z-map-locations: 25;
-    --z-player-marker: 30;
-    --z-map-labels: 28;
-
-    /* 📦 LAYER 50-99: Core UI Panels */
+    /* 📦 LAYER 50-99: Core UI Panels (ABOVE game world) */
     --z-side-panel: 50;
     --z-location-panel: 55;
     --z-message-log: 60;
@@ -69,55 +72,216 @@
     /* ⚠️ LAYER 2000+: Critical/System UI */
     --z-loading-screen: 2000;
     --z-error-modal: 2500;
-    --z-debooger-console: 3000;
 
-    /* 🖤 LAYER 3000+: Above main menu (main-menu is 3001) */
+    /* 🖤 LAYER 3000+: Main Menu & Settings */
+    --z-main-menu: 3001;
     --z-settings-panel: 3100;
+
+    /* 🦇 LAYER 999999: Debooger (absolute top) */
+    --z-debooger-console: 999998;
+    --z-debooger-toggle: 999999;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   🌦️ MENU WEATHER - Shows behind setup panel
+   🌧️ WEATHER - Layer 1-5 (DIRECTLY above background, below everything else)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* When menu weather container is moved to body during setup */
+/* Weather overlay in-game */
+.weather-overlay,
+#game-weather-overlay {
+    z-index: var(--z-weather-overlay) !important;
+    isolation: isolate;
+}
+
+/* Day/night overlay */
+.daynight-overlay,
+#daynight-overlay {
+    z-index: var(--z-day-night-overlay) !important;
+}
+
+/* Menu weather (during setup) - stays at layer 1 */
+#menu-weather-container,
 body > #menu-weather-container {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    z-index: var(--z-background-effects) !important;
+    z-index: var(--z-menu-weather) !important;
     pointer-events: none !important;
 }
 
-/* 🖤 Ensure ALL weather children stay behind setup panel 💀 */
-body > #menu-weather-container * {
+/* All weather children stay in their container */
+#menu-weather-container * {
     z-index: auto !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   🎮 GAME CONTAINER STATES
-   🖤 Using body classes instead of :has() for performance 💀
-   Classes managed by JS: .state-setup, .state-menu, .state-loading, .state-playing
+   📍 GAME WORLD UI - Layer 10-40 (ABOVE weather)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* During setup - transparent background to show weather through */
-body.state-setup #game-container {
-    background: transparent !important;
+/* Map container - creates stacking context */
+#map-container,
+#game-world {
+    isolation: isolate !important;
+    position: relative;
+    z-index: 5 !important; /* Above weather (2-3), contains UI elements */
+}
+
+/* Path connections between locations */
+#game-world svg,
+.map-connections,
+.path-line {
+    z-index: var(--z-map-connections) !important;
+}
+
+/* Location markers */
+.map-location {
+    z-index: var(--z-map-locations) !important;
+}
+
+/* Property markers */
+.property-marker {
+    z-index: var(--z-map-locations) !important;
+}
+
+/* Unexplored location markers */
+.unexplored-marker,
+.undiscovered-location {
+    z-index: var(--z-map-locations) !important;
+}
+
+/* Location labels - always readable */
+.map-location-label,
+.location-label,
+.location-name {
+    z-index: var(--z-map-labels) !important;
+}
+
+/* Player marker */
+.player-marker,
+.you-are-here {
+    z-index: var(--z-player-marker) !important;
+}
+
+/* Quest wayfinder glow */
+.quest-marker,
+.quest-glow,
+.wayfinder-glow,
+.objective-marker {
+    z-index: var(--z-quest-wayfinder) !important;
+}
+
+/* Traveling indicator */
+.traveling-indicator,
+.travel-progress-marker {
+    z-index: var(--z-traveling-indicator) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   📦 SETUP PANEL - Above weather, centered
+   📦 UI PANELS - Layer 50-99 (ABOVE game world)
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* UI Panels container */
+#ui-panels {
+    position: relative;
+    z-index: var(--z-side-panel) !important;
+}
+
+/* Side panel */
+#side-panel {
+    z-index: var(--z-side-panel) !important;
+}
+
+/* Location panel */
+#location-panel {
+    z-index: var(--z-location-panel) !important;
+}
+
+/* Message log */
+#message-log {
+    z-index: var(--z-message-log) !important;
+}
+
+/* Top bar */
+#top-bar {
+    z-index: var(--z-top-bar) !important;
+}
+
+/* Bottom bar */
+#bottom-action-bar {
+    z-index: var(--z-bottom-bar) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎛️ FLOATING PANELS - Layer 100-199
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Quest tracker */
+.quest-tracker {
+    z-index: var(--z-quest-tracker) !important;
+}
+
+/* All standard panels */
+.panel,
+#travel-panel,
+#character-panel,
+#inventory-panel,
+#financial-panel,
+#achievements-panel,
+#properties-panel {
+    z-index: var(--z-draggable-panel) !important;
+}
+
+/* Setup panel - above other floating panels */
 #game-setup-panel {
     z-index: var(--z-setup-panel) !important;
     position: relative;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   🎭 MODALS & OVERLAYS - Layer 500-1999
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Overlay container for modals */
+#overlay-container {
+    z-index: var(--z-overlay-container) !important;
+}
+
+/* Loading screen */
+#loading-screen {
+    z-index: var(--z-loading-screen) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🖤 MENU & SETTINGS - Layer 3000+
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Main menu */
+#main-menu {
+    z-index: var(--z-main-menu) !important;
+}
+
+/* Settings panel - ABOVE main menu */
+#settings-panel {
+    z-index: var(--z-settings-panel) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   🦇 DEBOOGER - Layer 999999 (always on top)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#debooger-console,
+.debooger-console {
+    z-index: var(--z-debooger-console) !important;
+}
+
+#toggle-debooger-console {
+    z-index: var(--z-debooger-toggle) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    🙈 HIDE GAME UI DURING SETUP/MENU/LOADING
-   🖤 Replaced :has() with body state classes for O(1) performance 💀
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Hide quest tracker */
@@ -127,7 +291,7 @@ body.state-loading .quest-tracker {
     display: none !important;
 }
 
-/* Hide game weather overlay (not menu weather) during setup */
+/* Hide game weather overlay during setup (menu weather shows instead) */
 body.state-setup #game-weather-overlay,
 body.state-setup .weather-overlay,
 body.state-menu #game-weather-overlay,
@@ -172,106 +336,7 @@ body.state-setup #game-world {
     display: none !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   🔧 APPLY Z-INDEX VALUES TO ELEMENTS
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* Weather overlay in-game - MUST be below map markers and all panels */
-.weather-overlay,
-#game-weather-overlay {
-    z-index: var(--z-weather-overlay) !important;
-    isolation: isolate; /* 🖤 Prevent backdrop-filter from affecting panels */
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   📍 MAP MARKERS - ABOVE weather so they don't get rained on or fogged out
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* Location markers sit ABOVE weather overlay */
-.map-location {
-    z-index: var(--z-map-locations) !important;
-}
-
-/* Location labels */
-.map-location-label {
-    z-index: var(--z-map-labels) !important;
-}
-
-/* Player marker always visible above everything on map */
-.player-marker {
-    z-index: var(--z-player-marker) !important;
-}
-
-/* Property markers */
-.property-marker {
-    z-index: var(--z-map-locations) !important;
-}
-
-/* Path connections stay below weather (they're part of the terrain) */
-#game-world svg,
-.map-connections {
-    z-index: var(--z-map-connections) !important;
-}
-
-/* UI Panels container - ABOVE weather overlay */
-#ui-panels {
-    position: relative;
-    z-index: var(--z-side-panel) !important; /* At least 50, above weather's 15 */
-}
-
-/* All panels should be above weather */
-.panel,
-#game-setup-panel,
-#travel-panel,
-#character-panel,
-#inventory-panel,
-#financial-panel,
-#achievements-panel,
-#properties-panel {
-    z-index: var(--z-draggable-panel) !important; /* 120 - well above weather */
-}
-
-/* 🖤 Settings panel needs to be ABOVE main-menu (3001) so it shows on start screen */
-#settings-panel {
-    z-index: var(--z-settings-panel) !important; /* 3100 - above main menu */
-}
-
-/* Quest tracker */
-.quest-tracker {
-    z-index: var(--z-quest-tracker) !important;
-}
-
-/* Message log */
-#message-log {
-    z-index: var(--z-message-log) !important;
-}
-
-/* Location panel - fixed bottom-left, above weather */
-#location-panel {
-    z-index: var(--z-location-panel) !important;
-}
-
-/* Top bar */
-#top-bar {
-    z-index: var(--z-top-bar) !important;
-}
-
-/* Overlay container for modals */
-#overlay-container {
-    z-index: var(--z-overlay-container) !important;
-}
-
-/* Loading screen - always on top */
-#loading-screen {
-    z-index: var(--z-loading-screen) !important;
-}
-
-/* 🦇 Debooger console - absolute top (inline styles take precedence) 💀 */
-#debooger-console,
-.debooger-console {
-    z-index: 999998;
-}
-
-#toggle-debooger-console {
-    z-index: 999999;
+/* During setup - transparent background to show weather through */
+body.state-setup #game-container {
+    background: transparent !important;
 }

@@ -118,28 +118,37 @@ const NPCRelationshipSystem = {
     // 💾 PERSISTENCE
     // ═══════════════════════════════════════════════════════════════
 
+    // 🖤 DEPRECATED - Use getSaveData/loadSaveData for per-slot saving 💀
+    // Kept for backwards compatibility - will load old global data on first run
     saveRelationships() {
         // 🖤 Debounce saves - batch rapid changes into single write 💀
+        // NOTE: This is now called less often - SaveManager handles persistence
         if (this._saveTimeout) {
             clearTimeout(this._saveTimeout);
         }
         this._saveTimeout = setTimeout(() => {
-            const saveData = {
-                relationships: this.relationships,
-                factionReputation: this.factionReputation,
-                playerTitle: this.playerTitle
-            };
-            try {
-                localStorage.setItem('medievalTradingGameRelationships', JSON.stringify(saveData));
-            } catch (e) {
-                // 🦇 Storage full - relationships live in memory only
-                console.warn('💕 Relationships not persisted - storage full');
+            // 🖤 Only save to global if SaveManager hasn't taken over 💀
+            // This maintains backwards compatibility for old saves
+            if (!this._managedBySaveManager) {
+                const saveData = {
+                    relationships: this.relationships,
+                    factionReputation: this.factionReputation,
+                    playerTitle: this.playerTitle
+                };
+                try {
+                    localStorage.setItem('medievalTradingGameRelationships', JSON.stringify(saveData));
+                } catch (e) {
+                    console.warn('💕 Relationships not persisted - storage full');
+                }
             }
             this._saveTimeout = null;
-        }, 500); // 🖤 500ms debounce - batches rapid reputation changes 💀
+        }, 500);
     },
 
     loadRelationships() {
+        // 🖤 Only load from global localStorage if SaveManager hasn't loaded us 💀
+        if (this._managedBySaveManager) return;
+
         try {
             const saved = localStorage.getItem('medievalTradingGameRelationships');
             if (saved) {
@@ -147,12 +156,57 @@ const NPCRelationshipSystem = {
                 this.relationships = data.relationships || {};
                 this.factionReputation = data.factionReputation || {};
                 this.playerTitle = data.playerTitle || null;
-                console.log('💕 Loaded relationships:', Object.keys(this.relationships).length, 'NPCs remembered');
+                console.log('💕 Loaded relationships from global storage:', Object.keys(this.relationships).length, 'NPCs');
             }
         } catch (e) {
-            // 🦇 Corrupt relationship data - start fresh
             console.warn('💕 Relationships reset - previous data corrupt');
         }
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🖤 SAVE MANAGER INTEGRATION - Per-slot relationship storage 💀
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Get save data for SaveManager - called during game save
+     * @returns {object} Serializable relationship state
+     */
+    getSaveData() {
+        return {
+            relationships: this.relationships,
+            factionReputation: this.factionReputation,
+            playerTitle: this.playerTitle,
+            unlockedBenefits: this.unlockedBenefits
+        };
+    },
+
+    /**
+     * Load save data from SaveManager - called during game load
+     * @param {object} data - Saved relationship state
+     */
+    loadSaveData(data) {
+        if (!data) return;
+
+        this._managedBySaveManager = true; // 🖤 Flag that SaveManager is handling persistence
+
+        this.relationships = data.relationships || {};
+        this.factionReputation = data.factionReputation || {};
+        this.playerTitle = data.playerTitle || null;
+        this.unlockedBenefits = data.unlockedBenefits || {};
+
+        console.log('💕 Loaded relationships from save slot:', Object.keys(this.relationships).length, 'NPCs remembered');
+    },
+
+    /**
+     * Reset relationships for new game
+     */
+    resetForNewGame() {
+        this.relationships = {};
+        this.factionReputation = {};
+        this.playerTitle = null;
+        this.unlockedBenefits = {};
+        this._managedBySaveManager = false;
+        console.log('💕 Relationships reset for new game');
     },
 
     // ═══════════════════════════════════════════════════════════════

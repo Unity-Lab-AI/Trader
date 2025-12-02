@@ -46,6 +46,7 @@ const LoadingManager = {
     startTime: 0,
     expectedLoadTime: 8000,  // 🖤 Expected ~8 seconds to load
     maxWaitTime: 20000,      // 🖤 Max 20 seconds before force-completing
+    _lastLogTime: 0,         // 🖤 Track last log time for 5s interval 💀
 
     // 🚀 Start monitoring loading progress
     init() {
@@ -118,7 +119,9 @@ const LoadingManager = {
 
         // 🖤 Debooger logging 🦇 every 5 seconds
         const elapsed = Date.now() - this.startTime;
-        if (elapsed > 5000 && elapsed % 5000 < 100) {
+        const now = Date.now();
+        if (elapsed > 5000 && (now - this._lastLogTime) >= 5000) {
+            this._lastLogTime = now;
             console.log('🖤 LoadingManager: Still waiting...', {
                 elapsed: Math.round(elapsed / 1000) + 's',
                 'window.startNewGame': typeof window.startNewGame,

@@ -1721,6 +1721,56 @@ const EventSystem = {
             duration: 360, // 6 hours
             chance: 0
         });
+
+        // 🍀 Lucky events - trigger lucky achievements!
+        this.addEventType('lucky_find', {
+            name: 'Lucky Find!',
+            description: 'You stumble upon a small pouch of gold coins hidden in the road! Fortune smiles upon you today.',
+            effects: { goldReward: 50 },
+            duration: 0,
+            chance: 0.005 // Rare!
+        });
+
+        this.addEventType('treasure_found', {
+            name: 'Hidden Treasure!',
+            description: 'While resting, you notice something glinting in the dirt. You\'ve found a buried treasure chest!',
+            effects: { goldReward: 200, itemReward: 'rare_gem' },
+            duration: 0,
+            chance: 0.002 // Very rare!
+        });
+
+        this.addEventType('blessing', {
+            name: 'Traveler\'s Blessing',
+            description: 'A wandering monk offers you a blessing for your journey. Your next trades will be more fortunate.',
+            effects: { priceBonus: 0.15 },
+            duration: 180, // 3 hours
+            chance: 0.01
+        });
+
+        this.addEventType('festival', {
+            name: 'Local Festival!',
+            description: 'The town is celebrating a local festival! Merchants are in good spirits and prices are favorable.',
+            effects: { priceBonus: 0.1, newItems: true },
+            duration: 300, // 5 hours
+            chance: 0.008
+        });
+
+        // 🖤 Negative events - balance the luck!
+        this.addEventType('tax_collector', {
+            name: 'Tax Collector',
+            description: 'The king\'s tax collector approaches. You must pay a small toll for using the road.',
+            effects: { goldLost: 25 },
+            duration: 0,
+            chance: 0.01
+        });
+
+        this.addEventType('bad_weather', {
+            name: 'Harsh Conditions',
+            description: 'The weather has taken a turn for the worse. Travel will be slower for a while.',
+            effects: { travelSpeedPenalty: -0.2 },
+            duration: 120, // 2 hours
+            chance: 0.015
+        });
     },
     
     // Add event type definition
@@ -1763,7 +1813,7 @@ const EventSystem = {
     triggerEvent(eventId, data = {}) {
         const eventType = this.eventTypes?.[eventId];
         if (!eventType) return;
-        
+
         const event = {
             id: eventId,
             name: eventType.name,
@@ -1773,16 +1823,24 @@ const EventSystem = {
             duration: eventType.duration || 60,
             active: true
         };
-        
+
         this.events.push(event);
         this.applyEventEffects(event);
-        
-        // Notify UI
-        if (game.ui) {
+
+        // 🎲 Show RandomEventPanel for proper visual display (skip travel_complete - that has its own UI)
+        if (eventId !== 'travel_complete' && typeof RandomEventPanel !== 'undefined') {
+            RandomEventPanel.showEvent(event);
+        }
+
+        // 🖤 Also dispatch custom event for any other listeners 💀
+        document.dispatchEvent(new CustomEvent('random-event-triggered', { detail: { event } }));
+
+        // Legacy UI notification (still useful for message log)
+        if (game.ui && game.ui.showEventNotification) {
             game.ui.showEventNotification(event);
         }
-        
-        console.log(`Event triggered: ${event.name}`);
+
+        console.log(`🎲 Event triggered: ${event.name}`);
     },
     
     // Apply event effects to game state
@@ -1791,24 +1849,52 @@ const EventSystem = {
         if (event.effects.priceBonus) {
             game.marketPriceModifier = (game.marketPriceModifier || 1) * (1 + event.effects.priceBonus);
         }
-        
+
         if (event.effects.pricePenalty) {
             game.marketPriceModifier = (game.marketPriceModifier || 1) * (1 + event.effects.pricePenalty);
         }
-        
+
         if (event.effects.travelSpeedBonus) {
             game.travelSpeedModifier = (game.travelSpeedModifier || 1) * (1 + event.effects.travelSpeedBonus);
         }
-        
+
         if (event.effects.travelSpeedPenalty) {
             game.travelSpeedModifier = (game.travelSpeedModifier || 1) * (1 + event.effects.travelSpeedPenalty);
         }
-        
+
+        // 🍀 Gold reward from lucky events
+        if (event.effects.goldReward && game.player) {
+            game.player.gold = (game.player.gold || 0) + event.effects.goldReward;
+            addMessage(`💰 You found ${event.effects.goldReward} gold!`, 'success');
+
+            // 🏆 Track for achievements
+            if (typeof AchievementSystem !== 'undefined') {
+                AchievementSystem.stats.treasuresFound = (AchievementSystem.stats.treasuresFound || 0) + 1;
+            }
+        }
+
+        // 💸 Gold lost from negative events
+        if (event.effects.goldLost && game.player) {
+            const lostAmount = Math.min(event.effects.goldLost, game.player.gold || 0);
+            game.player.gold = Math.max(0, (game.player.gold || 0) - lostAmount);
+            if (lostAmount > 0) {
+                addMessage(`💸 You lost ${lostAmount} gold...`, 'warning');
+            }
+        }
+
+        // 🎁 Item reward from events
+        if (event.effects.itemReward && game.player) {
+            const itemId = event.effects.itemReward;
+            game.player.inventory = game.player.inventory || {};
+            game.player.inventory[itemId] = (game.player.inventory[itemId] || 0) + 1;
+            addMessage(`🎁 You received: ${itemId}!`, 'success');
+        }
+
         // Handle special events
         if (event.id === 'travel_complete' && event.data?.destination) {
             GameWorld.completeTravel(event.data.destination);
         }
-        
+
         if (event.effects.newItems) {
             this.refreshMarketItems();
         }
@@ -1905,6 +1991,44 @@ const EventSystem = {
     // Get active events
     getActiveEvents() {
         return this.events.filter(event => event.active);
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🖤 SAVE/LOAD INTEGRATION - Restore events on game load 💀
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Get save data for SaveManager
+     * @returns {object} Serializable event state
+     */
+    getSaveData() {
+        return {
+            events: this.events || [],
+            scheduledEvents: this.scheduledEvents || [],
+            lastEventCheck: this.lastEventCheck || 0
+        };
+    },
+
+    /**
+     * Load save data from SaveManager - restore events on game load
+     * @param {object} data - Saved event state
+     */
+    loadSaveData(data) {
+        if (!data) return;
+
+        // 🖤 Restore active events
+        this.events = data.events || data.activeEvents || [];
+        this.scheduledEvents = data.scheduledEvents || [];
+        this.lastEventCheck = data.lastEventCheck || 0;
+
+        // 🦇 Re-apply effects for active events
+        const activeEvents = this.events.filter(e => e.active);
+        activeEvents.forEach(event => {
+            console.log(`🎲 Restoring event effects: ${event.name}`);
+            this.applyEventEffects(event);
+        });
+
+        console.log(`🎲 EventSystem: Restored ${this.events.length} events, ${this.scheduledEvents.length} scheduled`);
     }
 };
 
@@ -2073,28 +2197,43 @@ const game = {
 
     // 🖤 Update player stats over time - hunger, thirst, stamina decay and health regen
     // all values pulled from GameConfig.survival - the dark heart of balance
+    // 🖤 Track total minutes for proper stat decay across time speeds 💀
+    _lastProcessedTotalMinutes: -1,
+
     processPlayerStatsOverTime() {
         if (!game.player || !game.player.stats) return;
 
         // 🖤 FIX: Stats only decay when TIME is flowing - paused = frozen in time 💀
         if (typeof TimeMachine !== 'undefined' && TimeMachine.isPaused) return;
 
-        const timeInfo = TimeSystem.getTimeInfo();
+        // 🖤 FIX: Use total minutes to properly handle FAST speeds 💀
+        // At fast speeds, time might jump from minute 3 to minute 7, SKIPPING minute 5
+        // So we calculate how many 5-minute intervals have PASSED and apply decay for ALL of them
+        const totalMinutes = TimeSystem.getTotalMinutes();
 
-        // Only update every few game minutes to avoid rapid changes
-        if (timeInfo.minute % 5 !== 0) return;
+        // Initialize on first run
+        if (this._lastProcessedTotalMinutes < 0) {
+            this._lastProcessedTotalMinutes = totalMinutes;
+            return;
+        }
 
-        // 🖤 FIX: Prevent multi-frame decay - only process ONCE per 5-minute interval 💀
-        // The game loop runs at 60fps, so multiple frames can hit the same minute
-        const minuteKey = timeInfo.day * 10000 + timeInfo.hour * 100 + timeInfo.minute;
-        if (minuteKey === this._lastProcessedMinute) return;
-        this._lastProcessedMinute = minuteKey;
+        // Calculate how many 5-minute intervals have passed
+        const lastInterval = Math.floor(this._lastProcessedTotalMinutes / 5);
+        const currentInterval = Math.floor(totalMinutes / 5);
+        const intervalsPassed = currentInterval - lastInterval;
+
+        // No intervals passed yet
+        if (intervalsPassed <= 0) return;
+
+        // Update tracked time
+        this._lastProcessedTotalMinutes = totalMinutes;
 
         // 🖤 Pull survival config from GameConfig (or use defaults if config isn't loaded)
+        // 🦇 FIX: Fallback values now match config.js exactly - 5 day hunger, 3 day thirst 💀
         const survivalConfig = (typeof GameConfig !== 'undefined' && GameConfig.survival) ? GameConfig.survival : {
-            hunger: { decayPerUpdate: 0.0868, criticalThreshold: 20 },
-            thirst: { decayPerUpdate: 0.1157, criticalThreshold: 20 },
-            stamina: { decayPerUpdate: 0.5 },
+            hunger: { decayPerUpdate: 0.0694, criticalThreshold: 20 },  // 5 days: 100/(5*1440/5) = 0.0694
+            thirst: { decayPerUpdate: 0.1157, criticalThreshold: 20 },  // 3 days: 100/(3*1440/5) = 0.1157
+            stamina: { regenPerUpdate: 1.667 },
             starvationDeath: { healthDrainPercent: 0.00694 },
             healthRegen: { baseRegenPerUpdate: 0.5, wellFedBonus: 1.0, wellFedThreshold: 70, enduranceBonusMultiplier: 0.05 }
         };
@@ -2107,11 +2246,16 @@ const game = {
         const hungerSeasonMod = season.effects?.hungerDrain || 1.0;
         const thirstSeasonMod = season.effects?.thirstDrain || 1.0;
 
+        // 🖤 FIX: Apply decay for ALL intervals that passed (handles fast speeds!) 💀
+        // At FAST speed, multiple 5-minute intervals can pass in one frame
+        const hungerDecay = survivalConfig.hunger.decayPerUpdate * hungerSeasonMod * intervalsPassed;
+        const thirstDecay = survivalConfig.thirst.decayPerUpdate * thirstSeasonMod * intervalsPassed;
+
         // 🍖 HUNGER DECAY - dragged from the config's cold embrace
-        game.player.stats.hunger = Math.max(0, game.player.stats.hunger - (survivalConfig.hunger.decayPerUpdate * hungerSeasonMod));
+        game.player.stats.hunger = Math.max(0, game.player.stats.hunger - hungerDecay);
 
         // 💧 THIRST DECAY - dehydration comes for us all
-        game.player.stats.thirst = Math.max(0, game.player.stats.thirst - (survivalConfig.thirst.decayPerUpdate * thirstSeasonMod));
+        game.player.stats.thirst = Math.max(0, game.player.stats.thirst - thirstDecay);
 
         // ⚡ STAMINA REGENERATION - rest restores energy when idle 🖤
         // 0% to 100% in 5 game hours when not gathering or traveling
@@ -2122,15 +2266,16 @@ const game = {
 
         if (isIdle) {
             // 😴 Regenerate stamina when resting (idle)
-            const staminaRegenRate = survivalConfig.stamina?.regenPerUpdate || 1.667;
+            // 🖤 FIX: Apply for ALL intervals that passed 💀
+            const staminaRegenRate = (survivalConfig.stamina?.regenPerUpdate || 1.667) * intervalsPassed;
             const maxStamina = game.player.stats.maxStamina || 100;
             const currentStamina = game.player.stats.stamina;
 
             if (currentStamina < maxStamina) {
                 game.player.stats.stamina = Math.min(maxStamina, currentStamina + staminaRegenRate);
 
-                // Occasional message when resting
-                if (Math.floor(currentStamina / 25) < Math.floor(game.player.stats.stamina / 25) && Math.random() < 0.3) {
+                // Occasional message when resting (only if significant change)
+                if (Math.floor(currentStamina / 25) < Math.floor(game.player.stats.stamina / 25) && Math.random() < 0.1) {
                     addMessage("😴 Resting... stamina recovering.", 'info');
                 }
             }
@@ -2146,17 +2291,17 @@ const game = {
         const maxHealth = game.player.stats.maxHealth;
 
         if (canRegen && currentHealth < maxHealth) {
-            // Base regen from config
-            let regenAmount = survivalConfig.healthRegen.baseRegenPerUpdate;
+            // Base regen from config - apply for ALL intervals
+            let regenAmount = survivalConfig.healthRegen.baseRegenPerUpdate * intervalsPassed;
 
             // Bonus regen if well-fed and hydrated
             const wellFedThreshold = survivalConfig.healthRegen.wellFedThreshold;
             if (game.player.stats.hunger > wellFedThreshold && game.player.stats.thirst > wellFedThreshold) {
-                regenAmount = survivalConfig.healthRegen.wellFedBonus;
+                regenAmount = survivalConfig.healthRegen.wellFedBonus * intervalsPassed;
             }
 
             // Bonus from endurance attribute
-            const enduranceBonus = (game.player.attributes?.endurance || 5) * survivalConfig.healthRegen.enduranceBonusMultiplier;
+            const enduranceBonus = (game.player.attributes?.endurance || 5) * survivalConfig.healthRegen.enduranceBonusMultiplier * intervalsPassed;
             regenAmount += enduranceBonus;
 
             // Apply regen
@@ -2175,8 +2320,9 @@ const game = {
 
         if (isStarving || isDehydrated) {
             // Calculate damage as percentage of max health from config
-            const maxHealth = game.player.stats.maxHealth || 100;
-            const percentageDamage = maxHealth * survivalConfig.starvationDeath.healthDrainPercent;
+            // 🖤 FIX: Apply for ALL intervals that passed (handles fast speeds!) 💀
+            const maxHealthForDeath = game.player.stats.maxHealth || 100;
+            const percentageDamage = maxHealthForDeath * survivalConfig.starvationDeath.healthDrainPercent * intervalsPassed;
             game.player.stats.health = Math.max(0, game.player.stats.health - percentageDamage);
 
             // Show appropriate warning message
@@ -4815,8 +4961,7 @@ function initializeElements() {
     elements.createCharacterBtn = document.getElementById('create-character-btn');
     elements.visitMarketBtn = document.getElementById('visit-market-btn');
     elements.travelBtn = document.getElementById('travel-btn');
-    elements.transportationBtn = document.getElementById('transportation-btn');
-    elements.transportationQuickBtn = document.getElementById('transportation-quick-btn');
+    elements.peopleBtn = document.getElementById('people-btn'); // 🖤 People button in location panel 💀
     elements.closeMarketBtn = document.getElementById('close-market-btn');
     elements.closeInventoryBtn = document.getElementById('close-inventory-btn');
     elements.closeTravelBtn = document.getElementById('close-travel-btn');
@@ -4903,9 +5048,10 @@ function setupEventListeners() {
     
     // 🖤 Game Controls - guard all element access, EventManager handles null gracefully but let's be explicit
     if (elements.visitMarketBtn) EventManager.addEventListener(elements.visitMarketBtn, 'click', openMarket);
-    if (elements.travelBtn) EventManager.addEventListener(elements.travelBtn, 'click', openTravel);
-    if (elements.transportationBtn) EventManager.addEventListener(elements.transportationBtn, 'click', openTransportation);
-    if (elements.transportationQuickBtn) EventManager.addEventListener(elements.transportationQuickBtn, 'click', openTransportation);
+    // 🖤 Travel button now TOGGLES the travel panel 💀
+    if (elements.travelBtn) EventManager.addEventListener(elements.travelBtn, 'click', toggleTravel);
+    // 🖤 People button TOGGLES the people panel 💀
+    if (elements.peopleBtn) EventManager.addEventListener(elements.peopleBtn, 'click', togglePeople);
     if (elements.closeMarketBtn) EventManager.addEventListener(elements.closeMarketBtn, 'click', () => game.hideOverlay('market-panel'));
     if (elements.closeInventoryBtn) EventManager.addEventListener(elements.closeInventoryBtn, 'click', () => game.hideOverlay('inventory-panel'));
     if (elements.closeTravelBtn) EventManager.addEventListener(elements.closeTravelBtn, 'click', () => game.hideOverlay('travel-panel'));
@@ -7833,7 +7979,7 @@ function populateMarketItems() {
 // ═══════════════════════════════════════════════════════════════
 function openTravel() {
     changeState(GameState.TRAVEL);
-    
+
     // Use new travel system if available
     if (typeof TravelSystem !== 'undefined') {
         TravelSystem.showTravelPanel();
@@ -7846,10 +7992,36 @@ function openTravel() {
 function closeTravel() {
     game.hideOverlay('travel-panel');
     changeState(GameState.PLAYING);
-    
+
     // Hide travel system if available
     if (typeof TravelSystem !== 'undefined') {
         TravelSystem.hideTravelPanel();
+    }
+}
+
+// 🖤 TOGGLE TRAVEL - open if closed, close if open 💀
+function toggleTravel() {
+    const travelPanel = document.getElementById('travel-panel');
+    const isVisible = travelPanel && (
+        travelPanel.classList.contains('active') ||
+        travelPanel.classList.contains('show') ||
+        travelPanel.style.display === 'block' ||
+        travelPanel.style.display === 'flex'
+    );
+
+    if (isVisible) {
+        closeTravel();
+    } else {
+        openTravel();
+    }
+}
+
+// 🖤 TOGGLE PEOPLE - open if closed, close if open 💀
+function togglePeople() {
+    if (typeof PeoplePanel !== 'undefined' && PeoplePanel.toggle) {
+        PeoplePanel.toggle();
+    } else {
+        console.warn('🖤 PeoplePanel not found');
     }
 }
 

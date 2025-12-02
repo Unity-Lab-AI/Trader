@@ -1057,9 +1057,10 @@ const GameWorld = {
                 }
             });
 
-            // 🗡️ Specialties with better prices
-            if (location.specialties && Array.isArray(location.specialties)) {
-                location.specialties.forEach(specialty => {
+            // 🗡️ Specialties with better prices (🖤 check both 'sells' and 'specialties' for backwards compat 💀)
+            const locationItems = location.sells || location.specialties;
+            if (locationItems && Array.isArray(locationItems)) {
+                locationItems.forEach(specialty => {
                     const item = ItemDatabase.getItem(specialty);
                     if (item) {
                         location.marketPrices[specialty] = {
@@ -1073,21 +1074,16 @@ const GameWorld = {
             // ⚰️ Add random additional items based on location type
             this.addRandomMarketItems(location);
 
+            // 🖤 Lookup tables for stock calculation - avoids if-else chains 💀
+            const locationStockBase = { city: 15, town: 10, village: 5 };
+            const rarityMultiplier = { common: 2, uncommon: 1.5, rare: 1, epic: 0.5, legendary: 0.2 };
+
             // 💀 Ensure ALL items from ItemDatabase are available
             Object.keys(ItemDatabase.items).forEach(itemId => {
                 if (!location.marketPrices[itemId]) {
                     const item = ItemDatabase.getItem(itemId);
                     if (item) {
-                        let baseStock = 5;
-                        if (location.type === 'city') baseStock = 15;
-                        else if (location.type === 'town') baseStock = 10;
-                        else if (location.type === 'village') baseStock = 5;
-
-                        if (item.rarity === 'common') baseStock *= 2;
-                        else if (item.rarity === 'uncommon') baseStock *= 1.5;
-                        else if (item.rarity === 'rare') baseStock *= 1;
-                        else if (item.rarity === 'epic') baseStock *= 0.5;
-                        else if (item.rarity === 'legendary') baseStock *= 0.2;
+                        const baseStock = (locationStockBase[location.type] || 5) * (rarityMultiplier[item.rarity] || 1);
 
                         location.marketPrices[itemId] = {
                             price: ItemDatabase.calculatePrice(itemId),

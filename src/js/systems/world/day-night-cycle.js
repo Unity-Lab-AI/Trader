@@ -317,16 +317,25 @@ const DayNightCycle = {
     createOverlay() {
         if (document.getElementById('daynight-overlay')) return;
 
+        // 🖤 Day/night overlay goes in map-container, NOT body - so it doesn't cover panels! 💀
+        const mapContainer = document.getElementById('map-container');
+        if (!mapContainer) {
+            console.warn('🌅 DayNightCycle: map-container not found, delaying overlay creation');
+            setTimeout(() => this.createOverlay(), 500);
+            return;
+        }
+
         const overlay = document.createElement('div');
         overlay.id = 'daynight-overlay';
         overlay.className = 'daynight-overlay';
-        document.body.appendChild(overlay);
+        mapContainer.appendChild(overlay);
 
-        // Create stars container (for night)
+        // 🖤 Stars container is SEPARATE and goes on body but BEHIND everything 💀
+        // Stars/moon should only be visible in the outer margins, not over the game world
         const stars = document.createElement('div');
         stars.id = 'stars-container';
         stars.className = 'stars-container';
-        overlay.appendChild(stars);
+        document.body.insertBefore(stars, document.body.firstChild); // 🖤 Very back of body
 
         // Time phase indicator is now created in top-bar by WeatherSystem
     },
@@ -415,25 +424,33 @@ const DayNightCycle = {
         const style = document.createElement('style');
         style.id = 'daynight-styles';
         style.textContent = `
+            /* 🖤 Day/night overlay - INSIDE map-container only, affects game world lighting 💀 */
             .daynight-overlay {
-                position: fixed;
+                position: absolute;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
                 pointer-events: none;
-                z-index: 55; /* Z-INDEX STANDARD: Day/night overlay (below weather) */
+                z-index: var(--z-day-night-overlay, 12) !important; /* 🦇 BELOW weather (15), BELOW map markers (25+) */
                 transition: background 5s ease, opacity 5s ease;
+                border-radius: inherit;
             }
+
+            /* 🖤 Stars container - FIXED to body at z-index 0 (very back) 💀
+               Stars appear in the margins around the game world, NOT over it */
             .stars-container {
-                position: absolute;
+                position: fixed;
                 top: 0;
                 left: 0;
-                width: 100%;
-                height: 60%;
+                width: 100vw;
+                height: 100vh;
                 overflow: hidden;
+                pointer-events: none;
+                z-index: 0 !important; /* 🦇 Behind EVERYTHING - only visible in body margins */
                 transition: opacity 3s ease;
             }
+
             .star {
                 position: absolute;
                 animation: twinkle 3s ease-in-out infinite;

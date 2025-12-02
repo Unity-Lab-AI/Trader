@@ -18,9 +18,25 @@ const GameEngine = {
     // 🦇 Debooger mode 🦇
     debooger: false,
 
+    // 🖤 Promise pattern for async initialization tracking 💀
+    _initPromise: null,
+    _initResolve: null,
+    _initialized: false,
+
     // 🖤 Wake up the engine from its eternal slumber
     init() {
+        // 🦇 Guard against double initialization
+        if (this._initialized) {
+            console.log('🎮 GameEngine: Already initialized, returning existing promise');
+            return this._initPromise;
+        }
+
         console.log('🎮 GameEngine: Initializing...');
+
+        // 🖤 Create the init promise for other systems to await 💀
+        this._initPromise = new Promise((resolve) => {
+            this._initResolve = resolve;
+        });
 
         // 🦇 Ensure TimeSystem exists and is initialized
         if (typeof TimeSystem !== 'undefined') {
@@ -28,7 +44,8 @@ const GameEngine = {
             console.log('🎮 GameEngine: TimeSystem found, current speed:', TimeSystem.currentSpeed);
         } else {
             console.error('💀 GameEngine: TimeSystem not found!');
-            return false;
+            this._initResolve(false);
+            return this._initPromise;
         }
 
         // ⚡ Setup time control buttons with direct handlers
@@ -37,8 +54,31 @@ const GameEngine = {
         // 🗺️ Setup location click handlers for travel
         this.setupTravelTriggers();
 
+        // 🖤 Mark as initialized and resolve promise 💀
+        this._initialized = true;
+        this._initResolve(true);
+
         console.log('🎮 GameEngine: Initialized successfully');
-        return true;
+        return this._initPromise;
+    },
+
+    // 🖤 Wait for initialization to complete - for systems that depend on us 💀
+    async whenReady() {
+        if (this._initialized) return true;
+        if (!this._initPromise) {
+            // 🦇 Init not started yet, create a promise that waits for it
+            return new Promise((resolve) => {
+                const checkInit = () => {
+                    if (this._initialized) {
+                        resolve(true);
+                    } else {
+                        setTimeout(checkInit, 50);
+                    }
+                };
+                checkInit();
+            });
+        }
+        return this._initPromise;
     },
 
     // main game loop - DISABLED: game.js gameLoop() handles all updates

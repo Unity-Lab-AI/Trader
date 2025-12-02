@@ -331,15 +331,17 @@ const ModalSystem = {
                     box-sizing: border-box;
                 }
 
+                /* 🖤 UNIFIED MODAL THEME - Matching quest panel's dark purple/gold theme 💀 */
                 .modal-overlay > div,
                 .modal-dialog {
-                    background: linear-gradient(135deg, #2a1810 0%, #1a0f08 100%);
-                    border: 2px solid #8b4513;
-                    border-radius: 8px;
+                    background: linear-gradient(180deg, rgba(40, 40, 70, 0.98) 0%, rgba(25, 25, 45, 0.98) 100%);
+                    border: 2px solid #ffd700;
+                    border-radius: 12px;
                     max-width: 90%;
                     max-height: 90%;
                     overflow-y: auto;
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+                    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3), 0 10px 40px rgba(0, 0, 0, 0.5);
+                    backdrop-filter: blur(10px);
                     position: relative;
                     min-width: 300px;
                 }
@@ -358,16 +360,17 @@ const ModalSystem = {
                     display: flex;
                     align-items: center;
                     padding: 15px 20px;
-                    border-bottom: 1px solid #8b4513;
-                    background: linear-gradient(90deg, #8b4513 0%, #a0522d 100%);
-                    color: #f4e4c1;
-                    border-radius: 6px 6px 0 0;
+                    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+                    background: linear-gradient(90deg, rgba(255, 215, 0, 0.2) 0%, transparent 100%);
+                    color: #fff;
+                    border-radius: 10px 10px 0 0;
                     user-select: none;
                 }
 
                 .modal-header h2 {
                     margin: 0;
                     font-size: 1.3em;
+                    color: #ffd700;
                     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
                     flex: 1;
                 }
@@ -395,13 +398,13 @@ const ModalSystem = {
 
                 .modal-content {
                     padding: 20px;
-                    color: #f4e4c1;
+                    color: #e0e0e0;
                 }
 
                 .modal-footer {
                     padding: 15px 20px;
-                    border-top: 1px solid #8b4513;
-                    background: rgba(139, 69, 19, 0.2);
+                    border-top: 1px solid rgba(255, 215, 0, 0.3);
+                    background: rgba(0, 0, 0, 0.2);
                     display: flex;
                     justify-content: flex-end;
                     gap: 10px;
@@ -409,25 +412,26 @@ const ModalSystem = {
                 }
 
                 .close-btn, .cancel-btn {
-                    background: #8b4513;
-                    color: #f4e4c1;
-                    border: none;
+                    background: rgba(255, 215, 0, 0.2);
+                    color: #ffd700;
+                    border: 1px solid rgba(255, 215, 0, 0.4);
                     padding: 5px 10px;
                     border-radius: 4px;
                     cursor: pointer;
                     font-size: 1.2em;
-                    transition: background-color 0.3s;
+                    transition: all 0.3s;
                 }
 
                 .close-btn:hover, .cancel-btn:hover {
-                    background: #a0522d;
+                    background: rgba(255, 215, 0, 0.3);
+                    border-color: #ffd700;
                 }
 
                 .modal-btn,
                 .primary-btn, .secondary-btn {
                     padding: 10px 20px;
                     border: none;
-                    border-radius: 4px;
+                    border-radius: 6px;
                     cursor: pointer;
                     font-weight: bold;
                     transition: all 0.3s;
@@ -435,24 +439,28 @@ const ModalSystem = {
 
                 .modal-btn.primary-btn,
                 .primary-btn {
-                    background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
-                    color: #f4e4c1;
+                    background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 215, 0, 0.15) 100%);
+                    color: #ffd700;
+                    border: 1px solid rgba(255, 215, 0, 0.5);
                 }
 
                 .modal-btn.primary-btn:hover:not(:disabled),
                 .primary-btn:hover:not(:disabled) {
-                    background: linear-gradient(135deg, #a0522d 0%, #cd853f 100%);
+                    background: linear-gradient(135deg, rgba(255, 215, 0, 0.5) 0%, rgba(255, 215, 0, 0.3) 100%);
+                    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
                 }
 
                 .modal-btn.secondary-btn,
                 .secondary-btn {
-                    background: #654321;
-                    color: #f4e4c1;
+                    background: rgba(100, 100, 150, 0.3);
+                    color: #a0a0c0;
+                    border: 1px solid rgba(150, 150, 200, 0.3);
                 }
 
                 .modal-btn.secondary-btn:hover:not(:disabled),
                 .secondary-btn:hover:not(:disabled) {
-                    background: #8b4513;
+                    background: rgba(100, 100, 150, 0.5);
+                    color: #c0c0e0;
                 }
 
                 .primary-btn:disabled, .secondary-btn:disabled {

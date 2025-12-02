@@ -18,6 +18,12 @@ const TooltipSystem = {
         offset: { x: 10, y: 10 } // offset from cursor
     },
 
+    // 🖤 Store MutationObserver reference for cleanup 💀
+    _domObserver: null,
+
+    // 🖤 Cache parsed tooltip data to avoid repeated JSON.parse 💀
+    _tooltipCache: new WeakMap(),
+
     // 📚 All the tooltips for UI elements - organized chaos
     tooltips: {
         // ═══════════════════════════════════════════════════════════
@@ -648,10 +654,25 @@ const TooltipSystem = {
         document.addEventListener('click', () => this.hideTooltip());
 
         // re-apply tooltips when DOM changes (for dynamically created elements)
-        const observer = new MutationObserver(() => {
+        // 🖤 Store observer reference for cleanup 💀
+        this._domObserver = new MutationObserver(() => {
             this.applyTooltips();
         });
-        observer.observe(document.body, { childList: true, subtree: true });
+        this._domObserver.observe(document.body, { childList: true, subtree: true });
+
+        // 🖤 Cleanup on page unload to prevent memory leaks 💀
+        window.addEventListener('beforeunload', () => this.destroy());
+    },
+
+    // 🖤 Cleanup method - disconnect observer and clear timers 💀
+    destroy() {
+        if (this._domObserver) {
+            this._domObserver.disconnect();
+            this._domObserver = null;
+        }
+        clearTimeout(this.showTimeout);
+        clearTimeout(this.hideTimeout);
+        this.hideTooltip();
     },
 
     // ⏰ Schedule tooltip to show
@@ -679,13 +700,19 @@ const TooltipSystem = {
     showTooltip(target, event) {
         let tooltipData = null;
 
+        // 🖤 Check cache first to avoid repeated JSON.parse 💀
+        if (this._tooltipCache.has(target)) {
+            tooltipData = this._tooltipCache.get(target);
+        }
         // try to get tooltip data from data attribute
-        if (target.hasAttribute('data-tooltip')) {
+        else if (target.hasAttribute('data-tooltip')) {
             try {
                 tooltipData = JSON.parse(target.getAttribute('data-tooltip'));
+                this._tooltipCache.set(target, tooltipData); // 🖤 Cache it 💀
             } catch (e) {
                 // not JSON, use as plain text
                 tooltipData = { desc: target.getAttribute('data-tooltip') };
+                this._tooltipCache.set(target, tooltipData); // 🖤 Cache it 💀
             }
         }
 

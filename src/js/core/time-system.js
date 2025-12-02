@@ -52,8 +52,9 @@ const TimeSystem = {
     },
 
     // 🔮 Control variables (because we're control freaks but like, in a time way)
-    currentSpeed: 'NORMAL',
-    isPaused: false,
+    // 🖤 Initial state must match - if PAUSED then isPaused=true, otherwise false 💀
+    currentSpeed: 'PAUSED',   // 🦇 Starts paused so player can read intro
+    isPaused: true,           // 🦇 Must match currentSpeed - both indicate paused state
     lastUpdateTime: 0,
     accumulatedTime: 0,
 

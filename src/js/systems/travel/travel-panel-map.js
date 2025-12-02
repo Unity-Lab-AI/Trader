@@ -13,6 +13,13 @@ const TravelPanelMap = {
     mapElement: null,
     tooltipElement: null,
 
+    // 🖤 Bound event listeners for cleanup 💀
+    _boundMouseMove: null,
+    _boundMouseUp: null,
+    _boundTouchMove: null,
+    _boundTouchEnd: null,
+    _boundLocationChanged: null,
+
     // 📍 Map state (similar to GameWorldRenderer but scaled for mini view)
     mapState: {
         zoom: 0.6,           // Start more zoomed out for overview
@@ -130,24 +137,31 @@ const TravelPanelMap = {
 
     // 👂 Setup event listeners
     setupEventListeners() {
+        // 🖤 Store bound listeners for cleanup 💀
+        this._boundMouseMove = (e) => this.onMouseMove(e);
+        this._boundMouseUp = (e) => this.onMouseUp(e);
+        this._boundTouchMove = (e) => this.onTouchMove(e);
+        this._boundTouchEnd = (e) => this.onTouchEnd(e);
+        this._boundLocationChanged = () => {
+            console.log('🗺️ TravelPanelMap: Location changed, re-rendering map...');
+            this.render();
+        };
+
         // Map dragging
         this.mapElement.addEventListener('mousedown', (e) => this.onMouseDown(e));
-        document.addEventListener('mousemove', (e) => this.onMouseMove(e));
-        document.addEventListener('mouseup', (e) => this.onMouseUp(e));
+        document.addEventListener('mousemove', this._boundMouseMove);
+        document.addEventListener('mouseup', this._boundMouseUp);
 
         // Zoom with scroll wheel
         this.container.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
 
         // Touch support
         this.mapElement.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: false });
-        document.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
-        document.addEventListener('touchend', (e) => this.onTouchEnd(e));
+        document.addEventListener('touchmove', this._boundTouchMove, { passive: false });
+        document.addEventListener('touchend', this._boundTouchEnd);
 
         // 🖤 Listen for location changes to update map (tooltips, explored status) 💀
-        document.addEventListener('player-location-changed', () => {
-            console.log('🗺️ TravelPanelMap: Location changed, re-rendering map...');
-            this.render();
-        });
+        document.addEventListener('player-location-changed', this._boundLocationChanged);
         document.addEventListener('location-changed', () => {
             console.log('🗺️ TravelPanelMap: Location changed (legacy event), re-rendering map...');
             this.render();
@@ -396,6 +410,7 @@ const TravelPanelMap = {
             top: 0;
             left: 0;
             pointer-events: none;
+            z-index: 20; /* 🖤 ABOVE weather (15) so path lines are always visible 💀 */
         `;
 
         const locations = GameWorld.locations || {};
@@ -491,7 +506,7 @@ const TravelPanelMap = {
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             box-shadow: ${boxShadowStyle};
-            z-index: 10;
+            z-index: 25; /* 🖤 ABOVE weather overlay (z-index 15) so locations stay visible in snow/fog 💀 */
             opacity: ${opacity};
             ${hasBonanzaEffect ? 'animation: bonanza-pulse-mini 1.5s ease-in-out infinite;' : ''}
         `;
@@ -513,7 +528,7 @@ const TravelPanelMap = {
                 padding: 1px 3px;
                 border-radius: 6px;
                 border: 1px solid #c084fc;
-                z-index: 15;
+                z-index: 30; /* 🖤 ABOVE locations (25) and weather (15) 💀 */
                 pointer-events: none;
             `;
             el.appendChild(bonanzaBadge);
@@ -542,7 +557,7 @@ const TravelPanelMap = {
             text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 0 0 4px #000;
             white-space: nowrap;
             pointer-events: none;
-            z-index: 5;
+            z-index: 28; /* 🖤 ABOVE weather overlay (15) so location names are readable 💀 */
         `;
         this.mapElement.appendChild(label);
     },
@@ -1572,7 +1587,8 @@ const TravelPanelMap = {
         if (!displayEl) return;
 
         // Check if we're still traveling
-        if (typeof TravelSystem !== 'undefined' && TravelSystem.playerPosition.isTraveling) {
+        // 🖤 Null check for playerPosition to prevent race condition 💀
+        if (typeof TravelSystem !== 'undefined' && TravelSystem.playerPosition?.isTraveling) {
             const dest = this.travelState.destination || this.currentDestination;
             if (!dest) return;
 
@@ -1890,6 +1906,28 @@ const TravelPanelMap = {
         if (this.travelState.countdownInterval) {
             clearInterval(this.travelState.countdownInterval);
             this.travelState.countdownInterval = null;
+        }
+
+        // 🖤 Remove document-level event listeners 💀
+        if (this._boundMouseMove) {
+            document.removeEventListener('mousemove', this._boundMouseMove);
+            this._boundMouseMove = null;
+        }
+        if (this._boundMouseUp) {
+            document.removeEventListener('mouseup', this._boundMouseUp);
+            this._boundMouseUp = null;
+        }
+        if (this._boundTouchMove) {
+            document.removeEventListener('touchmove', this._boundTouchMove);
+            this._boundTouchMove = null;
+        }
+        if (this._boundTouchEnd) {
+            document.removeEventListener('touchend', this._boundTouchEnd);
+            this._boundTouchEnd = null;
+        }
+        if (this._boundLocationChanged) {
+            document.removeEventListener('player-location-changed', this._boundLocationChanged);
+            this._boundLocationChanged = null;
         }
     }
 };

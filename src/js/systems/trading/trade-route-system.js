@@ -139,8 +139,10 @@ const TradeRouteSystem = {
         if (!item) return;
         
         // Check if it's time to trade (once per day)
+        // 🖤 Use HOURS_PER_DAY * MINUTES_PER_HOUR (24 * 60 = 1440 minutes per day) 💀
         const currentTime = TimeSystem.getTotalMinutes();
-        if (currentTime - route.lastTradeTime < TimeSystem.DAYS_PER_DAY * TimeSystem.MINUTES_PER_HOUR) {
+        const MINUTES_PER_DAY = (TimeSystem.HOURS_PER_DAY || 24) * (TimeSystem.MINUTES_PER_HOUR || 60);
+        if (currentTime - route.lastTradeTime < MINUTES_PER_DAY) {
             return;
         }
         
@@ -154,10 +156,10 @@ const TradeRouteSystem = {
             return;
         }
         
-        // Get market prices
+        // Get market prices (🖤 null check warehouseLocation.marketPrices 💀)
         const warehouseLocation = GameWorld.locations[warehouse.location];
-        const warehousePrice = warehouseLocation.marketPrices[route.itemId]?.price || ItemDatabase.calculatePrice(route.itemId);
-        const destinationPrice = destination.marketPrices[route.itemId]?.price || ItemDatabase.calculatePrice(route.itemId);
+        const warehousePrice = warehouseLocation?.marketPrices?.[route.itemId]?.price || ItemDatabase.calculatePrice(route.itemId);
+        const destinationPrice = destination?.marketPrices?.[route.itemId]?.price || ItemDatabase.calculatePrice(route.itemId);
         
         // Check if trade is profitable
         const buyPrice = Math.min(warehousePrice, route.buyLimit || warehousePrice);

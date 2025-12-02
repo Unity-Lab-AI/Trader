@@ -18,11 +18,22 @@ const NPCChatUI = {
     panelElement: null,
     isWaitingForResponse: false,
 
+    // 🖤 Guards and timeout tracking for cleanup 💀
+    _initialized: false,
+    _typewriterTimeouts: [],
+
     // ═══════════════════════════════════════════════════════════
     // INITIALIZATION - summoning the chat interface from shadow
     // ═══════════════════════════════════════════════════════════
 
     init() {
+        // 🖤 Guard against double init 💀
+        if (this._initialized) {
+            console.log('🗨️ NPCChatUI: Already initialized, skipping');
+            return;
+        }
+        this._initialized = true;
+
         this.createPanel();
         this.setupEventListeners();
         console.log('🗨️ NPCChatUI: Initialized - ready to facilitate digital conversations');
@@ -926,6 +937,9 @@ const NPCChatUI = {
     typewriterEffect(element, text, speed = 30) {
         if (!element || !text) return;
 
+        // 🖤 Clear any existing typewriter timeouts first 💀
+        this.clearTypewriterTimeouts();
+
         const formattedText = this.formatNPCMessage(text);
         let displayText = '';
         let charIndex = 0;
@@ -974,12 +988,21 @@ const NPCChatUI = {
                 delay = speed * 2;
             }
 
-            // ⏭️ Queue the next character - the ritual continues 🔄
-            setTimeout(typeNext, delay);
+            // 🖤 Track timeout for cleanup 💀
+            const timeoutId = setTimeout(typeNext, delay);
+            this._typewriterTimeouts.push(timeoutId);
         };
 
         // 🎬 Begin the performance - start typing the message 📝
         typeNext();
+    },
+
+    // 🖤 Clear all typewriter timeouts 💀
+    clearTypewriterTimeouts() {
+        if (this._typewriterTimeouts) {
+            this._typewriterTimeouts.forEach(id => clearTimeout(id));
+            this._typewriterTimeouts = [];
+        }
     },
 
     formatNPCMessage(text) {

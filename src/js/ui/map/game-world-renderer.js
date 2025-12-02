@@ -271,13 +271,14 @@ const GameWorldRenderer = {
         // 🦇 Move current to previous (if exists)
         if (this.currentBackdrop) {
             this.previousBackdrop = this.currentBackdrop;
-            this.previousBackdrop.style.zIndex = '1';
+            this.previousBackdrop.style.zIndex = '-1'; // 🖤 Behind new backdrop during transition
         }
 
         // 💀 Create new backdrop layer
         const newBackdrop = document.createElement('div');
         newBackdrop.className = 'backdrop-layer';
         // 🖤 Use explicit dimensions and separate background-image for reliability
+        // z-index: 0 - BACKGROUND LAYER (below weather at z-index 2-3)
         newBackdrop.style.cssText = `
             position: absolute;
             top: 0;
@@ -290,7 +291,7 @@ const GameWorldRenderer = {
             background-repeat: no-repeat;
             opacity: 0;
             transition: opacity ${this.SEASON_FADE_DURATION}ms ease-in-out;
-            z-index: 2;
+            z-index: 0;
         `;
 
         this.backdropContainer.appendChild(newBackdrop);
@@ -441,10 +442,11 @@ const GameWorldRenderer = {
         // 🦇 Move current to previous
         if (this.currentBackdrop) {
             this.previousBackdrop = this.currentBackdrop;
-            this.previousBackdrop.style.zIndex = '1';
+            this.previousBackdrop.style.zIndex = '-1'; // 🖤 Behind new backdrop during transition
         }
 
         // 💀 Create dungeon backdrop with faster fade and darker overlay
+        // z-index: 0 - BACKGROUND LAYER (below weather at z-index 2-3)
         const newBackdrop = document.createElement('div');
         newBackdrop.className = 'backdrop-layer dungeon-backdrop';
         newBackdrop.style.cssText = `
@@ -459,7 +461,7 @@ const GameWorldRenderer = {
             background-repeat: no-repeat;
             opacity: 0;
             transition: opacity 2000ms ease-in-out;
-            z-index: 2;
+            z-index: 0;
         `;
 
         this.backdropContainer.appendChild(newBackdrop);
@@ -682,7 +684,7 @@ const GameWorldRenderer = {
             font-weight: bold;
             color: white;
             cursor: pointer;
-            z-index: 50;
+            z-index: 25; /* 🖤 Game world UI layer - above locations (15) 💀 */
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
             transition: transform 0.2s, box-shadow 0.2s;
         `;
@@ -897,6 +899,7 @@ const GameWorldRenderer = {
             top: 0;
             left: 0;
             pointer-events: none;
+            z-index: 10; /* 🖤 ABOVE weather (2-3) - matches --z-map-connections 💀 */
         `;
 
         const locations = GameWorld.locations || {};
@@ -975,8 +978,9 @@ const GameWorldRenderer = {
                 }
 
                 // Add hover events for tooltip
+                // 🖤 FIX: Only show detailed path info if BOTH locations are explored 💀
                 hitbox.addEventListener('mouseenter', (e) => {
-                    this.showPathTooltip(e, pathInfo, location, target);
+                    this.showPathTooltip(e, pathInfo, location, target, bothExplored);
                     line.setAttribute('stroke-width', bothExplored ? '5' : '4');
                     line.style.filter = 'drop-shadow(0 0 4px rgba(255, 215, 0, 0.8))';
                 });
@@ -999,50 +1003,63 @@ const GameWorldRenderer = {
     },
 
     // 🛤️ Get path information for tooltip
-    // 🖤 FIX: Delegate to TravelSystem.calculateTravelInfo() for accurate times! 💀
-    // The tooltip MUST show the same time as actual travel - no separate calculations!
+    // 🖤 FIX: Calculate path info for the SPECIFIC path being hovered, not from player location! 💀
+    // The tooltip shows info for the path between fromLocation and toLocation
     getPathInfo(fromLocation, toLocation) {
-        // 🖤 USE TRAVELSYSTEM FOR ACCURATE CALCULATIONS 💀
-        // This ensures tooltip shows EXACTLY what the actual travel will be
-        // Only use if game is running and player has a current location
-        if (typeof TravelSystem !== 'undefined' &&
-            TravelSystem.calculateTravelInfo &&
-            TravelSystem.locations &&
-            TravelSystem.playerPosition?.currentLocation) {
-            try {
-                const destLocation = TravelSystem.locations[toLocation.id];
-                if (destLocation) {
-                    const travelInfo = TravelSystem.calculateTravelInfo(destLocation);
-                    if (travelInfo && travelInfo.timeHours !== undefined) {
-                        return {
-                            type: travelInfo.pathType || 'road',
-                            typeName: travelInfo.pathTypeName || 'Road',
-                            description: travelInfo.pathDescription || 'A well-worn path',
-                            distanceMiles: travelInfo.distance || 0,
-                            travelTimeMinutes: Math.round((travelInfo.timeHours || 0) * 60),
-                            baseTravelTimeMinutes: Math.round((travelInfo.timeHours || 0) * 60),
-                            staminaDrain: travelInfo.staminaCost || 0,
-                            safety: travelInfo.safety || 50,
-                            speedMultiplier: travelInfo.speedMultiplier || 1.0,
-                            weatherMod: travelInfo.weatherSpeedMod || 1.0,
-                            seasonMod: travelInfo.seasonalSpeedMod || 1.0,
-                            eventMod: travelInfo.eventSpeedMod || 1.0,
-                            hops: travelInfo.hops || 1,
-                            routeDescription: travelInfo.routeDescription || ''
-                        };
-                    }
+        // 🖤 Try to get path data from TravelSystem.paths for accurate info 💀
+        if (typeof TravelSystem !== 'undefined' && TravelSystem.paths && TravelSystem.paths.length > 0) {
+            // Find the direct path between these two locations
+            const directPath = TravelSystem.paths.find(p =>
+                (p.from === fromLocation.id && p.to === toLocation.id) ||
+                (p.from === toLocation.id && p.to === fromLocation.id)
+            );
+
+            if (directPath) {
+                // Get path type info
+                const pathType = directPath.type || 'road';
+                const pathData = TravelSystem.PATH_TYPES?.[pathType] || this.PATH_TYPES[pathType] || this.PATH_TYPES.road;
+
+                // Get distance from path data - ensure we have a valid number
+                // 🖤 FIX: directPath.distance can be 0 or very small, use fallback if invalid 💀
+                let distanceMiles = directPath.distance;
+                if (!distanceMiles || distanceMiles <= 0 || isNaN(distanceMiles)) {
+                    distanceMiles = this.calculateDistanceBetween(fromLocation, toLocation);
                 }
-            } catch (err) {
-                // 🖤 If TravelSystem fails, fall through to local calculation 💀
-                console.warn('🖤 getPathInfo: TravelSystem error, using fallback', err.message);
+                // Ensure reasonable minimum distance (0.5 miles)
+                distanceMiles = Math.max(0.5, distanceMiles);
+
+                // Calculate travel time using TravelSystem's logic
+                const transport = game?.player?.transportation || 'backpack';
+                const transportData = typeof transportationOptions !== 'undefined' ? transportationOptions[transport] : null;
+                const baseSpeed = transportData?.speed || 3; // mph
+                const effectiveSpeed = baseSpeed * (pathData.speedMultiplier || 1.0);
+                let travelTimeHours = distanceMiles / effectiveSpeed;
+                travelTimeHours = Math.min(travelTimeHours, 6); // Cap at 6 hours
+
+                const travelTimeMinutes = Math.round(travelTimeHours * 60);
+                const staminaDrain = Math.round(distanceMiles * (pathData.staminaDrain || 0.5) * 10) / 10;
+
+                return {
+                    type: pathType,
+                    typeName: pathData.name || pathType,
+                    description: pathData.description || 'A path between locations',
+                    distanceMiles: Math.round(distanceMiles * 10) / 10,
+                    travelTimeMinutes: travelTimeMinutes,
+                    baseTravelTimeMinutes: travelTimeMinutes,
+                    staminaDrain: staminaDrain,
+                    safety: Math.round((directPath.safety || pathData.safety || 0.7) * 100),
+                    speedMultiplier: pathData.speedMultiplier || 1.0,
+                    weatherMod: 1.0,
+                    seasonMod: 1.0,
+                    eventMod: 1.0
+                };
             }
         }
 
-        // 🖤 FALLBACK: Only if TravelSystem not available or failed 💀
-        const dx = toLocation.mapPosition.x - fromLocation.mapPosition.x;
-        const dy = toLocation.mapPosition.y - fromLocation.mapPosition.y;
-        const pixelDistance = Math.sqrt(dx * dx + dy * dy);
-        const distanceMiles = Math.round(pixelDistance / 50 * 10) / 10;
+        // 🖤 FALLBACK: Calculate from map positions 💀
+        let distanceMiles = this.calculateDistanceBetween(fromLocation, toLocation);
+        // Ensure reasonable minimum distance (0.5 miles)
+        distanceMiles = Math.max(0.5, distanceMiles);
 
         const pathType = this.determinePathType(fromLocation, toLocation);
         const pathData = this.PATH_TYPES[pathType] || this.PATH_TYPES.road;
@@ -1058,7 +1075,7 @@ const GameWorldRenderer = {
             type: pathType,
             typeName: pathData.name,
             description: pathData.description,
-            distanceMiles: distanceMiles,
+            distanceMiles: Math.round(distanceMiles * 10) / 10,
             travelTimeMinutes: travelTimeMinutes,
             baseTravelTimeMinutes: travelTimeMinutes,
             staminaDrain: staminaDrain,
@@ -1068,6 +1085,22 @@ const GameWorldRenderer = {
             seasonMod: 1.0,
             eventMod: 1.0
         };
+    },
+
+    // 🛤️ Calculate distance between two specific locations (for path tooltips)
+    // 🖤 Using mapPosition coordinates (GameWorld scale, ~100-800 range) 💀
+    // Divide by 50 to convert to approximate miles (2-3 miles between nearby locations)
+    calculateDistanceBetween(fromLocation, toLocation) {
+        if (!fromLocation?.mapPosition || !toLocation?.mapPosition) {
+            console.warn('🖤 calculateDistanceBetween: missing mapPosition for', fromLocation?.id, toLocation?.id);
+            return 2; // Default 2 miles if positions missing
+        }
+        const dx = toLocation.mapPosition.x - fromLocation.mapPosition.x;
+        const dy = toLocation.mapPosition.y - fromLocation.mapPosition.y;
+        const pixelDistance = Math.sqrt(dx * dx + dy * dy);
+        // 🖤 GameWorld coordinates are ~100-800 range, div by 50 gives 2-16 miles for map extremes 💀
+        const miles = pixelDistance / 50;
+        return Math.max(0.5, Math.round(miles * 10) / 10); // Min 0.5 miles, rounded to 1 decimal
     },
 
     // 🛤️ Determine path type based on connected locations
@@ -1151,13 +1184,38 @@ const GameWorldRenderer = {
     },
 
     // 💬 Show path tooltip
-    showPathTooltip(e, pathInfo, fromLoc, toLoc) {
+    // 🖤 FIX: Only show detailed stats for paths where BOTH locations are explored 💀
+    showPathTooltip(e, pathInfo, fromLoc, toLoc, bothExplored = false) {
         const formatGameTime = (minutes) => {
             if (minutes < 60) return `${minutes} min`;
             const hours = Math.floor(minutes / 60);
             const mins = minutes % 60;
             return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
         };
+
+        // 🖤 For unexplored paths, show limited info 💀
+        if (!bothExplored) {
+            this.tooltipElement.innerHTML = `
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #888;">
+                    🛤️ Unknown Path
+                </div>
+                <div style="color: #666; font-size: 11px; margin-bottom: 8px; font-style: italic;">
+                    Explore both locations to reveal path details
+                </div>
+                <div style="font-size: 12px; color: #555;">
+                    <span>❓ Distance: ???</span><br>
+                    <span>❓ Travel Time: ???</span><br>
+                    <span>❓ Safety: ???</span>
+                </div>
+                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: #555;">
+                    ${fromLoc.name} ↔ ${toLoc.name}
+                </div>
+            `;
+            this.tooltipElement.style.display = 'block';
+            this.tooltipElement.style.left = (e.clientX + 15) + 'px';
+            this.tooltipElement.style.top = (e.clientY + 15) + 'px';
+            return;
+        }
 
         // 🖤 Calculate real-time using BASE time (clear skies, normal speed) 💀
         // This shows ideal conditions - what the trip WOULD take without weather/season penalties
@@ -1266,7 +1324,7 @@ const GameWorldRenderer = {
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             box-shadow: ${boxShadowStyle};
-            z-index: 10;
+            z-index: 15; /* 🖤 ABOVE weather (2-3) - matches --z-map-locations 💀 */
             opacity: ${opacity};
             filter: ${iconFilter};
             ${hasBonanzaEffect ? 'animation: bonanza-pulse 1.5s ease-in-out infinite;' : ''}
@@ -1292,7 +1350,7 @@ const GameWorldRenderer = {
                 border-radius: 8px;
                 border: 1px solid #c084fc;
                 text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-                z-index: 15;
+                z-index: 20; /* 🖤 ABOVE locations (15) - badges need to be visible 💀 */
                 pointer-events: none;
             `;
             el.appendChild(bonanzaBadge);
@@ -1322,7 +1380,7 @@ const GameWorldRenderer = {
             text-shadow: 1px 1px 3px #000, -1px -1px 3px #000, 0 0 6px #000;
             white-space: nowrap;
             pointer-events: none;
-            z-index: 5;
+            z-index: 18; /* 🖤 ABOVE weather (2-3) - matches --z-map-labels 💀 */
         `;
         this.mapElement.appendChild(label);
     },
@@ -1445,7 +1503,7 @@ const GameWorldRenderer = {
             `;
             this.playerMarker.style.cssText = `
                 position: absolute;
-                z-index: 150;
+                z-index: 20; /* 🖤 Game world UI - matches --z-player-marker 💀 */
                 pointer-events: none;
                 transform: translate(-50%, -100%);
                 display: flex;
@@ -1554,6 +1612,22 @@ const GameWorldRenderer = {
             }
 
             this.mapElement.appendChild(this.playerMarker);
+
+            // 🖤 CRITICAL: If we're currently traveling, apply traveling style to newly created marker 💀
+            // This fixes the bug where render() clears the marker and recreates it with "YOU ARE HERE"
+            // even though we're mid-travel
+            if (this.currentTravel) {
+                this.playerMarker.classList.add('traveling');
+                const tack = this.playerMarker.querySelector('.marker-tack');
+                if (tack) {
+                    tack.textContent = '🚶'; // Walking person while traveling
+                }
+                const label = this.playerMarker.querySelector('.marker-label');
+                if (label) {
+                    label.textContent = 'TRAVELING...';
+                    label.style.background = 'linear-gradient(180deg, #ff8844 0%, #cc4400 100%)';
+                }
+            }
         }
 
         // Update position
@@ -2157,6 +2231,40 @@ const GameWorldRenderer = {
         console.log('🗺️ Centered on location at', pos, 'offset:', this.mapState.offsetX, this.mapState.offsetY);
     },
 
+    // 🖤 Center on a specific location by ID - for quest "Show on Map" button 💀
+    centerOnLocation(locationId) {
+        if (!this.container || !locationId) {
+            console.warn('🗺️ Cannot center - no container or locationId');
+            return false;
+        }
+
+        // Look up the location from GameWorld
+        if (typeof GameWorld === 'undefined' || !GameWorld.locations) {
+            console.warn('🗺️ GameWorld not available');
+            return false;
+        }
+
+        const location = GameWorld.locations[locationId];
+        if (!location || !location.mapPosition) {
+            console.warn(`🗺️ Location "${locationId}" not found or has no mapPosition`);
+            return false;
+        }
+
+        // Scale the position to our map dimensions
+        const pos = this.scalePosition(location.mapPosition);
+
+        const containerRect = this.container.getBoundingClientRect();
+
+        // Calculate offset to center this location in the container
+        this.mapState.offsetX = (containerRect.width / 2) - (pos.x * this.mapState.zoom);
+        this.mapState.offsetY = (containerRect.height / 2) - (pos.y * this.mapState.zoom);
+
+        // Apply constraints and update
+        this.updateTransform();
+        console.log(`🗺️ Centered on "${location.name}" at`, pos, 'offset:', this.mapState.offsetX, this.mapState.offsetY);
+        return true;
+    },
+
     // 📱 touch handlers - for those brave souls on mobile
     onTouchStart(e) {
         if (e.touches.length === 1) {
@@ -2202,6 +2310,20 @@ const GameWorldRenderer = {
             const isGate = this.isGatehouse(location.id);
             let gateInfo = isGate ? this.getGateInfo(location) : '';
 
+            // 🖤 Check for tracked quest even at undiscovered locations 💀
+            let questInfo = '';
+            if (typeof QuestSystem !== 'undefined' && QuestSystem.getQuestInfoForLocation) {
+                const quest = QuestSystem.getQuestInfoForLocation(location.id);
+                if (quest) {
+                    questInfo = `
+                        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 215, 0, 0.15); border-radius: 6px; border-left: 3px solid #ffd700;">
+                            <div style="color: #ffd700; font-weight: bold; margin-bottom: 4px;">🎯 ${quest.questName}</div>
+                            ${quest.objective ? `<div style="color: #ffeb3b; font-size: 11px;">${quest.objective}</div>` : ''}
+                        </div>
+                    `;
+                }
+            }
+
             if (isGate) {
                 // Gatehouses show their name and fee info even when discovered
                 // so players can make informed decisions about where to travel
@@ -2216,6 +2338,7 @@ const GameWorldRenderer = {
                         A frontier outpost guarding passage to new lands...
                     </div>
                     ${gateInfo}
+                    ${questInfo}
                     <div style="color: #95E77E; margin-top: 5px;">🖱️ Click to travel here</div>
                 `;
             } else {
@@ -2230,12 +2353,27 @@ const GameWorldRenderer = {
                     <div style="font-size: 12px; line-height: 1.4; color: #888; font-style: italic;">
                         Travel here to discover what lies in this area...
                     </div>
+                    ${questInfo}
                     <div style="color: #95E77E; margin-top: 5px;">🖱️ Click to explore</div>
                 `;
             }
         } else {
             // Check if this is a gate/outpost with passage fees
             let gateInfo = this.getGateInfo(location);
+
+            // 🖤 Check for tracked quest at this location 💀
+            let questInfo = '';
+            if (typeof QuestSystem !== 'undefined' && QuestSystem.getQuestInfoForLocation) {
+                const quest = QuestSystem.getQuestInfoForLocation(location.id);
+                if (quest) {
+                    questInfo = `
+                        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 215, 0, 0.15); border-radius: 6px; border-left: 3px solid #ffd700;">
+                            <div style="color: #ffd700; font-weight: bold; margin-bottom: 4px;">🎯 ${quest.questName}</div>
+                            ${quest.objective ? `<div style="color: #ffeb3b; font-size: 11px;">${quest.objective}</div>` : ''}
+                        </div>
+                    `;
+                }
+            }
 
             this.tooltipElement.innerHTML = `
                 <div style="font-size: 16px; font-weight: bold; margin-bottom: 5px;">
@@ -2248,6 +2386,7 @@ const GameWorldRenderer = {
                     ${location.description || 'No description available.'}
                 </div>
                 ${gateInfo}
+                ${questInfo}
                 ${this.isCurrentLocation(location) ? '<div style="color: #4fc3f7; margin-top: 5px;">📍 You are here</div>' : '<div style="color: #95E77E; margin-top: 5px;">🖱️ Click to travel</div>'}
             `;
         }
@@ -2855,6 +2994,52 @@ const GameWorldRenderer = {
         this.saveLocationHistory();
         this.updateHistoryPanel();
         console.log('📜 Location history cleared');
+    },
+
+    // 🖤 Cleanup before re-initialization - prevents stale DOM elements 💀
+    cleanup() {
+        // Remove tooltip element
+        if (this.tooltipElement && this.tooltipElement.parentNode) {
+            this.tooltipElement.remove();
+            this.tooltipElement = null;
+        }
+
+        // Clear map element contents (preserves backdrop container)
+        if (this.mapElement) {
+            const backdrop = this.mapElement.querySelector('.backdrop-container');
+            this.mapElement.innerHTML = '';
+            if (backdrop) {
+                this.mapElement.appendChild(backdrop);
+            }
+        }
+
+        console.log('🗺️ GameWorldRenderer cleaned up');
+    },
+
+    // 🖤 Full teardown - removes all DOM elements and references 💀
+    destroy() {
+        this.cleanup();
+
+        // Remove map element entirely
+        if (this.mapElement && this.mapElement.parentNode) {
+            this.mapElement.remove();
+            this.mapElement = null;
+        }
+
+        // Clear backdrop references
+        if (this.backdropContainer && this.backdropContainer.parentNode) {
+            this.backdropContainer.remove();
+        }
+        this.backdropContainer = null;
+        this.currentBackdrop = null;
+        this.previousBackdrop = null;
+
+        // Clear state
+        this.container = null;
+        this.currentDestination = null;
+        this.currentSeason = null;
+
+        console.log('🗺️ GameWorldRenderer destroyed 💀');
     }
 };
 

@@ -81,7 +81,7 @@ const WeatherSystem = {
             icon: '🌧️',
             description: 'Roads turn to mud, spirits dampen.',
             effects: {
-                travelSpeed: 0.7,
+                travelSpeed: 0.9, // 🖤 Was 0.7 - too harsh! Now only 10% slower 💀
                 priceModifier: 1.1, // Indoor goods more valuable
                 encounterChance: 0.6,
                 staminaDrain: 1.3,
@@ -98,7 +98,7 @@ const WeatherSystem = {
             icon: '⛈️',
             description: 'Lightning cracks, thunder rolls. Dangerous to travel.',
             effects: {
-                travelSpeed: 0.4,
+                travelSpeed: 0.75, // 🖤 Was 0.4 - way too harsh! Now 25% slower 💀
                 priceModifier: 1.25,
                 encounterChance: 0.3,
                 staminaDrain: 1.8,
@@ -116,7 +116,7 @@ const WeatherSystem = {
             icon: '🌫️',
             description: 'Visibility near zero. Easy to get lost.',
             effects: {
-                travelSpeed: 0.5,
+                travelSpeed: 0.85, // 🖤 Was 0.5 - too harsh! Now 15% slower 💀
                 priceModifier: 1.05,
                 encounterChance: 1.5, // Easier to be ambushed
                 staminaDrain: 1.1,
@@ -132,7 +132,7 @@ const WeatherSystem = {
             icon: '🌨️',
             description: 'Winter descends. Cold bites deep.',
             effects: {
-                travelSpeed: 0.6,
+                travelSpeed: 0.85, // 🖤 Was 0.6 - too harsh! Now 15% slower 💀
                 priceModifier: 1.15, // Warm goods premium
                 encounterChance: 0.5,
                 staminaDrain: 1.5,
@@ -149,7 +149,7 @@ const WeatherSystem = {
             icon: '❄️',
             description: 'Deadly cold. Only fools travel in this.',
             effects: {
-                travelSpeed: 0.25,
+                travelSpeed: 0.7, // 🖤 Was 0.25 - way too harsh! Now 30% slower 💀
                 priceModifier: 1.4,
                 encounterChance: 0.2,
                 staminaDrain: 2.5,
@@ -168,7 +168,7 @@ const WeatherSystem = {
             icon: '⚡❄️',
             description: 'Thunder echoes through the blinding snow. A rare and terrifying phenomenon.',
             effects: {
-                travelSpeed: 0.15,
+                travelSpeed: 0.6, // 🖤 Was 0.15 - insanely harsh! Now 40% slower (worst weather) 💀
                 priceModifier: 1.6,
                 encounterChance: 0.1,
                 staminaDrain: 3.0,

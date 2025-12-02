@@ -304,8 +304,13 @@ const NPCVoiceChatSystem = {
     // ═══════════════════════════════════════════════════════════
 
     audioContext: null,
+    _audioContextSetup: false, // 🖤 Guard against duplicate setup 💀
 
     setupAudioContext() {
+        // 🖤 Prevent duplicate listener registration 💀
+        if (this._audioContextSetup) return;
+        this._audioContextSetup = true;
+
         // create audio context on first user interaction (mobile requirement)
         const initAudio = () => {
             if (!this.audioContext) {
@@ -871,15 +876,15 @@ RELATIONSHIP MEMORY:
             this.currentAudio.setAttribute('webkit-playsinline', '');
             this.currentAudio.preload = 'auto';
 
-            // event handlers
-            this.currentAudio.addEventListener('ended', () => {
+            // 🖤 Use property assignment for easier cleanup (vs addEventListener) 💀
+            this.currentAudio.onended = () => {
                 this.playNextVoiceChunk();
-            });
+            };
 
-            this.currentAudio.addEventListener('error', (e) => {
+            this.currentAudio.onerror = (e) => {
                 // 🦇 Audio chunk failed - skip to next
                 this.playNextVoiceChunk();
-            });
+            };
 
             // play with error handling
             try {
@@ -906,8 +911,12 @@ RELATIONSHIP MEMORY:
         this.isPlayingVoice = false;
 
         if (this.currentAudio) {
+            // 🖤 Remove event listeners before nulling to prevent memory leaks 💀
+            this.currentAudio.onended = null;
+            this.currentAudio.onerror = null;
             this.currentAudio.pause();
             this.currentAudio.currentTime = 0;
+            this.currentAudio.src = ''; // 🖤 Release the audio resource 💀
             this.currentAudio = null;
         }
 

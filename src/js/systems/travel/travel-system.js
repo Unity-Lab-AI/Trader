@@ -2085,8 +2085,10 @@ const TravelSystem = {
             console.log(`🚶 journey progress: ${progressPct}% (${elapsed}/${duration} mins elapsed)`);
         }
 
-        // Apply character stat drain during travel
-        this.applyTravelStatDrain(elapsed);
+        // 🖤 FIX: REMOVED travel stat drain - game.js processPlayerStatsOverTime() handles ALL vital decay 💀
+        // Travel just advances game time, which naturally triggers the unified decay system
+        // This prevents double-drain and ensures 3 day thirst / 5 day hunger rates are accurate
+        // this.applyTravelStatDrain(elapsed); // DISABLED
 
         // Update player position along path
         this.updatePlayerPositionAlongPath();
@@ -2110,14 +2112,22 @@ const TravelSystem = {
         this.updateTravelUI();
     },
     
+    // 🖤 Track last travel drain time to prevent multi-frame drain 💀
+    _lastTravelDrainMinute: -1,
+
     // Apply stat drain during travel
     applyTravelStatDrain(elapsedMinutes) {
         if (!game.player || !game.player.stats) return;
-        
+
+        // 🖤 FIX: Prevent multi-frame drain - only drain ONCE per 30-minute mark 💀
+        const drainMark = Math.floor(elapsedMinutes / 30) * 30;
+        if (drainMark === 0 || drainMark === this._lastTravelDrainMinute) return;
+        this._lastTravelDrainMinute = drainMark;
+
         // Calculate drain based on travel speed and path type
         const path = this.playerPosition.path;
         let drainMultiplier = 1.0;
-        
+
         if (path && path.quality) {
             switch (path.quality) {
                 case 'excellent':
@@ -2134,11 +2144,11 @@ const TravelSystem = {
                     break;
             }
         }
-        
+
         // 🦇 FIX: Reduced travel stat drain - these are ADDITIONAL to normal decay
         // Only apply small extra drain during travel, not massive amounts
-        // Apply stat drain every 30 minutes of travel (not every 10)
-        if (elapsedMinutes % 30 === 0 && elapsedMinutes > 0) {
+        // Apply stat drain every 30 minutes of travel (check already done above)
+        {
             // Small additional drain during travel (on top of normal game.js decay)
             const hungerDrain = 0.5 * drainMultiplier;  // Was 3, now 0.5
             const thirstDrain = 0.8 * drainMultiplier;  // Was 5, now 0.8

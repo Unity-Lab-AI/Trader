@@ -10,6 +10,7 @@
 const InitialEncounterSystem = {
     // 🔧 CONFIG
     hasShownEncounter: false,
+    hasShownTutorialChoice: false, // 🖤 Track if we've shown the tutorial Yes/No popup
     encounterDelay: 1500, // ms after game start to show encounter
 
     // 📖 THE MYSTERIOUS STRANGER - your first encounter in this world
@@ -37,6 +38,7 @@ const InitialEncounterSystem = {
     },
 
     // 🎭 TRIGGER INITIAL ENCOUNTER - called after character creation
+    // 🖤 Now shows Tutorial Yes/No popup FIRST (if enabled in settings) 💀
     triggerInitialEncounter(playerName, startLocation) {
         // 🖤 only trigger ONCE per new game
         if (this.hasShownEncounter) {
@@ -50,6 +52,154 @@ const InitialEncounterSystem = {
         // 🖤 Store params for later use
         this._pendingPlayerName = playerName;
         this._pendingStartLocation = startLocation;
+
+        // 🖤 Check if tutorial popup should be shown FIRST (before anything else) 💀
+        if (this._shouldShowTutorialOnStart()) {
+            console.log('🌟 Tutorial popup enabled - showing FIRST before anything else 📚');
+            this._showTutorialChoiceFirst();
+        } else {
+            console.log('🌟 Tutorial popup disabled in settings - skipping directly to game 💀');
+            // 🦇 Wait for rank-up celebration to finish BEFORE showing intro
+            this._waitForRankUpThenShowIntro();
+        }
+    },
+
+    // 🖤 Check if we should show the tutorial popup on start 💀
+    _shouldShowTutorialOnStart() {
+        // Check SettingsPanel settings first
+        if (typeof SettingsPanel !== 'undefined' && SettingsPanel.currentSettings?.gameplay) {
+            return SettingsPanel.currentSettings.gameplay.showTutorialOnStart !== false;
+        }
+
+        // Fallback: check localStorage directly
+        try {
+            const saved = localStorage.getItem('tradingGameGameplaySettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                return settings.showTutorialOnStart !== false;
+            }
+        } catch (e) {
+            console.warn('🌟 Could not read gameplay settings from localStorage:', e);
+        }
+
+        // Default: show tutorial popup
+        return true;
+    },
+
+    // 🖤 Show tutorial Yes/No choice FIRST before rank celebration 💀
+    _showTutorialChoiceFirst() {
+        if (this.hasShownTutorialChoice) return;
+        this.hasShownTutorialChoice = true;
+
+        // Pause time during this choice (🖤 store previous speed for proper restoration 💀)
+        if (typeof TimeSystem !== 'undefined' && !TimeSystem.isPaused) {
+            this._previousSpeedForTutorial = TimeSystem.currentSpeed || 'NORMAL';
+            TimeSystem.setSpeed('PAUSED');
+        }
+
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: '📚 Would You Like a Tutorial?',
+                content: `
+                    <div style="text-align: center; padding: 1rem;">
+                        <p style="color: #c0c0d0; margin-bottom: 1.5rem; font-size: 1.1em;">
+                            Welcome, brave merchant! Would you like to learn the basics of trading and survival?
+                        </p>
+                        <p style="color: #888; font-size: 0.9em; font-style: italic;">
+                            You can change this in Settings → Gameplay if you don't want to see this every time.
+                        </p>
+                    </div>
+                `,
+                closeable: false, // 🖤 Must choose - no escape from this decision
+                buttons: [
+                    {
+                        text: '❌ No, Just Start',
+                        className: 'secondary',
+                        onClick: () => {
+                            ModalSystem.hide();
+                            console.log('🌟 Player chose NO tutorial - diving straight into the chaos 💀');
+                            // 🖤 Proceed with normal flow (rank celebration, then intro)
+                            this._proceedAfterTutorialChoice();
+                        }
+                    },
+                    {
+                        text: '✅ Yes, Show Tutorial',
+                        className: 'primary',
+                        onClick: () => {
+                            ModalSystem.hide();
+                            console.log('🌟 Player chose YES to tutorial - enlightening the newbie 📚');
+                            // 🖤 Show tutorial, then proceed
+                            this._showQuickTutorial(() => {
+                                this._proceedAfterTutorialChoice();
+                            });
+                        }
+                    }
+                ]
+            });
+        } else {
+            // 🖤 No ModalSystem - proceed directly
+            this._proceedAfterTutorialChoice();
+        }
+    },
+
+    // 🖤 Quick tutorial content (shown if player says Yes) 💀
+    _showQuickTutorial(onComplete) {
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: '📚 Quick Tutorial',
+                content: `
+                    <div style="line-height: 1.8;">
+                        <div style="background: rgba(100, 100, 150, 0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <p style="margin-bottom: 0.5rem; color: #4fc3f7;"><strong>🎮 Basic Controls:</strong></p>
+                            <p style="color: #c0c0d0; margin-left: 1rem;">• <strong>SPACE</strong> - Pause/Unpause time</p>
+                            <p style="color: #c0c0d0; margin-left: 1rem;">• <strong>M</strong> - Open Market (at Royal Capital only)</p>
+                            <p style="color: #c0c0d0; margin-left: 1rem;">• <strong>I</strong> - Open Inventory</p>
+                            <p style="color: #c0c0d0; margin-left: 1rem;">• <strong>T</strong> - Travel to new locations</p>
+                            <p style="color: #c0c0d0; margin-left: 1rem;">• <strong>Q</strong> - View your Quest Log</p>
+                            <p style="color: #c0c0d0; margin-left: 1rem;">• <strong>O</strong> - Talk to People at your location</p>
+                        </div>
+
+                        <div style="background: rgba(100, 150, 100, 0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <p style="margin-bottom: 0.5rem; color: #90EE90;"><strong>💰 Trading Tips:</strong></p>
+                            <p style="color: #c0c0d0; margin-left: 1rem;">• Buy low in one location, sell high in another</p>
+                            <p style="color: #c0c0d0; margin-left: 1rem;">• Different locations specialize in different goods</p>
+                            <p style="color: #c0c0d0; margin-left: 1rem;">• Watch your hunger and thirst - they drain over time!</p>
+                        </div>
+
+                        <div style="background: rgba(150, 100, 100, 0.2); padding: 1rem; border-radius: 8px;">
+                            <p style="margin-bottom: 0.5rem; color: #f48fb1;"><strong>⚠️ Survival:</strong></p>
+                            <p style="color: #c0c0d0; margin-left: 1rem;">• Hunger depletes over 5 days</p>
+                            <p style="color: #c0c0d0; margin-left: 1rem;">• Thirst depletes over 3 days</p>
+                            <p style="color: #c0c0d0; margin-left: 1rem;">• Buy food and water to stay alive!</p>
+                        </div>
+                    </div>
+                `,
+                closeable: true,
+                buttons: [
+                    {
+                        text: '🎮 Got It!',
+                        className: 'primary',
+                        onClick: () => {
+                            ModalSystem.hide();
+                            if (typeof onComplete === 'function') {
+                                onComplete();
+                            }
+                        }
+                    }
+                ]
+            });
+        } else if (typeof onComplete === 'function') {
+            onComplete();
+        }
+    },
+
+    // 🖤 Proceed after tutorial choice - resume normal game flow 💀
+    _proceedAfterTutorialChoice() {
+        // Resume time to previous speed if we paused it (🖤 restore actual speed, not just 'NORMAL' 💀)
+        if (this._previousSpeedForTutorial && typeof TimeSystem !== 'undefined') {
+            TimeSystem.setSpeed(this._previousSpeedForTutorial);
+            this._previousSpeedForTutorial = null;
+        }
 
         // 🦇 Wait for rank-up celebration to finish BEFORE showing intro
         this._waitForRankUpThenShowIntro();
@@ -94,11 +244,10 @@ const InitialEncounterSystem = {
 
     // 📖 INTRODUCTION SEQUENCE - the story begins
     showIntroductionSequence(playerName, startLocation) {
-        // Pause time during this sequence
-        // 🦇 FIX: Use setSpeed() instead of direct isPaused assignment for state consistency
+        // Pause time during this sequence (🖤 store previous speed for proper restoration 💀)
         if (typeof TimeSystem !== 'undefined' && !TimeSystem.isPaused) {
+            this._previousSpeedForIntro = TimeSystem.currentSpeed || 'NORMAL';
             TimeSystem.setSpeed('PAUSED');
-            this.timePausedByUs = true;
         }
 
         // 🖤 First, show a narrative text overlay
@@ -147,6 +296,7 @@ const InitialEncounterSystem = {
     },
 
     // 🎭 STRANGER ENCOUNTER - the mysterious figure speaks
+    // 🖤 Player accepts quest FIRST, then gets tutorial option as a separate Yes/No choice 💀
     showStrangerEncounter(playerName) {
         const stranger = this.mysteriousStranger;
         const greeting = stranger.greetings[Math.floor(Math.random() * stranger.greetings.length)];
@@ -165,19 +315,12 @@ const InitialEncounterSystem = {
                 closeable: false, // 🖤 Must accept quest - no escape from destiny
                 buttons: [
                     {
-                        text: '📚 Tutorial',
-                        className: 'secondary',
-                        onClick: () => {
-                            ModalSystem.hide();
-                            this.showTutorial(playerName);
-                        }
-                    },
-                    {
                         text: '✅ Accept Quest',
                         className: 'primary',
                         onClick: () => {
                             ModalSystem.hide();
-                            this.showQuestAccepted(playerName);
+                            // 🖤 Accept quest FIRST, then ask about tutorial 💀
+                            this.showQuestAcceptedThenTutorialOption(playerName);
                         }
                     }
                 ]
@@ -185,9 +328,61 @@ const InitialEncounterSystem = {
         }
     },
 
-    // 📚 TUTORIAL - teach the player the basics (placeholder for now)
+    // 🖤 Accept quest and show quest panel (tutorial already shown at game start) 💀
+    showQuestAcceptedThenTutorialOption(playerName) {
+        // 🖤 Actually start the quest NOW
+        this.completeEncounter(true);
+
+        // 🖤 Use unified QuestInfoPanel if available 💀
+        // NOTE: Tutorial prompt no longer shows here - it's now shown FIRST at game start
+        if (typeof QuestSystem !== 'undefined' && QuestSystem.showQuestInfoPanel) {
+            // Show unified quest panel for main_prologue (no tutorial callback)
+            QuestSystem.showQuestInfoPanel('main_prologue', {
+                isNewQuest: true
+                // 🖤 No onClose callback needed - tutorial was already offered at start
+            });
+        }
+        // 🖤 No more tutorial prompt here - it's handled by _showTutorialChoiceFirst() at game start
+    },
+
+    // 🖤 Show tutorial Yes/No prompt 💀
+    _showTutorialPrompt(playerName) {
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: '📚 Tutorial',
+                content: `
+                    <p style="color: #a0a0c0; text-align: center; margin-bottom: 1rem;">Would you like to see the tutorial?</p>
+                    <p style="color: #666; text-align: center; font-size: 0.9em; font-style: italic;">(Tutorial coming soon!)</p>
+                `,
+                closeable: true,
+                buttons: [
+                    {
+                        text: '❌ No Thanks',
+                        className: 'secondary',
+                        onClick: () => {
+                            ModalSystem.hide();
+                            // 🖤 Just close - player can start playing
+                        }
+                    },
+                    {
+                        text: '✅ Yes Please',
+                        className: 'primary',
+                        onClick: () => {
+                            ModalSystem.hide();
+                            // 🖤 Tutorial not implemented yet - just show a message 💀
+                            if (typeof addMessage === 'function') {
+                                addMessage('📚 Tutorial coming soon! For now, explore the game and have fun! 🖤', 'info');
+                            }
+                        }
+                    }
+                ]
+            });
+        }
+    },
+
+    // 📚 TUTORIAL - teach the player the basics
+    // 🖤 Now shown AFTER quest is accepted, just shows tips then closes 💀
     showTutorial(playerName) {
-        // 🖤 Tutorial will be expanded later - for now show basic tips and accept quest
         if (typeof ModalSystem !== 'undefined') {
             ModalSystem.show({
                 title: '📚 Tutorial - Getting Started',
@@ -211,17 +406,16 @@ const InitialEncounterSystem = {
                             <p style="color: #c0c0d0; margin-left: 1rem;">• Keep some gold for emergencies</p>
                         </div>
 
-                        <p style="color: #a0a0c0; font-style: italic; font-size: 0.9em;">More tutorial content coming soon! For now, speak with Elder Morin to continue your journey.</p>
+                        <p style="color: #a0a0c0; font-style: italic; font-size: 0.9em;">Tip: Look for the Elder in the village. NPCs with quests have a 📜 icon. Press 'Q' to open your Quest Log.</p>
                     </div>
                 `,
-                closeable: false, // 🖤 Must accept quest after tutorial
+                closeable: true, // 🖤 Quest already accepted, can close anytime
                 buttons: [
                     {
-                        text: '✅ Accept Quest & Begin',
+                        text: '🎮 Begin Adventure',
                         className: 'primary',
                         onClick: () => {
                             ModalSystem.hide();
-                            this.showQuestAccepted(playerName);
                         }
                     }
                 ]
@@ -297,11 +491,10 @@ const InitialEncounterSystem = {
         // 📜 Unlock the main quest
         this.unlockMainQuest();
 
-        // 🖤 Resume time if we paused it
-        // 🦇 FIX: Use setSpeed() instead of direct isPaused assignment for state consistency
-        if (this.timePausedByUs && typeof TimeSystem !== 'undefined') {
-            TimeSystem.setSpeed('NORMAL');
-            this.timePausedByUs = false;
+        // 🖤 Resume time to previous speed if we paused it (restore actual speed, not just 'NORMAL' 💀)
+        if (this._previousSpeedForIntro && typeof TimeSystem !== 'undefined') {
+            TimeSystem.setSpeed(this._previousSpeedForIntro);
+            this._previousSpeedForIntro = null;
         }
 
         // 📝 Add journal entry based on choice
@@ -373,14 +566,19 @@ const InitialEncounterSystem = {
                         console.log('🎯 main_prologue auto-tracked - wayfinder activated');
                     }
                 } else {
-                    console.log('🌟 main_prologue assignment failed:', result.error, '💔');
-                    // 🖤 If quest is already active, we STILL need to track it for the wayfinder! 💀
-                    if (result.error === 'Quest already active' && QuestSystem.trackQuest) {
-                        QuestSystem.trackQuest('main_prologue');
-                        console.log('🎯 main_prologue already active - tracking it now for wayfinder');
-                    } else if (QuestSystem.discoverQuest) {
-                        // Fallback to discover for other issues
-                        QuestSystem.discoverQuest('main_prologue');
+                    // 🖤 If quest is already active, that's fine - just track it for wayfinder! 💀
+                    if (result.error === 'Quest already active') {
+                        console.log('🌟 main_prologue already active - just need to track it 🦇');
+                        if (QuestSystem.trackQuest) {
+                            QuestSystem.trackQuest('main_prologue');
+                            console.log('🎯 main_prologue tracked - wayfinder activated');
+                        }
+                    } else {
+                        // 🖤 Actual error - log it
+                        console.warn('🌟 main_prologue assignment failed:', result.error);
+                        if (QuestSystem.discoverQuest) {
+                            QuestSystem.discoverQuest('main_prologue');
+                        }
                     }
                 }
             } else if (QuestSystem.discoverQuest) {

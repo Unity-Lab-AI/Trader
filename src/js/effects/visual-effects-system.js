@@ -37,7 +37,8 @@ const VisualEffectsSystem = {
         intensity: 0,
         duration: 0,
         startTime: 0,
-        originalTransform: ''
+        originalTransform: '',
+        frameId: null // 🖤 Track rAF for cleanup 💀
     },
     
     // Weather system
@@ -46,12 +47,19 @@ const VisualEffectsSystem = {
         particles: [],
         intensity: 0
     },
+
+    // 🖤 Track pending timeouts for cleanup 💀
+    _pendingTimeouts: [],
     
     // 🌙 Initialize visual effects system - conjuring the spectacle
     init() {
         this.createParticleContainer();
         this.loadSettings();
         this.setupEventListeners();
+
+        // 🖤 Cleanup on page unload to prevent memory leaks 💀
+        window.addEventListener('beforeunload', () => this.destroy());
+
         console.log('✨ Visual effects system awakened... prepare for beauty and chaos 🖤');
     },
     
@@ -447,7 +455,8 @@ const VisualEffectsSystem = {
             rotate(${rotation}deg)
         `;
         
-        requestAnimationFrame(() => this.animateScreenShake());
+        // 🖤 Store frame ID for cleanup 💀
+        this.screenShake.frameId = requestAnimationFrame(() => this.animateScreenShake());
     },
     
     // Weather system
@@ -884,6 +893,24 @@ const VisualEffectsSystem = {
         this.saveSettings();
     },
     
+    // 🖤 Schedule a timeout and track it for cleanup 💀
+    _scheduleTimeout(callback, delay) {
+        const id = TimerManager.setTimeout(() => {
+            // Remove from tracking array when executed
+            const idx = this._pendingTimeouts.indexOf(id);
+            if (idx > -1) this._pendingTimeouts.splice(idx, 1);
+            callback();
+        }, delay);
+        this._pendingTimeouts.push(id);
+        return id;
+    },
+
+    // 🖤 Clear all pending timeouts 💀
+    _clearAllTimeouts() {
+        this._pendingTimeouts.forEach(id => TimerManager.clearTimeout(id));
+        this._pendingTimeouts = [];
+    },
+
     // 🧹 Cleanup methods - sweeping away the remnants of magic
     clearAllParticles() {
         this.activeParticles.forEach(particle => {
@@ -901,6 +928,16 @@ const VisualEffectsSystem = {
             this.particleFrameId = null;
         }
 
+        // 🖤 Cancel screen shake animation frame 💀
+        if (this.screenShake.frameId) {
+            cancelAnimationFrame(this.screenShake.frameId);
+            this.screenShake.frameId = null;
+        }
+        this.screenShakeActive = false;
+
+        // 🖤 Clear all pending timeouts 💀
+        this._clearAllTimeouts();
+
         this.clearAllParticles();
         this.clearWeather();
 
@@ -915,6 +952,26 @@ const VisualEffectsSystem = {
         if (this.particleSystem.container && this.particleSystem.container.parentNode) {
             this.particleSystem.container.remove();
         }
+    },
+
+    // 🖤 Stop particle loop without full cleanup 💀
+    stop() {
+        if (this.particleFrameId) {
+            cancelAnimationFrame(this.particleFrameId);
+            this.particleFrameId = null;
+        }
+        if (this.screenShake.frameId) {
+            cancelAnimationFrame(this.screenShake.frameId);
+            this.screenShake.frameId = null;
+        }
+        this.screenShakeActive = false;
+    },
+
+    // 🖤 Full teardown - call on page unload 💀
+    destroy() {
+        this.stop();
+        this.cleanup();
+        console.log('✨ Visual effects system destroyed 💀');
     }
 };
 

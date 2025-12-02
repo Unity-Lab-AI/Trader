@@ -13,6 +13,9 @@ const InventorySystem = {
     maxWeight: 100,
     sortCriteria: 'name',
     filterCriteria: null,
+
+    // 🖤 Store dropdown close handlers for cleanup 💀
+    _dropdownCloseHandler: null,
     
     // 🌙 Initialize - waking up the hoard
     init() {
@@ -297,13 +300,22 @@ const InventorySystem = {
 
         document.body.appendChild(dropdown);
 
+        // 🖤 Cleanup helper - removes dropdown and its close handler 💀
+        const cleanupDropdown = () => {
+            if (this._dropdownCloseHandler) {
+                document.removeEventListener('click', this._dropdownCloseHandler);
+                this._dropdownCloseHandler = null;
+            }
+            dropdown.remove();
+        };
+
         // Handle clicks
         dropdown.addEventListener('click', (e) => {
             const sortType = e.target.dataset?.sort;
             if (sortType) {
                 this.sortCriteria = sortType;
                 this.sortInventory(sortType);
-                dropdown.remove();
+                cleanupDropdown();
                 if (typeof addMessage === 'function') {
                     addMessage(`📦 Inventory sorted by ${sortType.replace('-', ' ')}`, 'info');
                 }
@@ -312,13 +324,12 @@ const InventorySystem = {
 
         // Close on outside click
         setTimeout(() => {
-            const closeHandler = (e) => {
+            this._dropdownCloseHandler = (e) => {
                 if (!dropdown.contains(e.target) && e.target !== sortBtn) {
-                    dropdown.remove();
-                    document.removeEventListener('click', closeHandler);
+                    cleanupDropdown();
                 }
             };
-            document.addEventListener('click', closeHandler);
+            document.addEventListener('click', this._dropdownCloseHandler);
         }, 10);
     },
 
@@ -453,6 +464,15 @@ const InventorySystem = {
 
         document.body.appendChild(dropdown);
 
+        // 🖤 Cleanup helper - removes dropdown and its close handler 💀
+        const cleanupDropdown = () => {
+            if (this._dropdownCloseHandler) {
+                document.removeEventListener('click', this._dropdownCloseHandler);
+                this._dropdownCloseHandler = null;
+            }
+            dropdown.remove();
+        };
+
         // Handle category filter clicks
         dropdown.addEventListener('click', (e) => {
             const filterCat = e.target.dataset?.filter;
@@ -462,7 +482,7 @@ const InventorySystem = {
                 this.filterCriteria = filterCat === 'all' ? null : filterCat;
                 this.filterType = 'category';
                 this.applyFilter();
-                dropdown.remove();
+                cleanupDropdown();
                 if (typeof addMessage === 'function') {
                     addMessage(`📦 Showing ${filterCat === 'all' ? 'all items' : filterCat + ' items'}`, 'info');
                 }
@@ -470,7 +490,7 @@ const InventorySystem = {
                 this.filterCriteria = filterRarity;
                 this.filterType = 'rarity';
                 this.applyFilter();
-                dropdown.remove();
+                cleanupDropdown();
                 if (typeof addMessage === 'function') {
                     addMessage(`📦 Showing ${filterRarity} items`, 'info');
                 }
@@ -492,13 +512,12 @@ const InventorySystem = {
 
         // Close on outside click
         setTimeout(() => {
-            const closeHandler = (e) => {
+            this._dropdownCloseHandler = (e) => {
                 if (!dropdown.contains(e.target) && e.target !== filterBtn) {
-                    dropdown.remove();
-                    document.removeEventListener('click', closeHandler);
+                    cleanupDropdown();
                 }
             };
-            document.addEventListener('click', closeHandler);
+            document.addEventListener('click', this._dropdownCloseHandler);
         }, 10);
     },
 

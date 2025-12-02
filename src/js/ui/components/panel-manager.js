@@ -11,6 +11,13 @@ const PanelManager = {
     // Stack of currently open panels (most recent last)
     openPanels: [],
 
+    // 🖤 Store toolbar drag handlers for cleanup 💀
+    _toolbarDragHandlers: {
+        mousedown: null,
+        mousemove: null,
+        mouseup: null
+    },
+
     // 🖤 Safe toggle handlers registry - NO EVAL ALLOWED IN THIS REALM
     // Maps customToggle string names to actual functions
     toggleHandlers: {
@@ -69,6 +76,9 @@ const PanelManager = {
 
         // 🖤 Add close buttons to all appropriate panels
         this.addCloseButtonsToAllPanels();
+
+        // 🖤 Cleanup observer on page unload to prevent memory leaks 💀
+        window.addEventListener('beforeunload', () => this.disconnectObserver());
 
         console.log('🪟 PanelManager: Ready');
     },
@@ -355,24 +365,29 @@ const PanelManager = {
         let isDragging = false;
         let offsetX, offsetY;
 
-        handle.addEventListener('mousedown', (e) => {
+        // 🖤 Store handlers for cleanup 💀
+        this._toolbarDragHandlers.mousedown = (e) => {
             if (e.target.classList.contains('toolbar-collapse')) return;
             isDragging = true;
             offsetX = e.clientX - toolbar.getBoundingClientRect().left;
             offsetY = e.clientY - toolbar.getBoundingClientRect().top;
             e.preventDefault();
-        });
+        };
 
-        document.addEventListener('mousemove', (e) => {
+        this._toolbarDragHandlers.mousemove = (e) => {
             if (!isDragging) return;
             toolbar.style.left = (e.clientX - offsetX) + 'px';
             toolbar.style.top = (e.clientY - offsetY) + 'px';
             toolbar.style.right = 'auto';
-        });
+        };
 
-        document.addEventListener('mouseup', () => {
+        this._toolbarDragHandlers.mouseup = () => {
             isDragging = false;
-        });
+        };
+
+        handle.addEventListener('mousedown', this._toolbarDragHandlers.mousedown);
+        document.addEventListener('mousemove', this._toolbarDragHandlers.mousemove);
+        document.addEventListener('mouseup', this._toolbarDragHandlers.mouseup);
     },
 
     // Check if panel is currently open/visible
@@ -667,6 +682,16 @@ const PanelManager = {
             this._panelObserver.disconnect();
             this._panelObserver = null;
         }
+        clearTimeout(this._updateTimeout);
+
+        // 🖤 Clean up toolbar drag handlers 💀
+        if (this._toolbarDragHandlers.mousemove) {
+            document.removeEventListener('mousemove', this._toolbarDragHandlers.mousemove);
+        }
+        if (this._toolbarDragHandlers.mouseup) {
+            document.removeEventListener('mouseup', this._toolbarDragHandlers.mouseup);
+        }
+        this._toolbarDragHandlers = { mousedown: null, mousemove: null, mouseup: null };
     },
 
     // Sync openPanels array with actual DOM state

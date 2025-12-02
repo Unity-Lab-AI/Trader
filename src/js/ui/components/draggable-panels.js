@@ -268,6 +268,9 @@ const DraggablePanels = {
         element.classList.remove('dragging');
         element.style.zIndex = '100';
 
+        // 🖤 Mark that user has manually dragged this panel - prevents auto-repositioning 💀
+        element.dataset.userDragged = 'true';
+
         this.savePosition(element);
         this.dragState = null;
 
@@ -309,14 +312,23 @@ const DraggablePanels = {
         }
     },
 
+    // 🖤 Save position as PERCENTAGE of viewport for responsive behavior 💀
     savePosition(element) {
         const id = element.id;
         if (!id) return;
 
+        const rect = element.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // Store as percentages so positions scale with viewport
         const positions = this.getAllPositions();
         positions[id] = {
-            left: element.style.left,
-            top: element.style.top
+            leftPercent: (rect.left / viewportWidth) * 100,
+            topPercent: (rect.top / viewportHeight) * 100,
+            // Also store last known viewport size for migration
+            savedViewportWidth: viewportWidth,
+            savedViewportHeight: viewportHeight
         };
 
         try {
@@ -332,6 +344,26 @@ const DraggablePanels = {
         }
     },
 
+    // 🖤 Convert percentage position to constrained pixel position 💀
+    getConstrainedPosition(leftPercent, topPercent, elementWidth, elementHeight) {
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // Convert percentage to pixels
+        let left = (leftPercent / 100) * viewportWidth;
+        let top = (topPercent / 100) * viewportHeight;
+
+        // Constrain to viewport with 20px margin
+        const margin = 20;
+        const minVisible = 50; // At least 50px of panel must be visible
+
+        // Ensure panel stays within viewport bounds
+        left = Math.max(margin, Math.min(left, viewportWidth - minVisible));
+        top = Math.max(margin, Math.min(top, viewportHeight - minVisible));
+
+        return { left, top };
+    },
+
     loadPositions() {
         const positions = this.getAllPositions();
 
@@ -340,7 +372,31 @@ const DraggablePanels = {
             if (!element) return;
 
             const pos = positions[id];
-            if (pos.left && pos.top) {
+
+            // 🖤 Handle both old (pixel) and new (percentage) format 💀
+            if (pos.leftPercent !== undefined && pos.topPercent !== undefined) {
+                // New percentage-based format
+                const rect = element.getBoundingClientRect();
+                const constrained = this.getConstrainedPosition(
+                    pos.leftPercent,
+                    pos.topPercent,
+                    rect.width || 300,
+                    rect.height || 200
+                );
+
+                if (element.parentElement?.id === 'ui-panels') {
+                    document.body.appendChild(element);
+                }
+
+                element.style.position = 'fixed';
+                element.style.left = constrained.left + 'px';
+                element.style.top = constrained.top + 'px';
+                element.style.right = 'auto';
+                element.style.bottom = 'auto';
+                element.style.transform = 'none';
+                element.style.margin = '0';
+            } else if (pos.left && pos.top) {
+                // Legacy pixel format - migrate to percentage
                 if (element.parentElement?.id === 'ui-panels') {
                     document.body.appendChild(element);
                 }
@@ -352,6 +408,75 @@ const DraggablePanels = {
                 element.style.bottom = 'auto';
                 element.style.transform = 'none';
                 element.style.margin = '0';
+
+                // Re-save in new format
+                this.savePosition(element);
+            }
+        });
+
+        // 🖤 Setup resize handler to keep panels visible 💀
+        this.setupResizeHandler();
+    },
+
+    // 🖤 Handle window resize - keep all panels within viewport 💀
+    setupResizeHandler() {
+        if (this._resizeHandlerSetup) return;
+        this._resizeHandlerSetup = true;
+
+        // Debounced resize handler
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => this.constrainAllPanels(), 100);
+        });
+    },
+
+    // 🖤 Ensure all dragged panels stay within viewport after resize 💀
+    constrainAllPanels() {
+        const positions = this.getAllPositions();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const margin = 20;
+        const minVisible = 50;
+
+        Object.keys(positions).forEach(id => {
+            const element = document.getElementById(id);
+            if (!element || element.style.position !== 'fixed') return;
+            if (!element.style.left || element.style.left === 'auto') return;
+
+            const rect = element.getBoundingClientRect();
+
+            // Check if panel is outside viewport
+            let needsUpdate = false;
+            let newLeft = rect.left;
+            let newTop = rect.top;
+
+            // Panel too far right
+            if (rect.left > viewportWidth - minVisible) {
+                newLeft = viewportWidth - minVisible;
+                needsUpdate = true;
+            }
+            // Panel too far left
+            if (rect.right < minVisible) {
+                newLeft = margin;
+                needsUpdate = true;
+            }
+            // Panel too far down
+            if (rect.top > viewportHeight - minVisible) {
+                newTop = viewportHeight - minVisible;
+                needsUpdate = true;
+            }
+            // Panel too far up
+            if (rect.bottom < minVisible) {
+                newTop = margin;
+                needsUpdate = true;
+            }
+
+            if (needsUpdate) {
+                element.style.left = Math.max(margin, newLeft) + 'px';
+                element.style.top = Math.max(margin, newTop) + 'px';
+                // Save new position
+                this.savePosition(element);
             }
         });
     },

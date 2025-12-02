@@ -260,6 +260,11 @@ const GameConfig = {
             colorBlindMode: 'none',        // 'none', 'deuteranopia', 'protanopia', 'tritanopia'
             fontSize: 'medium',            // text size preference
             keyboardNavigation: true       // enable keyboard nav
+        },
+
+        // 🎮 gameplay settings - tweak the torture experience
+        gameplay: {
+            showTutorialOnStart: true      // show tutorial yes/no popup on new game (default ON)
         }
     },
 

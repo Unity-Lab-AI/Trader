@@ -786,12 +786,13 @@ const NPCTradeWindow = {
         }
     },
 
+    // 🖤 HTML escape Map - cached for performance instead of creating object each call 💀
+    _escapeMap: new Map([['&', '&amp;'], ['<', '&lt;'], ['>', '&gt;'], ['"', '&quot;'], ["'", '&#39;']]),
+
     // 🖤 Escape HTML to prevent XSS attacks - dark magic for security
     escapeHtml(str) {
         if (!str) return '';
-        return String(str).replace(/[&<>"']/g, char => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-        })[char]);
+        return String(str).replace(/[&<>"']/g, char => this._escapeMap.get(char));
     },
 
     updateTradeValue() {

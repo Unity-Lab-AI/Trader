@@ -153,12 +153,38 @@ const SystemRegistry = {
     },
 
     /**
+     * 🖤 Get the game object or throw - use when game MUST exist 💀
+     * @returns {Object}
+     * @throws {Error} If game is not registered
+     */
+    requireGame() {
+        const game = this.get('game');
+        if (!game) {
+            throw new Error('🖤 SystemRegistry: game not registered! Call SystemRegistry.register("game", game) first.');
+        }
+        return game;
+    },
+
+    /**
      * 🦇 Get the player object safely
      * @returns {Object|null}
      */
     get player() {
         const game = this.game;
         return game?.player || null;
+    },
+
+    /**
+     * 🦇 Get the player object or throw - use when player MUST exist 💀
+     * @returns {Object}
+     * @throws {Error} If player is not available
+     */
+    requirePlayer() {
+        const game = this.requireGame();
+        if (!game.player) {
+            throw new Error('🦇 SystemRegistry: player not initialized! Ensure game.player exists before calling.');
+        }
+        return game.player;
     },
 
     /**

@@ -230,14 +230,18 @@ const DynamicMarketSystem = {
         }
     },
 
+    // 🖤 Market size lookup table - cached outside loop for performance 💀
+    _marketSizes: { tiny: 5, small: 10, medium: 20, large: 35, grand: 50 },
+
     // Reset all stock at start of new day
     resetDailyStock() {
         // Keep some items from previous day (50% carry over)
         for (const locationId of Object.keys(this.originalStock)) {
+            // 🖤 Cache location lookup ONCE per location instead of per-item 💀
+            const location = GameWorld.locations[locationId];
+            const baseStock = this._marketSizes[location?.marketSize] || 10;
+
             for (const itemId of Object.keys(this.originalStock[locationId])) {
-                const location = GameWorld.locations[locationId];
-                const marketSizes = { tiny: 5, small: 10, medium: 20, large: 35, grand: 50 };
-                const baseStock = marketSizes[location?.marketSize] || 10;
                 const variance = Math.floor(Math.random() * baseStock * 0.3);
 
                 // Fresh restock + some leftover
@@ -290,6 +294,12 @@ const DynamicMarketSystem = {
 
     // Initialize dynamic market system
     init() {
+        // 🖤 Validate ItemDatabase exists before initializing 💀
+        if (typeof ItemDatabase === 'undefined') {
+            console.warn('⚠️ DynamicMarketSystem: ItemDatabase not loaded, skipping init');
+            return;
+        }
+
         this.loadMarketSaturation();
         this.startUpdateTimer();
 
