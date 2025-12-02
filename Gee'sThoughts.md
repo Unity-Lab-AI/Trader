@@ -54,6 +54,40 @@ Each entry follows this format:
 
 ---
 
+### Remove Auto-Refresh + Test Button (API Spam Prevention) 🖤💀
+
+**Request:**
+1. Hall of Champions should NOT auto-refresh every 10 minutes
+2. Remove test connection button from settings (prevents API spam)
+3. Only fetch from JSONBin on explicit user action
+**Context:**
+- Auto-refresh was calling API every 10 min even when nobody viewing
+- Test button allowed users to spam the JSONBin API
+- Need to limit API calls to prevent abuse
+**Status:** COMPLETE ✅
+
+**Fixes Applied:**
+1. **leaderboard-panel.js:33** - Removed `autoRefreshInterval` property
+2. **leaderboard-panel.js:69-72** - Removed `startAutoRefresh()` call and the entire method
+3. **settings-panel.js:621** - Removed "🧪 Test Connection" button
+4. **settings-panel.js:1714-1717** - Removed test button event listener
+5. **settings-panel.js:2802-2824** - Removed `testLeaderboardConnection()` method
+6. **settings-panel.js:632** - Changed hint from "auto-refreshes every 10 minutes" to "refreshes when you view"
+
+**API Calls Now Only Happen On:**
+- Initial page load (once)
+- User clicks "View All Champions" button
+- User returns to main menu (sees Hall of Champions)
+- User clicks refresh button in settings
+- User saves score (on death/retire)
+- Dev console commands (debooger)
+
+**Files Changed:**
+- `src/js/ui/panels/leaderboard-panel.js`
+- `src/js/ui/panels/settings-panel.js`
+
+---
+
 ### Settings About Tab Empty Bug Fix 🖤💀
 
 **Request:** About info in settings is blank! It shall show all Unity AI Lab info, media addresses, and creators = Hackall360, Sponge, GFourteen. All info should load from config.

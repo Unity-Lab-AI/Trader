@@ -30,7 +30,7 @@ const GlobalLeaderboardSystem = {
     // 📊 Local cache of leaderboard
     leaderboard: [],
     lastFetch: null,
-    autoRefreshInterval: null,
+    // 🖤 No auto-refresh interval - API calls only on user action 💀
     // cacheTimeout now comes from config
     _fetchPromise: null, // 🖤 Stores ongoing fetch promise so concurrent callers can await 💀
 
@@ -66,38 +66,10 @@ const GlobalLeaderboardSystem = {
             }
         });
 
-        // Start auto-refresh every 10 minutes
-        this.startAutoRefresh();
+        // 🖤 NO auto-refresh - only fetch when user explicitly views champions 💀
+        // This limits API calls to JSONBin to prevent abuse
 
         console.log(`🏆 Leaderboard backend: ${this.config.backend}`);
-    },
-
-    // ⏰ Start auto-refresh interval (every 10 minutes)
-    startAutoRefresh() {
-        // Clear any existing interval
-        if (this.autoRefreshInterval) {
-            clearInterval(this.autoRefreshInterval);
-        }
-
-        // Refresh every 10 minutes (600000ms)
-        this.autoRefreshInterval = setInterval(() => {
-            console.log('🏆 Auto-refreshing leaderboard...');
-            this.lastFetch = null; // Force refresh
-            this.fetchLeaderboard().then(() => {
-                this.renderLeaderboard();
-            });
-        }, 600000); // 10 minutes
-
-        console.log('🏆 Auto-refresh started (every 10 minutes)');
-    },
-
-    // 🛑 Stop auto-refresh (call when leaving game)
-    stopAutoRefresh() {
-        if (this.autoRefreshInterval) {
-            clearInterval(this.autoRefreshInterval);
-            this.autoRefreshInterval = null;
-            console.log('🏆 Auto-refresh stopped');
-        }
     },
 
     // 📜 Load configuration from GameConfig (config.js)

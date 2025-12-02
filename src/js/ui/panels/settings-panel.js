@@ -618,7 +618,6 @@ const SettingsPanel = {
                                 </div>
 
                                 <div class="setting-item">
-                                    <button id="test-leaderboard-btn" class="settings-action-btn">🧪 Test Connection</button>
                                     <button id="save-leaderboard-btn" class="settings-action-btn primary">💾 Save Configuration</button>
                                 </div>
 
@@ -630,7 +629,7 @@ const SettingsPanel = {
                                 <div id="settings-leaderboard-preview" class="leaderboard-preview">
                                     <p>loading champions...</p>
                                 </div>
-                                <p class="settings-hint">🔄 auto-refreshes every 10 minutes</p>
+                                <p class="settings-hint">🏆 refreshes when you view the Hall of Champions</p>
                             </div>
                         </div>
 
@@ -1709,11 +1708,6 @@ const SettingsPanel = {
         const leaderboardBackend = this.panelElement.querySelector('#leaderboard-backend');
         if (leaderboardBackend) {
             leaderboardBackend.addEventListener('change', (e) => this.updateLeaderboardConfigUI(e.target.value));
-        }
-
-        const testLeaderboardBtn = this.panelElement.querySelector('#test-leaderboard-btn');
-        if (testLeaderboardBtn) {
-            testLeaderboardBtn.addEventListener('click', () => this.testLeaderboardConnection());
         }
 
         const saveLeaderboardBtn = this.panelElement.querySelector('#save-leaderboard-btn');
@@ -2803,30 +2797,6 @@ const SettingsPanel = {
         });
 
         this.showLeaderboardStatus('✅ configuration saved! your legacy awaits.', 'success');
-    },
-
-    // Test leaderboard connection
-    async testLeaderboardConnection() {
-        if (typeof GlobalLeaderboardSystem === 'undefined') {
-            this.showLeaderboardStatus('❌ leaderboard system not loaded', 'error');
-            return;
-        }
-
-        this.showLeaderboardStatus('🔄 testing connection...', 'info');
-
-        try {
-            // Save config first
-            this.saveLeaderboardConfig();
-
-            // Try to fetch
-            await GlobalLeaderboardSystem.refresh();
-
-            const count = GlobalLeaderboardSystem.leaderboard.length;
-            this.showLeaderboardStatus(`✅ connected! found ${count} champion${count !== 1 ? 's' : ''} in the hall.`, 'success');
-            this.refreshLeaderboardPreview();
-        } catch (error) {
-            this.showLeaderboardStatus(`❌ connection failed: ${error.message}`, 'error');
-        }
     },
 
     // Show status message
