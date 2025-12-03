@@ -336,8 +336,8 @@ const InitialEncounterSystem = {
         // 🖤 Use unified QuestInfoPanel if available 💀
         // NOTE: Tutorial prompt no longer shows here - it's now shown FIRST at game start
         if (typeof QuestSystem !== 'undefined' && QuestSystem.showQuestInfoPanel) {
-            // Show unified quest panel for main_prologue (no tutorial callback)
-            QuestSystem.showQuestInfoPanel('main_prologue', {
+            // Show unified quest panel for act1_quest1 (First Steps - the new starting quest)
+            QuestSystem.showQuestInfoPanel('act1_quest1', {
                 isNewQuest: true
                 // 🖤 No onClose callback needed - tutorial was already offered at start
             });
@@ -556,35 +556,36 @@ const InitialEncounterSystem = {
 
         if (typeof QuestSystem !== 'undefined') {
             // 🖤 Actually ASSIGN the quest so it becomes active, not just discovered
+            // 🦇 act1_quest1 is "First Steps" - the new starting quest from MainQuests
             if (QuestSystem.assignQuest) {
-                const result = QuestSystem.assignQuest('main_prologue', { name: 'The Hooded Stranger' });
+                const result = QuestSystem.assignQuest('act1_quest1', { name: 'Elder Morin' });
                 if (result.success) {
-                    console.log('🌟 main_prologue quest STARTED - the darkness beckons, no turning back 🦇');
+                    console.log('🌟 act1_quest1 (First Steps) quest STARTED - the darkness beckons 🦇');
                     // 🖤 Auto-track main quest so wayfinder shows where to go 💀
                     if (QuestSystem.trackQuest) {
-                        QuestSystem.trackQuest('main_prologue');
-                        console.log('🎯 main_prologue auto-tracked - wayfinder activated');
+                        QuestSystem.trackQuest('act1_quest1');
+                        console.log('🎯 act1_quest1 auto-tracked - wayfinder activated');
                     }
                 } else {
                     // 🖤 If quest is already active, that's fine - just track it for wayfinder! 💀
                     if (result.error === 'Quest already active') {
-                        console.log('🌟 main_prologue already active - just need to track it 🦇');
+                        console.log('🌟 act1_quest1 already active - just need to track it 🦇');
                         if (QuestSystem.trackQuest) {
-                            QuestSystem.trackQuest('main_prologue');
-                            console.log('🎯 main_prologue tracked - wayfinder activated');
+                            QuestSystem.trackQuest('act1_quest1');
+                            console.log('🎯 act1_quest1 tracked - wayfinder activated');
                         }
                     } else {
                         // 🖤 Actual error - log it
-                        console.warn('🌟 main_prologue assignment failed:', result.error);
+                        console.warn('🌟 act1_quest1 assignment failed:', result.error);
                         if (QuestSystem.discoverQuest) {
-                            QuestSystem.discoverQuest('main_prologue');
+                            QuestSystem.discoverQuest('act1_quest1');
                         }
                     }
                 }
             } else if (QuestSystem.discoverQuest) {
                 // Fallback to old behavior if assignQuest doesn't exist
-                QuestSystem.discoverQuest('main_prologue');
-                console.log('🌟 main_prologue quest discovered (fallback) - old ritual, still works 🕯️');
+                QuestSystem.discoverQuest('act1_quest1');
+                console.log('🌟 act1_quest1 quest discovered (fallback) 🕯️');
             }
 
             // Update quest UI if available

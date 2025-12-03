@@ -127,7 +127,7 @@ const GameWorld = {
             mapPosition: { x: 400, y: 440 },
             sells: ['bread', 'ale', 'flour', 'cheese', 'butter', 'eggs', 'meat', 'vegetables', 'livestock'],
             buys: ['wheat', 'grain', 'milk', 'honey', 'salt', 'herbs', 'wool'],
-            npcs: ['elder', 'innkeeper', 'apothecary', 'merchant', 'farmer', 'guard'] // Quest: main_prologue needs elder; greendale quests need apothecary, merchant, innkeeper
+            npcs: ['elder', 'innkeeper', 'apothecary', 'merchant', 'farmer', 'guard'] // Quest: act1_quest1 (First Steps) needs elder
         },
         stonebridge: {
             id: 'stonebridge',
