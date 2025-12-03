@@ -1691,8 +1691,9 @@ const EventSystem = {
             name: 'Foreign Merchant',
             description: 'A merchant from distant kingdoms has arrived with exotic goods.',
             effects: { newItems: true },
-            duration: 240, // 4 hours
-            chance: 0.03
+            duration: 720, // 12 hours (rare event, should last longer)
+            chance: 0.005, // 0.5% - rare event
+            silent: true // 🖤 Don't show popup, just log to message panel 💀
         });
 
         // 🖤 REMOVED: rain_storm and clear_skies events - WeatherSystem controls all weather now 💀
@@ -1705,21 +1706,23 @@ const EventSystem = {
             chance: 0
         });
         
-        // Market events
+        // Market events - these are triggered by specific game logic, not random chance
         this.addEventType('weekly_market', {
             name: 'Weekly Market Day',
             description: 'The weekly gathering of merchants with rare goods from distant lands!',
             effects: { newItems: true, priceBonus: 0.1 },
-            duration: 240, // 4 hours
-            chance: 0
+            duration: 720, // 12 hours
+            chance: 0, // Triggered by day-of-week check, not random
+            silent: true // 🖤 Just log to message panel 💀
         });
-        
+
         this.addEventType('merchant_caravan', {
             name: 'Merchant Caravan',
             description: 'A grand merchant caravan has arrived with exotic goods from the east.',
             effects: { newItems: true, rareItems: true },
-            duration: 360, // 6 hours
-            chance: 0
+            duration: 720, // 12 hours
+            chance: 0, // Triggered by specific conditions
+            silent: true // 🖤 Just log to message panel 💀
         });
 
         // 🍀 Lucky events - trigger lucky achievements!
@@ -1827,17 +1830,20 @@ const EventSystem = {
         this.events.push(event);
         this.applyEventEffects(event);
 
-        // 🎲 Show RandomEventPanel for proper visual display (skip travel_complete - that has its own UI)
-        if (eventId !== 'travel_complete' && typeof RandomEventPanel !== 'undefined') {
+        // 🎲 Show RandomEventPanel for proper visual display
+        // Skip: travel_complete (has own UI), silent events (just log to message panel)
+        const isSilent = eventType.silent || eventId === 'travel_complete';
+        if (!isSilent && typeof RandomEventPanel !== 'undefined') {
             RandomEventPanel.showEvent(event);
         }
 
         // 🖤 Also dispatch custom event for any other listeners 💀
         document.dispatchEvent(new CustomEvent('random-event-triggered', { detail: { event } }));
 
-        // Legacy UI notification (still useful for message log)
-        if (game.ui && game.ui.showEventNotification) {
-            game.ui.showEventNotification(event);
+        // 🖤 Message log notification - always show for non-travel events 💀
+        if (eventId !== 'travel_complete') {
+            const icon = eventType.silent ? '🐫' : '🎲';
+            addMessage(`${icon} ${event.name}: ${event.description}`, 'event');
         }
 
         console.log(`🎲 Event triggered: ${event.name}`);
