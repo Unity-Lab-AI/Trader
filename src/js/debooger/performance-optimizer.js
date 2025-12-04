@@ -36,8 +36,10 @@ const PerformanceOptimizer = {
         highAnimationCount: 50
     },
     
-    // Optimization history
+    // 🖤 Optimization history - using circular buffer for efficiency 💀
     optimizationHistory: [],
+    _historyMaxSize: 50,
+    _historyIndex: 0,
     
     // Object pools for frequently created objects
     objectPools: {
@@ -216,20 +218,23 @@ const PerformanceOptimizer = {
         const now = Date.now();
         this.metrics.lastOptimization = now;
         
-        // Record optimization
-        this.optimizationHistory.push({
+        // 🖤 Record optimization using circular buffer - no array resizing! 💀
+        const entry = {
             timestamp: now,
             reason: reason,
             fps: this.metrics.currentFPS,
             memory: this.metrics.memoryUsage,
             particles: this.metrics.particleCount,
             animations: this.metrics.animationCount
-        });
-        
-        // Keep only last 50 optimizations
-        if (this.optimizationHistory.length > 50) {
-            this.optimizationHistory = this.optimizationHistory.slice(-50);
+        };
+
+        // Circular buffer: overwrite oldest entry when full
+        if (this.optimizationHistory.length < this._historyMaxSize) {
+            this.optimizationHistory.push(entry);
+        } else {
+            this.optimizationHistory[this._historyIndex] = entry;
         }
+        this._historyIndex = (this._historyIndex + 1) % this._historyMaxSize;
         
         console.log(`Performance optimization triggered: ${reason}`);
         
@@ -1142,6 +1147,25 @@ const PerformanceOptimizer = {
     },
     
     // Cleanup
+    // 🖤 Get optimization history in chronological order 💀
+    // Since we use a circular buffer, we need to reorder the entries
+    getOptimizationHistory() {
+        if (this.optimizationHistory.length < this._historyMaxSize) {
+            // Buffer not full yet - return as-is
+            return [...this.optimizationHistory];
+        }
+        // Buffer is full - reorder from oldest to newest
+        const firstPart = this.optimizationHistory.slice(this._historyIndex);
+        const secondPart = this.optimizationHistory.slice(0, this._historyIndex);
+        return [...firstPart, ...secondPart];
+    },
+
+    // 🖤 Clear optimization history 💀
+    clearOptimizationHistory() {
+        this.optimizationHistory = [];
+        this._historyIndex = 0;
+    },
+
     cleanup() {
         // 🖤 Cancel animation frame monitoring 💀
         if (this._monitoringFrameId) {

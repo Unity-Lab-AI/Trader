@@ -116,12 +116,12 @@ const GlobalLeaderboardSystem = {
             this.config.GIST_ID = lb.gist.gistId || null;
         }
 
-        // Settings
+        // Settings - use ?? for numeric values where 0 is valid
         if (lb.settings) {
-            this.config.maxEntries = lb.settings.maxEntries || 100;
-            this.config.displayEntries = lb.settings.displayEntries || 10;
-            this.config.minScoreToSubmit = lb.settings.minScoreToSubmit || 100;
-            this.config.cacheTimeout = lb.settings.cacheTimeout || 300000;
+            this.config.maxEntries = lb.settings.maxEntries ?? 100;
+            this.config.displayEntries = lb.settings.displayEntries ?? 10;
+            this.config.minScoreToSubmit = lb.settings.minScoreToSubmit ?? 100;
+            this.config.cacheTimeout = lb.settings.cacheTimeout ?? 300000;
         }
 
         // Validate - if jsonbin selected but no credentials, fall back to local

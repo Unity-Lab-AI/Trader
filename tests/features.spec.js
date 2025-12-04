@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 const config = require('./config/test-config');
 const {
   waitForGameLoad,
-  startNewGame,
+  startGameAndSkipIntro,  // 🖤 Use new helper that handles ALL intro modals 💀
   openDeboogerConsole,
   runDeboogerCommand,
   togglePanelWithKey,
@@ -25,7 +25,7 @@ test.describe('Trading System', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
     // Give player some gold to trade with via direct JS call
     await page.evaluate(() => {
       if (typeof game !== 'undefined' && game.player) {
@@ -162,7 +162,7 @@ test.describe('Travel System', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Travel panel shows destinations', async ({ page }) => {
@@ -232,7 +232,7 @@ test.describe('Quest System', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Quest log shows available quests', async ({ page }) => {
@@ -304,7 +304,7 @@ test.describe('Achievement System', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Achievement panel shows categories', async ({ page }) => {
@@ -409,7 +409,7 @@ test.describe('Save/Load System', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Quick save works (F5)', async ({ page }) => {
@@ -690,7 +690,7 @@ test.describe('Time System', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Time advances automatically', async ({ page }) => {
@@ -790,7 +790,7 @@ test.describe('Keybindings', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
     // 🖤 Ensure game is in PLAYING state for keyboard shortcuts to work
     await page.evaluate(() => {
       if (typeof game !== 'undefined' && typeof GameState !== 'undefined') {

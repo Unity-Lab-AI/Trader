@@ -13,6 +13,52 @@ const Bootstrap = {
     loadingProgress: 0,
     errors: [],
 
+    // 🖤 Module severity levels - determines failure handling 💀
+    // CRITICAL: Game won't work without it - abort on failure
+    // REQUIRED: Important but game can limp along without it
+    // OPTIONAL: Nice to have, silent fail is okay
+    MODULE_SEVERITY: {
+        // Critical - abort if these fail
+        'EventBus': 'critical',
+        'EventManager': 'critical',
+        'TimerManager': 'critical',
+        'GameConfig': 'critical',
+        'ItemDatabase': 'critical',
+        'LocationDatabase': 'critical',
+        'TimeSystem': 'critical',
+        'GameWorld': 'critical',
+        'game': 'critical',
+
+        // Required - warn loudly but continue
+        'GoldManager': 'required',
+        'InventorySystem': 'required',
+        'TravelSystem': 'required',
+        'TradingSystem': 'required',
+        'QuestSystem': 'required',
+        'SaveLoadSystem': 'required',
+        'PanelManager': 'required',
+
+        // Optional - silent fail
+        'SkillSystem': 'optional',
+        'EquipmentSystem': 'optional',
+        'PropertySystem': 'optional',
+        'EmployeeSystem': 'optional',
+        'CraftingSystem': 'optional',
+        'AchievementSystem': 'optional',
+        'DungeonExplorationSystem': 'optional',
+        'TradeRouteSystem': 'optional',
+        'NPCMerchantSystem': 'optional',
+        'NPCDialogueSystem': 'optional',
+        'NPCVoiceChatSystem': 'optional',
+        'GameWorldRenderer': 'optional',
+        'TravelPanelMap': 'optional',
+        'NotificationSystem': 'optional',
+        'SettingsPanel': 'optional',
+        'AudioManager': 'optional',
+        'DeboogerSystem': 'optional',
+        'PerformanceMonitor': 'optional',
+    },
+
     // Module load order - dependencies must come first
     // Each phase completes before the next begins
     LOAD_PHASES: {
@@ -153,32 +199,90 @@ const Bootstrap = {
         console.log(`✅ Phase ${phaseName} complete`);
     },
 
-    // Initialize a single module
+    // 🖤 Module init timeout (prevents hangs) 💀
+    MODULE_INIT_TIMEOUT_MS: 10000, // 10 seconds max per module
+
+    // Initialize a single module with timeout protection and severity handling
     async initModule(moduleName) {
+        const severity = this.MODULE_SEVERITY[moduleName] || 'optional';
+
         try {
             // Check if module exists
             const module = window[moduleName];
 
             if (!module) {
-                // Module not loaded yet - this is okay, some are optional
-                console.log(`   ⏭️ ${moduleName} not found (optional)`);
+                // Module not loaded yet - handle based on severity
+                if (severity === 'critical') {
+                    throw new Error(`Critical module ${moduleName} not found!`);
+                } else if (severity === 'required') {
+                    console.warn(`   ⚠️ ${moduleName} not found (required)`);
+                    this.errors.push({ module: moduleName, error: 'Not found', severity });
+                } else {
+                    console.log(`   ⏭️ ${moduleName} not found (optional)`);
+                }
                 return;
             }
 
             // Call init if it exists
             if (typeof module.init === 'function') {
                 console.log(`   🔧 Initializing ${moduleName}...`);
-                await module.init();
+
+                // 🖤 Wrap init in a timeout to prevent hangs 💀
+                await this._initWithTimeout(module, moduleName);
+
                 console.log(`   ✅ ${moduleName} initialized`);
             } else {
                 console.log(`   📦 ${moduleName} loaded (no init needed)`);
             }
 
         } catch (error) {
-            console.error(`   ❌ Failed to initialize ${moduleName}:`, error);
-            this.errors.push({ module: moduleName, error });
-            // Continue with other modules - don't break everything
+            // 🖤 Handle failure based on severity 💀
+            this.errors.push({ module: moduleName, error, severity });
+
+            if (severity === 'critical') {
+                console.error(`   💀 CRITICAL: ${moduleName} failed - aborting!`, error);
+                throw error; // Re-throw to stop bootstrap
+            } else if (severity === 'required') {
+                console.error(`   ⚠️ REQUIRED: ${moduleName} failed - continuing with degraded functionality`, error);
+            } else {
+                console.warn(`   ⏭️ OPTIONAL: ${moduleName} failed - skipping`, error.message);
+            }
         }
+    },
+
+    // 🖤 Helper: Init with timeout protection 💀
+    async _initWithTimeout(module, moduleName) {
+        return new Promise((resolve, reject) => {
+            let settled = false;
+
+            // Timeout handler
+            const timeoutId = setTimeout(() => {
+                if (!settled) {
+                    settled = true;
+                    const error = new Error(`Module ${moduleName} init timed out after ${this.MODULE_INIT_TIMEOUT_MS}ms`);
+                    console.warn(`   ⏰ ${moduleName} init timed out - continuing anyway`);
+                    this.errors.push({ module: moduleName, error, type: 'timeout' });
+                    resolve(); // Resolve anyway to continue loading
+                }
+            }, this.MODULE_INIT_TIMEOUT_MS);
+
+            // Try to init
+            Promise.resolve(module.init())
+                .then(() => {
+                    if (!settled) {
+                        settled = true;
+                        clearTimeout(timeoutId);
+                        resolve();
+                    }
+                })
+                .catch((error) => {
+                    if (!settled) {
+                        settled = true;
+                        clearTimeout(timeoutId);
+                        reject(error);
+                    }
+                });
+        });
     },
 
     // Final setup after all modules loaded

@@ -594,6 +594,28 @@ const SettingsPanel = {
                                     <p class="no-saves">No manual saves yet...</p>
                                 </div>
 
+                                <h4>🚨 Emergency Recovery</h4>
+                                <p class="settings-description">Recover from crashes, corrupted saves, or browser issues</p>
+                                <div id="emergency-save-section" class="emergency-section">
+                                    <!-- Emergency save info loads here -->
+                                    <p class="no-saves">Checking for emergency saves...</p>
+                                </div>
+                                <div id="corrupted-saves-section" class="corrupted-section">
+                                    <!-- Corrupted saves load here -->
+                                </div>
+
+                                <h4>💾 Backup & Restore</h4>
+                                <p class="settings-description">Export all saves to a file or import from backup</p>
+                                <div class="setting-item save-actions">
+                                    <button id="export-saves-btn" class="save-load-btn" onclick="SettingsPanel.exportAllSaves();">
+                                        📤 Export All Saves
+                                    </button>
+                                    <button id="import-saves-btn" class="save-load-btn" onclick="document.getElementById('import-file-input').click();">
+                                        📥 Import Saves
+                                    </button>
+                                    <input type="file" id="import-file-input" accept=".json" style="display:none;" onchange="SettingsPanel.importSaves(this);">
+                                </div>
+
                                 <h4>🗑️ Storage Management</h4>
                                 <p class="settings-description">Clear old data to free up space if saves are failing</p>
                                 <div class="storage-info" id="storage-info">
@@ -1135,6 +1157,59 @@ const SettingsPanel = {
 
             .save-slot-btn.delete-btn:hover {
                 background: #d32f2f;
+            }
+
+            /* Emergency Recovery Styles */
+            .emergency-section, .corrupted-section {
+                padding: 10px;
+                background: rgba(0,0,0,0.3);
+                border-radius: 8px;
+                margin-bottom: 15px;
+            }
+
+            .emergency-save-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 15px;
+                background: rgba(255, 152, 0, 0.2);
+                border: 1px solid rgba(255, 152, 0, 0.5);
+                border-radius: 6px;
+                margin-bottom: 8px;
+            }
+
+            .emergency-save-item .save-slot-name {
+                color: #ffb74d;
+            }
+
+            .corrupted-save-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 15px;
+                background: rgba(244, 67, 54, 0.2);
+                border: 1px solid rgba(244, 67, 54, 0.5);
+                border-radius: 6px;
+                margin-bottom: 8px;
+            }
+
+            .corrupted-save-item .save-slot-name {
+                color: #ef5350;
+            }
+
+            .save-slot-btn.recover-btn {
+                background: #ff9800;
+                color: white;
+            }
+
+            .save-slot-btn.recover-btn:hover {
+                background: #f57c00;
+            }
+
+            .no-emergency {
+                color: #4CAF50;
+                font-style: italic;
+                padding: 10px;
             }
 
             .no-saves {
@@ -2175,12 +2250,12 @@ const SettingsPanel = {
             });
         }
 
-        // voice volume slider
+        // voice volume slider - use ?? since 0 is valid (muted)
         const volumeSlider = this.panelElement.querySelector('#voice-volume');
         const volumeValue = this.panelElement.querySelector('#voice-volume-value');
         if (volumeSlider) {
             if (typeof NPCVoiceChatSystem !== 'undefined') {
-                volumeSlider.value = NPCVoiceChatSystem.settings.voiceVolume || 70;
+                volumeSlider.value = NPCVoiceChatSystem.settings.voiceVolume ?? 70;
                 if (volumeValue) volumeValue.textContent = `${volumeSlider.value}%`;
             }
             volumeSlider.addEventListener('input', (e) => {
@@ -2998,7 +3073,10 @@ const SettingsPanel = {
     refreshSaveLists() {
         this.populateAutoSaveList();
         this.populateManualSaveList();
+        this.populateEmergencySaveSection();
+        this.populateCorruptedSavesSection();
         this.updateSaveButtonStates();
+        this.updateStorageInfo();
     },
 
     // 🖤 Check if we're in a state where saving is allowed 💀
@@ -3187,6 +3265,273 @@ const SettingsPanel = {
                 </div>
             </div>
         `).join('');
+    },
+
+    // 🖤 Populate emergency save section - crash recovery 💀
+    populateEmergencySaveSection() {
+        const container = document.getElementById('emergency-save-section');
+        if (!container) return;
+
+        const emergencyData = localStorage.getItem('tradingGameEmergencySave');
+        if (!emergencyData) {
+            container.innerHTML = '<p class="no-emergency">✅ No emergency saves - your game is running smoothly!</p>';
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(emergencyData);
+            const gameData = parsed.gameData || parsed;
+            const timestamp = parsed.timestamp || Date.now();
+
+            container.innerHTML = `
+                <div class="emergency-save-item">
+                    <div class="save-slot-info">
+                        <span class="save-slot-name">🚨 Emergency Save Found!</span>
+                        <span class="save-slot-details">
+                            ${this.escapeHtml(gameData.player?.name || 'Unknown')} | Day ${gameData.time?.day || '?'} | ${(gameData.player?.gold || 0).toLocaleString()}g
+                        </span>
+                        <span class="save-slot-details">Saved: ${new Date(timestamp).toLocaleString()}</span>
+                        <span class="save-slot-details" style="color: #ffb74d;">This save was created when your browser closed unexpectedly</span>
+                    </div>
+                    <div class="save-slot-actions">
+                        <button class="save-slot-btn recover-btn" onclick="SettingsPanel.recoverEmergencySave();">
+                            🔄 Recover
+                        </button>
+                        <button class="save-slot-btn delete-btn" onclick="SettingsPanel.deleteEmergencySave();">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `;
+        } catch (e) {
+            container.innerHTML = `
+                <div class="corrupted-save-item">
+                    <div class="save-slot-info">
+                        <span class="save-slot-name">⚠️ Corrupted Emergency Save</span>
+                        <span class="save-slot-details">The emergency save data is corrupted and cannot be recovered</span>
+                    </div>
+                    <div class="save-slot-actions">
+                        <button class="save-slot-btn delete-btn" onclick="SettingsPanel.deleteEmergencySave();">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    },
+
+    // 🖤 Populate corrupted saves section - find and display broken saves 💀
+    populateCorruptedSavesSection() {
+        const container = document.getElementById('corrupted-saves-section');
+        if (!container) return;
+
+        const corruptedSaves = [];
+
+        // Check auto-saves for corruption
+        for (let i = 0; i < 10; i++) {
+            const key = `tradingGameAutoSave_${i}`;
+            const data = localStorage.getItem(key);
+            if (data) {
+                try {
+                    JSON.parse(data);
+                } catch (e) {
+                    corruptedSaves.push({ key, type: 'auto', index: i, name: `Auto-Save ${i + 1}` });
+                }
+            }
+        }
+
+        // Check manual saves for corruption
+        for (let i = 1; i <= 10; i++) {
+            const key = `tradingGameSave_${i}`;
+            const data = localStorage.getItem(key);
+            if (data) {
+                try {
+                    JSON.parse(data);
+                } catch (e) {
+                    corruptedSaves.push({ key, type: 'manual', slot: i, name: `Save Slot ${i}` });
+                }
+            }
+        }
+
+        if (corruptedSaves.length === 0) {
+            container.innerHTML = ''; // Hide section if no corrupted saves
+            return;
+        }
+
+        container.innerHTML = `
+            <p style="color: #ef5350; margin-bottom: 10px;">⚠️ Found ${corruptedSaves.length} corrupted save(s):</p>
+            ${corruptedSaves.map(save => `
+                <div class="corrupted-save-item">
+                    <div class="save-slot-info">
+                        <span class="save-slot-name">💀 ${this.escapeHtml(save.name)}</span>
+                        <span class="save-slot-details">This save file is corrupted and cannot be loaded</span>
+                    </div>
+                    <div class="save-slot-actions">
+                        <button class="save-slot-btn delete-btn" onclick="localStorage.removeItem('${save.key}'); SettingsPanel.refreshSaveLists();">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        `;
+    },
+
+    // 🖤 Recover emergency save - load it into the game 💀
+    recoverEmergencySave() {
+        const emergencyData = localStorage.getItem('tradingGameEmergencySave');
+        if (!emergencyData) {
+            if (typeof addMessage === 'function') addMessage('No emergency save found!', 'error');
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(emergencyData);
+            if (typeof SaveLoadSystem !== 'undefined' && SaveLoadSystem.loadGameState) {
+                SaveLoadSystem.loadGameState(parsed.gameData);
+                localStorage.removeItem('tradingGameEmergencySave');
+                if (typeof addMessage === 'function') addMessage('🎉 Emergency save recovered successfully!', 'success');
+                this.closePanel();
+                this.refreshSaveLists();
+            }
+        } catch (e) {
+            console.error('Failed to recover emergency save:', e);
+            if (typeof addMessage === 'function') addMessage('Failed to recover emergency save - data corrupted', 'error');
+        }
+    },
+
+    // 🖤 Delete emergency save 💀
+    deleteEmergencySave() {
+        localStorage.removeItem('tradingGameEmergencySave');
+        this.refreshSaveLists();
+        if (typeof addMessage === 'function') addMessage('Emergency save deleted', 'info');
+    },
+
+    // 🖤 Export all saves to JSON file 💀
+    exportAllSaves() {
+        const exportData = {
+            exportVersion: '1.0',
+            exportDate: new Date().toISOString(),
+            gameVersion: typeof GameConfig !== 'undefined' ? GameConfig.version?.full : 'unknown',
+            saves: {
+                autoSaves: {},
+                manualSaves: {},
+                emergencySave: null
+            }
+        };
+
+        // Collect auto-saves
+        for (let i = 0; i < 10; i++) {
+            const data = localStorage.getItem(`tradingGameAutoSave_${i}`);
+            if (data) {
+                exportData.saves.autoSaves[i] = data;
+            }
+        }
+
+        // Collect manual saves
+        for (let i = 1; i <= 10; i++) {
+            const data = localStorage.getItem(`tradingGameSave_${i}`);
+            if (data) {
+                exportData.saves.manualSaves[i] = data;
+            }
+        }
+
+        // Collect emergency save
+        const emergencyData = localStorage.getItem('tradingGameEmergencySave');
+        if (emergencyData) {
+            exportData.saves.emergencySave = emergencyData;
+        }
+
+        // Download as JSON file
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `MTG_saves_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        if (typeof addMessage === 'function') addMessage('💾 All saves exported successfully!', 'success');
+    },
+
+    // 🖤 Import saves from JSON file 💀
+    importSaves(fileInput) {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importData = JSON.parse(e.target.result);
+
+                if (!importData.saves) {
+                    throw new Error('Invalid save file format');
+                }
+
+                let imported = 0;
+
+                // Import auto-saves
+                if (importData.saves.autoSaves) {
+                    for (const [index, data] of Object.entries(importData.saves.autoSaves)) {
+                        localStorage.setItem(`tradingGameAutoSave_${index}`, data);
+                        imported++;
+                    }
+                }
+
+                // Import manual saves
+                if (importData.saves.manualSaves) {
+                    for (const [slot, data] of Object.entries(importData.saves.manualSaves)) {
+                        localStorage.setItem(`tradingGameSave_${slot}`, data);
+                        imported++;
+                    }
+                }
+
+                // Import emergency save
+                if (importData.saves.emergencySave) {
+                    localStorage.setItem('tradingGameEmergencySave', importData.saves.emergencySave);
+                    imported++;
+                }
+
+                this.refreshSaveLists();
+                if (typeof addMessage === 'function') addMessage(`📥 Imported ${imported} save(s) successfully!`, 'success');
+
+            } catch (err) {
+                console.error('Import failed:', err);
+                if (typeof addMessage === 'function') addMessage('❌ Failed to import saves - invalid file format', 'error');
+            }
+        };
+        reader.readAsText(file);
+
+        // Reset file input so same file can be selected again
+        fileInput.value = '';
+    },
+
+    // 🖤 Update storage info display 💀
+    updateStorageInfo() {
+        const container = document.getElementById('storage-info');
+        if (!container) return;
+
+        let totalSize = 0;
+        let saveCount = 0;
+
+        // Calculate size of all trading game data
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('tradingGame')) {
+                const value = localStorage.getItem(key);
+                totalSize += (key.length + (value?.length || 0)) * 2; // UTF-16 = 2 bytes per char
+                if (key.includes('Save')) saveCount++;
+            }
+        }
+
+        const sizeKB = (totalSize / 1024).toFixed(1);
+        const sizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+        const displaySize = totalSize > 1024 * 1024 ? `${sizeMB} MB` : `${sizeKB} KB`;
+
+        container.innerHTML = `
+            <span>📊 Storage Used: <strong>${displaySize}</strong> (${saveCount} saves)</span>
+        `;
     },
 
     // open settings panel - welcome to configuration hell

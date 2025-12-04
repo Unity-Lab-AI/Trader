@@ -14,7 +14,7 @@ module.exports = {
   loadingTests: false,
   newGameTests: false,
   mainMenuTests: false,
-  gameFlowTests: false,
+  gameFlowTests: true,  // 🖤 Enabled - tests now handle full intro sequence
 
   // ═══════════════════════════════════════════════════════════════
   // 🐛 DEBOOGER & CHEAT COMMAND TESTS - ALL DISABLED

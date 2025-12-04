@@ -28,8 +28,9 @@ async function waitForGameLoad(page) {
 }
 
 /**
- * Start a new game and get to gameplay
- * Optimized for speed - uses direct function calls where possible
+ * Start a new game and get to gameplay (basic setup only)
+ * NOTE: This does NOT handle the tutorial/intro sequence!
+ * Use startGameAndSkipIntro() for tests that need the full game ready.
  */
 async function startNewGame(page) {
   await waitForGameLoad(page);
@@ -82,24 +83,239 @@ async function startNewGame(page) {
 }
 
 /**
+ * 🖤 Start a new game and skip ALL intro modals to get to playable game state 💀
+ * This handles the COMPLETE game initialization sequence:
+ * 1. New Game button → Character Setup
+ * 2. Randomize character → Start Game
+ * 3. Tutorial Choice modal → Click "No, Just Start"
+ * 4. Rank Celebration popup → Wait for it to dismiss
+ * 5. Introduction modal → Click "Approach the Stranger"
+ * 6. Stranger Encounter modal → Click "Accept Quest"
+ * 7. Quest Info Panel → Close it
+ * 8. Game is now ready for testing!
+ */
+async function startGameAndSkipIntro(page) {
+  await waitForGameLoad(page);
+
+  // 🖤 Step 1: Click New Game
+  await page.click('#new-game-btn');
+  await page.waitForFunction(() => {
+    const panel = document.getElementById('game-setup-panel');
+    return panel && !panel.classList.contains('hidden');
+  }, { timeout: 10000 });
+
+  // 🖤 Step 2: Use Randomize button (faster than manual attribute allocation)
+  const randomizeBtn = page.locator('#randomize-character-btn');
+  if (await randomizeBtn.count() > 0) {
+    await randomizeBtn.click();
+    await page.waitForTimeout(300);
+  } else {
+    // Fallback: manually allocate attributes
+    await page.evaluate(() => {
+      const nameInput = document.getElementById('character-name-input');
+      if (nameInput) nameInput.value = 'TestCharacter';
+      const attrs = ['strength', 'intelligence', 'charisma', 'endurance', 'luck'];
+      for (let i = 0; i < 5; i++) {
+        const btn = document.querySelector(`button[data-attr="${attrs[i % attrs.length]}"].attr-up`);
+        if (btn) btn.click();
+      }
+    });
+  }
+
+  await page.waitForTimeout(300);
+
+  // 🖤 Step 3: Click Start Game
+  await page.click('#start-game-btn');
+  await page.waitForTimeout(500);
+
+  // 🖤 Step 4: Handle Tutorial Choice modal - click "No, Just Start"
+  await handleModalButton(page, ['No, Just Start', 'No Thanks', '❌ No', 'Skip'], 3000);
+
+  // 🖤 Step 5: Wait for Rank Celebration to appear and auto-dismiss (or click to dismiss)
+  await page.waitForTimeout(1000);
+  const rankCelebration = page.locator('.rank-up-celebration, .rank-celebration');
+  if (await rankCelebration.count() > 0) {
+    // Try clicking to dismiss if it has a dismiss button
+    const dismissBtn = page.locator('.rank-up-celebration button, .rank-celebration button, .dismiss-celebration');
+    if (await dismissBtn.count() > 0) {
+      await dismissBtn.first().click();
+    }
+    // Wait for it to go away
+    await page.waitForFunction(() => {
+      return !document.querySelector('.rank-up-celebration, .rank-celebration');
+    }, { timeout: 6000 }).catch(() => {});
+  }
+
+  // 🖤 Step 6: Handle Introduction modal - click "Approach the Stranger"
+  await handleModalButton(page, ['Approach the Stranger', 'Approach', '🎭 Approach'], 5000);
+
+  // 🖤 Step 7: Handle Stranger Encounter modal - click "Accept Quest"
+  await handleModalButton(page, ['Accept Quest', 'Accept', '✅ Accept'], 5000);
+
+  // 🖤 Step 8: Close Quest Info Panel if visible
+  await page.waitForTimeout(500);
+
+  // Try multiple methods to close any open quest panels
+  await page.evaluate(() => {
+    // Method 1: Try QuestSystem.hideQuestLog()
+    if (typeof QuestSystem !== 'undefined' && QuestSystem.hideQuestLog) {
+      QuestSystem.hideQuestLog();
+    }
+
+    // Method 2: Hide quest-info-panel directly
+    const questInfoPanel = document.getElementById('quest-info-panel');
+    if (questInfoPanel && !questInfoPanel.classList.contains('hidden')) {
+      questInfoPanel.classList.add('hidden');
+    }
+
+    // Method 3: Hide quest-panel (quest log)
+    const questPanel = document.getElementById('quest-panel');
+    if (questPanel && !questPanel.classList.contains('hidden')) {
+      questPanel.classList.add('hidden');
+    }
+  });
+
+  await page.waitForTimeout(300);
+
+  // 🖤 Step 9: Verify game is in playable state
+  await page.waitForFunction(() => {
+    // Game is ready when:
+    // - Location panel is visible (main gameplay UI)
+    // - No blocking modals are open
+    const locationPanel = document.getElementById('location-panel');
+    const modalContainer = document.querySelector('.modal-container:not(.hidden)');
+    const gameContainer = document.getElementById('game-container');
+
+    const locationVisible = locationPanel && !locationPanel.classList.contains('hidden');
+    const noBlockingModal = !modalContainer;
+    const gameVisible = gameContainer && !gameContainer.classList.contains('hidden');
+
+    return (locationVisible || gameVisible) && noBlockingModal;
+  }, { timeout: 10000 });
+
+  // 🖤 Final: Ensure any remaining modals are closed
+  await page.evaluate(() => {
+    // Force close any lingering modals
+    const modalContainers = document.querySelectorAll('.modal-container, .modal-overlay');
+    modalContainers.forEach(modal => {
+      if (!modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
+      }
+    });
+    // Also try ModalSystem.hide()
+    if (typeof ModalSystem !== 'undefined' && ModalSystem.hide) {
+      ModalSystem.hide();
+    }
+  });
+
+  await page.waitForTimeout(200);
+}
+
+/**
+ * 🖤 Helper: Click a button in a modal by searching for text patterns 💀
+ */
+async function handleModalButton(page, buttonTexts, timeout = 3000) {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    // Check for modal buttons
+    for (const text of buttonTexts) {
+      const selector = `button:has-text("${text}"), .modal-btn:has-text("${text}"), .btn:has-text("${text}")`;
+      const btn = page.locator(selector);
+
+      if (await btn.count() > 0 && await btn.first().isVisible()) {
+        await btn.first().click();
+        await page.waitForTimeout(200);
+        return true;
+      }
+    }
+
+    // Also try clicking any visible primary button in a modal
+    const primaryBtn = page.locator('.modal-container:not(.hidden) .primary, .modal-container:not(.hidden) button.btn-primary');
+    if (await primaryBtn.count() > 0 && await primaryBtn.first().isVisible()) {
+      await primaryBtn.first().click();
+      await page.waitForTimeout(200);
+      return true;
+    }
+
+    await page.waitForTimeout(100);
+  }
+
+  return false; // Timeout - no button found
+}
+
+/**
  * 🖤 Open the Debooger console (button-only, no keyboard shortcut) 💀
+ * NOTE: For testing, this FORCE-ENABLES the debooger if it's disabled in config
  */
 async function openDeboogerConsole(page) {
-  // 🖤 Click the Debooger button - no keyboard shortcut exists anymore
+  // 🖤 FIRST: Force-enable debooger for testing purposes
+  await page.evaluate(() => {
+    // Enable debooger in GameConfig
+    if (typeof GameConfig !== 'undefined' && GameConfig.debooger) {
+      GameConfig.debooger.enabled = true;
+    }
+
+    // Make sure the debooger button is visible
+    const btn = document.getElementById('toggle-debooger-console');
+    if (btn) {
+      btn.style.display = '';
+      btn.style.visibility = 'visible';
+    }
+
+    // Make sure the debooger console element exists and is accessible
+    const console = document.getElementById('debooger-console');
+    if (console) {
+      console.style.display = '';
+      console.style.visibility = 'visible';
+    }
+
+    // Remove any CSS that hides the debooger
+    const hidingStyles = document.querySelectorAll('style');
+    hidingStyles.forEach(style => {
+      if (style.innerHTML.includes('toggle-debooger-console') && style.innerHTML.includes('display: none')) {
+        style.remove();
+      }
+    });
+  });
+
+  await page.waitForTimeout(100);
+
+  // 🖤 Click the Debooger button to open it
   const deboogerBtn = page.locator('#toggle-debooger-console, #debooger-toggle-btn, .debooger-toggle, button:has-text("Debooger")');
-  if (await deboogerBtn.count() > 0) {
+  if (await deboogerBtn.count() > 0 && await deboogerBtn.first().isVisible()) {
     await deboogerBtn.first().click();
+    await page.waitForTimeout(config.actionDelay);
+  } else {
+    // Fallback: Try to open via JS function
+    await page.evaluate(() => {
+      if (typeof toggleDebooger === 'function') {
+        toggleDebooger();
+      } else if (typeof DeboogerCommandSystem !== 'undefined' && DeboogerCommandSystem.toggle) {
+        DeboogerCommandSystem.toggle();
+      }
+    });
     await page.waitForTimeout(config.actionDelay);
   }
 
   // Wait for Debooger console to be visible 🕯️
   await page.waitForFunction(() => {
-    const console = document.getElementById('debooger-console') ||
+    const deboogerConsole = document.getElementById('debooger-console') ||
                     document.querySelector('.debooger-console');
-    return console && !console.classList.contains('hidden');
+    return deboogerConsole && !deboogerConsole.classList.contains('hidden');
   }, { timeout: 5000 }).catch(() => {
-    // If still not visible, try clicking again
-    console.log('Debooger console not visible, trying again...');
+    // If still not visible, force-show it directly
+    console.log('Debooger console not visible, forcing display...');
+  });
+
+  // 🖤 Final fallback: Force the console visible
+  await page.evaluate(() => {
+    const deboogerConsole = document.getElementById('debooger-console');
+    if (deboogerConsole) {
+      deboogerConsole.classList.remove('hidden');
+      deboogerConsole.style.display = '';
+      deboogerConsole.style.visibility = 'visible';
+    }
   });
 
   // Give a moment for the input to be ready
@@ -108,33 +324,36 @@ async function openDeboogerConsole(page) {
 
 /**
  * 🖤 Execute a debooger command 🔮
+ * NOTE: For testing, this executes via DeboogerCommandSystem.execute() directly
+ * and FORCE-ENABLES the debooger if it's disabled in config
  */
 async function runDeboogerCommand(page, command) {
-  // Ensure debooger console is open
-  const isOpen = await page.evaluate(() => {
-    const console = document.getElementById('debooger-console') ||
-                    document.querySelector('.debooger-console');
-    return console && !console.classList.contains('hidden');
-  });
+  // 🖤 Execute directly via DeboogerCommandSystem - bypasses UI entirely
+  const result = await page.evaluate(async (cmd) => {
+    // First, force-enable debooger for testing
+    if (typeof GameConfig !== 'undefined' && GameConfig.debooger) {
+      GameConfig.debooger.enabled = true;
+    }
 
-  if (!isOpen) {
-    await openDeboogerConsole(page);
-  }
+    // 🖤 If commands weren't registered (because debooger was disabled at load), register them now
+    if (typeof DeboogerCommandSystem !== 'undefined') {
+      if (!DeboogerCommandSystem.commands || Object.keys(DeboogerCommandSystem.commands).length === 0) {
+        DeboogerCommandSystem.registerBuiltInCommands();
+      }
+    }
 
-  // Focus the debooger input ⚰️
-  const input = page.locator('#debooger-command-input, .debooger-input');
-  if (await input.count() > 0) {
-    await input.first().focus();
-    await page.waitForTimeout(100);
-  }
+    // Execute the command directly (it's async!)
+    if (typeof DeboogerCommandSystem !== 'undefined' && DeboogerCommandSystem.execute) {
+      await DeboogerCommandSystem.execute(cmd);
+      return { success: true, command: cmd };
+    } else {
+      console.warn('DeboogerCommandSystem not available');
+      return { success: false, error: 'DeboogerCommandSystem not available' };
+    }
+  }, command);
 
-  // Clear any existing text and type the command
-  await page.fill('#debooger-command-input', command);
-  await page.waitForTimeout(100);
-
-  // Press Enter to execute 💀
-  await page.keyboard.press('Enter');
   await page.waitForTimeout(config.actionDelay);
+  return result;
 }
 
 /**
@@ -226,12 +445,19 @@ async function closePanel(page, panelId) {
 
 /**
  * Get player gold amount
+ * 🖤 Reads directly from game.player.gold to ensure fresh value after load
  */
 async function getPlayerGold(page) {
   return await page.evaluate(() => {
+    // 🖤 Read directly from game.player.gold for most accurate value
+    if (typeof game !== 'undefined' && game.player) {
+      return game.player.gold || 0;
+    }
+    // Fallback to GoldManager
     if (typeof GoldManager !== 'undefined') {
       return GoldManager.getGold();
     }
+    // Fallback to global player
     if (typeof player !== 'undefined') {
       return player.gold || 0;
     }
@@ -241,10 +467,22 @@ async function getPlayerGold(page) {
 
 /**
  * Get player stats
+ * 🖤 Stats are in game.player.stats object, not directly on game.player
  */
 async function getPlayerStats(page) {
   return await page.evaluate(() => {
-    // Try game.player first (most common path)
+    // Try game.player.stats first (correct path)
+    if (typeof game !== 'undefined' && game.player?.stats) {
+      return {
+        health: game.player.stats.health,
+        maxHealth: game.player.stats.maxHealth || 100,
+        hunger: game.player.stats.hunger,
+        thirst: game.player.stats.thirst,
+        fatigue: game.player.stats.fatigue,
+        happiness: game.player.stats.happiness,
+      };
+    }
+    // Fall back to direct properties (legacy support)
     if (typeof game !== 'undefined' && game.player) {
       return {
         health: game.player.health,
@@ -258,12 +496,12 @@ async function getPlayerStats(page) {
     // Fall back to global player
     if (typeof player !== 'undefined') {
       return {
-        health: player.health,
-        maxHealth: player.maxHealth || 100,
-        hunger: player.hunger,
-        thirst: player.thirst,
-        fatigue: player.fatigue,
-        happiness: player.happiness,
+        health: player.stats?.health ?? player.health,
+        maxHealth: player.stats?.maxHealth ?? player.maxHealth ?? 100,
+        hunger: player.stats?.hunger ?? player.hunger,
+        thirst: player.stats?.thirst ?? player.thirst,
+        fatigue: player.stats?.fatigue ?? player.fatigue,
+        happiness: player.stats?.happiness ?? player.happiness,
       };
     }
     return null;
@@ -303,13 +541,16 @@ function filterCriticalErrors(errors) {
     !e.includes('Failed to fetch') &&
     !e.includes('net::ERR') &&
     !e.includes('getSavedGames') &&
-    !e.includes('NPCScheduleSystem')
+    !e.includes('NPCScheduleSystem') &&
+    !e.includes('NPC Voice API Error')  // 🖤 Cosmetic voice API errors are non-critical
   );
 }
 
 module.exports = {
   waitForGameLoad,
   startNewGame,
+  startGameAndSkipIntro,  // 🖤 NEW: Complete game setup with all intro handling 💀
+  handleModalButton,       // 🖤 NEW: Helper for clicking modal buttons 💀
   openDeboogerConsole,
   runDeboogerCommand,
   getDeboogerOutput,

@@ -1347,6 +1347,25 @@ const WeatherSystem = {
         }
     },
 
+    // 🖤 Stop all weather particles - called by quitToMainMenu 💀
+    stopParticles() {
+        // Stop lightning
+        this.stopLightning();
+        // Stop meteors
+        this.stopMeteors();
+        // Clear all particles
+        const particles = document.getElementById('weather-particles');
+        if (particles) {
+            particles.innerHTML = '';
+        }
+        // Remove weather overlay effects
+        const overlay = document.getElementById('weather-overlay');
+        if (overlay) {
+            overlay.className = 'weather-overlay';
+            overlay.style.background = '';
+        }
+    },
+
     createMeteor() {
         const particles = document.getElementById('weather-particles');
         if (!particles) return;

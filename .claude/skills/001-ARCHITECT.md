@@ -97,8 +97,17 @@ START -> Trade -> Profit -> Explore -> Build -> Trade More -> Face Darkness -> V
 | Mysterious | +20% | -20% | 40% | ash |
 | Desperate | -20% | +15% | 90% | echo |
 
-### 12 Boss Personalities
-Dark Lord, Frost Lord, Ancient Dragon, Alpha Wolf, Bandit Chief, Goblin King, Smuggler Boss, Necromancer, Cultist Leader, Rat Queen, Gruff Guard, Cold Mercenary
+### 8 Dungeon Boss Encounters
+| Boss | Personality | Location |
+|------|-------------|----------|
+| Malachar | Dark Lord | Shadow Tower |
+| Frost Lord | Elemental | Frozen Cave |
+| Scorathax | Ancient Dragon | Deep Cavern |
+| Grimfang | Alpha Wolf | Forest Dungeon |
+| Scarhand Viktor | Bandit Chief | Bandit Camp |
+| Griknak | Goblin King | Shadow Dungeon |
+| Captain Blackheart | Smuggler Lord | Smuggler's Cove |
+| Rat Queen | Queen of Warren | Sewer |
 
 ---
 

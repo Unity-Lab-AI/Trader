@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 const config = require('./config/test-config');
 const {
   waitForGameLoad,
-  startNewGame,
+  startGameAndSkipIntro,  // 🖤 Use new helper that handles ALL intro modals 💀
   openDeboogerConsole,
   runDeboogerCommand,
   getDeboogerOutput,
@@ -22,8 +22,9 @@ const {
 test.describe('Debooger Commands', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
-    await openDeboogerConsole(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
+    // NOTE: openDeboogerConsole removed - runDeboogerCommand now executes directly via JS
+    // This bypasses the UI which is hidden in production builds 🖤💀
   });
 
   // ═══════════════════════════════════════════════════════════════

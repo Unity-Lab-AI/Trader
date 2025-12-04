@@ -40,7 +40,47 @@ const SaveManager = {
     maxAutoSaveSlots: 10,
     autoSaveInterval: 900000, // 15 minutes (real time) - configurable in settings
     compressionEnabled: true,
-    saveVersion: '1.0.0',
+
+    // 🖤 SAVE FORMAT VERSIONING - for migrations 💀
+    // Increment SAVE_FORMAT when save structure changes
+    // Add migration handler in MIGRATIONS for backward compatibility
+    SAVE_FORMAT: 2,  // Current format version (integer for easy comparison)
+    saveVersion: '1.0.0',  // Legacy - kept for backward compat
+
+    // 🖤 Migration handlers: { fromFormat: migrationFunction } 💀
+    // Each migration transforms save data from version N to N+1
+    MIGRATIONS: {
+        // Format 1 → 2: Added questItems, doomVisitedLocations, questMetrics
+        1: (saveData) => {
+            console.log('💾 Migrating save from format 1 → 2...');
+            const gd = saveData.gameData;
+
+            // Add questItems if missing
+            if (gd.player && !gd.player.questItems) {
+                gd.player.questItems = {};
+            }
+
+            // Add doomVisitedLocations if missing
+            if (gd.worldState && !gd.worldState.doomVisitedLocations) {
+                gd.worldState.doomVisitedLocations = [];
+            }
+
+            // Add questMetrics if missing
+            if (gd.questState && !gd.questState.questMetrics) {
+                gd.questState.questMetrics = {
+                    mainQuestsCompleted: 0,
+                    sideQuestsCompleted: 0,
+                    doomQuestsCompleted: 0,
+                    totalQuestsCompleted: gd.questState.completedQuests?.length || 0
+                };
+            }
+
+            saveData._saveFormat = 2;
+            return saveData;
+        }
+        // Future migrations go here:
+        // 2: (saveData) => { /* migrate format 2 → 3 */ }
+    },
 
     // ═══════════════════════════════════════════════════════════════
     // STATE
@@ -241,6 +281,7 @@ const SaveManager = {
 
         return {
             version: this.saveVersion,
+            _saveFormat: this.SAVE_FORMAT,  // 🖤 Track format for migrations 💀
             timestamp: Date.now(),
             gameData: {
                 state: game.state,
@@ -328,17 +369,147 @@ const SaveManager = {
         };
     },
 
+    // 🖤 SAVE DATA SCHEMA - defines expected structure for validation 💀
+    SAVE_SCHEMA: {
+        version: { type: 'string', required: true },
+        _saveFormat: { type: 'number', required: false },
+        timestamp: { type: 'number', required: true },
+        gameData: {
+            type: 'object',
+            required: true,
+            properties: {
+                // 🖤 GameState is a string enum ('menu', 'playing', etc.), not a number 💀
+                state: { type: 'string', required: false },
+                gameTick: { type: 'number', required: false },
+                currentLocation: { type: 'object', required: false },
+                player: {
+                    type: 'object',
+                    required: true,
+                    properties: {
+                        name: { type: 'string', required: true },
+                        gold: { type: 'number', required: true },
+                        // 🖤 Inventory is an OBJECT {itemId: count}, not an array 💀
+                        inventory: { type: 'object', required: false },
+                        stats: { type: 'object', required: false },
+                        level: { type: 'number', required: false }
+                    }
+                },
+                timeState: { type: 'object', required: false },
+                worldState: { type: 'object', required: false },
+                questState: { type: 'object', required: false },
+                marketData: { type: 'object', required: false },
+                settings: { type: 'object', required: false }
+            }
+        }
+    },
+
     validateSaveData(saveData) {
         const errors = [];
+        const warnings = [];
+
+        // Basic structure check
         if (!saveData || typeof saveData !== 'object') {
             errors.push('Invalid save data structure');
-            return { valid: false, errors };
+            return { valid: false, errors, warnings };
         }
-        if (!saveData.version) errors.push('Missing save version');
-        if (!saveData.gameData) errors.push('Missing gameData');
-        if (saveData.gameData && !saveData.gameData.player) errors.push('Missing player data');
 
-        return { valid: errors.length === 0, errors };
+        // 🖤 Recursive schema validation 💀
+        this._validateAgainstSchema(saveData, this.SAVE_SCHEMA, '', errors, warnings);
+
+        // 🖤 Additional semantic validation 💀
+        if (saveData.gameData?.player) {
+            const player = saveData.gameData.player;
+
+            // Gold should be non-negative
+            if (typeof player.gold === 'number' && player.gold < 0) {
+                warnings.push('Player gold is negative (will be clamped to 0)');
+            }
+
+            // Level should be positive
+            if (typeof player.level === 'number' && player.level < 1) {
+                warnings.push('Player level is less than 1 (will default to 1)');
+            }
+
+            // Name should not be empty
+            if (typeof player.name === 'string' && player.name.trim() === '') {
+                warnings.push('Player name is empty');
+            }
+        }
+
+        // Timestamp should be in the past
+        if (saveData.timestamp && saveData.timestamp > Date.now() + 60000) {
+            warnings.push('Save timestamp is in the future');
+        }
+
+        return {
+            valid: errors.length === 0,
+            errors,
+            warnings
+        };
+    },
+
+    // 🖤 Helper: Validate object against schema recursively 💀
+    _validateAgainstSchema(data, schema, path, errors, warnings) {
+        for (const [key, rules] of Object.entries(schema)) {
+            const fullPath = path ? `${path}.${key}` : key;
+            const value = data?.[key];
+
+            // Check required fields
+            if (rules.required && (value === undefined || value === null)) {
+                errors.push(`Missing required field: ${fullPath}`);
+                continue;
+            }
+
+            // Skip optional missing fields
+            if (value === undefined || value === null) continue;
+
+            // Check type
+            if (rules.type) {
+                const actualType = Array.isArray(value) ? 'array' : typeof value;
+                if (actualType !== rules.type) {
+                    errors.push(`Invalid type for ${fullPath}: expected ${rules.type}, got ${actualType}`);
+                    continue;
+                }
+            }
+
+            // Recurse into nested objects
+            if (rules.type === 'object' && rules.properties && typeof value === 'object') {
+                this._validateAgainstSchema(value, rules.properties, fullPath, errors, warnings);
+            }
+        }
+    },
+
+    // 🖤 Migrate save data from older formats to current 💀
+    migrateSaveData(saveData) {
+        // Determine format version (old saves without _saveFormat are format 1)
+        let currentFormat = saveData._saveFormat || 1;
+
+        // Already at current format - no migration needed
+        if (currentFormat >= this.SAVE_FORMAT) {
+            return saveData;
+        }
+
+        console.log(`💾 Save format ${currentFormat} detected, migrating to ${this.SAVE_FORMAT}...`);
+
+        // Apply migrations sequentially
+        while (currentFormat < this.SAVE_FORMAT) {
+            const migration = this.MIGRATIONS[currentFormat];
+            if (migration) {
+                try {
+                    saveData = migration(saveData);
+                    currentFormat++;
+                } catch (e) {
+                    console.error(`💀 Migration from format ${currentFormat} failed:`, e);
+                    break; // Stop migrating but try to load what we have
+                }
+            } else {
+                console.warn(`💀 No migration found for format ${currentFormat}`);
+                break;
+            }
+        }
+
+        console.log(`💾 Migration complete. Save now at format ${saveData._saveFormat || currentFormat}`);
+        return saveData;
     },
 
     // Unicode compression for localStorage efficiency
@@ -483,7 +654,7 @@ const SaveManager = {
                 throw new SaveError('Save data not found!', SaveErrorCodes.DATA_NOT_FOUND, { slotNumber });
             }
 
-            const saveData = this.decompressSaveData(compressedData);
+            let saveData = this.decompressSaveData(compressedData);
             const validation = this.validateSaveData(saveData);
             if (!validation.valid) {
                 throw new SaveError('Save data corrupted', SaveErrorCodes.DATA_CORRUPTED, {
@@ -491,6 +662,14 @@ const SaveManager = {
                     validationErrors: validation.errors
                 });
             }
+
+            // 🖤 Log warnings but continue loading 💀
+            if (validation.warnings?.length > 0) {
+                console.warn('💾 Save data warnings:', validation.warnings);
+            }
+
+            // 🖤 Apply migrations if needed 💀
+            saveData = this.migrateSaveData(saveData);
 
             this.loadGameState(saveData.gameData);
             this.currentSaveSlot = slotNumber;
@@ -698,7 +877,9 @@ const SaveManager = {
         }
 
         try {
-            const parsed = this.decompressSaveData(saveData);
+            let parsed = this.decompressSaveData(saveData);
+            // 🖤 Apply migrations if needed 💀
+            parsed = this.migrateSaveData(parsed);
             this.loadGameState(parsed.gameData);
             if (typeof addMessage === 'function') addMessage('Auto-save loaded!', 'success');
             return true;

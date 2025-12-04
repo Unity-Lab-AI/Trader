@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 const config = require('./config/test-config');
 const {
   waitForGameLoad,
-  startNewGame,
+  startGameAndSkipIntro,  // 🖤 Use new helper that handles ALL intro modals 💀
   isPanelVisible,
   togglePanelWithKey,
   openPanel,
@@ -20,7 +20,7 @@ test.describe('Game Panels', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   // ═══════════════════════════════════════════════════════════════

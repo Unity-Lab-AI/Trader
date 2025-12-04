@@ -3,7 +3,7 @@ const { test, expect } = require('@playwright/test');
 const config = require('./config/test-config');
 const {
   waitForGameLoad,
-  startNewGame,
+  startGameAndSkipIntro,  // 🖤 Use new helper that handles ALL intro modals 💀
   openPanel,
   isPanelVisible,
   getPlayerGold,
@@ -35,7 +35,7 @@ const {
 test.describe('Quest Tracker Widget', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Quest tracker widget exists in DOM', async ({ page }) => {
@@ -203,7 +203,7 @@ test.describe('Quest Tracker Widget', () => {
 test.describe('Quest Log Panel', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Quest log panel exists in DOM', async ({ page }) => {
@@ -355,7 +355,7 @@ test.describe('Quest Log Panel', () => {
 test.describe('Quest Workflow - Accept, Track, Complete', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Can accept a quest', async ({ page }) => {
@@ -570,7 +570,7 @@ test.describe('Quest Workflow - Accept, Track, Complete', () => {
 test.describe('Quest Progress and Rewards', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Quest progress updates correctly for collect objectives', async ({ page }) => {
@@ -772,7 +772,7 @@ test.describe('Quest Progress and Rewards', () => {
 test.describe('Quest Filtering and Categories', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Can filter quests by "All"', async ({ page }) => {
@@ -990,7 +990,7 @@ test.describe('Quest Filtering and Categories', () => {
 test.describe('Quest Markers on Map', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Quest marker element exists in DOM', async ({ page }) => {
@@ -1138,7 +1138,7 @@ test.describe('Quest Markers on Map', () => {
 test.describe('Quest System Integration', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('QuestSystem initializes correctly', async ({ page }) => {

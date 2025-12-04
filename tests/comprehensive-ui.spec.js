@@ -7,7 +7,7 @@
 
 const { test, expect } = require('@playwright/test');
 const config = require('./config/test-config');
-const { startNewGame, openDeboogerConsole, runDeboogerCommand } = require('./helpers/test-helpers');
+const { startGameAndSkipIntro, openDeboogerConsole, runDeboogerCommand } = require('./helpers/test-helpers');
 
 // ═══════════════════════════════════════════════════════════════
 // 🗺️ MAP CONTROLS TESTS
@@ -16,8 +16,7 @@ const { startNewGame, openDeboogerConsole, runDeboogerCommand } = require('./hel
 test.describe('Map Controls', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#loading-screen')).toHaveClass(/hidden/, { timeout: 20000 });
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Use new helper that handles ALL intro modals 💀
   });
 
   test('Zoom buttons exist and are functional on map', async ({ page }) => {
@@ -149,8 +148,7 @@ test.describe('Map Controls', () => {
 test.describe('Save/Load System', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#loading-screen')).toHaveClass(/hidden/, { timeout: 20000 });
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Save button exists and SaveManager has save functionality', async ({ page }) => {
@@ -244,8 +242,7 @@ test.describe('Save/Load System', () => {
 test.describe('Transportation System', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#loading-screen')).toHaveClass(/hidden/, { timeout: 20000 });
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Transportation button exists and is functional', async ({ page }) => {
@@ -333,8 +330,7 @@ test.describe('Transportation System', () => {
 test.describe('Property System', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#loading-screen')).toHaveClass(/hidden/, { timeout: 20000 });
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Property system exists with purchase and income capabilities', async ({ page }) => {
@@ -446,8 +442,7 @@ test.describe('Property System', () => {
 test.describe('Inventory Advanced Features', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#loading-screen')).toHaveClass(/hidden/, { timeout: 20000 });
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Inventory has sort button and functionality', async ({ page }) => {
@@ -580,8 +575,7 @@ test.describe('Inventory Advanced Features', () => {
 test.describe('Market Advanced Features', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#loading-screen')).toHaveClass(/hidden/, { timeout: 20000 });
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Market tabs exist and can switch between buy/sell', async ({ page }) => {
@@ -705,8 +699,7 @@ test.describe('Market Advanced Features', () => {
 test.describe('Equipment System', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#loading-screen')).toHaveClass(/hidden/, { timeout: 20000 });
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('EquipmentSystem exists with equip/unequip functionality', async ({ page }) => {
@@ -802,8 +795,7 @@ test.describe('Equipment System', () => {
 test.describe('NPC Interactions', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#loading-screen')).toHaveClass(/hidden/, { timeout: 20000 });
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('NPC systems exist with dialogue and merchant capabilities', async ({ page }) => {
@@ -887,8 +879,7 @@ test.describe('NPC Interactions', () => {
 test.describe('UI Polish Features', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#loading-screen')).toHaveClass(/hidden/, { timeout: 20000 });
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Tooltip system exists', async ({ page }) => {
@@ -922,8 +913,7 @@ test.describe('UI Polish Features', () => {
 test.describe('Weather System', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#loading-screen')).toHaveClass(/hidden/, { timeout: 20000 });
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('WeatherSystem exists', async ({ page }) => {
@@ -946,8 +936,7 @@ test.describe('Weather System', () => {
 test.describe('Crafting System', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#loading-screen')).toHaveClass(/hidden/, { timeout: 20000 });
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
   });
 
   test('Crafting/Economy System exists', async ({ page }) => {
@@ -1044,8 +1033,7 @@ test.describe('Keyboard Shortcuts', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#loading-screen')).toHaveClass(/hidden/, { timeout: 20000 });
-    await startNewGame(page);
+    await startGameAndSkipIntro(page);  // 🖤 Handles loading, setup, and ALL intro modals 💀
     // Ensure game is in PLAYING state for keyboard shortcuts to work
     await page.evaluate(() => {
       if (typeof game !== 'undefined' && typeof GameState !== 'undefined') {
@@ -1099,9 +1087,17 @@ test.describe('Keyboard Shortcuts', () => {
     expect(result.hasInventoryHeader).toBe(true);
   });
 
-  test('M key opens market and shows market content', async ({ page }) => {
-    // 🖤 Use direct function call
+  test('M key opens market (only at Royal Capital) or shows message', async ({ page }) => {
+    // 🖤 GAME DESIGN: Market (M key) only works at Royal Capital
+    // In other locations, it shows a message "There is no grand market here"
+    // This test verifies the KeyBindings.openMarket function exists and responds correctly
+
     const result = await page.evaluate(() => {
+      // Check if we're at the Royal Capital (the only market location)
+      const isAtMarket = typeof locationHasMarket === 'function' && locationHasMarket();
+      const currentLocation = typeof game !== 'undefined' ? game?.currentLocation?.id : null;
+
+      // Try to open market
       if (typeof KeyBindings !== 'undefined' && KeyBindings.openMarket) {
         KeyBindings.openMarket();
       } else if (typeof openMarket === 'function') {
@@ -1111,13 +1107,31 @@ test.describe('Keyboard Shortcuts', () => {
       const panel = document.getElementById('market-panel');
       const isVisible = panel && !panel.classList.contains('hidden');
       const hasTabs = panel?.querySelector('.tabs') !== null;
-      const hasMerchantInfo = document.getElementById('merchant-info-panel') !== null;
 
-      return { isVisible, hasTabs, hasMerchantInfo };
+      return {
+        isAtMarket,
+        currentLocation,
+        isVisible,
+        hasTabs,
+        hasKeyBindings: typeof KeyBindings !== 'undefined' && typeof KeyBindings.openMarket === 'function',
+        hasOpenMarket: typeof openMarket === 'function'
+      };
     });
 
-    expect(result.isVisible).toBe(true);
-    expect(result.hasTabs).toBe(true);
+    // 🖤 Test passes if:
+    // 1. KeyBindings.openMarket exists AND
+    // 2. If at Royal Capital: market opens with tabs
+    // 3. If NOT at Royal Capital: market stays closed (correct behavior)
+    expect(result.hasOpenMarket).toBe(true);
+
+    if (result.isAtMarket) {
+      // At Royal Capital - market should open
+      expect(result.isVisible).toBe(true);
+      expect(result.hasTabs).toBe(true);
+    } else {
+      // Not at Royal Capital - market should NOT open (game design)
+      expect(result.isVisible).toBe(false);
+    }
   });
 
   test('T key opens travel panel with destinations', async ({ page }) => {

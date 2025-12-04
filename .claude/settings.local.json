@@ -47,7 +47,9 @@
       "Bash(move \"C:\\Users\\gfour\\OneDrive\\Desktop\\MTG v0.89.93\\src\\js\\data\\doom-world-config.js\" \"C:\\Users\\gfour\\OneDrive\\Desktop\\MTG v0.89.93\\src\\js\\old-files\"\" && move \"C:UsersgfourOneDriveDesktopMTG v0.89.93srcjsdatadoom-world-npcs.js\" \"C:UsersgfourOneDriveDesktopMTG v0.89.93srcjsold-files\"\")",
       "Bash(move \"C:\\Users\\gfour\\OneDrive\\Desktop\\MTG v0.89.93\\src\\js\\npc\\doom-npc-instruction-templates.js\" \"C:\\Users\\gfour\\OneDrive\\Desktop\\MTG v0.89.93\\src\\js\\old-files\"\" && move \"C:UsersgfourOneDriveDesktopMTG v0.89.93srcjssystemsprogressiondoom-quest-system.js\" \"C:UsersgfourOneDriveDesktopMTG v0.89.93srcjsold-files\"\")",
       "Bash(cmd /c move:*)",
-      "Bash(\"C:\\Users\\gfour\\OneDrive\\Desktop\\MTG v0.89.95\\Gee''sThoughts.md\")"
+      "Bash(\"C:\\Users\\gfour\\OneDrive\\Desktop\\MTG v0.89.95\\Gee''sThoughts.md\")",
+      "Bash(del testsverify-intro-helper.spec.js)",
+      "Bash(powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$mtgPath = ''C:\\Users\\gfour\\OneDrive\\Desktop\\MTG v0.89.97''; $emptyDirs = Get-ChildItem -Path $mtgPath -Directory -Recurse | Where-Object { $_FullName -notlike ''*node_modules*'' -and $_FullName -notlike ''*\\.git*'' } | Where-Object { @(Get-ChildItem -Path $_FullName -Force).Count -eq 0 }; $emptyDirs | ForEach-Object { $_FullName }\")"
     ],
     "deny": [],
     "ask": []

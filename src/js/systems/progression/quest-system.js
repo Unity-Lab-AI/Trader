@@ -14,6 +14,45 @@
 
 const QuestSystem = {
     // ═══════════════════════════════════════════════════════════════
+    // 📋 QUEST METADATA CATEGORIES - for classification and filtering 💀
+    // ═══════════════════════════════════════════════════════════════
+    QUEST_TYPES: Object.freeze({
+        MAIN: 'main',     // Main story quests (35 total across 5 acts)
+        SIDE: 'side',     // Regional side quests (50 total, 2 chains per region)
+        DOOM: 'doom'      // Doom world quests (15 total + Greedy Won boss)
+    }),
+
+    QUEST_SUBTYPES: Object.freeze({
+        COMBAT: 'combat',     // Combat-focused quests (kill, defeat, protect)
+        TRADE: 'trade',       // Trade-focused quests (buy, sell, deliver)
+        EXPLORE: 'explore',   // Exploration quests (discover, investigate)
+        DIALOGUE: 'dialogue', // Talk-focused quests (negotiate, persuade)
+        COLLECT: 'collect',   // Collection quests (gather items)
+        ESCORT: 'escort',     // Protection/escort quests
+        BOSS: 'boss'          // Boss fight quests
+    }),
+
+    QUEST_DIFFICULTIES: Object.freeze({
+        EASY: 'easy',         // Starter quests, low risk
+        MEDIUM: 'medium',     // Standard difficulty
+        HARD: 'hard',         // Challenging, requires preparation
+        DEADLY: 'deadly',     // Boss fights, high risk
+        NIGHTMARE: 'nightmare' // Doom world end-game
+    }),
+
+    // 🖤 Helper: Get quest category info 💀
+    getQuestCategory(quest) {
+        return {
+            type: quest?.type || this.QUEST_TYPES.SIDE,
+            subtype: quest?.subtype || null,
+            difficulty: quest?.difficulty || this.QUEST_DIFFICULTIES.MEDIUM,
+            chain: quest?.chain || null,
+            act: quest?.act || null,
+            region: quest?.location || null
+        };
+    },
+
+    // ═══════════════════════════════════════════════════════════════
     // 📋 STATE - tracking your endless servitude
     // ═══════════════════════════════════════════════════════════════
     initialized: false,
