@@ -16,6 +16,45 @@ Each entry follows this format:
 
 ---
 
+## 2025-12-05 - SESSION #21: SAVE/LOAD REGRESSION FIX 🖤💀💾
+
+**Request:** Gee reported save/load system broken:
+- Manual saves not appearing in settings panel Save & Load section
+- Auto-saves not appearing in settings panel
+- Start menu Load button not working
+- Full game/player state not saving/loading correctly
+
+**Status:** ✅ COMPLETE
+
+### Root Cause:
+
+**SaveManager uses compression** - saves are stored with `UC:` prefix (Unicode compression) but settings panel was trying to parse them directly with `JSON.parse()`, which fails for compressed data!
+
+### Fixes Applied:
+
+**Settings Panel Auto-Save List** - FIXED in `settings-panel.js:3240-3308`
+- **Root Cause:** `populateAutoSaveList()` used raw `JSON.parse()` on compressed saves
+- **Fix:** Now uses `SaveManager.decompressSaveData()` to properly parse compressed saves
+- Also fixed data path: `gameData.timeState.currentTime.day` instead of `gameData.time.day`
+- Also fixed location path: `gameData.currentLocation.name`
+
+**Settings Panel Manual Save List** - FIXED in `settings-panel.js:3310-3380`
+- **Root Cause:** Same issue - `populateManualSaveList()` used raw `JSON.parse()`
+- **Fix:** Now uses `SaveManager.decompressSaveData()` for proper parsing
+- Updated button onclick to use `SaveManager` instead of `SaveLoadSystem`
+
+**Corrupted Saves Detection** - FIXED in `settings-panel.js:3435-3496`
+- **Root Cause:** `populateCorruptedSavesSection()` marked compressed saves as "corrupted" because `JSON.parse()` failed on them
+- **Fix:** Now uses `SaveManager.decompressSaveData()` to properly check if save is actually corrupted vs just compressed
+
+**Emergency Save Recovery** - FIXED in `settings-panel.js:3498-3519`
+- Updated to use `SaveManager.loadGameState()` instead of `SaveLoadSystem.loadGameState()`
+
+**Files Modified:**
+- `src/js/ui/panels/settings-panel.js` - All save list population functions now use proper decompression
+
+---
+
 ## 2025-12-05 - SESSION #20: MULTIPLE FIXES 🖤💀🔧
 
 **Request:** Gee reported multiple issues:

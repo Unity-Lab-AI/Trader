@@ -3249,20 +3249,31 @@ const SettingsPanel = {
             const saveData = localStorage.getItem(key);
             if (saveData) {
                 try {
-                    const parsed = JSON.parse(saveData);
+                    // 🖤💀 FIX: Use SaveManager's decompression for compressed saves! 💀
+                    let parsed;
+                    if (typeof SaveManager !== 'undefined' && SaveManager.decompressSaveData) {
+                        parsed = SaveManager.decompressSaveData(saveData);
+                    } else {
+                        // Fallback for uncompressed
+                        parsed = JSON.parse(saveData);
+                    }
+                    if (!parsed) continue; // Decompression failed
+
                     const gameData = parsed.gameData || parsed;
+                    const timeState = gameData.timeState || gameData.time || {};
                     autoSaves.push({
                         index: i,
                         name: `Auto-Save ${i + 1}`,
                         playerName: gameData.player?.name || 'Unknown',
                         gold: gameData.player?.gold || 0,
-                        day: gameData.time?.day || parsed.time?.day || 1,
-                        location: gameData.player?.currentLocation || 'Unknown',
+                        day: timeState.currentTime?.day || timeState.day || 1,
+                        location: gameData.currentLocation?.name || gameData.player?.currentLocation || 'Unknown',
                         timestamp: parsed.timestamp || Date.now(),
                         version: parsed.version || '?'
                     });
                 } catch (e) {
                     // 💀 Corrupt save - skip it
+                    console.warn(`💀 Auto-save ${i} corrupted:`, e.message);
                 }
             }
         }
@@ -3285,7 +3296,7 @@ const SettingsPanel = {
                     <span class="save-slot-details">${new Date(save.timestamp).toLocaleString()}</span>
                 </div>
                 <div class="save-slot-actions">
-                    <button class="save-slot-btn load-btn" onclick="SaveLoadSystem.loadAutoSave(${save.index}); SettingsPanel.closePanel();">
+                    <button class="save-slot-btn load-btn" onclick="SaveManager.loadAutoSave(${save.index}); SettingsPanel.closePanel();">
                         Load
                     </button>
                     <button class="save-slot-btn delete-btn" onclick="localStorage.removeItem('tradingGameAutoSave_${save.index}'); SettingsPanel.refreshSaveLists();">
@@ -3308,22 +3319,33 @@ const SettingsPanel = {
             const saveData = localStorage.getItem(key);
             if (saveData) {
                 try {
-                    const parsed = JSON.parse(saveData);
+                    // 🖤💀 FIX: Use SaveManager's decompression for compressed saves! 💀
+                    let parsed;
+                    if (typeof SaveManager !== 'undefined' && SaveManager.decompressSaveData) {
+                        parsed = SaveManager.decompressSaveData(saveData);
+                    } else {
+                        // Fallback for uncompressed
+                        parsed = JSON.parse(saveData);
+                    }
+                    if (!parsed) continue; // Decompression failed
+
                     const gameData = parsed.gameData || parsed;
+                    const timeState = gameData.timeState || gameData.time || {};
                     // Also check metadata for the name
-                    const metaName = SaveLoadSystem?.saveSlots?.[i]?.name;
+                    const metaName = SaveManager?.saveSlots?.[i]?.name;
                     manualSaves.push({
                         slot: i,
                         name: metaName || `Save Slot ${i}`,
                         playerName: gameData.player?.name || 'Unknown',
                         gold: gameData.player?.gold || 0,
-                        day: gameData.time?.day || parsed.time?.day || 1,
-                        location: gameData.player?.currentLocation || 'Unknown',
+                        day: timeState.currentTime?.day || timeState.day || 1,
+                        location: gameData.currentLocation?.name || gameData.player?.currentLocation || 'Unknown',
                         timestamp: parsed.timestamp || Date.now(),
                         version: parsed.version || '?'
                     });
                 } catch (e) {
                     // 💀 Corrupt save - skip it
+                    console.warn(`💀 Manual save ${i} corrupted:`, e.message);
                 }
             }
         }
@@ -3346,10 +3368,10 @@ const SettingsPanel = {
                     <span class="save-slot-details">${new Date(save.timestamp).toLocaleString()}</span>
                 </div>
                 <div class="save-slot-actions">
-                    <button class="save-slot-btn load-btn" onclick="SaveLoadSystem.loadFromSlot(${save.slot}); SettingsPanel.closePanel();">
+                    <button class="save-slot-btn load-btn" onclick="SaveManager.loadFromSlot(${save.slot}); SettingsPanel.closePanel();">
                         Load
                     </button>
-                    <button class="save-slot-btn delete-btn" onclick="SaveLoadSystem.deleteSlot(${save.slot}); SettingsPanel.refreshSaveLists();">
+                    <button class="save-slot-btn delete-btn" onclick="SaveManager.deleteSave(${save.slot}); SettingsPanel.refreshSaveLists();">
                         🗑️
                     </button>
                 </div>
@@ -3417,16 +3439,27 @@ const SettingsPanel = {
 
         const corruptedSaves = [];
 
+        // 🖤💀 FIX: Check saves using proper decompression - compressed saves aren't "corrupted" 💀
+        const tryParseSave = (data) => {
+            if (!data) return null;
+            try {
+                // Use SaveManager's decompression if available
+                if (typeof SaveManager !== 'undefined' && SaveManager.decompressSaveData) {
+                    return SaveManager.decompressSaveData(data);
+                }
+                // Fallback for uncompressed
+                return JSON.parse(data);
+            } catch (e) {
+                return null;
+            }
+        };
+
         // Check auto-saves for corruption
         for (let i = 0; i < 10; i++) {
             const key = `tradingGameAutoSave_${i}`;
             const data = localStorage.getItem(key);
-            if (data) {
-                try {
-                    JSON.parse(data);
-                } catch (e) {
-                    corruptedSaves.push({ key, type: 'auto', index: i, name: `Auto-Save ${i + 1}` });
-                }
+            if (data && tryParseSave(data) === null) {
+                corruptedSaves.push({ key, type: 'auto', index: i, name: `Auto-Save ${i + 1}` });
             }
         }
 
@@ -3434,12 +3467,8 @@ const SettingsPanel = {
         for (let i = 1; i <= 10; i++) {
             const key = `tradingGameSave_${i}`;
             const data = localStorage.getItem(key);
-            if (data) {
-                try {
-                    JSON.parse(data);
-                } catch (e) {
-                    corruptedSaves.push({ key, type: 'manual', slot: i, name: `Save Slot ${i}` });
-                }
+            if (data && tryParseSave(data) === null) {
+                corruptedSaves.push({ key, type: 'manual', slot: i, name: `Save Slot ${i}` });
             }
         }
 
@@ -3476,8 +3505,8 @@ const SettingsPanel = {
 
         try {
             const parsed = JSON.parse(emergencyData);
-            if (typeof SaveLoadSystem !== 'undefined' && SaveLoadSystem.loadGameState) {
-                SaveLoadSystem.loadGameState(parsed.gameData);
+            if (typeof SaveManager !== 'undefined' && SaveManager.loadGameState) {
+                SaveManager.loadGameState(parsed.gameData);
                 localStorage.removeItem('tradingGameEmergencySave');
                 if (typeof addMessage === 'function') addMessage('🎉 Emergency save recovered successfully!', 'success');
                 this.closePanel();
