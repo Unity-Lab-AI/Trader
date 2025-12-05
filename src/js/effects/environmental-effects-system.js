@@ -393,11 +393,10 @@ const EnvironmentalEffectsSystem = {
         // Bias weather patterns
         this.biasedWeatherPatterns = seasonConfig.weatherBias;
         
-        // Trigger season change event
-        if (typeof EventManager !== 'undefined') {
-            EventManager.dispatchEvent('seasonEffectChange', { season, config: seasonConfig });
+        // 🖤💀 Trigger season change event - use EventBus if available, else DOM event 💀
+        if (typeof EventBus !== 'undefined' && EventBus.emit) {
+            EventBus.emit('seasonEffectChange', { season, config: seasonConfig });
         } else {
-            // Fallback to native event dispatching
             document.dispatchEvent(new CustomEvent('seasonEffectChange', {
                 detail: { season, config: seasonConfig }
             }));
@@ -430,11 +429,10 @@ const EnvironmentalEffectsSystem = {
         // Update lighting
         this.applyLocationLighting(atmosphere.lighting);
         
-        // Trigger location change event
-        if (typeof EventManager !== 'undefined') {
-            EventManager.dispatchEvent('locationAtmosphereChange', { location, atmosphere });
+        // 🖤💀 Trigger location change event - use EventBus if available, else DOM event 💀
+        if (typeof EventBus !== 'undefined' && EventBus.emit) {
+            EventBus.emit('locationAtmosphereChange', { location, atmosphere });
         } else {
-            // Fallback to native event dispatching
             document.dispatchEvent(new CustomEvent('locationAtmosphereChange', {
                 detail: { location, atmosphere }
             }));
@@ -494,11 +492,10 @@ const EnvironmentalEffectsSystem = {
                 break;
         }
         
-        // Trigger weather change event
-        if (typeof EventManager !== 'undefined') {
-            EventManager.dispatchEvent('weatherEffectChange', { weather, intensity });
+        // 🖤💀 Trigger weather change event - use EventBus if available, else DOM event 💀
+        if (typeof EventBus !== 'undefined' && EventBus.emit) {
+            EventBus.emit('weatherEffectChange', { weather, intensity });
         } else {
-            // Fallback to native event dispatching
             document.dispatchEvent(new CustomEvent('weatherEffectChange', {
                 detail: { weather, intensity }
             }));

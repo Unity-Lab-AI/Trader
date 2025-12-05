@@ -3654,18 +3654,30 @@ const SettingsPanel = {
         // save all settings - persist your decisions
         this.saveSettings();
 
-        // apply all settings to their respective systems - make it real
-        Object.keys(this.currentSettings).forEach(category => {
-            Object.keys(this.currentSettings[category]).forEach(settingKey => {
-                this.applyImmediateSetting(category, settingKey, this.currentSettings[category][settingKey]);
-            });
+        // 🖤💀 FIX: Only apply settings that use SET methods (not toggle) 💀
+        // Toggle methods flip the state, which breaks when re-applying unchanged settings
+        // Audio and theme settings use SET methods, so those are safe to reapply
+        const safeToReapplySettings = {
+            audio: ['masterVolume', 'musicVolume', 'sfxVolume', 'ambienceVolume', 'voiceVolume'],
+            ui: ['theme', 'fontSize'],
+            environmental: ['quality']
+        };
+
+        Object.keys(safeToReapplySettings).forEach(category => {
+            if (this.currentSettings[category]) {
+                safeToReapplySettings[category].forEach(settingKey => {
+                    if (this.currentSettings[category][settingKey] !== undefined) {
+                        this.applyImmediateSetting(category, settingKey, this.currentSettings[category][settingKey]);
+                    }
+                });
+            }
         });
 
         // show notification - pat yourself on the back
         if (typeof UIPolishSystem !== 'undefined') {
             UIPolishSystem.showNotification('Settings applied successfully!', 'success');
         }
-        
+
         this.closePanel();
     },
 
