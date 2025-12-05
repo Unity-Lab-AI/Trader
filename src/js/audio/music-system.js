@@ -466,12 +466,22 @@ const MusicSystem = {
         const step = startVolume / (this.settings.fadeOutDuration / 50);
         let currentVolume = startVolume;
 
-        const fadeInterval = setInterval(() => {
+        // 🖤💀 Track fade interval so we can clear it on cleanup 💀
+        this._fadeInterval = setInterval(() => {
+            // 🖤💀 Safety check - audio may have been nulled during cleanup 💀
+            if (!this.currentAudio) {
+                clearInterval(this._fadeInterval);
+                this._fadeInterval = null;
+                if (callback) callback();
+                return;
+            }
+
             currentVolume -= step;
             if (currentVolume <= 0) {
                 this.currentAudio.volume = 0;
                 this.currentAudio.pause();
-                clearInterval(fadeInterval);
+                clearInterval(this._fadeInterval);
+                this._fadeInterval = null;
                 if (callback) callback();
             } else {
                 this.currentAudio.volume = currentVolume;
@@ -556,6 +566,12 @@ const MusicSystem = {
 
     // 🧹 Cleanup
     cleanup() {
+        // 🖤💀 Clear any running fade interval FIRST to prevent null access 💀
+        if (this._fadeInterval) {
+            clearInterval(this._fadeInterval);
+            this._fadeInterval = null;
+        }
+
         this.stop();
         if (this.currentAudio) {
             this.currentAudio.removeEventListener('ended', () => {});
