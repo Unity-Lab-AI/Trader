@@ -557,19 +557,22 @@ const PeoplePanel = {
         document.addEventListener('quest-assigned', () => this.updateQuestItems());
         document.addEventListener('quest-completed', () => {
             this.updateQuestItems();
-            // 🖤💀 Also refresh stats bar to show updated reputation after quest reward
+            // 🖤💀 Also refresh stats bar AND trade section to show updated reputation after quest reward
             if (this.currentNPC && this.viewMode === 'chat') {
                 this.updateNPCStatsBar(this.currentNPC);
+                this.updateTradeSection(this.currentNPC); // 🖤💀 FIXED: Refresh trade section too!
             }
         });
 
-        // 🖤💀 FIXED: Listen for reputation changes to update stats bar in real-time 💀
+        // 🖤💀 FIXED: Listen for reputation changes to update stats bar AND trade section in real-time 💀
         document.addEventListener('npc-reputation-changed', (e) => {
             if (this.currentNPC && this.viewMode === 'chat') {
                 const npcId = this.currentNPC.id || this.currentNPC.type;
-                // 🦇 Only refresh if the changed NPC is the one we're viewing
-                if (e.detail.npcId === npcId || e.detail.npcId.includes(this.currentNPC.type)) {
+                const npcType = this.currentNPC.type;
+                // 🦇 Refresh if the changed NPC matches by id, type, or contains the type
+                if (e.detail.npcId === npcId || e.detail.npcId === npcType || e.detail.npcId.includes(npcType)) {
                     this.updateNPCStatsBar(this.currentNPC);
+                    this.updateTradeSection(this.currentNPC); // 🖤💀 Also refresh trade section to update rep requirement display!
                 }
             }
         });
