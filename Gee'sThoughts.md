@@ -16,6 +16,43 @@ Each entry follows this format:
 
 ---
 
+## 2025-12-05 - SESSION #28: QUEST TRACKER INLINE DETAILS 🖤💀📜
+
+**Request:** Gee reported quest tracker widget issues:
+- Clicking quest chain name opens a big overlay panel - can't get back to tracker
+- Should only expand/collapse chains, show quest details INLINE (scrollable)
+- Keep the collapsible quest chain logic working
+
+**Status:** ✅ COMPLETE
+
+### Fixes Applied:
+
+**Quest Tracker Inline Details** - FIXED in `quest-system.js:2468-2486, 2391-2445, 2447-2486, 2763-2848`
+- **Root Cause:** `handleChainQuestClick()` was calling `showQuestInfoPanel()` which opens a full-screen overlay
+- **Fix:** Quest clicks now toggle INLINE expansion:
+  1. Clicking a quest expands/collapses its details INSIDE the tracker
+  2. No more overlay panel taking over the screen
+  3. Added `_expandedQuestId` state to track which quest is expanded
+  4. Created `buildQuestDetailsInline()` for inline objective display
+  5. Added expand arrow (▶/▼) to indicate clickable quests
+  6. Inline Track/Untrack buttons with `event.stopPropagation()`
+
+**New UI Elements:**
+- `.quest-row-header` - Contains arrow + icon + quest name
+- `.quest-expand-arrow` - Shows ▶ collapsed or ▼ expanded
+- `.quest-details-inline` - Objectives shown inside tracker
+- `.inline-track-btn` - Track/Untrack button inline
+
+**Behavior:**
+- Chain header click → expand/collapse chain (unchanged ✅)
+- Quest click → expand/collapse inline details (NEW ✅)
+- All stays inside the scrollable tracker widget
+
+**Files Modified:**
+- `src/js/systems/progression/quest-system.js` - Inline quest expansion
+
+---
+
 ## 2025-12-05 - SESSION #27: FULL NEW GAME VALIDATION 🖤💀✅
 
 **Request:** Gee reported that the new game setup doesn't properly warn about ALL missing fields:
