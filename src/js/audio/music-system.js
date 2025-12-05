@@ -364,6 +364,17 @@ const MusicSystem = {
     playCurrentTrack() {
         if (!this.settings.enabled || !this.currentCategory) return;
 
+        // 🖤💀 Ensure audio element exists - recreate if null 💀
+        if (!this.currentAudio) {
+            console.log('🎵 MusicSystem: Audio element was null, recreating...');
+            this.currentAudio = new Audio();
+            this.currentAudio.addEventListener('ended', () => this.onTrackEnd());
+            this.currentAudio.addEventListener('error', (e) => {
+                console.warn('🎵 MusicSystem: Track failed to load:', e);
+                this.scheduleNextTrack();
+            });
+        }
+
         const tracks = this.TRACKS[this.currentCategory];
         if (!tracks || tracks.length === 0) return;
 
@@ -444,11 +455,19 @@ const MusicSystem = {
         const step = targetVolume / (this.settings.fadeInDuration / 50);
         let currentVolume = 0;
 
-        const fadeInterval = setInterval(() => {
+        this._fadeInInterval = setInterval(() => {
+            // 🖤💀 Safety check - audio may have been nulled 💀
+            if (!this.currentAudio) {
+                clearInterval(this._fadeInInterval);
+                this._fadeInInterval = null;
+                return;
+            }
+
             currentVolume += step;
             if (currentVolume >= targetVolume) {
                 this.currentAudio.volume = targetVolume;
-                clearInterval(fadeInterval);
+                clearInterval(this._fadeInInterval);
+                this._fadeInInterval = null;
             } else {
                 this.currentAudio.volume = currentVolume;
             }
@@ -566,18 +585,35 @@ const MusicSystem = {
 
     // 🧹 Cleanup
     cleanup() {
-        // 🖤💀 Clear any running fade interval FIRST to prevent null access 💀
+        // 🖤💀 Clear any running fade intervals FIRST to prevent null access 💀
         if (this._fadeInterval) {
             clearInterval(this._fadeInterval);
             this._fadeInterval = null;
         }
+        if (this._fadeInInterval) {
+            clearInterval(this._fadeInInterval);
+            this._fadeInInterval = null;
+        }
+        if (this.gapTimeout) {
+            clearTimeout(this.gapTimeout);
+            this.gapTimeout = null;
+        }
 
-        this.stop();
+        // 🖤💀 Don't call stop() here - it starts a new fadeOut which causes race condition 💀
+        // Just directly clean up the audio element
         if (this.currentAudio) {
-            this.currentAudio.removeEventListener('ended', () => {});
-            this.currentAudio.removeEventListener('error', () => {});
+            try {
+                this.currentAudio.pause();
+                this.currentAudio.src = '';
+            } catch (e) {
+                // Ignore errors during cleanup
+            }
             this.currentAudio = null;
         }
+
+        this.isPlaying = false;
+        this.isPaused = false;
+        this.currentCategory = null;
         console.log('🎵 MusicSystem: Cleaned up');
     }
 };
