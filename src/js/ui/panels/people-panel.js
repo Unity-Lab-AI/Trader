@@ -1124,6 +1124,51 @@ const PeoplePanel = {
             actions.push({ label: '🔮 Ask about the other world', action: () => this.askAboutDoomWorld(), priority: 1 });
         }
 
+        // 🖤💀 ENCOUNTER-SPECIFIC ACTIONS - Give gold, Attack, etc. 💀
+        // These show for ALL NPCs as interaction options
+        const isEncounter = npcData.isEncounter || this._isSpecialEncounter;
+
+        // 💰 Give Gold - charity or bribery, you decide
+        actions.push({
+            label: '💰 Give Gold',
+            action: () => this.giveGoldToNPC(),
+            priority: 30
+        });
+
+        // 🎁 Give Item - gift an item from inventory
+        actions.push({
+            label: '🎁 Give Item',
+            action: () => this.giveItemToNPC(),
+            priority: 31
+        });
+
+        // ⚔️ Attack - violence is always an option (but has consequences)
+        if (!['guard', 'noble', 'king', 'queen'].includes(npcType) || isEncounter) {
+            actions.push({
+                label: '⚔️ Attack',
+                action: () => this.attackNPC(),
+                priority: 80
+            });
+        }
+
+        // 🗡️ Rob/Pickpocket - for the morally flexible
+        if (['merchant', 'traveler', 'noble', 'pilgrim', 'beggar', 'drunk'].includes(npcType)) {
+            actions.push({
+                label: '🗡️ Pickpocket',
+                action: () => this.pickpocketNPC(),
+                priority: 81
+            });
+        }
+
+        // 🏃 Flee - get the fuck out
+        if (isEncounter) {
+            actions.push({
+                label: '🏃 Flee',
+                action: () => this.fleeFromEncounter(),
+                priority: 90
+            });
+        }
+
         // 🖤 Generic actions - always available
         actions.push({ label: '❓ Ask for directions', action: () => this.askDirections(), priority: 50 });
         actions.push({ label: '👋 Say goodbye', action: () => this.sayGoodbye(), priority: 100 });
@@ -1860,6 +1905,210 @@ const PeoplePanel = {
         const inDoom = typeof TravelSystem !== 'undefined' && TravelSystem.isInDoomWorld();
         return `You are the Boatman, a mysterious ferryman between worlds.
 Speak cryptically and briefly. You offer passage to the ${inDoom ? 'normal world' : 'doom world'}.`;
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🖤💀 ENCOUNTER ACTIONS - Give Gold, Attack, Pickpocket, Flee 💀
+    // ═══════════════════════════════════════════════════════════════
+
+    // 💰 Give Gold to NPC - charity, bribery, or appeasement
+    giveGoldToNPC() {
+        if (!this.currentNPC) return;
+
+        const playerGold = game?.player?.gold || 0;
+        if (playerGold <= 0) {
+            this.addChatMessage("*checks pockets* I have no gold to give.", 'player');
+            this.addChatMessage("*looks disappointed*", 'npc');
+            return;
+        }
+
+        // 🖤 Create a simple gold input dialog
+        const amounts = [1, 5, 10, 25, 50, 100].filter(a => a <= playerGold);
+        const amountStr = prompt(`How much gold to give? (You have ${playerGold})\nSuggested: ${amounts.join(', ')}`);
+
+        if (!amountStr) return;
+        const amount = parseInt(amountStr);
+
+        if (isNaN(amount) || amount <= 0 || amount > playerGold) {
+            this.addChatMessage("*fumbles with coin pouch*", 'player');
+            return;
+        }
+
+        // 🦇 Transfer gold
+        game.player.gold -= amount;
+        if (this.currentNPC.gold !== undefined) {
+            this.currentNPC.gold += amount;
+        }
+
+        // 💰 Increase reputation with this NPC
+        if (typeof NPCRelationshipSystem !== 'undefined') {
+            NPCRelationshipSystem.modifyReputation(this.currentNPC.type || this.currentNPC.id, Math.floor(amount / 5));
+        }
+
+        this.addChatMessage(`*hands over ${amount} gold*`, 'player');
+        this.addChatMessage(`*accepts the gold gratefully* Many thanks, traveler.`, 'npc');
+        if (typeof addMessage === 'function') {
+            addMessage(`💰 Gave ${amount} gold to ${this.currentNPC.name}`);
+        }
+        if (typeof updateDisplay === 'function') updateDisplay();
+    },
+
+    // 🎁 Give Item to NPC
+    giveItemToNPC() {
+        if (!this.currentNPC) return;
+
+        const inventory = game?.player?.inventory || [];
+        if (inventory.length === 0) {
+            this.addChatMessage("*checks bag* I have nothing to give.", 'player');
+            return;
+        }
+
+        // 🦇 Simple item selection - list first 10 items
+        const itemList = inventory.slice(0, 10).map((item, i) =>
+            `${i + 1}. ${item.name || item.id} (x${item.quantity || 1})`
+        ).join('\n');
+
+        const choice = prompt(`Which item to give?\n${itemList}\n\nEnter number (1-${Math.min(inventory.length, 10)}):`);
+        if (!choice) return;
+
+        const index = parseInt(choice) - 1;
+        if (isNaN(index) || index < 0 || index >= Math.min(inventory.length, 10)) {
+            this.addChatMessage("*hesitates*", 'player');
+            return;
+        }
+
+        const item = inventory[index];
+        // 🖤 Remove item from inventory
+        if (typeof InventorySystem !== 'undefined') {
+            InventorySystem.removeItem(item.id, 1);
+        } else {
+            inventory.splice(index, 1);
+        }
+
+        // 💚 Increase reputation
+        if (typeof NPCRelationshipSystem !== 'undefined') {
+            NPCRelationshipSystem.modifyReputation(this.currentNPC.type || this.currentNPC.id, 5);
+        }
+
+        this.addChatMessage(`*offers ${item.name || item.id}*`, 'player');
+        this.addChatMessage(`*takes the gift* How kind of you!`, 'npc');
+        if (typeof addMessage === 'function') {
+            addMessage(`🎁 Gave ${item.name || item.id} to ${this.currentNPC.name}`);
+        }
+    },
+
+    // ⚔️ Attack NPC - violence has consequences
+    attackNPC() {
+        if (!this.currentNPC) return;
+
+        // 🖤 Confirm attack
+        const confirm = window.confirm(`⚔️ Attack ${this.currentNPC.name}?\n\nThis will have consequences!`);
+        if (!confirm) {
+            this.addChatMessage("*thinks better of it*", 'player');
+            return;
+        }
+
+        this.addChatMessage("*draws weapon and attacks!*", 'player');
+
+        // 🦇 Simple combat resolution
+        const playerStrength = game?.player?.stats?.strength || 10;
+        const npcStrength = this.currentNPC.strength || 10;
+        const playerRoll = Math.floor(Math.random() * 20) + playerStrength;
+        const npcRoll = Math.floor(Math.random() * 20) + npcStrength;
+
+        if (playerRoll > npcRoll) {
+            // 🏆 Player wins
+            const loot = this.currentNPC.gold || Math.floor(Math.random() * 50) + 10;
+            game.player.gold = (game.player.gold || 0) + loot;
+
+            this.addChatMessage("*falls defeated*", 'npc');
+            if (typeof addMessage === 'function') {
+                addMessage(`⚔️ Defeated ${this.currentNPC.name}! Looted ${loot} gold.`);
+            }
+
+            // 🖤 Decrease reputation significantly
+            if (typeof NPCRelationshipSystem !== 'undefined') {
+                NPCRelationshipSystem.modifyReputation(this.currentNPC.type || this.currentNPC.id, -50);
+            }
+
+            // 🦇 End encounter
+            setTimeout(() => this.close(), 1500);
+        } else {
+            // 💀 NPC wins or escapes
+            const damage = Math.floor(Math.random() * 20) + 5;
+            if (game?.player?.stats?.health !== undefined) {
+                game.player.stats.health = Math.max(0, game.player.stats.health - damage);
+            }
+
+            this.addChatMessage(`*fights back and wounds you for ${damage} damage!*`, 'npc');
+            if (typeof addMessage === 'function') {
+                addMessage(`⚔️ ${this.currentNPC.name} fought back! Took ${damage} damage.`);
+            }
+        }
+
+        if (typeof updateDisplay === 'function') updateDisplay();
+    },
+
+    // 🗡️ Pickpocket NPC
+    pickpocketNPC() {
+        if (!this.currentNPC) return;
+
+        this.addChatMessage("*tries to discreetly reach for their coin pouch*", 'player');
+
+        // 🦇 Skill check
+        const dexterity = game?.player?.stats?.dexterity || 10;
+        const roll = Math.floor(Math.random() * 20) + 1;
+        const success = roll + dexterity > 15;
+
+        if (success) {
+            // 🏆 Successful steal
+            const stolen = Math.floor(Math.random() * 30) + 5;
+            game.player.gold = (game.player.gold || 0) + stolen;
+
+            this.addChatMessage("*doesn't notice anything*", 'npc');
+            if (typeof addMessage === 'function') {
+                addMessage(`🗡️ Stole ${stolen} gold from ${this.currentNPC.name}!`);
+            }
+        } else {
+            // 🚨 Caught!
+            this.addChatMessage("*grabs your wrist* THIEF!", 'npc');
+            if (typeof addMessage === 'function') {
+                addMessage(`🚨 Caught pickpocketing ${this.currentNPC.name}!`);
+            }
+
+            // 🖤 Massive reputation loss
+            if (typeof NPCRelationshipSystem !== 'undefined') {
+                NPCRelationshipSystem.modifyReputation(this.currentNPC.type || this.currentNPC.id, -30);
+            }
+
+            // 🦇 Might trigger guards
+            if (Math.random() < 0.5 && typeof NPCEncounters !== 'undefined') {
+                setTimeout(() => {
+                    NPCEncounters.triggerGuardEncounter?.();
+                }, 2000);
+            }
+        }
+
+        if (typeof updateDisplay === 'function') updateDisplay();
+    },
+
+    // 🏃 Flee from encounter
+    fleeFromEncounter() {
+        if (!this.currentNPC) return;
+
+        this.addChatMessage("*turns and runs!*", 'player');
+        this.addChatMessage("*shouts after you* Coward!", 'npc');
+
+        if (typeof addMessage === 'function') {
+            addMessage(`🏃 Fled from ${this.currentNPC.name}`);
+        }
+
+        // 🦇 End encounter
+        if (typeof NPCEncounters !== 'undefined') {
+            NPCEncounters.endEncounter(this.currentNPC.id);
+        }
+
+        setTimeout(() => this.close(), 500);
     },
 
     // ═══════════════════════════════════════════════════════════════

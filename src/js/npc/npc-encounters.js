@@ -624,12 +624,45 @@ const NPCEncounterSystem = {
         }
     },
 
-    // 🖤💀 Start conversation - NPCChatUI handles the rest with API
+    // 🖤💀 Start conversation - PeoplePanel has ALL the actions (trade, quest, attack, etc.)
+    // NPCChatUI only had Hello/News/Directions - that's garbage for encounters! 💀
     startEncounterConversation(npcData) {
-        if (typeof NPCChatUI !== 'undefined') {
-            // 🖤💀 NPCChatUI will use NPCVoiceChatSystem for continued conversation
+        if (typeof PeoplePanel !== 'undefined' && PeoplePanel.showSpecialEncounter) {
+            // 🖤💀 Use PeoplePanel's encounter mode - has trade, attack, give gold, quests, etc.
+            PeoplePanel.showSpecialEncounter(npcData, {
+                introText: this._getEncounterIntroText(npcData),
+                disableChat: false,  // Allow freeform chat
+                disableBack: false,  // Allow backing out
+                playVoice: true      // Play TTS greeting
+            });
+        } else if (typeof PeoplePanel !== 'undefined' && PeoplePanel.showNPC) {
+            // 🦇 Fallback to regular NPC view
+            PeoplePanel.showNPC(npcData);
+        } else if (typeof NPCChatUI !== 'undefined') {
+            // 💀 Last resort fallback - limited actions
             NPCChatUI.open(npcData);
         }
+    },
+
+    // 🖤 Generate intro text for encounter based on NPC type 💀
+    _getEncounterIntroText(npcData) {
+        const type = npcData.type || 'stranger';
+        const name = npcData.name || 'A stranger';
+
+        const intros = {
+            merchant: `${name} approaches with goods to trade, their pack jingling with wares...`,
+            bandit: `${name} blocks your path, hand resting on their weapon...`,
+            traveler: `${name} spots you on the road and waves in greeting...`,
+            guard: `${name} steps forward, eyeing you with professional suspicion...`,
+            beggar: `${name} shuffles toward you, hand outstretched...`,
+            noble: `${name} approaches with an air of importance...`,
+            farmer: `${name} pauses from their work to greet you...`,
+            pilgrim: `${name} clasps their hands in prayer and bows slightly...`,
+            adventurer: `${name} sizes you up with the practiced eye of a fellow traveler...`,
+            default: `${name} approaches you on the road...`
+        };
+
+        return intros[type] || intros.default;
     },
 
     startEncounterTrade(npcData) {
