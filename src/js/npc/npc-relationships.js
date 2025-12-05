@@ -287,6 +287,17 @@ const NPCRelationshipSystem = {
 
         console.log(`💕 Reputation with ${relationship.npcName}: ${oldRep} → ${relationship.reputation} (${reason})`);
 
+        // 🖤💀 FIXED: Dispatch event so UI can update in real-time 💀
+        document.dispatchEvent(new CustomEvent('npc-reputation-changed', {
+            detail: {
+                npcId,
+                oldReputation: oldRep,
+                newReputation: relationship.reputation,
+                change: relationship.reputation - oldRep,
+                reason
+            }
+        }));
+
         return relationship;
     },
 

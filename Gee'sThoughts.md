@@ -16,6 +16,47 @@ Each entry follows this format:
 
 ---
 
+## 2025-12-05 - SESSION #17: NPC DEDUPLICATION + REPUTATION FIX 🖤💀👴
+
+**Request:** Gee reported:
+1. Village Elder appearing in Royal Capital - incorrectly triggering quest steps meant for Greendale Elder
+2. Reputation awarded (10-15) not showing in messages panel - only showing +2
+3. Reputation not refreshing in trader card until panel reopened
+
+**Status:** ✅ COMPLETE
+
+### Fixes Applied:
+
+**Issue 1: Duplicate Elder NPC** - FIXED in `game-world.js:81`, `npc-data-embedded.js`, `npc-trade.js`, `people-panel.js`
+- **Root Cause:** Royal Capital had `elder` in its NPC list, same as Greendale and Frostholm
+- **Fix:** Created new `royal_advisor` NPC type distinct from village `elder`
+  - Changed Royal Capital NPCs from `elder` to `royal_advisor`
+  - Added `royal_advisor` to npc-data-embedded.js with court-specific personality, dialogue, traits
+  - Added to `_npcTypeCategories` for name generation (uses 'wise' names)
+  - Added title "Royal Advisor" to `_getNPCRoleTitle()` and `formatNPCName()`
+  - Added icon 📜 and description to people-panel.js
+  - Added inventory (scrolls, ink, parchment, wine, books, royal decrees) to npc-trade.js
+
+**Issue 2: Rep Message Not Showing** - FIXED in `quest-system.js:1460`
+- **Root Cause:** Quest completion showed gold, XP, items but NOT reputation!
+- **Fix:** Added `if (rewardsGiven.reputation) addMessage(`+${rewardsGiven.reputation} reputation`, 'success');`
+
+**Issue 3: Rep Not Refreshing in Trader Card** - FIXED in `npc-relationships.js:290-299`, `people-panel.js:566-575`
+- **Root Cause:** NPCRelationshipSystem didn't emit event when reputation changed
+- **Fix:**
+  - Added `npc-reputation-changed` event dispatch in `modifyReputation()`
+  - Added event listener in people-panel.js to `updateNPCStatsBar()` when reputation changes
+
+**Files Modified:**
+- `src/js/data/game-world.js` - Changed Royal Capital elder→royal_advisor, added name/title mappings
+- `src/js/npc/npc-data-embedded.js` - Added royal_advisor NPC type definition
+- `src/js/npc/npc-trade.js` - Added royal_advisor inventory
+- `src/js/npc/npc-relationships.js` - Added npc-reputation-changed event
+- `src/js/ui/panels/people-panel.js` - Added icon, title, description for royal_advisor + rep change listener
+- `src/js/systems/progression/quest-system.js` - Added reputation reward message
+
+---
+
 ## 2025-12-05 - SESSION #16: ATOMIC TRADE TRANSACTIONS 🖤💀💰
 
 **Request:** Gee requested the debooger properly show player trades and AI checks - verify if item not received then gold not taken, and vice versa. All trades (NPC/market/encounter/event/quest) should have transactional integrity.

@@ -78,7 +78,7 @@ const GameWorld = {
             mapPosition: { x: 400, y: 300 },
             sells: ['royal_goods', 'luxury_items', 'fine_clothes', 'jewelry', 'silk_garments', 'perfume', 'wine', 'spices'],
             buys: ['artifacts', 'rare_gems', 'silk', 'gems', 'gold_bar', 'exotic_goods', 'furs', 'spices'],
-            npcs: ['noble', 'guard', 'captain', 'jeweler', 'tailor', 'banker', 'herald', 'merchant', 'elder'] // Quest: dungeon_ancient_tome needs elder
+            npcs: ['noble', 'guard', 'captain', 'jeweler', 'tailor', 'banker', 'herald', 'merchant', 'royal_advisor'] // 🖤💀 FIXED: Changed elder→royal_advisor to prevent quest confusion with village elders
         },
 
         // ═══════════════════════════════════════════════════════════
@@ -1046,7 +1046,7 @@ const GameWorld = {
         merchant: 'merchant', banker: 'merchant', general_store: 'merchant', steward: 'merchant',
         farmer: 'rural', shepherd: 'rural', miller: 'rural', farmhand: 'rural', vintner: 'rural', beekeeper: 'rural', orchardist: 'rural',
         sailor: 'seafaring', ferryman: 'seafaring', fisherman: 'seafaring', dockmaster: 'seafaring', harbormaster: 'seafaring', lighthouse_keeper: 'seafaring', boatwright: 'seafaring',
-        noble: 'noble', herald: 'noble', villager: 'rural', mason: 'strong',
+        noble: 'noble', herald: 'noble', royal_advisor: 'wise', villager: 'rural', mason: 'strong', // 🖤💀 royal_advisor uses wise names
         adventurer: 'adventure', explorer: 'adventure', treasure_hunter: 'adventure', archaeologist: 'adventure', diver: 'adventure', pearl_hunter: 'adventure', ice_harvester: 'adventure', mountain_guide: 'adventure', caravan_master: 'adventure', wanderer: 'adventure',
         miner: 'mining', foreman: 'mining', gem_collector: 'mining',
         hunter: 'hunting', trapper: 'hunting', forager: 'rural', healer: 'wise',
@@ -1128,7 +1128,8 @@ const GameWorld = {
             gem_collector: 'Gem Hunter', treasure_hunter: 'Treasure Hunter',
             trapper: 'Trapper', pearl_hunter: 'Pearl Diver', ice_harvester: 'Ice Harvester',
             archaeologist: 'Archaeologist', diver: 'Diver',
-            hooded_stranger: 'Stranger', prophet: 'Prophet' // 🖤💀 Quest givers
+            hooded_stranger: 'Stranger', prophet: 'Prophet', // 🖤💀 Quest givers
+            royal_advisor: 'Royal Advisor' // 🖤💀 NEW: Court sage for Royal Capital
         };
         return titles[npcType] || npcType.charAt(0).toUpperCase() + npcType.slice(1).replace(/_/g, ' ');
     },
@@ -1166,7 +1167,8 @@ const GameWorld = {
             traveler: 'Weary Traveler',
             noble: 'Noble',
             priest: 'Priest',
-            elder: 'The Elder'
+            elder: 'The Elder',
+            royal_advisor: 'The Royal Advisor' // 🖤💀 NEW
         };
         return names[npcType] || npcType.charAt(0).toUpperCase() + npcType.slice(1).replace(/_/g, ' ');
     },

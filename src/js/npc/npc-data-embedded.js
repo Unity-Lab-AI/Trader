@@ -371,6 +371,22 @@ const NPC_EMBEDDED_DATA = {
         "farewells": ["Dismissed.", "Don't disappoint me.", "*turns back to tactical work*"]
     },
 
+    // 🖤💀 NEW: Royal Advisor - court sage distinct from village elders 💀
+    "royal_advisor": {
+        "type": "royal_advisor",
+        "category": "authority",
+        "voice": "sage",
+        "personality": "calculating",
+        "speakingStyle": "formal, speaks of politics and court intrigue, measured words",
+        "background": "Serves the crown as counselor and scholar. Knows the kingdom's secrets and histories. More politician than sage.",
+        "traits": ["intelligent", "political", "secretive"],
+        "services": ["royal_info", "court_connections", "kingdom_lore"],
+        "questTypes": ["political_mission", "find_artifact", "investigate_conspiracy"],
+        "repRequirement": 30,
+        "greetings": ["*looks up from ancient tome* Ah, a visitor to the court. How... interesting.", "The crown has many needs. Perhaps you can serve.", "*steeples fingers* I've heard reports of your... activities."],
+        "farewells": ["The court remembers those who serve well.", "*returns to scrolls* Information is power. Remember that.", "May your path serve the kingdom's interests."]
+    },
+
     // ═══════════════════════════════════════════════════════════════
     // 🗡️ CRIMINALS - thieves, bandits, smugglers
     // ═══════════════════════════════════════════════════════════════

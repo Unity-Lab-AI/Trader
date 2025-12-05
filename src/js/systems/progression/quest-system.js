@@ -1457,6 +1457,7 @@ const QuestSystem = {
             addMessage(`Quest Complete: ${quest.name}!`, 'success');
             if (rewardsGiven.gold) addMessage(`+${rewardsGiven.gold} gold`, 'success');
             if (rewardsGiven.experience) addMessage(`+${rewardsGiven.experience} XP`, 'success');
+            if (rewardsGiven.reputation) addMessage(`+${rewardsGiven.reputation} reputation`, 'success'); // 🖤💀 FIXED: Show rep reward message
             for (const [item, qty] of Object.entries(rewardsGiven.items)) {
                 addMessage(`+${qty}x ${item}`, 'success');
             }

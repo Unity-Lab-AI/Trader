@@ -312,13 +312,37 @@ const InventorySystem = {
         }
     },
     
-    // Drop item
+    // Drop item - 🖤💀 FIXED: Use modal instead of browser confirm() 💀
     dropItem(itemId) {
         if (game.player.inventory[itemId] > 0) {
             const item = ItemDatabase.getItem(itemId);
             const quantity = game.player.inventory[itemId];
-            
-            if (confirm(`Are you sure you want to drop ${quantity} × ${item.name}?`)) {
+
+            // Use ModalSystem instead of browser confirm
+            if (typeof ModalSystem !== 'undefined') {
+                ModalSystem.show({
+                    title: '🗑️ Drop Item',
+                    content: `<p>Are you sure you want to drop <strong>${quantity} × ${item.name}</strong>?</p><p style="color: #f44336; font-size: 12px;">This cannot be undone!</p>`,
+                    buttons: [
+                        {
+                            label: '❌ Cancel',
+                            type: 'secondary',
+                            action: () => ModalSystem.hide()
+                        },
+                        {
+                            label: '🗑️ Drop',
+                            type: 'danger',
+                            action: () => {
+                                delete game.player.inventory[itemId];
+                                addMessage(`You dropped ${quantity} × ${item.name}!`);
+                                this.updateInventoryDisplay();
+                                ModalSystem.hide();
+                            }
+                        }
+                    ]
+                });
+            } else {
+                // Fallback if ModalSystem not available
                 delete game.player.inventory[itemId];
                 addMessage(`You dropped ${quantity} × ${item.name}!`);
                 this.updateInventoryDisplay();

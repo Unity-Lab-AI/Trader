@@ -3005,12 +3005,32 @@ const SettingsPanel = {
         console.log('🖤 Setting keybindings HTML, length:', html.length);
         listContainer.innerHTML = html;
 
-        // setup reset button - return to factory defaults
+        // setup reset button - return to factory defaults 🖤💀 FIXED: Use modal instead of browser confirm() 💀
         let resetBtn = this.panelElement?.querySelector('#reset-keybindings-btn');
         if (!resetBtn) resetBtn = document.getElementById('reset-keybindings-btn');
         if (resetBtn) {
             resetBtn.onclick = () => {
-                if (confirm('Reset all keybindings to defaults?')) {
+                if (typeof ModalSystem !== 'undefined') {
+                    ModalSystem.show({
+                        title: '⌨️ Reset Keybindings',
+                        content: '<p>Reset all keybindings to defaults?</p>',
+                        buttons: [
+                            { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                            {
+                                label: '🔄 Reset',
+                                type: 'primary',
+                                action: () => {
+                                    if (typeof KeyBindings !== 'undefined') {
+                                        KeyBindings.resetToDefaults();
+                                    }
+                                    this.refreshKeyBindingsUI();
+                                    ModalSystem.hide();
+                                }
+                            }
+                        ]
+                    });
+                } else {
+                    // Fallback
                     if (typeof KeyBindings !== 'undefined') {
                         KeyBindings.resetToDefaults();
                     }
@@ -3066,14 +3086,38 @@ const SettingsPanel = {
             ([act, key]) => key === newKey && act !== action
         );
 
+        // 🖤💀 FIXED: Use modal instead of browser confirm() 💀
         if (existingAction) {
             const existingDesc = KeyBindings.descriptions[existingAction[0]] || existingAction[0];
-            if (!confirm(`"${KeyBindings.formatKey(newKey)}" is already used for "${existingDesc}". Swap keys?`)) {
-                this.cancelKeyRebind();
-                return;
+            if (typeof ModalSystem !== 'undefined') {
+                ModalSystem.show({
+                    title: '⚠️ Key Conflict',
+                    content: `<p>"<strong>${KeyBindings.formatKey(newKey)}</strong>" is already used for "<strong>${existingDesc}</strong>".</p><p>Do you want to swap the keys?</p>`,
+                    buttons: [
+                        { label: '❌ Cancel', type: 'secondary', action: () => { this.cancelKeyRebind(); ModalSystem.hide(); } },
+                        {
+                            label: '🔄 Swap Keys',
+                            type: 'primary',
+                            action: () => {
+                                // swap the keys - silent but deadly
+                                KeyBindings.setKey(existingAction[0], this.rebindContext.originalKey, true);
+                                // set the new key - commit to the change
+                                KeyBindings.setKey(this.rebindContext.action, newKey, true);
+                                // update ui
+                                this.rebindContext.button.classList.remove('listening');
+                                this.rebindContext.button.textContent = KeyBindings.formatKey(newKey);
+                                this.refreshKeyBindingsUI();
+                                this.rebindContext = null;
+                                ModalSystem.hide();
+                            }
+                        }
+                    ]
+                });
+                return; // Exit and wait for modal response
+            } else {
+                // Fallback: just do the swap without asking
+                KeyBindings.setKey(existingAction[0], this.rebindContext.originalKey, true);
             }
-            // swap the keys - silent but deadly
-            KeyBindings.setKey(existingAction[0], this.rebindContext.originalKey, true);
         }
 
         // set the new key - commit to the change
@@ -3681,9 +3725,9 @@ const SettingsPanel = {
         this.closePanel();
     },
 
-    // return to main menu - escape to the beginning
+    // return to main menu - escape to the beginning 🖤💀 FIXED: Use modal instead of browser confirm() 💀
     returnToMainMenu() {
-        if (confirm('Return to main menu? Unsaved progress will be lost.')) {
+        const doReturn = () => {
             this.closePanel();
 
             // Use the global function if available
@@ -3706,45 +3750,108 @@ const SettingsPanel = {
 
                 console.log('🏠 Returned to main menu via SettingsPanel');
             }
+        };
+
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: '🏠 Return to Main Menu',
+                content: '<p>Return to main menu?</p><p style="color: #f44336; font-size: 12px;">Unsaved progress will be lost.</p>',
+                buttons: [
+                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                    { label: '🏠 Return', type: 'danger', action: () => { ModalSystem.hide(); doReturn(); } }
+                ]
+            });
+        } else {
+            doReturn();
         }
     },
 
-    // reset to defaults - undo all your questionable choices
+    // reset to defaults - undo all your questionable choices 🖤💀 FIXED: Use modal instead of browser confirm() 💀
     resetToDefaults() {
-        // confirm reset - are you sure about this
-        if (!confirm('Are you sure you want to reset all settings to their default values?')) {
-            return;
+        const doReset = () => {
+            // reset all settings - back to square one
+            try {
+                this.currentSettings = JSON.parse(JSON.stringify(this.defaultSettings));
+            } catch (error) {
+                // 🦇 Clone failed - shouldn't happen, but handle it
+                this.currentSettings = { ...this.defaultSettings };
+            }
+
+            // update ui controls - show the defaults in all their glory
+            this.updateControlsFromSettings();
+
+            // apply settings - enforce the reset
+            this.applySettings();
+        };
+
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: '🔄 Reset Settings',
+                content: '<p>Are you sure you want to reset all settings to their default values?</p>',
+                buttons: [
+                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                    { label: '🔄 Reset', type: 'primary', action: () => { ModalSystem.hide(); doReset(); } }
+                ]
+            });
+        } else {
+            doReset();
         }
-
-        // reset all settings - back to square one
-        try {
-            this.currentSettings = JSON.parse(JSON.stringify(this.defaultSettings));
-        } catch (error) {
-            // 🦇 Clone failed - shouldn't happen, but handle it
-            this.currentSettings = { ...this.defaultSettings };
-        }
-
-        // update ui controls - show the defaults in all their glory
-        this.updateControlsFromSettings();
-
-        // apply settings - enforce the reset
-        this.applySettings();
     },
 
-    // clear all data - burn it ALL down, squeaky clean, nothing remains
+    // clear all data - burn it ALL down, squeaky clean, nothing remains 🖤💀 FIXED: Use modal instead of browser confirm() 💀
     clearAllData() {
-        // double confirm because this is destructive - we're serious here
-        if (!confirm('⚠️ WARNING: This will DELETE ALL your local data including:\n\n• All saved games (manual & auto)\n• All settings & preferences\n• Panel positions & layout\n• Achievement progress\n• High scores & statistics\n• Location history\n• Cached leaderboard data\n• ALL cookies and cached data\n• EVERYTHING stored locally\n\n🏆 Note: The global Hall of Champions on the server will NOT be affected (your scores remain online).\n\nThis cannot be undone!\n\nAre you sure you want to continue?')) {
-            return;
+        const doClear = () => {
+            console.log('🗑️ NUCLEAR OPTION: Clearing ALL application data...');
+            this._performDataClear();
+        };
+
+        const showFinalWarning = () => {
+            if (typeof ModalSystem !== 'undefined') {
+                ModalSystem.show({
+                    title: '🗑️ FINAL WARNING',
+                    content: `
+                        <p style="color: #f44336; font-weight: bold;">You are about to permanently delete ALL local game data.</p>
+                        <p>Your computer will be squeaky clean - nothing remains.</p>
+                        <p style="color: #4caf50;">🏆 The global Hall of Champions server data will remain intact.</p>
+                    `,
+                    buttons: [
+                        { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                        { label: '🗑️ DELETE EVERYTHING', type: 'danger', action: () => { ModalSystem.hide(); doClear(); } }
+                    ]
+                });
+            } else {
+                doClear();
+            }
+        };
+
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: '⚠️ Delete All Data',
+                content: `
+                    <p style="color: #f44336; font-weight: bold;">WARNING: This will DELETE ALL your local data including:</p>
+                    <ul style="font-size: 12px; margin: 10px 0;">
+                        <li>All saved games (manual & auto)</li>
+                        <li>All settings & preferences</li>
+                        <li>Panel positions & layout</li>
+                        <li>Achievement progress</li>
+                        <li>High scores & statistics</li>
+                        <li>ALL cookies and cached data</li>
+                    </ul>
+                    <p style="color: #4caf50;">🏆 Note: The global Hall of Champions on the server will NOT be affected.</p>
+                    <p style="color: #f44336; font-weight: bold;">This cannot be undone!</p>
+                `,
+                buttons: [
+                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                    { label: '⚠️ Continue', type: 'danger', action: () => { ModalSystem.hide(); showFinalWarning(); } }
+                ]
+            });
+        } else {
+            doClear();
         }
+    },
 
-        // second confirmation - last chance to bail
-        if (!confirm('🗑️ FINAL WARNING!\n\nYou are about to permanently delete ALL local game data.\nYour computer will be squeaky clean - nothing remains.\n\nThe global Hall of Champions server data will remain intact.\n\nClick OK to confirm TOTAL deletion.')) {
-            return;
-        }
-
-        console.log('🗑️ NUCLEAR OPTION: Clearing ALL application data...');
-
+    // 🖤💀 Extracted clear logic for modal callback 💀
+    _performDataClear() {
         try {
             // ═══════════════════════════════════════════════════════════
             // 🧹 STEP 1: Clear ALL localStorage - everything goes
@@ -3853,15 +3960,47 @@ const SettingsPanel = {
 
             console.log('🧹 ALL DATA OBLITERATED - SQUEAKY CLEAN!');
 
-            // show success message - it's done
-            alert('✅ ALL DATA HAS BEEN COMPLETELY CLEARED!\n\n🧹 Your system is squeaky clean:\n• All saves deleted\n• All settings reset\n• All cache cleared\n• All cookies removed\n\n🏆 Your scores on the global Hall of Champions server remain safe.\n\nThe page will now reload.');
-
-            // reload the page with cache bypass - rebirth imminent
-            window.location.reload(true);
+            // show success message - it's done 🖤💀 FIXED: Use modal instead of browser alert() 💀
+            if (typeof ModalSystem !== 'undefined') {
+                ModalSystem.show({
+                    title: '✅ Data Cleared',
+                    content: `
+                        <p style="color: #4caf50; font-weight: bold;">ALL DATA HAS BEEN COMPLETELY CLEARED!</p>
+                        <p>🧹 Your system is squeaky clean:</p>
+                        <ul style="font-size: 12px;">
+                            <li>All saves deleted</li>
+                            <li>All settings reset</li>
+                            <li>All cache cleared</li>
+                            <li>All cookies removed</li>
+                        </ul>
+                        <p style="color: #4caf50;">🏆 Your scores on the global Hall of Champions server remain safe.</p>
+                        <p>The page will now reload.</p>
+                    `,
+                    buttons: [
+                        { label: '🔄 Reload', type: 'primary', action: () => { ModalSystem.hide(); window.location.reload(true); } }
+                    ]
+                });
+            } else {
+                // Fallback: just reload
+                window.location.reload(true);
+            }
 
         } catch (error) {
-            // 🦇 Clear failed - alert user with guidance
-            alert('❌ Error clearing some data. Please try clearing your browser data manually.\n\nError: ' + error.message);
+            // 🦇 Clear failed - show error 🖤💀 FIXED: Use modal instead of browser alert() 💀
+            if (typeof ModalSystem !== 'undefined') {
+                ModalSystem.show({
+                    title: '❌ Error',
+                    content: `
+                        <p>Error clearing some data. Please try clearing your browser data manually.</p>
+                        <p style="color: #f44336; font-size: 12px;">Error: ${error.message}</p>
+                    `,
+                    buttons: [
+                        { label: 'OK', type: 'secondary', action: () => ModalSystem.hide() }
+                    ]
+                });
+            } else {
+                console.error('Error clearing data:', error);
+            }
         }
     },
 
@@ -3989,26 +4128,37 @@ const SettingsPanel = {
         }
     },
 
-    // 🗑️ Clear all auto-saves to free up space
+    // 🗑️ Clear all auto-saves to free up space 🖤💀 FIXED: Use modal instead of browser confirm() 💀
     clearAutoSaves() {
-        if (!confirm('This will delete ALL auto-saves. Your manual saves will be kept. Continue?')) {
-            return;
-        }
-
-        let clearedCount = 0;
-        for (let i = 0; i < 10; i++) {
-            const key = `tradingGameAutoSave_${i}`;
-            if (localStorage.getItem(key)) {
-                localStorage.removeItem(key);
-                clearedCount++;
+        const doClear = () => {
+            let clearedCount = 0;
+            for (let i = 0; i < 10; i++) {
+                const key = `tradingGameAutoSave_${i}`;
+                if (localStorage.getItem(key)) {
+                    localStorage.removeItem(key);
+                    clearedCount++;
+                }
             }
+
+            // Clear auto-save slots metadata
+            localStorage.removeItem('tradingGameAutoSaveSlots');
+
+            this.updateStorageInfo();
+            addMessage(`🗑️ Cleared ${clearedCount} auto-saves!`, 'success');
+        };
+
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: '🗑️ Clear Auto-Saves',
+                content: '<p>This will delete <strong>ALL auto-saves</strong>.</p><p>Your manual saves will be kept.</p><p>Continue?</p>',
+                buttons: [
+                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                    { label: '🗑️ Clear', type: 'danger', action: () => { ModalSystem.hide(); doClear(); } }
+                ]
+            });
+        } else {
+            doClear();
         }
-
-        // Clear auto-save slots metadata
-        localStorage.removeItem('tradingGameAutoSaveSlots');
-
-        this.updateStorageInfo();
-        addMessage(`🗑️ Cleared ${clearedCount} auto-saves!`, 'success');
     },
 
     // ⏱️ Load autosave interval into dropdown

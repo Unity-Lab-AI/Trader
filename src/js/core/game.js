@@ -423,9 +423,9 @@ const LeaderboardFeatures = {
         }
     },
 
-    // Clear all active high scores
+    // Clear all active high scores 🖤💀 FIXED: Use modal instead of browser confirm() 💀
     clearActiveScores() {
-        if (confirm('Are you sure you want to clear all active high scores? This cannot be undone.')) {
+        const doClear = () => {
             localStorage.removeItem(this.ACTIVE_SCORES_KEY);
             addMessage('🗑️ Active high scores cleared');
 
@@ -435,6 +435,19 @@ const LeaderboardFeatures = {
                 modal.remove();
                 this.showActiveHighScores();
             }
+        };
+
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: '🗑️ Clear High Scores',
+                content: '<p>Are you sure you want to clear all active high scores?</p><p style="color: #f44336; font-size: 12px;">This cannot be undone.</p>',
+                buttons: [
+                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                    { label: '🗑️ Clear', type: 'danger', action: () => { ModalSystem.hide(); doClear(); } }
+                ]
+            });
+        } else {
+            doClear();
         }
     },
 
@@ -6181,11 +6194,12 @@ function updatePerkSelection() {
 function openPerkModal() {
     console.log('Opening perk modal...');
 
-    // Get modal element
+    // Get modal element 🖤💀 FIXED: Use console.error instead of browser alert() 💀
     const modal = document.getElementById('perk-selection-modal');
     if (!modal) {
         gameDeboogerWarn('🖤 Perk modal not found');
-        alert('Error: Perk selection modal not found!');
+        console.error('Error: Perk selection modal not found!');
+        addMessage('⚠️ Perk modal not found - please reload the game', 'error');
         return;
     }
 
@@ -6196,7 +6210,8 @@ function openPerkModal() {
 
     if (!elements.perksContainer) {
         gameDeboogerWarn('🖤 Perks container not found');
-        alert('Error: Perks container not found!');
+        console.error('Error: Perks container not found!');
+        addMessage('⚠️ Perks container not found - please reload the game', 'error');
         return;
     }
 
@@ -9703,8 +9718,27 @@ function toggleMenu() {
             showHelpOverlay();
         });
 
+        // 🖤💀 FIXED: Use modal instead of browser confirm() 💀
         document.getElementById('menu-quit-btn').addEventListener('click', () => {
-            if (confirm('Are you sure you want to quit? Unsaved progress will be lost.')) {
+            if (typeof ModalSystem !== 'undefined') {
+                ModalSystem.show({
+                    title: '🚪 Quit Game',
+                    content: '<p>Are you sure you want to quit?</p><p style="color: #f44336; font-size: 12px;">Unsaved progress will be lost.</p>',
+                    buttons: [
+                        { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                        {
+                            label: '🚪 Quit',
+                            type: 'danger',
+                            action: () => {
+                                ModalSystem.hide();
+                                menuOverlay.classList.remove('active');
+                                menuOverlay.style.display = 'none';
+                                quitToMainMenu();
+                            }
+                        }
+                    ]
+                });
+            } else {
                 menuOverlay.classList.remove('active');
                 menuOverlay.style.display = 'none';
                 quitToMainMenu();

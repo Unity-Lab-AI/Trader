@@ -2258,6 +2258,13 @@ const NPCTradeWindow = {
                 herbs: 8, medicinal_herbs: 5, scroll: 4,
                 candle: 10, water: 12
             },
+            // 🖤💀 NEW: Royal Advisor - court sage for Royal Capital (distinct from village elders) 💀
+            royal_advisor: {
+                scroll: 15, ink: 10, quill: 8, parchment: 12,
+                fine_wine: 5, wine: 8, bread: 5, cheese: 3,
+                candle: 12, lantern_oil: 6, book: 4, map: 3,
+                seal_wax: 6, royal_decree: 2
+            },
             villager: {
                 bread: 8, vegetables: 10, eggs: 6, milk: 5,
                 cheese: 4, water: 10, ale: 3

@@ -263,24 +263,38 @@ const PropertyEmployeeUI = {
 
         const price = PropertySystem.calculatePropertyPrice(propertyId, acquisitionType);
 
-        let confirmMsg = `Are you sure you want to ${acquisitionType} a ${propertyType.name} for ${price} gold?`;
+        // 🖤💀 FIXED: Use modal instead of browser confirm() 💀
+        let contentHtml = `<p>Are you sure you want to <strong>${acquisitionType}</strong> a <strong>${propertyType.name}</strong> for <strong>${price} gold</strong>?</p>`;
 
         if (acquisitionType === 'rent') {
             const weeklyRent = Math.round(propertyType.basePrice * 0.1);
-            confirmMsg += `\n\nYou will also pay ${weeklyRent} gold per week in rent.`;
+            contentHtml += `<p style="color: #ff9800;">You will also pay ${weeklyRent} gold per week in rent.</p>`;
         } else if (acquisitionType === 'build') {
             const days = Math.ceil(PropertySystem.getConstructionTime(propertyId) / (24 * 60));
             const materials = PropertySystem.getBuildingMaterials(propertyId);
-            confirmMsg += `\n\nThis will take ${days} days to complete.`;
-            confirmMsg += `\n\nMaterials required: ${Object.entries(materials).map(([m, a]) => `${a} ${m}`).join(', ')}`;
+            contentHtml += `<p style="color: #ff9800;">This will take ${days} days to complete.</p>`;
+            contentHtml += `<p>Materials required: ${Object.entries(materials).map(([m, a]) => `${a} ${m}`).join(', ')}</p>`;
         }
 
-        if (confirm(confirmMsg)) {
+        const doPurchase = () => {
             const success = PropertySystem.purchaseProperty(propertyId, acquisitionType);
             if (success) {
                 this.closeAcquisitionModal();
                 this.updateOwnedProperties();
             }
+        };
+
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: `🏠 ${acquisitionType.charAt(0).toUpperCase() + acquisitionType.slice(1)} Property`,
+                content: contentHtml,
+                buttons: [
+                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                    { label: `✅ ${acquisitionType.charAt(0).toUpperCase() + acquisitionType.slice(1)}`, type: 'primary', action: () => { ModalSystem.hide(); doPurchase(); } }
+                ]
+            });
+        } else {
+            doPurchase();
         }
     },
 
@@ -324,19 +338,30 @@ const PropertyEmployeeUI = {
         }).join('');
     },
 
+    // 🖤💀 FIXED: Use modal instead of browser confirm() 💀
     selectLocationForProperty(locationId) {
         const location = GameWorld.locations[locationId];
         if (!location) return;
 
         // If not at this location, inform user they need to travel
         if (game.currentLocation?.id !== locationId) {
-            if (confirm(`You must travel to ${location.name} to acquire property there. Would you like to set it as your destination?`)) {
-                // Set travel destination
+            const setDestination = () => {
                 if (typeof TravelSystem !== 'undefined') {
                     TravelSystem.setDestination(locationId);
                     this.closeAcquisitionModal();
                     addMessage(`🗺️ Destination set to ${location.name}. Travel there to acquire property!`, 'info');
                 }
+            };
+
+            if (typeof ModalSystem !== 'undefined') {
+                ModalSystem.show({
+                    title: '🗺️ Travel Required',
+                    content: `<p>You must travel to <strong>${location.name}</strong> to acquire property there.</p><p>Would you like to set it as your destination?</p>`,
+                    buttons: [
+                        { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                        { label: '🗺️ Set Destination', type: 'primary', action: () => { ModalSystem.hide(); setDestination(); } }
+                    ]
+                });
             }
             return;
         }
@@ -1028,7 +1053,7 @@ const PropertyEmployeeUI = {
         }
     },
     
-    // 💰 Sell selected property - with proper warning about 50% value loss
+    // 💰 Sell selected property - with proper warning about 50% value loss 🖤💀 FIXED: Use modal instead of browser confirm() 💀
     sellSelectedProperty() {
         if (!this.selectedPropertyId) return;
 
@@ -1037,16 +1062,28 @@ const PropertyEmployeeUI = {
         const property = PropertySystem.getProperty(this.selectedPropertyId);
         const propertyName = property?.type ? (window.propertyTypes?.[property.type]?.name || property.type) : 'property';
 
-        // 💀 Dark warning - you only get 50% back
-        const confirmMsg = `⚠️ SELL ${propertyName.toUpperCase()}?\n\n` +
-            `You will receive: ${sellValue} gold\n` +
-            `(50% of total investment)\n\n` +
-            `This action cannot be undone!`;
-
-        if (confirm(confirmMsg)) {
+        const doSell = () => {
             PropertySystem.sellProperty(this.selectedPropertyId);
             document.getElementById('property-details-modal').classList.add('hidden');
             this.updateOwnedProperties(); // Refresh display
+        };
+
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: `💰 Sell ${propertyName}`,
+                content: `
+                    <p>Are you sure you want to sell this <strong>${propertyName}</strong>?</p>
+                    <p style="color: #4caf50; font-weight: bold;">You will receive: ${sellValue} gold</p>
+                    <p style="color: #ff9800; font-size: 12px;">(50% of total investment)</p>
+                    <p style="color: #f44336; font-size: 12px;">This action cannot be undone!</p>
+                `,
+                buttons: [
+                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                    { label: '💰 Sell', type: 'danger', action: () => { ModalSystem.hide(); doSell(); } }
+                ]
+            });
+        } else {
+            doSell();
         }
     },
     
@@ -1273,14 +1310,30 @@ const PropertyEmployeeUI = {
         this.showEmployeeDetails(this.selectedEmployeeId); // Refresh display
     },
     
-    // Fire selected employee
+    // Fire selected employee 🖤💀 FIXED: Use modal instead of browser confirm() 💀
     fireSelectedEmployee() {
         if (!this.selectedEmployeeId) return;
-        
-        if (confirm('Are you sure you want to fire this employee?')) {
+
+        const employee = EmployeeSystem.getEmployee(this.selectedEmployeeId);
+        const employeeName = employee?.name || 'this employee';
+
+        const doFire = () => {
             EmployeeSystem.fireEmployee(this.selectedEmployeeId);
             document.getElementById('employee-details-modal').classList.add('hidden');
             this.updateHiredEmployees(); // Refresh display
+        };
+
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: '🔥 Fire Employee',
+                content: `<p>Are you sure you want to fire <strong>${employeeName}</strong>?</p><p style="color: #f44336; font-size: 12px;">This will permanently dismiss them.</p>`,
+                buttons: [
+                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                    { label: '🔥 Fire', type: 'danger', action: () => { ModalSystem.hide(); doFire(); } }
+                ]
+            });
+        } else {
+            doFire();
         }
     },
     

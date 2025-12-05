@@ -562,6 +562,17 @@ const PeoplePanel = {
                 this.updateNPCStatsBar(this.currentNPC);
             }
         });
+
+        // 🖤💀 FIXED: Listen for reputation changes to update stats bar in real-time 💀
+        document.addEventListener('npc-reputation-changed', (e) => {
+            if (this.currentNPC && this.viewMode === 'chat') {
+                const npcId = this.currentNPC.id || this.currentNPC.type;
+                // 🦇 Only refresh if the changed NPC is the one we're viewing
+                if (e.detail.npcId === npcId || e.detail.npcId.includes(this.currentNPC.type)) {
+                    this.updateNPCStatsBar(this.currentNPC);
+                }
+            }
+        });
     },
 
     // 🔓 OPEN PANEL
@@ -1158,7 +1169,9 @@ const PeoplePanel = {
         });
 
         // ⚔️ Attack - violence is always an option (but has consequences)
-        if (!['guard', 'noble', 'king', 'queen'].includes(npcType) || isEncounter) {
+        // 🖤💀 Boatman is mystical - cannot be attacked. Guards/nobles protected unless encounter. 💀
+        const unattackableNPCs = ['guard', 'noble', 'king', 'queen', 'boatman', 'ferryman'];
+        if (!unattackableNPCs.includes(npcType) || isEncounter) {
             actions.push({
                 label: '⚔️ Attack',
                 action: () => this.attackNPC(),
@@ -2709,6 +2722,7 @@ Speak cryptically and briefly. You offer passage to the ${inDoom ? 'normal world
             herbalist: '🌿', hunter: '🏹', druid: '🌳', sailor: '⚓',
             explorer: '🧭', adventurer: '⚔️', banker: '🏦',
             prophet: '🎭', mysterious_stranger_intro: '🎭', hooded_stranger: '🎭', // 🖤 Hooded Stranger intro NPC
+            royal_advisor: '📜', // 🖤💀 NEW: Royal Advisor at Royal Capital
             default: '👤'
         };
         return icons[type] || icons.default;
@@ -2729,6 +2743,7 @@ Speak cryptically and briefly. You offer passage to the ${inDoom ? 'normal world
             hunter: 'Hunter', druid: 'Forest Keeper', sailor: 'Sailor',
             explorer: 'Explorer', adventurer: 'Adventurer', banker: 'Banker',
             prophet: 'Mysterious Prophet', mysterious_stranger_intro: 'Mysterious Figure', hooded_stranger: 'Hooded Stranger', // 🖤 Hooded Stranger
+            royal_advisor: 'Royal Advisor', // 🖤💀 NEW: Court sage for Royal Capital
             default: 'Local'
         };
         return titles[type] || titles.default;
@@ -2746,6 +2761,7 @@ Speak cryptically and briefly. You offer passage to the ${inDoom ? 'normal world
             general_store: 'Sells general supplies and necessities.',
             boatman: 'A cloaked figure beside a shimmering portal. Can transport between worlds.',
             hooded_stranger: 'A mysterious cloaked figure watching from the shadows. They seem to have something important to tell you.',
+            royal_advisor: 'A learned counselor to the crown. Knows the kingdom\'s secrets and political intrigues.', // 🖤💀 NEW
             default: 'A local going about their business.'
         };
         return descriptions[type] || descriptions.default;

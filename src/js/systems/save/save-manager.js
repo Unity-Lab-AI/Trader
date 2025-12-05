@@ -1719,23 +1719,37 @@ const SaveManager = {
         }
     },
 
+    // 🖤💀 FIXED: Use modal instead of browser confirm() 💀
     deleteSelectedLoad() {
         if (this._selectedLoadSlot === null) return;
 
-        if (!confirm('Delete this save? This cannot be undone!')) return;
+        const doDelete = () => {
+            if (this._selectedLoadType === 'manual') {
+                this.deleteSave(this._selectedLoadSlot);
+            } else {
+                localStorage.removeItem(`tradingGameAutoSave_${this._selectedLoadSlot}`);
+                this.autoSaveSlots = this.autoSaveSlots.filter(s => s.index !== this._selectedLoadSlot);
+                this.saveSaveSlotsMetadata();
+            }
 
-        if (this._selectedLoadType === 'manual') {
-            this.deleteSave(this._selectedLoadSlot);
+            this._selectedLoadSlot = null;
+            this.renderLoadSlots();
+            document.getElementById('confirm-load-btn')?.setAttribute('disabled', 'true');
+            document.getElementById('delete-save-btn')?.setAttribute('disabled', 'true');
+        };
+
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: '🗑️ Delete Save',
+                content: '<p>Delete this save?</p><p style="color: #f44336; font-size: 12px;">This cannot be undone!</p>',
+                buttons: [
+                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                    { label: '🗑️ Delete', type: 'danger', action: () => { ModalSystem.hide(); doDelete(); } }
+                ]
+            });
         } else {
-            localStorage.removeItem(`tradingGameAutoSave_${this._selectedLoadSlot}`);
-            this.autoSaveSlots = this.autoSaveSlots.filter(s => s.index !== this._selectedLoadSlot);
-            this.saveSaveSlotsMetadata();
+            doDelete();
         }
-
-        this._selectedLoadSlot = null;
-        this.renderLoadSlots();
-        document.getElementById('confirm-load-btn')?.setAttribute('disabled', 'true');
-        document.getElementById('delete-save-btn')?.setAttribute('disabled', 'true');
     }
 };
 

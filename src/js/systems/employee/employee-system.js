@@ -1292,57 +1292,96 @@ const EmployeeSystem = {
         addMessage(`Employee: ${employee.name} (${employeeType.name}) - Level ${employee.level}, Morale ${employee.morale}%, Wage ${employee.wage} gold/week`);
     },
     
-    // Adjust employee wage
+    // Adjust employee wage 🖤💀 FIXED: Use modal instead of browser prompt() 💀
     adjustWage(employeeId) {
         const employee = this.getEmployee(employeeId);
         if (!employee) return;
-        
-        const newWage = prompt(`Enter new weekly wage for ${employee.name} (current: ${employee.wage}):`);
-        if (!newWage) return;
-        
-        const wage = parseInt(newWage);
-        if (isNaN(wage) || wage < 1) {
-            addMessage('Invalid wage amount!');
-            return;
+
+        const applyWage = (newWage) => {
+            const wage = parseInt(newWage);
+            if (isNaN(wage) || wage < 1) {
+                addMessage('Invalid wage amount!');
+                return;
+            }
+
+            employee.wage = wage;
+            addMessage(`Adjusted ${employee.name}'s wage to ${wage} gold/week!`);
+
+            // Update morale based on wage change
+            const wageChange = wage - this.employeeTypes[employee.type].baseWage;
+            if (wageChange > 0) {
+                employee.morale = Math.min(100, employee.morale + 10);
+            } else if (wageChange < -5) {
+                employee.morale = Math.max(0, employee.morale - 15);
+            }
+
+            // Update UI
+            this.updateEmployeeDisplay();
+        };
+
+        if (typeof ModalSystem !== 'undefined') {
+            const baseWage = this.employeeTypes[employee.type].baseWage;
+            const content = `
+                <p>Enter new weekly wage for <strong>${employee.name}</strong></p>
+                <p style="font-size: 12px; color: #888;">Current wage: ${employee.wage} gold/week | Base: ${baseWage} gold</p>
+                <input type="number" id="wage-input" value="${employee.wage}" min="1" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.4); border: 1px solid rgba(79,195,247,0.3); border-radius: 6px; color: #fff; font-size: 16px; margin-top: 10px;">
+                <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                    ${[5, 10, 15, 20, 25, 30].map(w => `<button onclick="document.getElementById('wage-input').value=${w}" style="padding: 5px 10px; background: rgba(79,195,247,0.2); border: 1px solid rgba(79,195,247,0.3); border-radius: 4px; color: #4fc3f7; cursor: pointer;">${w}g</button>`).join('')}
+                </div>
+            `;
+            ModalSystem.show({
+                title: '💰 Adjust Wage',
+                content: content,
+                buttons: [
+                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                    { label: '✅ Apply', type: 'primary', action: () => {
+                        const input = document.getElementById('wage-input');
+                        if (input) applyWage(input.value);
+                        ModalSystem.hide();
+                    }}
+                ]
+            });
+        } else {
+            // Fallback - just skip
+            addMessage('Cannot adjust wage - modal system unavailable');
         }
-        
-        employee.wage = wage;
-        addMessage(`Adjusted ${employee.name}'s wage to ${wage} gold/week!`);
-        
-        // Update morale based on wage change
-        const wageChange = wage - this.employeeTypes[employee.type].baseWage;
-        if (wageChange > 0) {
-            employee.morale = Math.min(100, employee.morale + 10);
-        } else if (wageChange < -5) {
-            employee.morale = Math.max(0, employee.morale - 15);
-        }
-        
-        // Update UI
-        this.updateEmployeeDisplay();
     },
     
-    // Fire employee
+    // Fire employee 🖤💀 FIXED: Use modal instead of browser confirm() 💀
     fireEmployee(employeeId) {
         const employee = this.getEmployee(employeeId);
         if (!employee) return;
-        
-        if (!confirm(`Are you sure you want to fire ${employee.name}?`)) return;
-        
-        // Remove from assigned property
-        if (employee.assignedProperty) {
-            const property = PropertyEmployeeBridge.getProperty(employee.assignedProperty);
-            if (property) {
-                property.employees = property.employees.filter(id => id !== employee.id);
+
+        const doFire = () => {
+            // Remove from assigned property
+            if (employee.assignedProperty) {
+                const property = PropertyEmployeeBridge.getProperty(employee.assignedProperty);
+                if (property) {
+                    property.employees = property.employees.filter(id => id !== employee.id);
+                }
             }
+
+            // Remove from player's employees
+            game.player.ownedEmployees = game.player.ownedEmployees.filter(emp => emp.id !== employeeId);
+
+            addMessage(`Fired ${employee.name}!`);
+
+            // Update UI
+            this.updateEmployeeDisplay();
+            PropertyEmployeeBridge.updatePropertyDisplay();
+        };
+
+        if (typeof ModalSystem !== 'undefined') {
+            ModalSystem.show({
+                title: '🔥 Fire Employee',
+                content: `<p>Are you sure you want to fire <strong>${employee.name}</strong>?</p><p style="color: #f44336; font-size: 12px;">They will be permanently dismissed.</p>`,
+                buttons: [
+                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                    { label: '🔥 Fire', type: 'danger', action: () => { ModalSystem.hide(); doFire(); } }
+                ]
+            });
+        } else {
+            doFire();
         }
-        
-        // Remove from player's employees
-        game.player.ownedEmployees = game.player.ownedEmployees.filter(emp => emp.id !== employeeId);
-        
-        addMessage(`Fired ${employee.name}!`);
-        
-        // Update UI
-        this.updateEmployeeDisplay();
-        PropertyEmployeeBridge.updatePropertyDisplay();
     }
 };
