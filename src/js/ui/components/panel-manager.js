@@ -22,26 +22,31 @@ const PanelManager = {
     // Maps customToggle string names to actual functions
     toggleHandlers: {
         'KeyBindings.openMenu()': () => typeof KeyBindings !== 'undefined' && KeyBindings.openMenu?.(),
+        'KeyBindings.openPeople()': () => typeof KeyBindings !== 'undefined' && KeyBindings.openPeople?.(),
+        'KeyBindings.openQuests()': () => typeof KeyBindings !== 'undefined' && KeyBindings.openQuests?.(),
         'QuestSystem.toggleQuestTracker()': () => typeof QuestSystem !== 'undefined' && QuestSystem.toggleQuestTracker?.(),
         'openMarket()': () => typeof openMarket === 'function' && openMarket()
     },
 
     // All managed panel IDs and their info
+    // 🖤💀 Order should match bottom action bar for consistency 💀
     panelInfo: {
-        'game-setup-panel': { name: 'New Game', icon: '🎮', shortcut: '' }, // 🖤 Setup panel needs tracking for proper hide
+        'game-setup-panel': { name: 'New Game', icon: '🎮', shortcut: '' },
+        'game-menu-overlay': { name: 'Menu', icon: '📋', shortcut: 'Escape', useActiveClass: true, customToggle: 'KeyBindings.openMenu()' },
         'market-panel': { name: 'Market', icon: '🏪', shortcut: 'M', customToggle: 'openMarket()' },
-        'inventory-panel': { name: 'Inventory', icon: '🎒', shortcut: 'I' },
         'travel-panel': { name: 'Travel', icon: '🗺️', shortcut: 'T' },
         'transportation-panel': { name: 'Transport', icon: '🚗', shortcut: 'W' },
+        'inventory-panel': { name: 'Inventory', icon: '🎒', shortcut: 'I' },
         'character-sheet-overlay': { name: 'Character', icon: '👤', shortcut: 'C', useActiveClass: true },
+        'people-panel': { name: 'People', icon: '👥', shortcut: 'O', customToggle: 'KeyBindings.openPeople()' },  // 🖤💀 ADDED 💀
         'financial-sheet-overlay': { name: 'Finances', icon: '💰', shortcut: 'F', useActiveClass: true },
-        'achievement-overlay': { name: 'Achievements', icon: '🏆', shortcut: 'H', useActiveClass: true },
+        'quest-log-panel': { name: 'Quests', icon: '📜', shortcut: 'Q', customToggle: 'KeyBindings.openQuests()' },
+        'achievement-overlay': { name: 'Achievements', icon: '🏆', shortcut: 'A', useActiveClass: true },
         'settings-panel': { name: 'Settings', icon: '⚙️', shortcut: ',' },
         'property-employee-panel': { name: 'Properties', icon: '🏠', shortcut: 'P', useActiveClass: true },
         'location-panel': { name: 'Location', icon: '📍', shortcut: '' },
         'side-panel': { name: 'Player Info', icon: '👤', shortcut: '' },
         'message-log': { name: 'Messages', icon: '💬', shortcut: '' },
-        'game-menu-overlay': { name: 'Menu', icon: '📋', shortcut: 'Escape', useActiveClass: true, customToggle: 'KeyBindings.openMenu()' },
         'help-overlay': { name: 'Help', icon: '❓', shortcut: '', useActiveClass: true },
         'quest-tracker': { name: 'Quest Tracker', icon: '📋', shortcut: '', customToggle: 'QuestSystem.toggleQuestTracker()' }
     },
@@ -286,20 +291,21 @@ const PanelManager = {
         `;
 
         // Add buttons for main panels
-        // 🖤 side-panel (Player Info) is ALWAYS visible - no toggle button needed
+        // 🖤💀 Order matches bottom action bar: Menu, Market, Travel, Transport, Inventory, Character, People, Finances, Quests, Achievements, Settings 💀
         const mainPanels = [
-            'game-menu-overlay',  // 🖤 Menu button at top - opens fullscreen menu
-            'market-panel',
-            'inventory-panel',
-            'travel-panel',
-            'transportation-panel',
-            'character-sheet-overlay',
-            'financial-sheet-overlay',
-            'property-employee-panel',
-            'achievement-overlay',
-            'settings-panel',
-            'message-log',
-            'quest-tracker'  // 🖤 Added quest tracker widget toggle
+            'game-menu-overlay',      // 📋 Menu [ESC]
+            'market-panel',           // 🏪 Market [M]
+            'travel-panel',           // 🗺️ Travel [T]
+            'transportation-panel',   // 🚗 Transport [W]
+            'inventory-panel',        // 🎒 Inventory [I]
+            'character-sheet-overlay', // 👤 Character [C]
+            'people-panel',           // 👥 People [O] - 🖤 ADDED 💀
+            'financial-sheet-overlay', // 💰 Finances [F]
+            'quest-log-panel',        // 📜 Quests [Q]
+            'achievement-overlay',    // 🏆 Achievements [A]
+            'settings-panel',         // ⚙️ Settings [,]
+            'message-log',            // 💬 Messages
+            'quest-tracker'           // 📋 Quest Tracker widget
         ];
 
         mainPanels.forEach(panelId => {

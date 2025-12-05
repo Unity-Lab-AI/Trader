@@ -623,22 +623,40 @@ const KeyBindings = {
     },
 
     // 🚗 Toggle transportation panel
+    // 🖤💀 FIXED: Was calling openTravel() instead of transportation panel! 💀
     openTransportation() {
-        if (typeof game !== 'undefined' && game.state === GameState.TRAVEL) {
-            if (typeof changeState === 'function') changeState(GameState.PLAYING);
+        const panel = document.getElementById('transportation-panel');
+        if (panel && !panel.classList.contains('hidden')) {
+            // Panel is open - close it
+            panel.classList.add('hidden');
+            if (typeof PanelManager !== 'undefined') PanelManager.updateToolbarButtons();
+            if (typeof addMessage === 'function') addMessage('🚗 Transportation closed [W]');
         } else {
-            if (typeof openTravel === 'function') openTravel();
-            else console.warn('openTravel function not found');
+            // Panel is closed - open it
+            if (panel) {
+                panel.classList.remove('hidden');
+                if (typeof PanelManager !== 'undefined') PanelManager.updateToolbarButtons();
+                if (typeof addMessage === 'function') addMessage('🚗 Transportation opened [W]');
+            } else {
+                console.warn('transportation-panel not found');
+            }
         }
     },
 
     // 🎒 Toggle inventory panel
+    // 🖤💀 FIXED: Proper toggle logic like other panels 💀
     openInventory() {
-        if (typeof game !== 'undefined' && game.state === GameState.INVENTORY) {
-            if (typeof changeState === 'function') changeState(GameState.PLAYING);
+        const panel = document.getElementById('inventory-panel');
+        if (panel && !panel.classList.contains('hidden')) {
+            // Panel is open - close it
+            panel.classList.add('hidden');
+            if (typeof PanelManager !== 'undefined') PanelManager.updateToolbarButtons();
+            if (typeof addMessage === 'function') addMessage('🎒 Inventory closed [I]');
         } else {
+            // Panel is closed - open it
             if (typeof openInventory === 'function') openInventory();
             else console.warn('openInventory function not found');
+            if (typeof addMessage === 'function') addMessage('🎒 Inventory opened [I]');
         }
     },
 
