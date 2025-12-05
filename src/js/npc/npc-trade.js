@@ -1486,51 +1486,52 @@ const NPCTradeWindow = {
     },
 
     // 🪙 Get base gold amount for NPC type 💰
+    // 🖤💀 1000x GOLD BOOST - NPCs need real money to trade properly! 💰
     _getNPCGoldAmount(npcType) {
         const npcGoldAmounts = {
-            // === WEALTHY NPCs (100-500 gold) ===
-            noble: 500, banker: 400, grand_market_merchant: 350, jeweler: 300,
-            traveling_merchant: 250, merchant: 200, captain: 150, harbormaster: 150,
+            // === WEALTHY NPCs (100k-500k gold) ===
+            noble: 500000, banker: 400000, grand_market_merchant: 350000, jeweler: 300000,
+            traveling_merchant: 250000, merchant: 200000, captain: 150000, harbormaster: 150000,
 
-            // === MIDDLE CLASS (50-100 gold) ===
-            blacksmith: 100, weaponsmith: 100, armorsmith: 100, apothecary: 80,
-            innkeeper: 80, tavernkeeper: 70, clothier: 80, furrier: 75,
-            healer: 60, alchemist: 70, vintner: 60, caravan_master: 90,
-            dockmaster: 80, treasure_hunter: 60, gem_collector: 80,
+            // === MIDDLE CLASS (50k-100k gold) ===
+            blacksmith: 100000, weaponsmith: 100000, armorsmith: 100000, apothecary: 80000,
+            innkeeper: 80000, tavernkeeper: 70000, clothier: 80000, furrier: 75000,
+            healer: 60000, alchemist: 70000, vintner: 60000, caravan_master: 90000,
+            dockmaster: 80000, treasure_hunter: 60000, gem_collector: 80000,
 
-            // === WORKING CLASS (20-50 gold) ===
-            farmer: 30, fisherman: 35, miner: 40, lumberjack: 35,
-            baker: 40, cook: 35, herbalist: 30, hunter: 35, trapper: 30,
-            sailor: 25, stablemaster: 40, ferryman: 30, miller: 35,
-            shepherd: 25, beekeeper: 30, orchardist: 25,
+            // === WORKING CLASS (20k-50k gold) ===
+            farmer: 30000, fisherman: 35000, miner: 40000, lumberjack: 35000,
+            baker: 40000, cook: 35000, herbalist: 30000, hunter: 35000, trapper: 30000,
+            sailor: 25000, stablemaster: 40000, ferryman: 30000, miller: 35000,
+            shepherd: 25000, beekeeper: 30000, orchardist: 25000,
 
-            // === POOR/SCHOLARLY (10-20 gold) ===
-            villager: 15, farmhand: 10, guard: 20, sergeant: 30, scout: 25,
-            traveler: 15, wanderer: 10, hermit: 5, elder: 20, priest: 25,
-            scholar: 20, scribe: 25, acolyte: 15, druid: 15, forager: 10,
-            peddler: 25, bartender: 35, bard: 20, adventurer: 40, explorer: 35,
+            // === POOR/SCHOLARLY (10k-20k gold) ===
+            villager: 15000, farmhand: 10000, guard: 20000, sergeant: 30000, scout: 25000,
+            traveler: 15000, wanderer: 10000, hermit: 5000, elder: 20000, priest: 25000,
+            scholar: 20000, scribe: 25000, acolyte: 15000, druid: 15000, forager: 10000,
+            peddler: 25000, bartender: 35000, bard: 20000, adventurer: 40000, explorer: 35000,
 
             // === SHADY (varies - they hide their wealth) ===
-            smuggler: 100, thief: 50, fence: 150,
+            smuggler: 100000, thief: 50000, fence: 150000,
 
-            // === DOOM WORLD - Mostly broke 💀 ===
-            fallen_noble: 10, deposed_noble: 5, ruined_banker: 0,
-            desperate_guard: 5, hollow_guard: 3, paranoid_guard: 8,
-            crazed_blacksmith: 15, one_armed_blacksmith: 10,
-            plague_apothecary: 5, hoarding_apothecary: 50,
-            desperate_merchant: 10, scavenger_merchant: 20, stranded_merchant: 5, hoarding_merchant: 100,
-            traumatized_innkeeper: 10, desperate_innkeeper: 15, surviving_innkeeper: 20,
-            poisoned_herbalist: 5, corrupted_druid: 5, mad_forager: 2,
-            starving_farmer: 2, burned_farmer: 0, refugee_farmer: 5,
-            trapped_miner: 5, buried_miner: 3, dying_miner: 0,
-            hunted_hunter: 8, last_hunter: 15, desperate_trapper: 5,
-            shell_shocked_traveler: 5, stranded_traveler: 10, lost_wanderer: 0,
-            drowned_sailor: 0, ghost_sailor: 0, mad_ferryman: 30,
-            haunted_elder: 10, grief_stricken_elder: 5,
-            doomsayer: 5, mad_captain: 10, insane_hermit: 0,
-            broken_captain: 5, starving_jeweler: 15, ragged_tailor: 5, mutinous_sailor: 20
+            // === DOOM WORLD - Still have SOME gold even in apocalypse 💀 ===
+            fallen_noble: 10000, deposed_noble: 5000, ruined_banker: 1000,
+            desperate_guard: 5000, hollow_guard: 3000, paranoid_guard: 8000,
+            crazed_blacksmith: 15000, one_armed_blacksmith: 10000,
+            plague_apothecary: 5000, hoarding_apothecary: 50000,
+            desperate_merchant: 10000, scavenger_merchant: 20000, stranded_merchant: 5000, hoarding_merchant: 100000,
+            traumatized_innkeeper: 10000, desperate_innkeeper: 15000, surviving_innkeeper: 20000,
+            poisoned_herbalist: 5000, corrupted_druid: 5000, mad_forager: 2000,
+            starving_farmer: 2000, burned_farmer: 1000, refugee_farmer: 5000,
+            trapped_miner: 5000, buried_miner: 3000, dying_miner: 1000,
+            hunted_hunter: 8000, last_hunter: 15000, desperate_trapper: 5000,
+            shell_shocked_traveler: 5000, stranded_traveler: 10000, lost_wanderer: 1000,
+            drowned_sailor: 1000, ghost_sailor: 1000, mad_ferryman: 30000,
+            haunted_elder: 10000, grief_stricken_elder: 5000,
+            doomsayer: 5000, mad_captain: 10000, insane_hermit: 1000,
+            broken_captain: 5000, starving_jeweler: 15000, ragged_tailor: 5000, mutinous_sailor: 20000
         };
-        return npcGoldAmounts[npcType] ?? 25; // Default 25 gold
+        return npcGoldAmounts[npcType] ?? 25000; // Default 25k gold
     },
 
     getNPCItemQty(itemId) {

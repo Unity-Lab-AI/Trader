@@ -2564,9 +2564,28 @@ const game = {
         if (timeDisplay) {
             timeDisplay.textContent = TimeSystem.getFormattedTime();
         }
-        
+
         // Update time control buttons
         this.updateTimeControls();
+
+        // 🖤💀 UNIVERSAL FINANCIAL TRACKING - Update gold display every tick 💰
+        // This ensures all sales, purchases, wages, and income show immediately
+        if (typeof updatePlayerInfo === 'function') {
+            updatePlayerInfo();
+        }
+
+        // 🖤💀 Sync game.player.gold with GoldManager/UniversalGoldManager if available 💰
+        if (typeof UniversalGoldManager !== 'undefined' && this.player) {
+            const currentGold = UniversalGoldManager.getPersonalGold();
+            if (this.player.gold !== currentGold) {
+                this.player.gold = currentGold;
+            }
+        } else if (typeof GoldManager !== 'undefined' && this.player) {
+            const currentGold = GoldManager.getGold();
+            if (this.player.gold !== currentGold) {
+                this.player.gold = currentGold;
+            }
+        }
     },
     
     // Update time control button states
