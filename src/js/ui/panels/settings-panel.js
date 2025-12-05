@@ -146,8 +146,8 @@ const SettingsPanel = {
                                 </div>
                                 <div class="setting-item">
                                     <label for="music-volume">Music Volume</label>
-                                    <input type="range" id="music-volume" min="0" max="1" step="0.1" value="0.5">
-                                    <span class="setting-value">50%</span>
+                                    <input type="range" id="music-volume" min="0" max="1" step="0.05" value="0.3">
+                                    <span class="setting-value">30%</span>
                                 </div>
                                 <div class="setting-item">
                                     <label for="sfx-volume">Sound Effects Volume</label>

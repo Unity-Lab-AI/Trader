@@ -9,29 +9,44 @@
 
 const MusicSystem = {
     // 🎵 Music tracks by category
+    // Each track has a path and a volume multiplier (0.0-1.0) for normalization
+    // 🖤💀 Adjust multipliers to balance tracks - lower = quieter 💀
     TRACKS: {
         menu: [
-            'assets/Music/Start Menu screen(15sec time out before replay creating music loop).mp3'
+            { path: 'assets/Music/Start Menu screen(15sec time out before replay creating music loop).mp3', volumeMult: 0.6 }
         ],
         normal: [
-            'assets/Music/normal world1.mp3',
-            'assets/Music/normal world2.mp3',
-            'assets/Music/normal world3.mp3',
-            'assets/Music/normal world4.mp3'
+            { path: 'assets/Music/normal world1.mp3', volumeMult: 0.7 },
+            { path: 'assets/Music/normal world2.mp3', volumeMult: 0.7 },
+            { path: 'assets/Music/normal world3.mp3', volumeMult: 0.7 },
+            { path: 'assets/Music/normal world4.mp3', volumeMult: 0.7 }
         ],
         dungeon: [
-            'assets/Music/dungeon1.mp3',
-            'assets/Music/dungeon2.mp3',
-            'assets/Music/dungeon3.mp3',
-            'assets/Music/dungeon4.mp3',
-            'assets/Music/dungeon5.mp3'
+            { path: 'assets/Music/dungeon1.mp3', volumeMult: 0.6 },
+            { path: 'assets/Music/dungeon2.mp3', volumeMult: 0.6 },
+            { path: 'assets/Music/dungeon3.mp3', volumeMult: 0.6 },
+            { path: 'assets/Music/dungeon4.mp3', volumeMult: 0.6 },
+            { path: 'assets/Music/dungeon5.mp3', volumeMult: 0.6 }
         ],
         doom: [
-            'assets/Music/doom world1.mp3',
-            'assets/Music/doom world2.mp3',
-            'assets/Music/doom world3.mp3',
-            'assets/Music/doom world4.mp3'
+            { path: 'assets/Music/doom world1.mp3', volumeMult: 0.5 },
+            { path: 'assets/Music/doom world2.mp3', volumeMult: 0.5 },
+            { path: 'assets/Music/doom world3.mp3', volumeMult: 0.5 },
+            { path: 'assets/Music/doom world4.mp3', volumeMult: 0.5 }
         ]
+    },
+
+    // 🎚️ Get the volume multiplier for current track
+    getCurrentTrackVolumeMult() {
+        if (!this.currentCategory) return 1.0;
+        const tracks = this.TRACKS[this.currentCategory];
+        if (!tracks || !tracks[this.currentTrackIndex]) return 1.0;
+        return tracks[this.currentTrackIndex].volumeMult || 1.0;
+    },
+
+    // 🎚️ Get effective volume (master volume * track multiplier)
+    getEffectiveVolume() {
+        return this.settings.volume * this.getCurrentTrackVolumeMult();
     },
 
     // 🎧 Current state
@@ -43,9 +58,10 @@ const MusicSystem = {
     gapTimeout: null,
 
     // ⚙️ Settings
+    // 🖤💀 Master volume lowered to 0.3 for background music - not overpowering 💀
     settings: {
         enabled: true,
-        volume: 0.5,  // 0.0 to 1.0
+        volume: 0.3,  // 0.0 to 1.0 - keep low for background ambiance
         gapBetweenTracks: 15000,  // 15 seconds in milliseconds
         fadeOutDuration: 1000,    // 1 second fade out
         fadeInDuration: 500       // 0.5 second fade in
@@ -136,10 +152,11 @@ const MusicSystem = {
     setVolume(volume) {
         this.settings.volume = Math.max(0, Math.min(1, volume));
         if (this.currentAudio) {
-            this.currentAudio.volume = this.settings.volume;
+            // 🖤💀 Use effective volume (master * track multiplier) 💀
+            this.currentAudio.volume = this.getEffectiveVolume();
         }
         this.saveSettings();
-        console.log(`🎵 MusicSystem: Volume set to ${Math.round(this.settings.volume * 100)}%`);
+        console.log(`🎵 MusicSystem: Volume set to ${Math.round(this.settings.volume * 100)}% (effective: ${Math.round(this.getEffectiveVolume() * 100)}%)`);
     },
 
     // 🔇 Toggle music on/off
@@ -212,7 +229,8 @@ const MusicSystem = {
 
         // Pick a random track from the new category
         const newTrackIndex = newCategory === 'menu' ? 0 : Math.floor(Math.random() * tracks.length);
-        const newTrackPath = tracks[newTrackIndex];
+        const newTrack = tracks[newTrackIndex];
+        const newTrackPath = newTrack.path;  // 🖤💀 Use .path from track object 💀
 
         console.log(`🎵 MusicSystem: Crossfading to ${newTrackPath.split('/').pop()}`);
 
@@ -238,7 +256,12 @@ const MusicSystem = {
         const fadeDuration = 2000; // 2 second crossfade
         const stepTime = 50; // Update every 50ms
         const steps = fadeDuration / stepTime;
-        const volumeStep = this.settings.volume / steps;
+
+        // 🖤💀 Get target volume for new track (master * track multiplier) 💀
+        const newTrack = this.TRACKS[newCategory]?.[newTrackIndex];
+        const newTrackVolumeMult = newTrack?.volumeMult || 1.0;
+        const targetVolume = this.settings.volume * newTrackVolumeMult;
+        const volumeStep = targetVolume / steps;
 
         let currentStep = 0;
         const oldAudio = this.currentAudio;
@@ -252,9 +275,9 @@ const MusicSystem = {
                 oldAudio.volume = Math.max(0, oldAudio.volume - volumeStep);
             }
 
-            // Fade in new track
-            if (newAudio && newAudio.volume < this.settings.volume) {
-                newAudio.volume = Math.min(this.settings.volume, newAudio.volume + volumeStep);
+            // Fade in new track to its target volume
+            if (newAudio && newAudio.volume < targetVolume) {
+                newAudio.volume = Math.min(targetVolume, newAudio.volume + volumeStep);
             }
 
             // Crossfade complete
@@ -312,8 +335,10 @@ const MusicSystem = {
         const tracks = this.TRACKS[this.currentCategory];
         if (!tracks || tracks.length === 0) return;
 
-        const trackPath = tracks[this.currentTrackIndex];
-        console.log(`🎵 MusicSystem: Playing ${this.currentCategory} track ${this.currentTrackIndex + 1}/${tracks.length}: ${trackPath.split('/').pop()}`);
+        // 🖤💀 Use track object with .path property 💀
+        const track = tracks[this.currentTrackIndex];
+        const trackPath = track.path;
+        console.log(`🎵 MusicSystem: Playing ${this.currentCategory} track ${this.currentTrackIndex + 1}/${tracks.length}: ${trackPath.split('/').pop()} (vol mult: ${track.volumeMult})`);
 
         this.currentAudio.src = trackPath;
         this.currentAudio.volume = 0; // Start silent for fade in
@@ -382,7 +407,8 @@ const MusicSystem = {
     fadeIn() {
         if (!this.currentAudio) return;
 
-        const targetVolume = this.settings.volume;
+        // 🖤💀 Use effective volume (master * track multiplier) 💀
+        const targetVolume = this.getEffectiveVolume();
         const step = targetVolume / (this.settings.fadeInDuration / 50);
         let currentVolume = 0;
 
