@@ -683,8 +683,12 @@ RELATIONSHIP MEMORY:
         const locationId = game?.currentLocation?.id;
         if (!locationId) return [];
 
-        const events = CityEventSystem.activeEvents?.[locationId] || [];
-        return events.slice(0, 3).map(e => e.name || e.type);
+        // 🖤💀 CityEventSystem.activeEvents[locationId] is a SINGLE event object, not an array!
+        const event = CityEventSystem.activeEvents?.[locationId];
+        if (!event || !event.active) return [];
+
+        // Return as single-item array with event name/type
+        return [event.name || event.type];
     },
 
     generateRandomSeed() {
@@ -1969,14 +1973,14 @@ ACCENT: Homey, rustic. Comfortable and inviting.`,
             // GAME-SPECIFIC KNOWLEDGE - VERIFIED AGAINST ACTUAL GAME MECHANICS
             gameKnowledge: {
                 sells: ['bread', 'cheese', 'cooked meat', 'ale', 'wine', 'dried meat', 'fresh fish', 'apples', 'carrots', 'honey', 'milk', 'eggs'],
-                services: ['Rest for 20 gold - sleep 6 hours, restore 60% health, fully restore hunger and thirst', 'Hot meals and drinks', 'Local gossip and rumors', 'News about city events'],
-                priceRange: 'Food costs 5-30 gold depending on quality. Resting costs 20 gold per night.',
+                services: ['Rest for 10 gold - sleep 6 hours, fully restore all vitals to 100%', 'Hot meals and drinks', 'Local gossip and rumors', 'News about city events'],
+                priceRange: 'Food costs 5-30 gold depending on quality. Resting costs 10 gold per night.',
                 knowsAbout: ['Local gossip', 'City events and festivals', 'Which merchants are trustworthy', 'Trade route conditions', 'Recent travelers and their stories'],
                 canHelp: ['Restoring health through rest', 'Filling your hunger and thirst', 'Learning about market conditions', 'Hearing news from other cities'],
                 commonPhrases: ['Have you eaten?', 'You look exhausted, dear', 'Between you and me...', 'A traveler told me...']
             },
-            worldKnowledge: `You run an inn where travelers can rest. Resting costs 20 gold and takes 6 hours of game time.
-            Resting restores 60% of maximum health and fully restores hunger and thirst - essential for weary travelers.
+            worldKnowledge: `You run an inn where travelers can rest. Resting costs 10 gold and takes 6 hours of game time.
+            Resting fully restores all vitals to 100% - health, hunger, thirst, and stamina - essential for weary travelers.
             Food items restore hunger: bread, cheese, cooked meat, dried meat, fish, fruit, and vegetables.
             Drinks like ale, wine, and milk restore thirst. Hunger and thirst decrease over time and affect health if too low.
             You hear about city events, market prices, and gossip from all who pass through.`
@@ -2240,7 +2244,7 @@ ACCENT: Soft, nurturing. The voice of comfort and care.`,
             worldKnowledge: `You understand health and healing. Health starts at 100 and you die at zero - stay vigilant.
             Health potions restore health instantly. Bandages provide quick healing. Both are essential for travelers.
             Hunger and thirst affect your health regeneration. Keep them high by eating food and drinking.
-            Resting at an inn costs 20 gold but restores 60% health and fully restores hunger and thirst.
+            Resting at an inn costs 10 gold and fully restores all vitals to 100%.
             If you own a house property, you can rest there for free and fully recover everything.`
         },
 
@@ -2382,7 +2386,7 @@ ACCENT: Slurred beyond origin. Whatever they once sounded like, now filtered thr
                 commonPhrases: ['Ale restores thirst', 'The inn is warm at least', 'I lost it all trading...', '*hiccup*']
             },
             worldKnowledge: `You spend your days at the tavern. Ale costs about 5-10 gold and restores thirst.
-            The inn charges 20 gold to rest - restores health, hunger, and thirst. You can barely afford it.
+            The inn charges 10 gold to rest - fully restores all your vitals. You can barely afford it.
             You were once a trader. You had gold, maybe even property. But bad trades and worse luck ruined you.
             Now you drink. The ale keeps the thirst at bay. You've seen others lose everything too.
             Merchant personalities matter - the Greedy ones robbed you, the Friendly ones pitied you.`
@@ -2729,10 +2733,10 @@ ACCENT: Trembling, frightened. Voice of someone who's seen too much.`,
                 priceRange: 'Just a few gold... 5-20 gold... anything helps',
                 knowsAbout: ['Survival on no gold', 'Where to find cheap food', 'How to not starve', 'Dangerous merchants to avoid'],
                 canHelp: ['Avoiding starvation', 'Finding cheap food', 'Warnings about Greedy merchants', 'Survival tips'],
-                commonPhrases: ['Watch your hunger', 'Health goes to zero, you die', 'The inn is 20 gold', 'Bread is only 5 gold']
+                commonPhrases: ['Watch your hunger', 'Health goes to zero, you die', 'The inn is 10 gold', 'Bread is only 5 gold']
             },
             worldKnowledge: `I know how to survive with nothing. Hunger and thirst drain over time. Health follows if they get low.
-            Cheap food: bread ~5g, cheese ~15g, dried meat ~20g. The inn costs 20 gold to rest and fully restores you.
+            Cheap food: bread ~5g, cheese ~15g, dried meat ~20g. The inn costs 10 gold to rest and fully restores you.
             I've seen traders die from ignoring their hunger. Health starts at 100. Zero means death.
             Watch your stats. Eat regularly. Drink when thirsty. Rest at inns. These are the basics of survival.
             I stay alive by knowing things others don't. Like which merchants will cheat you... the Greedy ones.`
