@@ -1461,6 +1461,10 @@ const QuestSystem = {
             for (const [item, qty] of Object.entries(rewardsGiven.items)) {
                 addMessage(`+${qty}x ${item}`, 'success');
             }
+            // 🖤💀 SEGWAY: Show completion dialogue to explain what happens next! 💀
+            if (quest.dialogue?.complete) {
+                addMessage(`💬 "${quest.dialogue.complete}"`, 'info');
+            }
         }
 
         document.dispatchEvent(new CustomEvent('quest-completed', { detail: { quest, rewards: rewardsGiven } }));

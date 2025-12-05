@@ -6953,9 +6953,73 @@ function createCharacter(event) {
     console.log('Character creation state:', characterCreationState);
     console.log('Selected perks:', selectedPerks);
 
+    // 🖤💀 VALIDATION: Check for missing required fields and highlight them 💀
+    let hasErrors = false;
+
     if (!name) {
-        addMessage('Please enter a character name.');
+        hasErrors = true;
+        addMessage('Please enter a character name.', 'error');
         console.warn('Character creation aborted: no name entered');
+
+        // 🖤 Highlight the name field with red border + shake animation 💀
+        if (characterNameInput) {
+            characterNameInput.style.border = '2px solid #f44336';
+            characterNameInput.style.animation = 'shake 0.5s ease-in-out';
+            characterNameInput.focus();
+
+            // 🖤 Show tooltip below the input 💀
+            let tooltip = document.getElementById('name-validation-tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'name-validation-tooltip';
+                tooltip.style.cssText = `
+                    position: absolute;
+                    background: #f44336;
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    z-index: 10000;
+                    pointer-events: none;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                `;
+                document.body.appendChild(tooltip);
+            }
+            tooltip.textContent = '⚠️ Character name is required!';
+            tooltip.style.display = 'block';
+
+            // Position below the input
+            const rect = characterNameInput.getBoundingClientRect();
+            tooltip.style.left = rect.left + 'px';
+            tooltip.style.top = (rect.bottom + 5) + 'px';
+
+            // 🖤 Clear error styling when user types 💀
+            const clearError = () => {
+                characterNameInput.style.border = '';
+                characterNameInput.style.animation = '';
+                if (tooltip) tooltip.style.display = 'none';
+                characterNameInput.removeEventListener('input', clearError);
+            };
+            characterNameInput.addEventListener('input', clearError);
+
+            // 🖤 Add shake animation if not already defined 💀
+            if (!document.getElementById('validation-shake-style')) {
+                const style = document.createElement('style');
+                style.id = 'validation-shake-style';
+                style.textContent = `
+                    @keyframes shake {
+                        0%, 100% { transform: translateX(0); }
+                        20%, 60% { transform: translateX(-5px); }
+                        40%, 80% { transform: translateX(5px); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+    }
+
+    if (hasErrors) {
         return;
     }
 

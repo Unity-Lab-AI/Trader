@@ -1270,13 +1270,16 @@ const PeoplePanel = {
 
         // 🖤💀 ALSO get quests where this NPC is the TURN-IN target (might be different from giver!)
         const allActive = Object.values(QuestSystem.activeQuests || {});
+
         const turnInQuests = allActive.filter(q => {
-            // Check if turnInNpc matches
-            if (q.turnInNpc && QuestSystem._npcMatchesObjective?.(npcType, q.turnInNpc)) return true;
-            // Check if final talk objective targets this NPC
+            // 🖤💀 FIX: More precise matching for turn-in NPCs 💀
+            // Check if turnInNpc EXACTLY matches (use strict comparison)
+            const turnInMatches = q.turnInNpc && q.turnInNpc === npcType;
+            // Check if final talk objective EXACTLY targets this NPC type
             const talkObj = q.objectives?.find(o => o.type === 'talk' && !o.completed);
-            if (talkObj && QuestSystem._npcMatchesObjective?.(npcType, talkObj.npc)) return true;
-            return false;
+            const talkMatches = talkObj && talkObj.npc === npcType;
+
+            return turnInMatches || talkMatches;
         });
 
         // 🦇 Combine and dedupe

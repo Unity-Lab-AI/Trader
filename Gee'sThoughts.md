@@ -16,6 +16,38 @@ Each entry follows this format:
 
 ---
 
+## 2025-12-05 - SESSION #25: NEW GAME VALIDATION + QUEST SEGWAYS 🖤💀🔗
+
+**Request:** Gee reported two issues:
+1. New game panel: When clicking START with missing fields (like name), should highlight the missing field with a tooltip
+2. Quest transition: No explanation for quest segways - when completing a quest and moving to next, no dialogue explains WHY you need to go to the next NPC
+
+**Status:** ✅ COMPLETE
+
+### Fixes Applied:
+
+**New Game Validation** - FIXED in `game.js:6956-7010`
+- **Root Cause:** Validation just showed an `addMessage()` error but didn't highlight the field
+- **Fix:** Added comprehensive validation with:
+  - Red border (`2px solid #f44336`) on the name input
+  - Shake animation (CSS keyframes)
+  - Tooltip below the field saying "⚠️ Character name is required!"
+  - Event listener to clear error styling when user starts typing
+  - Tooltip automatically hides when user types
+
+**Quest Segway Dialogue** - FIXED in `quest-system.js:1464-1467`
+- **Root Cause:** Quest completion showed "Quest Complete!" and rewards, then immediately "New Quest: X" - but never showed the NPC's completion dialogue that explains the transition
+- **Fix:** Added `quest.dialogue.complete` to the message feed when quest completes
+- Now shows: `💬 "Excellent! You have the instincts of a true trader. The Merchant Guild has taken notice..."` etc.
+- This provides the narrative "segway" explaining WHY the player should go to the next NPC
+
+**Files Modified:**
+- `src/js/core/game.js` - Character name validation with visual feedback
+- `src/js/systems/progression/quest-system.js` - Completion dialogue display
+- `src/js/ui/panels/people-panel.js` - Strict equality for NPC turn-in matching (bonus fix)
+
+---
+
 ## 2025-12-05 - SESSION #24: STRICT QUEST TRACKER + CLEAR DATA FIX 🖤💀🔗
 
 **Request:** Gee reported:
