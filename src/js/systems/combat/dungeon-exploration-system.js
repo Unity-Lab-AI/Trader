@@ -2260,12 +2260,7 @@ const DungeonExplorationSystem = {
             return;
         }
 
-        // 🎵 Switch to dungeon music when exploring
-        if (typeof MusicSystem !== 'undefined') {
-            MusicSystem.playDungeonMusic();
-        }
-
-        // Check cooldown
+        // Check cooldown BEFORE playing music
         if (this.isOnCooldown(locationId)) {
             const remaining = this.getCooldownRemaining(locationId);
             const hours = Math.floor(remaining);
@@ -2274,11 +2269,16 @@ const DungeonExplorationSystem = {
             return;
         }
 
-        // Get available events
+        // Get available events BEFORE playing music
         const events = this.getEventsForLocation(location.type);
         if (events.length === 0) {
             console.log('🏚️ No events for location type:', location.type);
             return;
+        }
+
+        // 🖤💀 FIXED: Play dungeon music AFTER all validation passes 💀
+        if (typeof MusicSystem !== 'undefined') {
+            MusicSystem.playDungeonMusic();
         }
 
         // Pick a random event

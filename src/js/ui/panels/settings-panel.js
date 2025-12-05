@@ -3161,10 +3161,19 @@ const SettingsPanel = {
     },
 
     // 🖤 Check if we're in a state where saving is allowed 💀
+    // FIXED: Allow saving in multiple game states, not just PLAYING
     canSaveNow() {
-        return typeof game !== 'undefined' &&
-               typeof GameState !== 'undefined' &&
-               game.state === GameState.PLAYING;
+        if (typeof game === 'undefined' || typeof GameState === 'undefined') return false;
+        // 🖤💀 Allow saving when in-game (any panel open counts as in-game) 💀
+        const savableStates = [
+            GameState.PLAYING,
+            GameState.MARKET,
+            GameState.TRAVEL,
+            GameState.INVENTORY,
+            GameState.TRANSPORTATION,
+            GameState.PAUSED
+        ];
+        return savableStates.includes(game.state);
     },
 
     // 🖤 Update save button states based on game state 💀

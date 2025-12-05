@@ -2248,13 +2248,13 @@ const GameWorldRenderer = {
 
     // 🔍 zoom handlers - for when you need to see your problems closer or further away
     // 🖤 Zoom towards cursor position, not the corner like some amateur hour nonsense
-    // 💀 Uses MULTIPLICATIVE zoom (10% per scroll) for smooth, proportional increments
+    // 💀 FIXED: Finer zoom granularity (5% per scroll tick instead of 10%)
     onWheel(e) {
         e.preventDefault();
 
-        // 🦇 Multiplicative zoom factor: 10% per scroll tick
-        // Scroll up = zoom in (multiply by 1.1), scroll down = zoom out (divide by 1.1)
-        const zoomFactor = e.deltaY > 0 ? (1 / 1.1) : 1.1;
+        // 🖤💀 FIXED: Finer zoom - 5% per scroll tick for smoother control 💀
+        // Scroll up = zoom in (multiply by 1.05), scroll down = zoom out (divide by 1.05)
+        const zoomFactor = e.deltaY > 0 ? (1 / 1.05) : 1.05;
         const oldZoom = this.mapState.zoom;
         const newZoom = Math.max(this.mapState.minZoom, Math.min(this.mapState.maxZoom, oldZoom * zoomFactor));
 
@@ -2283,14 +2283,14 @@ const GameWorldRenderer = {
     },
 
     // 🖤 Zoom in/out buttons zoom towards center of viewport
-    // 💀 Uses MULTIPLICATIVE zoom (15% per step) for smooth, proportional increments
+    // 💀 FIXED: Finer zoom (10% per step instead of 15%)
     // This means each step feels the same regardless of current zoom level
     zoomIn() {
-        this.zoomToCenter(1.15); // 15% zoom in
+        this.zoomToCenter(1.10); // 10% zoom in
     },
 
     zoomOut() {
-        this.zoomToCenter(1 / 1.15); // 15% zoom out (inverse)
+        this.zoomToCenter(1 / 1.10); // 10% zoom out (inverse)
     },
 
     // 🦇 zoomFactor is a multiplier: >1 zooms in, <1 zooms out

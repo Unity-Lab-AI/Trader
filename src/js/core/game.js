@@ -7603,7 +7603,232 @@ function updateLocationInfo() {
     }
 }
 
+// 🖤💀 LOCATION PANEL VIEW STACK - for expandable sections that take over the panel 💀
+const LocationPanelStack = {
+    viewStack: ['main'], // Stack of view names: 'main', 'gathering', 'exploration', etc.
+
+    // Push a new view onto the stack
+    pushView(viewName) {
+        if (this.viewStack[this.viewStack.length - 1] !== viewName) {
+            this.viewStack.push(viewName);
+        }
+        this.renderCurrentView();
+    },
+
+    // Pop current view, return to previous
+    popView() {
+        if (this.viewStack.length > 1) {
+            this.viewStack.pop();
+        }
+        this.renderCurrentView();
+    },
+
+    // Go back to main view
+    goToMain() {
+        this.viewStack = ['main'];
+        this.renderCurrentView();
+    },
+
+    // Get current view name
+    getCurrentView() {
+        return this.viewStack[this.viewStack.length - 1];
+    },
+
+    // Render the current view
+    renderCurrentView() {
+        const view = this.getCurrentView();
+        if (view === 'main') {
+            updateLocationPanelMain();
+        } else if (view === 'gathering') {
+            this.renderGatheringView();
+        } else if (view === 'exploration') {
+            this.renderExplorationView();
+        }
+    },
+
+    // 🖤 Render gathering as full panel 💀
+    renderGatheringView() {
+        const locationPanel = document.getElementById('location-panel');
+        const content = document.getElementById('location-panel-content');
+        if (!content || !locationPanel) return;
+
+        // Update header
+        const h2 = locationPanel.querySelector('h2');
+        if (h2) h2.textContent = '⛏️ Gather Resources';
+
+        // Get available actions
+        const availableActions = typeof ResourceGatheringSystem !== 'undefined'
+            ? ResourceGatheringSystem.getAvailableGatheringActions(game.currentLocation?.type)
+            : [];
+
+        content.innerHTML = `
+            <button class="location-back-btn" onclick="LocationPanelStack.goToMain()"
+                style="display: flex; align-items: center; gap: 6px; margin-bottom: 12px;
+                       padding: 8px 12px; background: rgba(79, 195, 247, 0.15);
+                       border: 1px solid rgba(79, 195, 247, 0.3); border-radius: 6px;
+                       color: #4fc3f7; cursor: pointer; font-size: 12px;">
+                ← Back to Location
+            </button>
+            <div class="gathering-full-list" style="display: flex; flex-direction: column; gap: 4px;">
+                ${availableActions.length === 0 ? `
+                    <div style="padding: 20px; text-align: center; color: #888;">
+                        No resources available here.
+                    </div>
+                ` : availableActions.map(action => {
+                    const toolCheck = typeof ResourceGatheringSystem !== 'undefined'
+                        ? ResourceGatheringSystem.checkToolRequirement(action)
+                        : { hasRequired: true, toolName: 'None' };
+                    const canGather = toolCheck.hasRequired;
+                    return `
+                        <button class="gather-action-btn"
+                            style="display: flex; align-items: center; justify-content: space-between;
+                                   padding: 12px; background: ${canGather ? 'rgba(76, 175, 80, 0.15)' : 'rgba(100, 100, 100, 0.1)'};
+                                   border: 1px solid ${canGather ? 'rgba(76, 175, 80, 0.3)' : 'rgba(100, 100, 100, 0.2)'};
+                                   border-radius: 6px; cursor: ${canGather ? 'pointer' : 'not-allowed'};
+                                   opacity: ${canGather ? '1' : '0.5'};"
+                            ${canGather ? `onclick="ResourceGatheringSystem.startGatheringFromPanel('${action.id}')"` : 'disabled'}>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.5em;">${action.icon}</span>
+                                <div style="text-align: left;">
+                                    <div style="font-weight: bold; color: #e0e0e0;">${action.name}</div>
+                                    <div style="font-size: 0.8em; color: ${canGather ? '#4caf50' : '#f44336'};">
+                                        ${canGather ? '✓ ' + (toolCheck.toolName || 'Ready') : '✗ Need ' + toolCheck.requiredTool}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="text-align: right; color: #888; font-size: 0.85em;">
+                                <div style="color: #4caf50;">${action.baseYield?.min || 1}-${action.baseYield?.max || 3}x</div>
+                                <div>${action.baseTime || 30}s</div>
+                            </div>
+                        </button>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    // 🖤 Render exploration as full panel 💀
+    renderExplorationView() {
+        const locationPanel = document.getElementById('location-panel');
+        const content = document.getElementById('location-panel-content');
+        if (!content || !locationPanel) return;
+
+        // Update header
+        const h2 = locationPanel.querySelector('h2');
+        if (h2) h2.textContent = '🏚️ Exploration';
+
+        const locationId = game.currentLocation?.id;
+        const location = GameWorld?.locations?.[locationId];
+
+        // Get exploration data
+        const des = typeof DungeonExplorationSystem !== 'undefined' ? DungeonExplorationSystem : null;
+        const desLocation = des?.getLocation?.(locationId);
+        const onCooldown = des?.isOnCooldown?.(locationId) || false;
+        const availableEvents = des?.getAvailableEventsForLocation?.(desLocation) || [];
+        const difficulty = des?.getLocationDifficulty?.(desLocation) || 'unknown';
+        const survival = des?.calculateSurvivalAssessment?.(desLocation, game.player) || { tier: 'Unknown', tierColor: '#888', chance: 50 };
+
+        // Build content based on state
+        let mainContent = '';
+
+        if (onCooldown) {
+            const remaining = des?.getCooldownRemaining?.(locationId) || 0;
+            const hours = Math.floor(remaining);
+            const minutes = Math.round((remaining - hours) * 60);
+            mainContent = `
+                <div style="background: #333; border-left: 4px solid #ff9800; padding: 16px; margin: 10px 0; border-radius: 4px;">
+                    <p style="margin: 0; color: #ff9800; font-size: 1.1em;">⏰ Location on cooldown</p>
+                    <p style="margin: 8px 0 0 0; font-size: 0.95em; color: #e0e0e0;">
+                        This area needs time to respawn treasures and threats.
+                    </p>
+                    <p style="margin: 8px 0 0 0; font-weight: bold; color: #ffd700;">
+                        Available in: ${hours}h ${minutes}m
+                    </p>
+                    <p style="margin: 10px 0 0 0; font-size: 0.85em; color: #888; font-style: italic;">
+                        "Even the darkness needs a nap between victims."
+                    </p>
+                </div>
+            `;
+        } else if (availableEvents.length === 0) {
+            mainContent = `
+                <div style="padding: 20px; text-align: center; color: #888;">
+                    <p style="margin: 0; font-size: 1.1em;">🔍 Nothing to explore here right now.</p>
+                    <p style="margin: 10px 0 0 0; font-size: 0.9em; font-style: italic;">
+                        Try dungeons, caves, ruins, or mines for adventure!
+                    </p>
+                </div>
+            `;
+        } else {
+            // Full exploration panel with survival preview and begin button
+            const diffColors = { easy: '#4caf50', medium: '#ff9800', hard: '#f44336', deadly: '#9c27b0', unknown: '#888' };
+            const diffColor = diffColors[difficulty] || '#888';
+
+            mainContent = `
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span style="color: #4fc3f7; font-weight: bold;">📍 ${location?.name || 'Unknown Area'}</span>
+                        <span style="background: ${diffColor}; color: #fff; padding: 3px 10px; border-radius: 4px; font-size: 0.85em; font-weight: bold;">
+                            ${difficulty.toUpperCase()}
+                        </span>
+                    </div>
+                    <div style="background: ${survival.tierColor}15; border: 1px solid ${survival.tierColor}40; border-radius: 8px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: bold; color: ${survival.tierColor};">
+                                ${survival.tier || 'Survival Assessment'}
+                            </span>
+                            <span style="color: ${survival.tierColor}; font-size: 1.1em; font-weight: bold;">
+                                ${Math.round(survival.chance || 50)}%
+                            </span>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div style="background: ${survival.tierColor}; height: 100%; width: ${survival.chance || 50}%; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 15px; padding: 10px; background: rgba(79, 195, 247, 0.1); border-radius: 6px;">
+                    <div style="color: #888; font-size: 0.9em; margin-bottom: 6px;">Available Encounters:</div>
+                    <div style="color: #e0e0e0; font-weight: bold;">${availableEvents.length} types of encounters</div>
+                </div>
+                <button class="explore-full-btn"
+                    style="width: 100%; padding: 15px; background: linear-gradient(135deg, #ff8c00 0%, #cc5500 100%);
+                           border: none; border-radius: 8px; color: white; font-size: 1.1em;
+                           font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;"
+                    onclick="DungeonExplorationSystem.showExplorationPanel('${locationId}')">
+                    ⚔️ Begin Exploration
+                </button>
+            `;
+        }
+
+        content.innerHTML = `
+            <button class="location-back-btn" onclick="LocationPanelStack.goToMain()"
+                style="display: flex; align-items: center; gap: 6px; margin-bottom: 12px;
+                       padding: 8px 12px; background: rgba(79, 195, 247, 0.15);
+                       border: 1px solid rgba(79, 195, 247, 0.3); border-radius: 6px;
+                       color: #4fc3f7; cursor: pointer; font-size: 12px;">
+                ← Back to Location
+            </button>
+            ${mainContent}
+        `;
+    }
+};
+
+// Make it global
+window.LocationPanelStack = LocationPanelStack;
+
+// 🖤💀 Reset stack when player changes location 💀
+document.addEventListener('player-location-changed', () => {
+    LocationPanelStack.goToMain();
+});
+document.addEventListener('location-changed', () => {
+    LocationPanelStack.goToMain();
+});
+
 function updateLocationPanel() {
+    // Always render current view
+    LocationPanelStack.renderCurrentView();
+}
+
+function updateLocationPanelMain() {
     if (!game.currentLocation || !game.currentLocation.id) return;
 
     const location = GameWorld.locations[game.currentLocation.id];
@@ -7714,15 +7939,73 @@ function updateLocationPanel() {
         });
     }
 
-    // 🏚️ Add exploration button for dungeons, caves, ruins, etc.
-    if (typeof DungeonExplorationSystem !== 'undefined') {
-        DungeonExplorationSystem.addExploreButton(game.currentLocation.id);
+    // 🖤💀 ADD NAVIGATION BUTTONS FOR STACK-BASED VIEWS 💀
+    // These replace the old inline expandable sections with full-panel takeover navigation
+    let actionsSection = locationPanel.querySelector('.location-stack-actions');
+    if (!actionsSection) {
+        actionsSection = document.createElement('div');
+        actionsSection.className = 'location-stack-actions';
+        actionsSection.style.cssText = 'margin-top: 12px; display: flex; flex-direction: column; gap: 6px;';
+        // Insert after region unlocks or rest options
+        const insertAfter = locationPanel.querySelector('.region-unlocks') || locationPanel.querySelector('.location-rest-options');
+        if (insertAfter && insertAfter.parentNode) {
+            insertAfter.parentNode.insertBefore(actionsSection, insertAfter.nextSibling);
+        } else {
+            locationPanel.querySelector('#location-panel-content')?.appendChild(actionsSection);
+        }
     }
 
-    // ⛏️ Add gathering section for resource locations (forest, mine, farm, etc.)
-    if (typeof ResourceGatheringSystem !== 'undefined') {
-        ResourceGatheringSystem.addGatheringSection(game.currentLocation.id);
+    // Build the navigation buttons
+    let navButtonsHTML = '';
+
+    // 🏚️ Exploration button (if location is explorable)
+    if (typeof DungeonExplorationSystem !== 'undefined') {
+        const exploreLocation = DungeonExplorationSystem.getLocation?.(game.currentLocation.id);
+        const isExplorable = exploreLocation && DungeonExplorationSystem.isExplorableLocation?.(exploreLocation);
+        const availableEvents = isExplorable ? (DungeonExplorationSystem.getAvailableEventsForLocation?.(exploreLocation) || []) : [];
+        const onCooldown = DungeonExplorationSystem.isOnCooldown?.(game.currentLocation.id);
+
+        if (isExplorable || availableEvents.length > 0) {
+            const cooldownStyle = onCooldown ? 'opacity: 0.6;' : '';
+            const cooldownIcon = onCooldown ? '⏰ ' : '';
+            navButtonsHTML += `
+                <button class="location-nav-btn explore-nav-btn"
+                    onclick="LocationPanelStack.pushView('exploration')"
+                    style="display: flex; align-items: center; justify-content: space-between;
+                           padding: 12px 15px; background: linear-gradient(135deg, #1a3a4a 0%, #0d2030 100%);
+                           border: 1px solid #4fc3f7; border-radius: 8px; color: #4fc3f7;
+                           font-weight: bold; cursor: pointer; ${cooldownStyle}">
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        ${cooldownIcon}🏚️ Explore Area
+                    </span>
+                    <span style="font-size: 0.85em; color: #888;">${availableEvents.length} encounters →</span>
+                </button>
+            `;
+        }
     }
+
+    // ⛏️ Gathering button (if location has resources)
+    if (typeof ResourceGatheringSystem !== 'undefined') {
+        const availableActions = ResourceGatheringSystem.getAvailableGatheringActions?.(location.type) || [];
+
+        if (availableActions.length > 0) {
+            navButtonsHTML += `
+                <button class="location-nav-btn gather-nav-btn"
+                    onclick="LocationPanelStack.pushView('gathering')"
+                    style="display: flex; align-items: center; justify-content: space-between;
+                           padding: 12px 15px; background: linear-gradient(135deg, #2e5a3a 0%, #1a3a2a 100%);
+                           border: 1px solid #4caf50; border-radius: 8px; color: #4caf50;
+                           font-weight: bold; cursor: pointer;">
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        ⛏️ Gather Resources
+                    </span>
+                    <span style="font-size: 0.85em; color: #888;">${availableActions.length} resources →</span>
+                </button>
+            `;
+        }
+    }
+
+    actionsSection.innerHTML = navButtonsHTML;
 
     // 🎵 Update music based on location type
     if (typeof MusicSystem !== 'undefined') {

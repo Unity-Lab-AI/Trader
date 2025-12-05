@@ -8,6 +8,8 @@
 // ═══════════════════════════════════════════════════════════════
 
 const PanelManager = {
+    // 🖤💀 Custom tooltip element for button hover 💀
+    _tooltipElement: null,
     // Stack of currently open panels (most recent last)
     openPanels: [],
 
@@ -333,15 +335,19 @@ const PanelManager = {
                 white-space: nowrap;
             `;
 
-            btn.onmouseenter = () => {
+            btn.onmouseenter = (e) => {
                 btn.style.background = 'rgba(79, 195, 247, 0.3)';
                 btn.style.borderColor = 'rgba(79, 195, 247, 0.5)';
+                // 🖤💀 Show custom tooltip with name + hotkey 💀
+                this.showButtonTooltip(btn, info.name, info.shortcut, e);
             };
 
             btn.onmouseleave = () => {
                 const isOpen = this.isPanelOpen(panelId);
                 btn.style.background = isOpen ? 'rgba(76, 175, 80, 0.3)' : 'rgba(79, 195, 247, 0.1)';
                 btn.style.borderColor = isOpen ? 'rgba(76, 175, 80, 0.5)' : 'rgba(79, 195, 247, 0.2)';
+                // 🖤 Hide custom tooltip 💀
+                this.hideButtonTooltip();
             };
 
             // 🖤 Handle custom toggle functions (like QuestSystem.toggleQuestTracker)
@@ -685,6 +691,63 @@ const PanelManager = {
     },
 
     // 🖤 Cleanup observer - call on destroy 💀
+    // 🖤💀 CUSTOM TOOLTIP SYSTEM FOR PANEL BUTTONS 💀
+    // Shows name + hotkey on hover - more visible than browser title
+    showButtonTooltip(btn, name, shortcut, event) {
+        if (!this._tooltipElement) {
+            this._tooltipElement = document.createElement('div');
+            this._tooltipElement.id = 'panel-btn-tooltip';
+            this._tooltipElement.style.cssText = `
+                position: fixed;
+                background: rgba(20, 20, 30, 0.95);
+                border: 1px solid rgba(79, 195, 247, 0.5);
+                border-radius: 6px;
+                padding: 6px 10px;
+                color: #fff;
+                font-size: 12px;
+                font-family: 'Segoe UI', sans-serif;
+                pointer-events: none;
+                z-index: 100000;
+                white-space: nowrap;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+                opacity: 0;
+                transition: opacity 0.15s ease;
+            `;
+            document.body.appendChild(this._tooltipElement);
+        }
+
+        // 🖤 Build tooltip content with name and optional hotkey 💀
+        let content = `<span style="color: #4fc3f7;">${name}</span>`;
+        if (shortcut) {
+            content += `<span style="margin-left: 8px; background: rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 3px; color: #ffd700;">${shortcut.toUpperCase()}</span>`;
+        }
+        this._tooltipElement.innerHTML = content;
+
+        // 🖤 Position tooltip below the button 💀
+        const rect = btn.getBoundingClientRect();
+        this._tooltipElement.style.left = rect.left + 'px';
+        this._tooltipElement.style.top = (rect.bottom + 8) + 'px';
+
+        // 🖤 Make sure tooltip stays on screen 💀
+        requestAnimationFrame(() => {
+            const tooltipRect = this._tooltipElement.getBoundingClientRect();
+            if (tooltipRect.right > window.innerWidth - 10) {
+                this._tooltipElement.style.left = (window.innerWidth - tooltipRect.width - 10) + 'px';
+            }
+            if (tooltipRect.bottom > window.innerHeight - 10) {
+                // Show above button instead
+                this._tooltipElement.style.top = (rect.top - tooltipRect.height - 8) + 'px';
+            }
+            this._tooltipElement.style.opacity = '1';
+        });
+    },
+
+    hideButtonTooltip() {
+        if (this._tooltipElement) {
+            this._tooltipElement.style.opacity = '0';
+        }
+    },
+
     disconnectObserver() {
         if (this._panelObserver) {
             this._panelObserver.disconnect();

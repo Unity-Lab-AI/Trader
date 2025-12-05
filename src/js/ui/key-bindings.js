@@ -185,8 +185,10 @@ const KeyBindings = {
             }
         }
 
-        // Only process other panel shortcuts in PLAYING state
-        if (game.state !== GameState.PLAYING) return;
+        // 🖤💀 FIXED: Allow panel shortcuts in multiple game states, not just PLAYING 💀
+        // Panels need to toggle even when another panel is open (MARKET, TRAVEL, INVENTORY, etc.)
+        const validStates = [GameState.PLAYING, GameState.MARKET, GameState.TRAVEL, GameState.INVENTORY, GameState.TRANSPORTATION, GameState.PAUSED];
+        if (!validStates.includes(game.state)) return;
 
         // Zoom controls
         if (this.matches(event, 'zoomIn')) {

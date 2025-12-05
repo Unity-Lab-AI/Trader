@@ -16,6 +16,79 @@ Each entry follows this format:
 
 ---
 
+## 2025-12-05 - SESSION #20: MULTIPLE FIXES 🖤💀🔧
+
+**Request:** Gee reported multiple issues:
+1. Save blocked when inventory panel open - shouldn't be blocked
+2. Mouse wheel zoom too aggressive - needs finer granularity
+3. Location panel expandable sections too tall - Gather/Explore should take over full panel
+4. Explorations not activating properly - dungeon music failing and breaking exploration starts
+
+**Status:** ✅ COMPLETE
+
+### Fixes Applied:
+
+**Save Blocking Fix** - FIXED in `settings-panel.js:3163-3177`
+- **Root Cause:** `canSaveNow()` only allowed saving in `GameState.PLAYING`
+- When any panel was open (INVENTORY, MARKET, etc.), save was blocked!
+- **Fix:** Now allows saving in multiple states: PLAYING, MARKET, TRAVEL, INVENTORY, TRANSPORTATION, PAUSED
+
+**Zoom Granularity Fix** - FIXED in `game-world-renderer.js:2252-2294`
+- **Root Cause:** Mouse wheel zoomed 10% per tick, buttons 15% per click - too aggressive
+- **Fix:** Reduced to 5% per wheel tick and 10% per button click for smoother zooming
+
+**Exploration Music Fix** - FIXED in `dungeon-exploration-system.js:2263-2282`
+- **Root Cause:** `MusicSystem.playDungeonMusic()` was called BEFORE validation (cooldown check, events check)
+- If validation failed, music had already started but exploration didn't - broke the flow
+- **Fix:** Moved music call AFTER all validation passes
+
+**Location Panel Stack System** - IMPLEMENTED in `game.js:7606-7832`
+- **Root Cause:** Gather Resources and Explore sections expanded inline, making panel tediously tall
+- **Solution:** Implemented `LocationPanelStack` view navigation system:
+  - Main view shows simple navigation buttons: "⛏️ Gather Resources" and "🏚️ Explore Area"
+  - Clicking either button pushes that view to the stack and takes over the FULL panel
+  - Each expanded view has a "← Back to Location" button
+  - Stack auto-resets when player changes location
+- **Gathering View:** Full panel with all gathering actions as large buttons
+- **Exploration View:** Full panel with survival assessment, difficulty, cooldown status, and Begin button
+
+**Files Modified:**
+- `src/js/ui/panels/settings-panel.js` - Save state validation
+- `src/js/ui/map/game-world-renderer.js` - Zoom granularity
+- `src/js/systems/combat/dungeon-exploration-system.js` - Music timing fix
+- `src/js/core/game.js` - LocationPanelStack system + navigation buttons
+
+---
+
+## 2025-12-05 - SESSION #19: PANEL TOOLTIPS & HOTKEY FIX 🖤💀⌨️
+
+**Request:** Gee reported:
+1. Panel toolbar buttons need mouse-over tooltips showing names + hotkeys
+2. Hotkeys not working in Firefox/Chrome
+
+**Status:** ✅ COMPLETE
+
+### Fixes Applied:
+
+**Panel Button Tooltips** - ADDED in `panel-manager.js:696-748`
+- Added custom tooltip system that shows on hover
+- Displays panel name in cyan + hotkey in gold badge
+- Tooltip positions below button, adjusts if off-screen
+- Much more visible than browser's native `title` tooltip
+
+**Hotkey Fix** - FIXED in `key-bindings.js:188-191`
+- **Root Cause:** Hotkeys only worked when `game.state === GameState.PLAYING`
+- But panels change state to MARKET/TRAVEL/INVENTORY/etc when open
+- So pressing hotkeys while a panel was open did NOTHING!
+- **Fix:** Now allows hotkeys in multiple states: PLAYING, MARKET, TRAVEL, INVENTORY, TRANSPORTATION, PAUSED
+- All panel shortcuts now work regardless of which panel is open
+
+**Files Modified:**
+- `src/js/ui/components/panel-manager.js` - Custom tooltip system
+- `src/js/ui/key-bindings.js` - Allow hotkeys in multiple game states
+
+---
+
 ## 2025-12-05 - SESSION #18: CREDITS, QUEST ICONS, ACHIEVEMENTS & CHAIN TRACKER 🖤💀🎮
 
 **Request:** Gee requested:
