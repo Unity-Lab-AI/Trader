@@ -39,6 +39,10 @@ const DeboogerCommandSystem = {
         console.log('🎮 Commands:', Object.keys(this.commands).join(', '));
     },
 
+    // 🖤 Track retry attempts for wiring up command input
+    _wireUpRetries: 0,
+    _maxWireUpRetries: 10,
+
     // 🔧 Wire up event listeners for command input - binding reality to our interface
     wireUpCommandInput() {
         const input = document.getElementById('debooger-command-input');
@@ -46,8 +50,13 @@ const DeboogerCommandSystem = {
         const helpBtn = document.getElementById('debooger-command-help');
 
         if (!input) {
-            console.warn('🎮 Command input not found, will retry... patience, darkness requires it');
-            setTimeout(() => this.wireUpCommandInput(), 500);
+            this._wireUpRetries++;
+            if (this._wireUpRetries < this._maxWireUpRetries) {
+                console.warn(`🎮 Command input not found, retry ${this._wireUpRetries}/${this._maxWireUpRetries}...`);
+                setTimeout(() => this.wireUpCommandInput(), 500);
+            } else {
+                console.warn('🎮 Command input not found after max retries - debooger console HTML may be missing');
+            }
             return;
         }
 
