@@ -1545,6 +1545,9 @@ const SaveManager = {
     },
 
     openLoadDialog() {
+        // 🐛 FIX: Reload metadata from localStorage to show latest saves
+        this.loadSaveSlotsMetadata();
+
         this._selectedLoadSlot = null;
         this._selectedLoadType = 'manual';
         this.renderLoadSlots();
