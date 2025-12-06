@@ -2647,8 +2647,24 @@ const QuestSystem = {
         style.textContent = `
             /* 🖤 Tracker content area */
             .tracker-content {
-                max-height: 80vh;
+                max-height: 500px;
                 overflow-y: auto;
+                overflow-x: hidden;
+                box-sizing: border-box;
+                padding: 4px;
+            }
+            .tracker-content::-webkit-scrollbar {
+                width: 6px;
+            }
+            .tracker-content::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.2);
+            }
+            .tracker-content::-webkit-scrollbar-thumb {
+                background: rgba(79, 195, 247, 0.4);
+                border-radius: 3px;
+            }
+            .tracker-content::-webkit-scrollbar-thumb:hover {
+                background: rgba(79, 195, 247, 0.6);
             }
 
             /* 🔗 Chain Section */
@@ -2710,10 +2726,7 @@ const QuestSystem = {
 
             /* 📜 Individual Quest in Chain */
             .chain-quest {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                gap: 6px;
+                display: block;
                 padding: 4px 8px;
                 margin: 2px 0;
                 border-radius: 4px;
@@ -2774,6 +2787,9 @@ const QuestSystem = {
             .quest-chain-name {
                 font-size: 11px;
                 flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
 
             /* Quest details (expanded view) */
@@ -2833,6 +2849,9 @@ const QuestSystem = {
                 align-items: center;
                 gap: 4px;
                 width: 100%;
+                flex-wrap: nowrap;
+                white-space: nowrap;
+                overflow: hidden;
             }
             .quest-expand-arrow {
                 font-size: 8px;
@@ -2852,6 +2871,7 @@ const QuestSystem = {
                 background: rgba(0, 0, 0, 0.3);
                 border-radius: 4px;
                 border-left: 2px solid #4fc3f7;
+                box-sizing: border-box;
             }
             .quest-details-inline .detail-objectives {
                 margin-bottom: 8px;
