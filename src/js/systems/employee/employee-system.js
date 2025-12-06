@@ -1333,8 +1333,8 @@ const EmployeeSystem = {
                 title: '💰 Adjust Wage',
                 content: content,
                 buttons: [
-                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
-                    { label: '✅ Apply', type: 'primary', action: () => {
+                    { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
+                    { text: '✅ Apply', className: 'primary', onClick: () => {
                         const input = document.getElementById('wage-input');
                         if (input) applyWage(input.value);
                         ModalSystem.hide();
@@ -1376,8 +1376,8 @@ const EmployeeSystem = {
                 title: '🔥 Fire Employee',
                 content: `<p>Are you sure you want to fire <strong>${employee.name}</strong>?</p><p style="color: #f44336; font-size: 12px;">They will be permanently dismissed.</p>`,
                 buttons: [
-                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
-                    { label: '🔥 Fire', type: 'danger', action: () => { ModalSystem.hide(); doFire(); } }
+                    { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
+                    { text: '🔥 Fire', className: 'danger', onClick: () => { ModalSystem.hide(); doFire(); } }
                 ]
             });
         } else {

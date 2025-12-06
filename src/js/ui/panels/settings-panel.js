@@ -3017,11 +3017,11 @@ const SettingsPanel = {
                         title: '⌨️ Reset Keybindings',
                         content: '<p>Reset all keybindings to defaults?</p>',
                         buttons: [
-                            { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                            { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
                             {
-                                label: '🔄 Reset',
-                                type: 'primary',
-                                action: () => {
+                                text: '🔄 Reset',
+                                className: 'primary',
+                                onClick: () => {
                                     if (typeof KeyBindings !== 'undefined') {
                                         KeyBindings.resetToDefaults();
                                     }
@@ -3096,11 +3096,11 @@ const SettingsPanel = {
                     title: '⚠️ Key Conflict',
                     content: `<p>"<strong>${KeyBindings.formatKey(newKey)}</strong>" is already used for "<strong>${existingDesc}</strong>".</p><p>Do you want to swap the keys?</p>`,
                     buttons: [
-                        { label: '❌ Cancel', type: 'secondary', action: () => { this.cancelKeyRebind(); ModalSystem.hide(); } },
+                        { text: '❌ Cancel', className: 'secondary', onClick: () => { this.cancelKeyRebind(); ModalSystem.hide(); } },
                         {
-                            label: '🔄 Swap Keys',
-                            type: 'primary',
-                            action: () => {
+                            text: '🔄 Swap Keys',
+                            className: 'primary',
+                            onClick: () => {
                                 // swap the keys - silent but deadly
                                 KeyBindings.setKey(existingAction[0], this.rebindContext.originalKey, true);
                                 // set the new key - commit to the change
@@ -3800,8 +3800,8 @@ const SettingsPanel = {
                 title: '🏠 Return to Main Menu',
                 content: '<p>Return to main menu?</p><p style="color: #f44336; font-size: 12px;">Unsaved progress will be lost.</p>',
                 buttons: [
-                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
-                    { label: '🏠 Return', type: 'danger', action: () => { ModalSystem.hide(); doReturn(); } }
+                    { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
+                    { text: '🏠 Return', className: 'danger', onClick: () => { ModalSystem.hide(); doReturn(); } }
                 ]
             });
         } else {
@@ -3832,8 +3832,8 @@ const SettingsPanel = {
                 title: '🔄 Reset Settings',
                 content: '<p>Are you sure you want to reset all settings to their default values?</p>',
                 buttons: [
-                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
-                    { label: '🔄 Reset', type: 'primary', action: () => { ModalSystem.hide(); doReset(); } }
+                    { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
+                    { text: '🔄 Reset', className: 'primary', onClick: () => { ModalSystem.hide(); doReset(); } }
                 ]
             });
         } else {
@@ -3858,8 +3858,8 @@ const SettingsPanel = {
                         <p style="color: #4caf50;">🏆 The global Hall of Champions server data will remain intact.</p>
                     `,
                     buttons: [
-                        { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
-                        { label: '🗑️ DELETE EVERYTHING', type: 'danger', action: () => { ModalSystem.hide(); doClear(); } }
+                        { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
+                        { text: '🗑️ DELETE EVERYTHING', className: 'danger', onClick: () => { ModalSystem.hide(); doClear(); } }
                     ]
                 });
             } else {
@@ -3884,8 +3884,8 @@ const SettingsPanel = {
                     <p style="color: #f44336; font-weight: bold;">This cannot be undone!</p>
                 `,
                 buttons: [
-                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
-                    { label: '⚠️ Continue', type: 'danger', action: () => { ModalSystem.hide(); showFinalWarning(); } }
+                    { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
+                    { text: '⚠️ Continue', className: 'danger', onClick: () => { ModalSystem.hide(); showFinalWarning(); } }
                 ]
             });
         } else {
@@ -4020,7 +4020,7 @@ const SettingsPanel = {
                         <p>The page will now reload.</p>
                     `,
                     buttons: [
-                        { label: '🔄 Reload', type: 'primary', action: () => { ModalSystem.hide(); window.location.reload(true); } }
+                        { text: '🔄 Reload', className: 'primary', onClick: () => { ModalSystem.hide(); window.location.reload(true); } }
                     ]
                 });
             } else {
@@ -4038,7 +4038,7 @@ const SettingsPanel = {
                         <p style="color: #f44336; font-size: 12px;">Error: ${error.message}</p>
                     `,
                     buttons: [
-                        { label: 'OK', type: 'secondary', action: () => ModalSystem.hide() }
+                        { text: 'OK', className: 'secondary', onClick: () => ModalSystem.hide() }
                     ]
                 });
             } else {
@@ -4195,8 +4195,8 @@ const SettingsPanel = {
                 title: '🗑️ Clear Auto-Saves',
                 content: '<p>This will delete <strong>ALL auto-saves</strong>.</p><p>Your manual saves will be kept.</p><p>Continue?</p>',
                 buttons: [
-                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
-                    { label: '🗑️ Clear', type: 'danger', action: () => { ModalSystem.hide(); doClear(); } }
+                    { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
+                    { text: '🗑️ Clear', className: 'danger', onClick: () => { ModalSystem.hide(); doClear(); } }
                 ]
             });
         } else {

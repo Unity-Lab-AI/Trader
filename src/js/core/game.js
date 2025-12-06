@@ -442,8 +442,8 @@ const LeaderboardFeatures = {
                 title: '🗑️ Clear High Scores',
                 content: '<p>Are you sure you want to clear all active high scores?</p><p style="color: #f44336; font-size: 12px;">This cannot be undone.</p>',
                 buttons: [
-                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
-                    { label: '🗑️ Clear', type: 'danger', action: () => { ModalSystem.hide(); doClear(); } }
+                    { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
+                    { text: '🗑️ Clear', className: 'danger', onClick: () => { ModalSystem.hide(); doClear(); } }
                 ]
             });
         } else {
@@ -10120,11 +10120,11 @@ function toggleMenu() {
                     title: '🚪 Quit Game',
                     content: '<p>Are you sure you want to quit?</p><p style="color: #f44336; font-size: 12px;">Unsaved progress will be lost.</p>',
                     buttons: [
-                        { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
+                        { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
                         {
-                            label: '🚪 Quit',
-                            type: 'danger',
-                            action: () => {
+                            text: '🚪 Quit',
+                            className: 'danger',
+                            onClick: () => {
                                 ModalSystem.hide();
                                 menuOverlay.classList.remove('active');
                                 menuOverlay.style.display = 'none';

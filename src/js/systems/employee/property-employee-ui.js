@@ -289,8 +289,8 @@ const PropertyEmployeeUI = {
                 title: `🏠 ${acquisitionType.charAt(0).toUpperCase() + acquisitionType.slice(1)} Property`,
                 content: contentHtml,
                 buttons: [
-                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
-                    { label: `✅ ${acquisitionType.charAt(0).toUpperCase() + acquisitionType.slice(1)}`, type: 'primary', action: () => { ModalSystem.hide(); doPurchase(); } }
+                    { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
+                    { text: `✅ ${acquisitionType.charAt(0).toUpperCase() + acquisitionType.slice(1)}`, className: 'primary', onClick: () => { ModalSystem.hide(); doPurchase(); } }
                 ]
             });
         } else {
@@ -358,8 +358,8 @@ const PropertyEmployeeUI = {
                     title: '🗺️ Travel Required',
                     content: `<p>You must travel to <strong>${location.name}</strong> to acquire property there.</p><p>Would you like to set it as your destination?</p>`,
                     buttons: [
-                        { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
-                        { label: '🗺️ Set Destination', type: 'primary', action: () => { ModalSystem.hide(); setDestination(); } }
+                        { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
+                        { text: '🗺️ Set Destination', className: 'primary', onClick: () => { ModalSystem.hide(); setDestination(); } }
                     ]
                 });
             }
@@ -1078,8 +1078,8 @@ const PropertyEmployeeUI = {
                     <p style="color: #f44336; font-size: 12px;">This action cannot be undone!</p>
                 `,
                 buttons: [
-                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
-                    { label: '💰 Sell', type: 'danger', action: () => { ModalSystem.hide(); doSell(); } }
+                    { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
+                    { text: '💰 Sell', className: 'danger', onClick: () => { ModalSystem.hide(); doSell(); } }
                 ]
             });
         } else {
@@ -1328,8 +1328,8 @@ const PropertyEmployeeUI = {
                 title: '🔥 Fire Employee',
                 content: `<p>Are you sure you want to fire <strong>${employeeName}</strong>?</p><p style="color: #f44336; font-size: 12px;">This will permanently dismiss them.</p>`,
                 buttons: [
-                    { label: '❌ Cancel', type: 'secondary', action: () => ModalSystem.hide() },
-                    { label: '🔥 Fire', type: 'danger', action: () => { ModalSystem.hide(); doFire(); } }
+                    { text: '❌ Cancel', className: 'secondary', onClick: () => ModalSystem.hide() },
+                    { text: '🔥 Fire', className: 'danger', onClick: () => { ModalSystem.hide(); doFire(); } }
                 ]
             });
         } else {
