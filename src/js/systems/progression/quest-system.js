@@ -1265,13 +1265,31 @@ const QuestSystem = {
                         if (data.npc === objective.npc || data.npcType === objective.npc) {
                             objective.completed = true;
                             updated = true;
-                            // 🖤💀 If this talk objective gives an item, add it to player inventory 💀
+                            // 🖤💀 If this talk objective gives an item, add it to correct inventory 💀
                             if (objective.givesItem && typeof game !== 'undefined' && game.player) {
-                                if (!game.player.inventory) game.player.inventory = {};
-                                game.player.inventory[objective.givesItem] = (game.player.inventory[objective.givesItem] || 0) + 1;
-                                if (typeof addMessage === 'function') {
-                                    addMessage(`📜 Received: ${objective.givesItem.replace(/_/g, ' ')}`, 'quest');
+                                const isQuestItemGiven = this.isQuestItem(objective.givesItem);
+                                const itemName = isQuestItemGiven && this.questItems[objective.givesItem]?.name
+                                    ? this.questItems[objective.givesItem].name
+                                    : objective.givesItem.replace(/_/g, ' ');
+
+                                if (isQuestItemGiven) {
+                                    // Quest item goes to questItems
+                                    if (!game.player.questItems) game.player.questItems = {};
+                                    game.player.questItems[objective.givesItem] = (game.player.questItems[objective.givesItem] || 0) + 1;
+                                } else {
+                                    // Regular item goes to inventory
+                                    if (!game.player.inventory) game.player.inventory = {};
+                                    game.player.inventory[objective.givesItem] = (game.player.inventory[objective.givesItem] || 0) + 1;
                                 }
+
+                                if (typeof addMessage === 'function') {
+                                    addMessage(`📜 Received: ${itemName}`, 'quest');
+                                }
+
+                                // 🎯 Dispatch item-received event for quest progress tracking
+                                document.dispatchEvent(new CustomEvent('item-received', {
+                                    detail: { item: objective.givesItem, quantity: 1, source: 'quest_talk', isQuestItem: isQuestItemGiven }
+                                }));
                             }
                         }
                         break;

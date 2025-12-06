@@ -818,15 +818,39 @@ const SaveManager = {
                 }
             }
 
-            // 🖤💀 MIGRATION: Patch Missing Trader quest talk objective with location 💀
-            // Talk objective was missing location field, causing it to target wrong NPC
+            // 🖤💀 MIGRATION: Restructure Missing Trader quest entirely 💀
+            // Old: talk to innkeeper + collect journal (no source for journal!)
+            // New: talk to innkeeper (gives journal) + return to guard
             if (QuestSystem.activeQuests['act1_quest6']) {
                 const quest = QuestSystem.activeQuests['act1_quest6'];
-                const talkObjective = quest.objectives && quest.objectives.find(o => o.type === 'talk' && o.npc === 'innkeeper');
+                console.log('🔧 Migrating Missing Trader quest to new structure');
 
-                if (talkObjective && !talkObjective.location) {
-                    console.log('🔧 Migrating Missing Trader quest: adding location to innkeeper talk objective');
-                    talkObjective.location = 'lighthouse_inn';
+                // Replace objectives entirely with new structure
+                const hasJournal = (game.player?.questItems?.traders_journal || 0) > 0;
+
+                quest.objectives = [
+                    {
+                        type: 'talk',
+                        npc: 'innkeeper',
+                        location: 'lighthouse_inn',
+                        completed: true, // Already done if quest is active
+                        description: 'Ask the innkeeper about the missing trader',
+                        givesItem: 'traders_journal'
+                    },
+                    {
+                        type: 'talk',
+                        npc: 'guard',
+                        location: 'sunhaven',
+                        completed: false,
+                        description: 'Return to Guard Captain Theron'
+                    }
+                ];
+
+                // If player doesn't have journal yet, give it to them
+                if (!hasJournal) {
+                    if (!game.player.questItems) game.player.questItems = {};
+                    game.player.questItems.traders_journal = 1;
+                    console.log('🔧 Gave traders_journal to player as part of migration');
                 }
             }
         }

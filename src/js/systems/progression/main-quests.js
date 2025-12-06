@@ -241,8 +241,8 @@ const MainQuests = {
                 chain: 'shadow_rising',
                 difficulty: 'easy',
                 objectives: [
-                    { type: 'talk', npc: 'innkeeper', location: 'lighthouse_inn', completed: false, description: 'Ask the innkeeper about the missing trader' },
-                    { type: 'collect', item: 'traders_journal', count: 1, current: 0, description: 'Find the trader\'s abandoned journal' }
+                    { type: 'talk', npc: 'innkeeper', location: 'lighthouse_inn', completed: false, description: 'Ask the innkeeper about the missing trader', givesItem: 'traders_journal' },
+                    { type: 'talk', npc: 'guard', location: 'sunhaven', completed: false, description: 'Return to Guard Captain Theron' }
                 ],
                 rewards: { gold: 80, reputation: 20, experience: 45 },
                 givesQuestItem: 'traders_journal',
