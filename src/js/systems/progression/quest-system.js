@@ -2526,16 +2526,35 @@ const QuestSystem = {
 
         // Active quest - show objectives + actions
         const objectives = activeQuest.objectives || [];
-        const objHTML = objectives.map(obj => {
+        const objHTML = objectives.map((obj, index) => {
             const isCountBased = ['collect', 'defeat', 'buy', 'trade', 'sell'].includes(obj.type);
             const isExplore = obj.type === 'explore';
             const isComplete = isCountBased ? (obj.current || 0) >= obj.count :
                                isExplore ? (obj.current || 0) >= obj.rooms :
                                obj.completed;
-            const icon = isComplete ? '✅' : '⬜';
+
+            // 🖤💀 Check if previous objectives are complete (sequential validation) 💀
+            let previousComplete = true;
+            for (let i = 0; i < index; i++) {
+                const prevObj = objectives[i];
+                const prevCountBased = ['collect', 'defeat', 'buy', 'trade', 'sell'].includes(prevObj.type);
+                const prevExplore = prevObj.type === 'explore';
+                const prevComplete = prevCountBased ? (prevObj.current || 0) >= prevObj.count :
+                                     prevExplore ? (prevObj.current || 0) >= prevObj.rooms :
+                                     prevObj.completed;
+                if (!prevComplete) {
+                    previousComplete = false;
+                    break;
+                }
+            }
+
+            const isLocked = !previousComplete && !isComplete;
+            const isActive = previousComplete && !isComplete;
+            const icon = isComplete ? '✅' : (isLocked ? '🔒' : '⬜');
+            const cssClass = isComplete ? 'done' : (isLocked ? 'locked' : (isActive ? 'active' : ''));
             const countText = obj.count ? ` (${obj.current || 0}/${obj.count})` :
                               obj.rooms ? ` (${obj.current || 0}/${obj.rooms})` : '';
-            return `<div class="detail-objective ${isComplete ? 'done' : ''}">${icon} ${obj.description}${countText}</div>`;
+            return `<div class="detail-objective ${cssClass}">${icon} ${obj.description}${countText}</div>`;
         }).join('');
 
         // 🖤💀 NO TRACK BUTTON - bullseye badge handles tracking! 💀
@@ -2773,6 +2792,14 @@ const QuestSystem = {
                 text-decoration: line-through;
                 opacity: 0.7;
             }
+            .detail-objective.active {
+                color: #4fc3f7;
+                font-weight: bold;
+            }
+            .detail-objective.locked {
+                color: #666;
+                opacity: 0.6;
+            }
             .detail-complete-msg {
                 color: #81c784;
                 font-style: italic;
@@ -2839,6 +2866,14 @@ const QuestSystem = {
                 color: #81c784;
                 text-decoration: line-through;
                 opacity: 0.7;
+            }
+            .quest-details-inline .detail-objective.active {
+                color: #4fc3f7;
+                font-weight: bold;
+            }
+            .quest-details-inline .detail-objective.locked {
+                color: #666;
+                opacity: 0.6;
             }
             .quest-details-inline .detail-complete-msg {
                 color: #81c784;
