@@ -2276,8 +2276,7 @@ const QuestSystem = {
         return `${hours}h ${minutes}m`;
     },
 
-    // 🖤💀 QUEST TRACKER STATE - track expanded/minimized mode 💀
-    trackerExpanded: false,
+    // 🖤💀 QUEST TRACKER STATE 💀
     expandedChains: {}, // Track which chains are expanded in chain view
 
     updateQuestTracker() {
@@ -2315,12 +2314,9 @@ const QuestSystem = {
             <div class="tracker-header">
                 <span class="drag-grip">⋮⋮</span>
                 <span class="tracker-title">Quest Chain 🔗</span>
-                <button class="tracker-expand-btn" onclick="QuestSystem.toggleTrackerExpand()" title="${this.trackerExpanded ? 'Minimize' : 'Expand'}">
-                    ${this.trackerExpanded ? '▼' : '▲'}
-                </button>
                 <button class="tracker-close" onclick="QuestSystem.hideQuestTracker()" title="Close">×</button>
             </div>
-            <div class="tracker-content ${this.trackerExpanded ? 'expanded' : 'minimized'}">
+            <div class="tracker-content">
                 ${chainHTML}
             </div>
         `;
@@ -2602,11 +2598,6 @@ const QuestSystem = {
         this.updateQuestTracker();
     },
 
-    // 🖤💀 TOGGLE TRACKER EXPAND/MINIMIZE 💀
-    toggleTrackerExpand() {
-        this.trackerExpanded = !this.trackerExpanded;
-        this.updateQuestTracker();
-    },
 
     // 🖤💀 GET DISPLAY NAME FOR CHAIN 💀
     getChainDisplayName(chainName) {
@@ -2636,28 +2627,9 @@ const QuestSystem = {
         style.id = 'quest-tracker-styles';
         // 🖤💀 QUEST CHAIN TRACKER STYLES 💀
         style.textContent = `
-            /* 🖤 Expand button */
-            .tracker-expand-btn {
-                background: rgba(79, 195, 247, 0.2);
-                border: none;
-                border-radius: 3px;
-                color: #4fc3f7;
-                cursor: pointer;
-                padding: 2px 6px;
-                font-size: 10px;
-                margin-right: 4px;
-            }
-            .tracker-expand-btn:hover {
-                background: rgba(79, 195, 247, 0.4);
-            }
-
-            /* 🖤 Content modes */
-            .tracker-content.minimized {
-                max-height: 300px;
-                overflow-y: auto;
-            }
-            .tracker-content.expanded {
-                max-height: 600px;
+            /* 🖤 Tracker content area */
+            .tracker-content {
+                max-height: 500px;
                 overflow-y: auto;
             }
 
