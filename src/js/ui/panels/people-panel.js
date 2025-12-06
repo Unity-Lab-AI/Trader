@@ -2773,9 +2773,20 @@ Speak cryptically and briefly. You offer passage to the ${inDoom ? 'normal world
                 o.npc === npcType &&
                 (!o.location || o.location === location || o.location === 'any')
             );
-            const npcMatches = turnInNpcMatches || talkObjMatches;
-            const locationMatches = !location || !q.turnInLocation || q.turnInLocation === location || q.turnInLocation === 'any';
-            return npcMatches && locationMatches;
+
+            // 🖤💀 CRITICAL FIX: If we found a talk objective match, the location is already validated! 💀
+            // Don't check q.turnInLocation - that's for the final turn-in NPC, not in-progress talk objectives
+            if (talkObjMatches) {
+                return true; // Talk objective already checked location
+            }
+
+            // For turn-in NPCs, check the quest's turn-in location
+            if (turnInNpcMatches) {
+                const locationMatches = !location || !q.turnInLocation || q.turnInLocation === location || q.turnInLocation === 'any';
+                return locationMatches;
+            }
+
+            return false;
         });
 
         if (inProgress.length > 0 || turnInQuests.length > 0) {
