@@ -116,7 +116,8 @@ const GameWorld = {
         },
         greendale: {
             id: 'greendale',
-            name: 'Greendale',
+            name: 'GREENDALE',
+            isAreaLabel: true, // Render as large area name on map
             region: 'starter',
             type: 'city',
             description: 'The breadbasket of the realm. Farmers bring wheat and livestock; bakers and brewers turn them into bread and ale.',
