@@ -326,7 +326,7 @@ const ModalSystem = {
                     display: none;
                     justify-content: center;
                     align-items: center;
-                    z-index: 700; /* Z-INDEX STANDARD: System modals */
+                    z-index: 100000; /* 🖤💀 MUST be above settings panel (99999) to show confirmation modals */
                     padding: 20px;
                     box-sizing: border-box;
                 }
