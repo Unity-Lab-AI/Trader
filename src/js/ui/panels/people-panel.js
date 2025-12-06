@@ -764,7 +764,9 @@ const PeoplePanel = {
         const description = this.escapeHtml(npc.description || this.getNPCDescription(npc.type || npc.id));
 
         // 🖤💀 WOW-STYLE QUEST MARKERS - Check for quest status 💀
-        const questMarker = this.getQuestMarker(npc.type || npc.id);
+        const npcTypeForQuest = npc.type || npc.id;
+        console.log(`🎴 createNPCCard: NPC "${name}" (id: ${npc.id}, type: ${npc.type}, using: ${npcTypeForQuest})`);
+        const questMarker = this.getQuestMarker(npcTypeForQuest);
         const hasDelivery = this.npcHasDeliveryForThem(npc.type || npc.id);
         // 🖤💀 Also check npc.canTrade for random encounters (smuggler, courier, pilgrim) 💀
         const canTrade = this.npcCanTrade(npc.type || npc.id) || npc.canTrade;
