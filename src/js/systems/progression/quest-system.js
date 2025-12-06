@@ -2945,7 +2945,6 @@ const QuestSystem = {
         if (tracker) {
             tracker.classList.add('hidden');
             this.trackerHidden = true;
-            this.saveQuestProgress(); // 🖤💀 PERSIST tracker state 💀
             // 🖤 Update panel button state 💀
             if (typeof PanelManager !== 'undefined' && PanelManager.updateToolbarButtons) {
                 PanelManager.updateToolbarButtons();
@@ -2958,7 +2957,6 @@ const QuestSystem = {
     showQuestTracker() {
         this.trackerHidden = false;
         this.updateQuestTracker(); // This will recreate/show it
-        this.saveQuestProgress(); // 🖤💀 PERSIST tracker state 💀
         // 🖤 Update panel button state 💀
         if (typeof PanelManager !== 'undefined' && PanelManager.updateToolbarButtons) {
             PanelManager.updateToolbarButtons();
