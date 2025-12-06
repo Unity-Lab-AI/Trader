@@ -1208,15 +1208,17 @@ const PeoplePanel = {
                         }
                     }
 
-                    // Only show talk button if previous objectives are done
-                    if (previousObjectivesComplete) {
-                        actions.push({
-                            label: `💬 ${talkObjective.description || 'Talk about quest'}`,
-                            action: () => this.completeTalkObjective(quest, talkObjective),
-                            priority: 1.5, // High priority - between turn-in and other actions
-                            questRelated: true
-                        });
-                    }
+                    // Show talk button, but disable it if previous objectives aren't done
+                    actions.push({
+                        label: `💬 ${talkObjective.description || 'Talk about quest'}`,
+                        action: previousObjectivesComplete
+                            ? () => this.completeTalkObjective(quest, talkObjective)
+                            : null, // No action if locked
+                        priority: 1.5, // High priority - between turn-in and other actions
+                        questRelated: true,
+                        disabled: !previousObjectivesComplete,
+                        lockedReason: !previousObjectivesComplete ? 'Complete previous objectives first' : null
+                    });
                 }
             });
 
@@ -1354,8 +1356,15 @@ const PeoplePanel = {
             const btn = document.createElement('button');
             btn.className = 'quick-action-btn';
             if (a.questRelated) btn.classList.add('quest-action-btn');
+            if (a.disabled) {
+                btn.classList.add('disabled');
+                btn.disabled = true;
+                if (a.lockedReason) btn.title = a.lockedReason;
+            }
             btn.textContent = a.label;
-            btn.addEventListener('click', a.action);
+            if (a.action) {
+                btn.addEventListener('click', a.action);
+            }
             container.appendChild(btn);
         });
 
@@ -2923,37 +2932,17 @@ Speak cryptically and briefly. You offer passage to the ${inDoom ? 'normal world
             // 🖤 Check if NPC type matches AND location matches (for multiple merchants/NPCs of same type)
             const turnInNpcMatches = q.turnInNpc === npcType;
 
-            // 🖤💀 CRITICAL: Check for talk objectives, but ONLY if previous objectives are complete! 💀
-            const talkObjectiveIndex = q.objectives?.findIndex(o =>
+            // 🖤💀 Check for ANY talk objectives to this NPC (even if locked by previous objectives) 💀
+            // This shows the grey ? marker indicating they're involved in an active quest
+            const hasTalkObjective = q.objectives?.some(o =>
                 o.type === 'talk' &&
                 !o.completed &&
                 o.npc === npcType &&
                 (!o.location || o.location === location || o.location === 'any')
             );
 
-            let talkObjMatches = false;
-            if (talkObjectiveIndex >= 0) {
-                // Check if all previous objectives are complete
-                let previousComplete = true;
-                for (let i = 0; i < talkObjectiveIndex; i++) {
-                    const prevObj = q.objectives[i];
-                    if (prevObj.type === 'collect' || prevObj.type === 'buy' || prevObj.type === 'sell' || prevObj.type === 'trade' || prevObj.type === 'defeat') {
-                        if ((prevObj.current || 0) < prevObj.count) {
-                            previousComplete = false;
-                            break;
-                        }
-                    } else if (prevObj.type === 'visit' || prevObj.type === 'talk' || prevObj.type === 'explore' || prevObj.type === 'investigate' || prevObj.type === 'gold') {
-                        if (!prevObj.completed) {
-                            previousComplete = false;
-                            break;
-                        }
-                    }
-                }
-                talkObjMatches = previousComplete;
-            }
-
-            // 🖤💀 If we found a valid talk objective match, return true
-            if (talkObjMatches) {
+            // 🖤💀 If this NPC has a talk objective in this quest, show the marker 💀
+            if (hasTalkObjective) {
                 return true;
             }
 
