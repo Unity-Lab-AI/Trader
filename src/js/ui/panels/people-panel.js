@@ -589,13 +589,23 @@ const PeoplePanel = {
         });
 
         // 🖤 listen for quest updates
-        document.addEventListener('quest-assigned', () => this.updateQuestItems());
+        document.addEventListener('quest-assigned', () => {
+            this.updateQuestItems();
+            // 🖤💀 CRITICAL: Refresh NPC list to update quest markers (! and ?) on portraits
+            if (this.viewMode === 'list') {
+                this.showNPCList(); // Rebuild cards with updated markers
+            }
+        });
         document.addEventListener('quest-completed', () => {
             this.updateQuestItems();
             // 🖤💀 Also refresh stats bar AND trade section to show updated reputation after quest reward
             if (this.currentNPC && this.viewMode === 'chat') {
                 this.updateNPCStatsBar(this.currentNPC);
                 this.updateTradeSection(this.currentNPC); // 🖤💀 FIXED: Refresh trade section too!
+            }
+            // 🖤💀 CRITICAL: Refresh NPC list to update quest markers (! and ?) on portraits
+            if (this.viewMode === 'list') {
+                this.showNPCList(); // Rebuild cards with updated markers
             }
         });
 
@@ -1344,10 +1354,14 @@ const PeoplePanel = {
                     return !o.completed;
                 }) || [];
 
-                // If only 1 incomplete objective AND it's a talk to THIS NPC
+                // If only 1 incomplete objective AND it's a talk to THIS NPC at THIS location
                 if (incompleteObjs.length === 1 && incompleteObjs[0].type === 'talk') {
-                    const talkTarget = incompleteObjs[0].npc;
-                    if (QuestSystem._npcMatchesObjective?.(npcType, talkTarget)) {
+                    const talkObj = incompleteObjs[0];
+                    const talkTarget = talkObj.npc;
+                    const talkLocation = talkObj.location;
+                    const npcMatches = QuestSystem._npcMatchesObjective?.(npcType, talkTarget);
+                    const locationMatches = !talkLocation || talkLocation === location || talkLocation === 'any';
+                    if (npcMatches && locationMatches) {
                         return true; // 🖤 Talking to them IS the completion action!
                     }
                 }
