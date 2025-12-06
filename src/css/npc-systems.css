@@ -212,6 +212,8 @@
     background: var(--npc-bg-medium);
     border-radius: 8px;
     padding: 12px;
+    display: flex;
+    flex-direction: column;
 }
 
 .trade-column h3, .trade-column h4 {
@@ -223,8 +225,9 @@
 
 /* Inventory */
 .trade-inventory {
-    max-height: 200px;
+    max-height: 400px;
     overflow-y: auto;
+    flex: 1;
 }
 
 .trade-inventory.scrollable {
@@ -356,7 +359,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 10px;
+    margin-top: auto;
+    padding-top: 10px;
     font-size: 0.85rem;
 }
 
